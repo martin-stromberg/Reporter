@@ -1,5 +1,5 @@
+using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
-using Reporter.Core.Services;
 using Reporter.Resources.Strings;
 
 namespace Reporter.ViewModels;
@@ -9,17 +9,17 @@ namespace Reporter.ViewModels;
 /// </summary>
 public partial class UnreadViewModel : BaseViewModel
 {
-    private readonly IArticleService _articleService;
+    private readonly IItemRepository _itemRepository;
     private string _title = AppResources.PageTitleUnread;
-    private IReadOnlyList<Article> _articles = new List<Article>();
+    private IReadOnlyList<Item> _articles = new List<Item>();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnreadViewModel"/> class.
     /// </summary>
-    /// <param name="articleService">The article service.</param>
-    public UnreadViewModel(IArticleService articleService)
+    /// <param name="itemRepository">The item repository.</param>
+    public UnreadViewModel(IItemRepository itemRepository)
     {
-        _articleService = articleService;
+        _itemRepository = itemRepository;
     }
 
     /// <summary>
@@ -32,9 +32,9 @@ public partial class UnreadViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets or sets the list of unread articles.
+    /// Gets or sets the list of unread items.
     /// </summary>
-    public IReadOnlyList<Article> Articles
+    public IReadOnlyList<Item> Articles
     {
         get => _articles;
         set => SetProperty(ref _articles, value);

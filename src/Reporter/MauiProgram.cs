@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Reporter.Core.Interfaces;
-using Reporter.Core.Services;
 using Reporter.Data;
 using Reporter.Data.Repositories;
 using Reporter.ViewModels;
@@ -39,9 +38,13 @@ public static class MauiProgram
         Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
 
         builder.Services
-            .AddDbContext<ReporterDbContext>(options => options.UseSqlite($"Data Source={databasePath}"))
-            .AddSingleton<IArticleRepository, ArticleRepository>()
-            .AddSingleton<IArticleService, ArticleService>()
+            .AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite($"Data Source={databasePath}"))
+            .AddSingleton<IFeedRepository, FeedRepository>()
+            .AddSingleton<ICategoryRepository, CategoryRepository>()
+            .AddSingleton<IItemRepository, ItemRepository>()
+            .AddSingleton<IKeywordRepository, KeywordRepository>()
+            .AddSingleton<ISettingsRepository, SettingsRepository>()
+            .AddSingleton<ISyncLogRepository, SyncLogRepository>()
             .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
             .AddSingleton<LaterViewModel>()

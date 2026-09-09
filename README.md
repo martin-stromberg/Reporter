@@ -80,8 +80,8 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 - `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
 - `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
 - `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
-- `Reporter.Core` enthält das Domänenmodell (`Article`), `IArticleRepository` und `IArticleService`.
-- `Reporter.Data` stellt `ArticleRepository` bereit.
+- `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`) und die Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`).
+- `Reporter.Data` stellt die EF Core-Entitäten und Repository-Implementierungen bereit; Repositories verwenden `IDbContextFactory<ReporterDbContext>` für kurzlebige, thread-sichere DbContext-Instanzen.
 - `BaseViewModel` dient als Basis für alle ViewModels.
 
 ## Tests

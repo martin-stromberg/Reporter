@@ -1,0 +1,120 @@
+using Reporter.Core.Models;
+using Reporter.Data.Repositories;
+
+namespace Reporter.Tests;
+
+/// <summary>
+/// Contains tests for the <see cref="FeedRepository"/> class.
+/// </summary>
+public class FeedRepositoryTests : IDisposable
+{
+    private readonly TestDbContextFactory _factory;
+    private readonly FeedRepository _repository;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeedRepositoryTests"/> class.
+    /// </summary>
+    public FeedRepositoryTests()
+    {
+        _factory = new TestDbContextFactory();
+        _repository = new FeedRepository(_factory);
+    }
+
+    /// <summary>
+    /// Disposes the test factory.
+    /// </summary>
+    public void Dispose()
+    {
+        _factory.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that a feed can be added and retrieved by id.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_ThenGetByIdAsync_ReturnsFeed()
+    {
+        var feed = new Feed
+        {
+            Id = Guid.NewGuid(),
+            Url = "https://example.com/feed",
+            Title = "Example Feed",
+        };
+        await _repository.AddAsync(feed);
+
+        var result = await _repository.GetByIdAsync(feed.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal("https://example.com/feed", result.Url);
+        Assert.Equal("Example Feed", result.Title);
+    }
+
+    /// <summary>
+    /// Verifies that GetAllAsync returns all added feeds ordered by title.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetAllAsync_ReturnsFeedsOrderedByTitle()
+    {
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://b.com", Title = "B" });
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://a.com", Title = "A" });
+
+        var result = await _repository.GetAllAsync();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("A", result[0].Title);
+        Assert.Equal("B", result[1].Title);
+    }
+
+    /// <summary>
+    /// Verifies that UpdateAsync persists changes.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_PersistsChanges()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://old.com", Title = "Old" };
+        await _repository.AddAsync(feed);
+
+        await _repository.UpdateAsync(new Feed
+        {
+            Id = feed.Id,
+            Url = "https://new.com",
+            Title = "New",
+        });
+        var result = await _repository.GetByIdAsync(feed.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal("https://new.com", result.Url);
+        Assert.Equal("New", result.Title);
+    }
+
+    /// <summary>
+    /// Verifies that DeleteAsync removes the feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesFeed()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://delete.com", Title = "ToDelete" };
+        await _repository.AddAsync(feed);
+
+        await _repository.DeleteAsync(feed.Id);
+        var result = await _repository.GetByIdAsync(feed.Id);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>
+    /// Verifies that GetByIdAsync returns null for a non-existing id.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByIdAsync_NonExisting_ReturnsNull()
+    {
+        var result = await _repository.GetByIdAsync(Guid.NewGuid());
+
+        Assert.Null(result);
+    }
+}
