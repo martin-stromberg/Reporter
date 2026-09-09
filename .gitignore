@@ -418,6 +418,9 @@ FodyWeavers.xsd
 # Local History for Visual Studio Code
 .history/
 
+# Local SQLite database used by EF Core design-time tooling
+reporter.db
+
 # Built Visual Studio Code Extensions
 *.vsix
 
