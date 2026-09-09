@@ -1,3 +1,11 @@
+## 2026-09-09 — RESX-Lokalisierung an UI gebunden
+
+- `AppResources.resx` / `AppResources.de.resx` um Seiten- und Tab-Titel sowie Platzhaltertexte erweitert.
+- `AppResources.Designer.cs` als typisierter Zugriff auf RESX-Texte hinzugefügt.
+- ViewModels (`UnreadViewModel`, `FeedsViewModel`, `LaterViewModel`, `SettingsViewModel`) verwenden `AppResources` für `Title`.
+- `AppShell` setzt Tab-Titel über `AppResources`.
+- Pages binden Platzhaltertexte per `x:Static` auf `AppResources`.
+
 ## 2026-09-09 — Design-System aus design-draft umgesetzt
 
 - Einbindung der Schriftarten **Newsreader** und **Inter** (inkl. Regular, Medium, SemiBold und Newsreader Italic).

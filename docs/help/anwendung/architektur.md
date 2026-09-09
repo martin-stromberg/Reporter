@@ -35,6 +35,7 @@ graph TD
 - `Colors.xaml` / `Styles.xaml` — Enthalten das Design-System (Farb- und Typografie-Tokens, Light/Dark-Styles).
 - `AppShell` — Definiert die Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
 - `Newsreader` (Editorial-Headlines) und `Inter` (UI-Texte) — Eingebundene Schriftarten.
+- `AppResources` — Typisierter Zugriff auf RESX-Lokalisierung (EN/DE).
 - `BaseViewModel` — Basisklasse für alle ViewModels, erbt von `ObservableObject`.
 - `UnreadPage` / `UnreadViewModel` — Ansicht und ViewModel für ungelesene Artikel.
 - `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds.

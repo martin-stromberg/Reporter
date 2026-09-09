@@ -12,7 +12,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 - Design-System mit den Schriftarten **Newsreader** und **Inter** sowie Farb- und Typografie-Tokens aus dem `design-draft`
 - Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
 - ViewModel-Basen mit `CommunityToolkit.Mvvm`
-- Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch)
+- Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch), Tab-Titel und Platzhaltertexte sind bereits an `AppResources` gebunden
 
 ## Projektstruktur
 

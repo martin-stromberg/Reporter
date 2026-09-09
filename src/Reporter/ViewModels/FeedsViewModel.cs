@@ -1,12 +1,13 @@
 using Reporter.Core.Models;
 using Reporter.Core.Services;
+using Reporter.Resources.Strings;
 
 namespace Reporter.ViewModels;
 
 public partial class FeedsViewModel : BaseViewModel
 {
     private readonly IArticleService _articleService;
-    private string _title = "Feeds";
+    private string _title = AppResources.PageTitleFeeds;
     private IReadOnlyList<Article> _articles = new List<Article>();
 
     public FeedsViewModel(IArticleService articleService)

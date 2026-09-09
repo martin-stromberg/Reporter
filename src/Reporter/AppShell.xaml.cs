@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Reporter.Resources.Strings;
 using Reporter.Views;
 
 namespace Reporter;
@@ -9,17 +10,17 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
 
-        var unreadTab = new Tab { Title = "Ungelesen" };
-        unreadTab.Items.Add(new ShellContent { Title = "Ungelesen", Content = services.GetRequiredService<UnreadPage>() });
+        var unreadTab = new Tab { Title = AppResources.TabUnread };
+        unreadTab.Items.Add(new ShellContent { Title = AppResources.TabUnread, Content = services.GetRequiredService<UnreadPage>() });
 
-        var feedsTab = new Tab { Title = "Feeds" };
-        feedsTab.Items.Add(new ShellContent { Title = "Feeds", Content = services.GetRequiredService<FeedsPage>() });
+        var feedsTab = new Tab { Title = AppResources.TabFeeds };
+        feedsTab.Items.Add(new ShellContent { Title = AppResources.TabFeeds, Content = services.GetRequiredService<FeedsPage>() });
 
-        var laterTab = new Tab { Title = "Später" };
-        laterTab.Items.Add(new ShellContent { Title = "Später", Content = services.GetRequiredService<LaterPage>() });
+        var laterTab = new Tab { Title = AppResources.TabLater };
+        laterTab.Items.Add(new ShellContent { Title = AppResources.TabLater, Content = services.GetRequiredService<LaterPage>() });
 
-        var settingsTab = new Tab { Title = "Einstellungen" };
-        settingsTab.Items.Add(new ShellContent { Title = "Einstellungen", Content = services.GetRequiredService<SettingsPage>() });
+        var settingsTab = new Tab { Title = AppResources.TabSettings };
+        settingsTab.Items.Add(new ShellContent { Title = AppResources.TabSettings, Content = services.GetRequiredService<SettingsPage>() });
 
         var tabBar = new TabBar();
         tabBar.Items.Add(unreadTab);

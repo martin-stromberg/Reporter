@@ -9,4 +9,40 @@
   <data name="Welcome" xml:space="preserve">
     <value>Welcome to Reporter.</value>
   </data>
+  <data name="PageTitleUnread" xml:space="preserve">
+    <value>Unread</value>
+  </data>
+  <data name="PageTitleFeeds" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="PageTitleLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="PageTitleSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="TabUnread" xml:space="preserve">
+    <value>Unread</value>
+  </data>
+  <data name="TabFeeds" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="TabLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="TabSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="PlaceholderUnread" xml:space="preserve">
+    <value>Unread articles will appear here.</value>
+  </data>
+  <data name="PlaceholderFeeds" xml:space="preserve">
+    <value>Feeds will appear here.</value>
+  </data>
+  <data name="PlaceholderLater" xml:space="preserve">
+    <value>Articles you save for later will appear here.</value>
+  </data>
+  <data name="PlaceholderSettings" xml:space="preserve">
+    <value>Settings will appear here.</value>
+  </data>
 </root>

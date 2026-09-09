@@ -9,4 +9,40 @@
   <data name="Welcome" xml:space="preserve">
     <value>Willkommen bei Reporter.</value>
   </data>
+  <data name="PageTitleUnread" xml:space="preserve">
+    <value>Ungelesen</value>
+  </data>
+  <data name="PageTitleFeeds" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="PageTitleLater" xml:space="preserve">
+    <value>Später</value>
+  </data>
+  <data name="PageTitleSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="TabUnread" xml:space="preserve">
+    <value>Ungelesen</value>
+  </data>
+  <data name="TabFeeds" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="TabLater" xml:space="preserve">
+    <value>Später</value>
+  </data>
+  <data name="TabSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="PlaceholderUnread" xml:space="preserve">
+    <value>Hier erscheinen ungelesene Artikel.</value>
+  </data>
+  <data name="PlaceholderFeeds" xml:space="preserve">
+    <value>Hier erscheinen Feeds.</value>
+  </data>
+  <data name="PlaceholderLater" xml:space="preserve">
+    <value>Hier erscheinen Artikel, die du dir für später merkst.</value>
+  </data>
+  <data name="PlaceholderSettings" xml:space="preserve">
+    <value>Hier erscheinen Einstellungen.</value>
+  </data>
 </root>
