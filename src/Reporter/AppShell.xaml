@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Reporter.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Reporter"
+    xmlns:views="clr-namespace:Reporter.Views"
+    Title="Reporter">
+
+    <TabBar>
+        <Tab Title="Ungelesen">
+            <ShellContent
+                Title="Ungelesen"
+                ContentTemplate="{DataTemplate views:UngelesenPage}" />
+        </Tab>
+        <Tab Title="Feeds">
+            <ShellContent
+                Title="Feeds"
+                ContentTemplate="{DataTemplate views:FeedsPage}" />
+        </Tab>
+        <Tab Title="Später">
+            <ShellContent
+                Title="Später"
+                ContentTemplate="{DataTemplate views:SpaeterPage}" />
+        </Tab>
+        <Tab Title="Einstellungen">
+            <ShellContent
+                Title="Einstellungen"
+                ContentTemplate="{DataTemplate views:EinstellungenPage}" />
+        </Tab>
+    </TabBar>
+
+</Shell>
