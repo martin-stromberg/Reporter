@@ -1,0 +1,8 @@
+## 2026-09-09 — .NET MAUI-Projektscaffolding und Basisarchitektur
+
+- Erstellung der Solution `Reporter.sln` mit den vier Projekten `Reporter`, `Reporter.Core`, `Reporter.Data` und `Reporter.Tests`.
+- Einrichtung der MAUI-Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
+- Einrichtung von `Microsoft.Extensions.DependencyInjection` sowie ViewModel-Basen auf Basis von `CommunityToolkit.Mvvm`.
+- Anlage der Design-System-Grundlagen (Light/Dark) und der RESX-Lokalisierungsrüstung für Deutsch und Englisch.
+- Aktualisierung der `README.md` und Anlage der `docs/help`-Dokumentation.
+- Durchführung eines technischen Code-Reviews.

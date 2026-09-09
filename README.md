@@ -1,6 +1,17 @@
 # Reporter
 
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
+
 Lokaler RSS-/Feed-Reader als .NET MAUI-App.
+
+## Features
+
+- .NET MAUI-App mit Shell-Navigation
+- Untere Navigationsleiste mit **Ungelesen**, **Feeds**, **Später** und **Einstellungen**
+- Light/Dark-Theme-Unterstützung über .NET MAUI `AppThemeBinding`
+- Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
+- ViewModel-Basen mit `CommunityToolkit.Mvvm`
+- Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch)
 
 ## Projektstruktur
 
@@ -11,7 +22,13 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 | `Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | Unit- und Integrationstests |
 
-## Bauen
+## Voraussetzungen
+
+- .NET 10 SDK
+- Windows: Windows 10 Build 19041 oder höher
+- iOS/macOS: Xcode (auf macOS)
+
+## Installation / Setup
 
 ```bash
 dotnet build Reporter.sln
@@ -36,8 +53,23 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 
 ## Architektur
 
-- `Microsoft.Extensions.DependencyInjection` für alle Services und ViewModels
-- `CommunityToolkit.Mvvm` als Basis für ViewModels
-- Shell-Navigation mit vier Tabs: Ungelesen, Feeds, Später, Einstellungen
-- Resx-Ressourcen für Deutsch und Englisch unter `src/Reporter/Resources/Strings`
-- Standard .NET MAUI Light/Dark-Styles
+- `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
+- `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
+- `Reporter.Core` enthält das Domänenmodell (`Article`), `IArticleRepository` und `IArticleService`.
+- `Reporter.Data` stellt `ArticleRepository` bereit.
+- `BaseViewModel` dient als Basis für alle ViewModels.
+
+## Tests
+
+```bash
+dotnet test Reporter.sln
+```
+
+## Changelog
+
+Siehe [changes.log](changes.log).
+
+## Dokumentation
+
+- [Hilfe / Anwenderdokumentation](docs/help/index.md)
+- [Code-Review des aktuellen Branches](docs/features/task/issue-16-7860f6e24bde49d788fdd9a6ed58f33d-net-maui-projektscaffolding-un/review-code.md)
