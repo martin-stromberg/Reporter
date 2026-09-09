@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Services;
+using Reporter.Data;
 using Reporter.Data.Repositories;
 using Reporter.ViewModels;
 using Reporter.Views;
@@ -33,7 +35,11 @@ public static class MauiProgram
                 fonts.AddFont("Newsreader-Italic.ttf", "NewsreaderItalic");
             });
 
+        var databasePath = Path.Combine(FileSystem.AppDataDirectory, "reporter.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
+
         builder.Services
+            .AddDbContext<ReporterDbContext>(options => options.UseSqlite($"Data Source={databasePath}"))
             .AddSingleton<IArticleRepository, ArticleRepository>()
             .AddSingleton<IArticleService, ArticleService>()
             .AddSingleton<UnreadViewModel>()
