@@ -1,0 +1,497 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f7f9fb;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-error": "#EF4444", "surface-dim": "#d8dadc", "on-tertiary-fixed": "#2f1500", "status-warning": "#F59E0B", "surface": "#f7f9fb", "secondary": "#0051d5", "on-tertiary-container": "#d97705", "on-primary-container": "#8590a6", "surface-subtle": "#F1F5F9", "on-error-container": "#93000a", "text-muted": "#94A3B8", "background": "#f7f9fb", "primary-container": "#1e293b", "status-ok": "#10B981", "on-primary": "#ffffff", "error": "#ba1a1a", "border-hairline": "rgba(15, 23, 42, 0.06)", "tertiary": "#240f00", "paper-base": "#F9F9FB", "on-background": "#191c1e", "primary-fixed-dim": "#bcc7de", "surface-container": "#eceef0", "secondary-fixed-dim": "#b4c5ff", "secondary-fixed": "#dbe1ff", "surface-container-low": "#f2f4f6", "on-error": "#ffffff", "error-container": "#ffdad6", "text-primary": "#0F172A", "primary-fixed": "#d8e3fb", "surface-variant": "#e0e3e5", "outline": "#75777d", "on-secondary-container": "#fefcff", "on-primary-fixed-variant": "#3c475a", "text-secondary": "#64748B", "bookmark-gold": "#D97706", "tertiary-fixed-dim": "#ffb77d", "surface-tint": "#545f73", "surface-container-high": "#e6e8ea", "surface-bright": "#f7f9fb", "inverse-on-surface": "#eff1f3", "surface-card": "#FFFFFF", "on-surface-variant": "#45474c", "surface-container-highest": "#e0e3e5", "outline-variant": "#c5c6cd", "on-primary-fixed": "#111c2d", "tertiary-container": "#422000", "secondary-container": "#316bf3", "on-secondary-fixed-variant": "#003ea8", "on-secondary": "#ffffff", "tertiary-fixed": "#ffdcc3", "inverse-primary": "#bcc7de", "on-tertiary-fixed-variant": "#6e3900", "surface-container-lowest": "#ffffff", "on-surface": "#191c1e", "on-secondary-fixed": "#00174b", "primary": "#091426", "inverse-surface": "#2d3133", "on-tertiary": "#ffffff", "border-subtle": "#E2E8F0" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin-desktop": "2.5rem", "spacing-md": "1rem", "spacing-2xs": "0.25rem", "margin-tablet": "1.5rem", "spacing-xs": "0.5rem", "spacing-sm": "0.75rem", "reader-max-width": "42rem", "spacing-3xl": "3rem", "gutter-stream": "0.75rem", "spacing-lg": "1.25rem", "margin-mobile": "1rem", "spacing-xl": "1.5rem", "spacing-2xl": "2rem" }, "fontFamily": { "headline-md": ["Newsreader"], "label-lg": ["Inter"], "body-reading-mobile": ["Newsreader"], "body-reading": ["Newsreader"], "headline-lg": ["Newsreader"], "display-lg-mobile": ["Newsreader"], "body-sm": ["Inter"], "body-lg": ["Inter"], "display-lg": ["Newsreader"], "headline-sm": ["Newsreader"], "label-sm": ["Inter"], "label-meta": ["Inter"], "headline-lg-mobile": ["Newsreader"], "label-md": ["Inter"], "body-md": ["Inter"] }, "fontSize": { "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}], "label-lg": ["14px", {"lineHeight": "18px", "fontWeight": "600"}], "body-reading-mobile": ["17px", {"lineHeight": "28px", "fontWeight": "400"}], "body-reading": ["19px", {"lineHeight": "32px", "fontWeight": "400"}], "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "600"}], "display-lg-mobile": ["30px", {"lineHeight": "38px", "fontWeight": "600"}], "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}], "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}], "display-lg": ["40px", {"lineHeight": "48px", "fontWeight": "600"}], "headline-sm": ["17px", {"lineHeight": "24px", "fontWeight": "500"}], "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}], "label-meta": ["10px", {"lineHeight": "12px", "fontWeight": "600"}], "headline-lg-mobile": ["22px", {"lineHeight": "30px", "fontWeight": "600"}], "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}], "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-secondary/15"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-margin-mobile flex items-center justify-between gap-spacing-sm"><div class="flex items-center gap-spacing-sm min-w-0"><img alt="Reporter Logo" class="h-8 w-8 object-contain shrink-0 rounded-lg shadow-xs" src="https://lh3.googleusercontent.com/aida/AEtjO1V6qixdzCRwzPwk8HatGPb8tG9n89psf-UXDba-H03DzYgNWKA_TYMfhuhDn8h5x2ebTlLynqk7voJGqTRTLJlKlbOdVn6ehKr8k1AOYPLV-q5S9OsFp-m-GTLQVBjUxTKwAZwefrL-2aG6SePO7e4Zy7lPQYJmbewXYGV5JrTNsRPlJILeL7c46VOXk99yp7dZjBrSwlmoET2BFvRttvk8sGlqd5KDfIW49H6r9TeQkJwEDd6mS-FCLgI"><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-text-primary truncate">Feeds</span><div class="flex items-center gap-spacing-2xs text-text-secondary"><span class="material-symbols-outlined text-[12px] text-status-ok shrink-0">sync</span><span class="font-label-meta text-label-meta truncate">Gerade synchronisiert</span></div></div></div><div class="flex items-center gap-spacing-xs shrink-0"><button aria-label="Aktualisieren" class="w-11 h-11 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">refresh</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full">
+<!-- Subtle Ambient Live Header Bar with Quick Action -->
+<div class="px-margin-mobile pt-spacing-sm pb-spacing-xs flex flex-col gap-spacing-sm">
+<!-- Action Bar -->
+<div class="flex items-center justify-between gap-spacing-sm">
+<button class="flex-1 flex items-center justify-center gap-spacing-xs bg-primary text-on-primary py-3 px-spacing-md rounded-xl shadow-md active:scale-[0.98] transition-transform" id="btn-open-add-feed">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span class="font-label-lg text-label-lg">+ Feed per URL hinzufügen</span>
+</button>
+<button aria-label="Alle Feeds jetzt synchronisieren" class="h-12 w-12 flex items-center justify-center rounded-xl bg-surface-container-high text-text-primary shadow-sm active:scale-95 transition-transform" id="btn-sync-all">
+<span class="material-symbols-outlined text-[22px]" id="sync-all-icon">sync</span>
+</button>
+</div>
+<!-- Health Overview Widget (Bento Style) -->
+<div class="bg-surface-card rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-spacing-2xs">
+<span class="material-symbols-outlined text-[18px] text-secondary">monitor_heart</span>
+<span class="font-label-md text-label-md text-text-secondary uppercase tracking-wider">System-Gesundheit</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">12 Feeds aktiv</span>
+</div>
+<!-- Segmented Health Bar Indicator -->
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden flex gap-0.5">
+<div class="h-full bg-status-ok rounded-full" style="width: 83.3%;"></div>
+<div class="h-full bg-status-warning rounded-full" style="width: 8.3%;"></div>
+<div class="h-full bg-status-error rounded-full" style="width: 8.4%;"></div>
+</div>
+<!-- Health Pills Grid -->
+<div class="grid grid-cols-3 gap-spacing-xs pt-spacing-2xs">
+<div class="bg-surface-subtle p-spacing-xs rounded-lg flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-ok"></span>
+<span class="font-label-meta text-label-meta text-text-secondary">OK</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary font-semibold mt-0.5">10</span>
+</div>
+<div class="bg-surface-subtle p-spacing-xs rounded-lg flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-warning"></span>
+<span class="font-label-meta text-label-meta text-text-secondary">Warnung</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary font-semibold mt-0.5">1</span>
+</div>
+<div class="bg-surface-subtle p-spacing-xs rounded-lg flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-error"></span>
+<span class="font-label-meta text-label-meta text-text-secondary">Fehler</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary font-semibold mt-0.5">1</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Filter / Segment Row -->
+<div class="px-margin-mobile py-spacing-xs flex items-center justify-between">
+<div class="flex items-center gap-spacing-xs overflow-x-auto no-scrollbar py-1">
+<button class="px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md shrink-0 shadow-sm">
+        Alle (12)
+      </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container text-text-secondary font-label-md text-label-md shrink-0">
+        Aufmerksamkeit (2)
+      </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container text-text-secondary font-label-md text-label-md shrink-0">
+        Technologie (2)
+      </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container text-text-secondary font-label-md text-label-md shrink-0">
+        Wirtschaft (1)
+      </button>
+</div>
+<button class="text-secondary font-label-md text-label-md shrink-0 pl-spacing-xs active:opacity-60 flex items-center gap-1" id="btn-sync-all-inline">
+<span class="material-symbols-outlined text-[16px]">sync_alt</span>
+      Alle prüfen
+    </button>
+</div>
+<!-- Feed Health Stream List -->
+<div class="px-margin-mobile flex flex-col gap-spacing-sm pb-spacing-xl">
+<!-- Item 1: Heise Online (OK) -->
+<div class="bg-surface-card rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-xs relative">
+<div class="flex items-start justify-between gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-subtle flex items-center justify-center shrink-0 text-text-primary font-label-lg text-label-lg font-bold">
+            H
+          </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-spacing-2xs">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate font-semibold">Heise Online</span>
+<span class="w-2 h-2 rounded-full bg-status-ok shrink-0" title="Status: OK"></span>
+</div>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="font-label-meta text-label-meta">Technologie</span>
+<span class="text-text-muted text-[10px]">•</span>
+<span class="font-label-meta text-label-meta">vor 5 Min.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-spacing-2xs shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
+            18 neu
+          </span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-container active:scale-95 transition-colors" data-feed-action="menu" data-feed-title="Heise Online">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Quick Action Row -->
+<div class="flex items-center justify-between pt-spacing-2xs mt-1 border-t-0 bg-surface-subtle/50 px-2 py-1.5 rounded-lg">
+<div class="flex items-center gap-1.5 text-status-ok">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-label-meta text-label-meta">Stream fehlerfrei synchronisiert</span>
+</div>
+<div class="flex items-center gap-spacing-xs">
+<button class="text-text-secondary hover:text-secondary p-1 rounded transition-colors" onclick="triggerFeedSync(this)" title="Feed aktualisieren">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" onclick="openEditModal('Heise Online', 'https://www.heise.de/rss/heise.rdf')" title="Umbenennen / Bearbeiten">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-text-muted hover:text-status-error p-1 rounded transition-colors" onclick="confirmDeleteFeed('Heise Online')" title="Feed löschen">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 2: Handelsblatt (OK) -->
+<div class="bg-surface-card rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-xs relative">
+<div class="flex items-start justify-between gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-subtle flex items-center justify-center shrink-0 text-text-primary font-label-lg text-label-lg font-bold">
+            HB
+          </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-spacing-2xs">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate font-semibold">Handelsblatt</span>
+<span class="w-2 h-2 rounded-full bg-status-ok shrink-0" title="Status: OK"></span>
+</div>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="font-label-meta text-label-meta">Wirtschaft</span>
+<span class="text-text-muted text-[10px]">•</span>
+<span class="font-label-meta text-label-meta">vor 15 Min.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-spacing-2xs shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
+            12 neu
+          </span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-container active:scale-95 transition-colors" data-feed-action="menu" data-feed-title="Handelsblatt">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between pt-spacing-2xs mt-1 bg-surface-subtle/50 px-2 py-1.5 rounded-lg">
+<div class="flex items-center gap-1.5 text-status-ok">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-label-meta text-label-meta">Stream fehlerfrei synchronisiert</span>
+</div>
+<div class="flex items-center gap-spacing-xs">
+<button class="text-text-secondary hover:text-secondary p-1 rounded transition-colors" onclick="triggerFeedSync(this)" title="Feed aktualisieren">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" onclick="openEditModal('Handelsblatt', 'https://www.handelsblatt.com/contentexport/feed/top-themen')" title="Umbenennen / Bearbeiten">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-text-muted hover:text-status-error p-1 rounded transition-colors" onclick="confirmDeleteFeed('Handelsblatt')" title="Feed löschen">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 3: Spektrum der Wissenschaft (Warning) -->
+<div class="bg-surface-card rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-xs relative">
+<div class="flex items-start justify-between gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-subtle flex items-center justify-center shrink-0 text-text-primary font-label-lg text-label-lg font-bold">
+            S
+          </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-spacing-2xs">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate font-semibold">Spektrum der Wissenschaft</span>
+<span class="w-2 h-2 rounded-full bg-status-warning shrink-0" title="Status: Warnung"></span>
+</div>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="font-label-meta text-label-meta">Wissenschaft</span>
+<span class="text-text-muted text-[10px]">•</span>
+<span class="font-label-meta text-label-meta">vor 2 Std.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-spacing-2xs shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-text-muted font-label-sm text-label-sm font-semibold">
+            0 neu
+          </span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-container active:scale-95 transition-colors" data-feed-action="menu" data-feed-title="Spektrum der Wissenschaft">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Warning Alert Box -->
+<div class="flex items-center justify-between pt-spacing-2xs mt-1 bg-amber-500/10 px-2.5 py-1.5 rounded-lg">
+<div class="flex items-center gap-1.5 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span class="font-label-meta text-label-meta font-medium">Keine neuen Artikel seit 5 Tagen</span>
+</div>
+<div class="flex items-center gap-spacing-xs">
+<button class="text-on-tertiary-container hover:text-text-primary p-1 rounded transition-colors" onclick="triggerFeedSync(this)" title="Erneut abfragen">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" onclick="openEditModal('Spektrum der Wissenschaft', 'https://www.spektrum.de/rss')" title="Umbenennen / Bearbeiten">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-text-muted hover:text-status-error p-1 rounded transition-colors" onclick="confirmDeleteFeed('Spektrum der Wissenschaft')" title="Feed löschen">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 4: DevTech Blog (Error) -->
+<div class="bg-surface-card rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-xs relative">
+<div class="flex items-start justify-between gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-subtle flex items-center justify-center shrink-0 text-text-primary font-label-lg text-label-lg font-bold">
+            DT
+          </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-spacing-2xs">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate font-semibold">DevTech Blog</span>
+<span class="w-2 h-2 rounded-full bg-status-error shrink-0" title="Status: Fehler"></span>
+</div>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="font-label-meta text-label-meta">Entwicklung</span>
+<span class="text-text-muted text-[10px]">•</span>
+<span class="font-label-meta text-label-meta text-status-error">Fehlgeschlagen vor 1 Tag</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-spacing-2xs shrink-0">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-container active:scale-95 transition-colors" data-feed-action="menu" data-feed-title="DevTech Blog">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Critical Error Details & Retry CTA -->
+<div class="flex items-center justify-between pt-spacing-2xs mt-1 bg-red-500/10 px-2.5 py-2 rounded-lg">
+<div class="flex items-center gap-1.5 text-error">
+<span class="material-symbols-outlined text-[16px]">error_outline</span>
+<span class="font-label-meta text-label-meta font-medium">HTTP 404 / Ungültiges XML</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1 bg-error text-on-error rounded-md font-label-sm text-label-sm active:scale-95 transition-transform flex items-center gap-1" onclick="triggerFeedSync(this)">
+<span class="material-symbols-outlined text-[14px]">replay</span>
+            Retry
+          </button>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" onclick="openEditModal('DevTech Blog', 'https://devtech.io/feed.xml')" title="Umbenennen / Bearbeiten">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-text-muted hover:text-status-error p-1 rounded transition-colors" onclick="confirmDeleteFeed('DevTech Blog')" title="Feed löschen">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 5: Ars Technica (OK) -->
+<div class="bg-surface-card rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-xs relative">
+<div class="flex items-start justify-between gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-subtle flex items-center justify-center shrink-0 text-text-primary font-label-lg text-label-lg font-bold">
+            AT
+          </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-spacing-2xs">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate font-semibold">Ars Technica</span>
+<span class="w-2 h-2 rounded-full bg-status-ok shrink-0" title="Status: OK"></span>
+</div>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="font-label-meta text-label-meta">Technologie</span>
+<span class="text-text-muted text-[10px]">•</span>
+<span class="font-label-meta text-label-meta">vor 30 Min.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-spacing-2xs shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
+            7 neu
+          </span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-container active:scale-95 transition-colors" data-feed-action="menu" data-feed-title="Ars Technica">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between pt-spacing-2xs mt-1 bg-surface-subtle/50 px-2 py-1.5 rounded-lg">
+<div class="flex items-center gap-1.5 text-status-ok">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-label-meta text-label-meta">Stream fehlerfrei synchronisiert</span>
+</div>
+<div class="flex items-center gap-spacing-xs">
+<button class="text-text-secondary hover:text-secondary p-1 rounded transition-colors" onclick="triggerFeedSync(this)" title="Feed aktualisieren">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" onclick="openEditModal('Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index')" title="Umbenennen / Bearbeiten">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-text-muted hover:text-status-error p-1 rounded transition-colors" onclick="confirmDeleteFeed('Ars Technica')" title="Feed löschen">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet / Modal: Feed per URL hinzufügen -->
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200" id="modal-add-feed">
+<div class="w-full max-w-lg bg-surface-card rounded-t-2xl p-spacing-lg flex flex-col gap-spacing-md shadow-2xl transform translate-y-full transition-transform duration-300">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-text-primary font-semibold">Feed per URL hinzufügen</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-text-secondary" id="btn-close-add-modal">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-spacing-xs">
+<label class="font-label-md text-label-md text-text-secondary" for="feed-url-input">RSS / Atom Feed URL</label>
+<div class="flex items-center bg-surface-subtle rounded-xl px-spacing-sm py-2.5">
+<span class="material-symbols-outlined text-text-muted text-[20px] mr-2">link</span>
+<input class="bg-transparent border-0 outline-none w-full text-text-primary font-body-md text-body-md placeholder:text-text-muted" id="feed-url-input" placeholder="https://example.com/rss.xml" type="url">
+</div>
+</div>
+<div class="flex flex-col gap-spacing-xs">
+<label class="font-label-md text-label-md text-text-secondary" for="feed-category-select">Kategorie (optional)</label>
+<div class="flex items-center bg-surface-subtle rounded-xl px-spacing-sm py-2.5">
+<span class="material-symbols-outlined text-text-muted text-[20px] mr-2">folder</span>
+<select class="bg-transparent border-0 outline-none w-full text-text-primary font-body-md text-body-md" id="feed-category-select">
+<option value="technologie">Technologie</option>
+<option value="wirtschaft">Wirtschaft</option>
+<option value="wissenschaft">Wissenschaft</option>
+<option value="allgemein">Allgemein</option>
+</select>
+</div>
+</div>
+<div class="flex gap-spacing-sm pt-spacing-xs">
+<button class="flex-1 bg-secondary text-on-secondary py-3 rounded-xl font-label-lg text-label-lg shadow-md active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5" id="btn-submit-feed">
+<span class="material-symbols-outlined text-[18px]">check</span>
+          Feed abonnieren
+        </button>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet / Modal: Feed bearbeiten / umbenennen -->
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200" id="modal-edit-feed">
+<div class="w-full max-w-lg bg-surface-card rounded-t-2xl p-spacing-lg flex flex-col gap-spacing-md shadow-2xl transform translate-y-full transition-transform duration-300">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-text-primary font-semibold">Feed anpassen</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-text-secondary" id="btn-close-edit-modal">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-spacing-xs">
+<label class="font-label-md text-label-md text-text-secondary" for="edit-feed-title">Name des Feeds</label>
+<div class="flex items-center bg-surface-subtle rounded-xl px-spacing-sm py-2.5">
+<span class="material-symbols-outlined text-text-muted text-[20px] mr-2">badge</span>
+<input class="bg-transparent border-0 outline-none w-full text-text-primary font-body-md text-body-md" id="edit-feed-title" type="text">
+</div>
+</div>
+<div class="flex flex-col gap-spacing-xs">
+<label class="font-label-md text-label-md text-text-secondary" for="edit-feed-url">Feed-URL</label>
+<div class="flex items-center bg-surface-subtle rounded-xl px-spacing-sm py-2.5">
+<span class="material-symbols-outlined text-text-muted text-[20px] mr-2">link</span>
+<input class="bg-transparent border-0 outline-none w-full text-text-primary font-body-md text-body-md" id="edit-feed-url" type="url">
+</div>
+</div>
+<div class="flex gap-spacing-sm pt-spacing-xs">
+<button class="flex-1 bg-primary text-on-primary py-3 rounded-xl font-label-lg text-label-lg shadow-md active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5" id="btn-save-edit-feed">
+<span class="material-symbols-outlined text-[18px]">save</span>
+          Änderungen speichern
+        </button>
+</div>
+</div>
+</div>
+<!-- Toast Notification System -->
+<div class="fixed top-20 inset-x-4 z-50 flex items-center gap-2 p-3 rounded-xl bg-primary text-on-primary shadow-xl opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-2" id="toast-notification">
+<span class="material-symbols-outlined text-[20px] text-status-ok" id="toast-icon">check_circle</span>
+<span class="font-label-md text-label-md truncate" id="toast-text">Alle Feeds erfolgreich synchronisiert</span>
+</div>
+</div>
+<script>
+  // Elements & Micro-interactions
+  const addModal = document.getElementById('modal-add-feed');
+  const addModalContent = addModal.querySelector('div');
+  const editModal = document.getElementById('modal-edit-feed');
+  const editModalContent = editModal.querySelector('div');
+  const openAddBtn = document.getElementById('btn-open-add-feed');
+  const closeAddBtn = document.getElementById('btn-close-add-modal');
+  const closeEditBtn = document.getElementById('btn-close-edit-modal');
+  const submitFeedBtn = document.getElementById('btn-submit-feed');
+  const saveEditBtn = document.getElementById('btn-save-edit-feed');
+  const syncAllBtn = document.getElementById('btn-sync-all');
+  const syncAllInline = document.getElementById('btn-sync-all-inline');
+  const syncAllIcon = document.getElementById('sync-all-icon');
+  const toast = document.getElementById('toast-notification');
+  const toastText = document.getElementById('toast-text');
+  const toastIcon = document.getElementById('toast-icon');
+
+  function showToast(message, isError = false) {
+    toastText.textContent = message;
+    toastIcon.textContent = isError ? 'error' : 'check_circle';
+    toastIcon.className = `material-symbols-outlined text-[20px] ${isError ? 'text-status-error' : 'text-status-ok'}`;
+    toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+    }, 2800);
+  }
+
+  function openModal(modal, content) {
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    modal.classList.add('opacity-100');
+    content.classList.remove('translate-y-full');
+    content.classList.add('translate-y-0');
+  }
+
+  function closeModal(modal, content) {
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    modal.classList.remove('opacity-100');
+    content.classList.add('translate-y-full');
+    content.classList.remove('translate-y-0');
+  }
+
+  openAddBtn.addEventListener('click', () => openModal(addModal, addModalContent));
+  closeAddBtn.addEventListener('click', () => closeModal(addModal, addModalContent));
+  closeEditBtn.addEventListener('click', () => closeModal(editModal, editModalContent));
+
+  // Sync All animation and state
+  function triggerGlobalSync() {
+    syncAllIcon.classList.add('animate-spin');
+    setTimeout(() => {
+      syncAllIcon.classList.remove('animate-spin');
+      showToast('12 Feeds aktualisiert • 1 Fehler verbleibend');
+    }, 1100);
+  }
+
+  syncAllBtn.addEventListener('click', triggerGlobalSync);
+  syncAllInline.addEventListener('click', triggerGlobalSync);
+
+  // Individual Sync Trigger
+  window.triggerFeedSync = function(btn) {
+    const icon = btn.querySelector('.material-symbols-outlined');
+    if (icon) {
+      icon.classList.add('animate-spin');
+      setTimeout(() => {
+        icon.classList.remove('animate-spin');
+        showToast('Feed erfolgreich abgefragt');
+      }, 800);
+    }
+  };
+
+  // Open Edit Modal with Context
+  window.openEditModal = function(title, url) {
+    document.getElementById('edit-feed-title').value = title;
+    document.getElementById('edit-feed-url').value = url;
+    openModal(editModal, editModalContent);
+  };
+
+  saveEditBtn.addEventListener('click', () => {
+    closeModal(editModal, editModalContent);
+    showToast('Feed-Einstellungen gespeichert');
+  });
+
+  submitFeedBtn.addEventListener('click', () => {
+    const urlInput = document.getElementById('feed-url-input');
+    if (urlInput.value.trim() === '') {
+      showToast('Bitte eine gültige URL angeben', true);
+      return;
+    }
+    closeModal(addModal, addModalContent);
+    urlInput.value = '';
+    showToast('Feed wird validiert und abonniert...');
+  });
+
+  // Confirm delete interaction
+  window.confirmDeleteFeed = function(title) {
+    if (window.confirm(`Möchtest du "${title}" wirklich aus deinen Feeds entfernen?`)) {
+      showToast(`Feed "${title}" wurde gelöscht`);
+    }
+  };
+
+  // Close modals on backdrop click
+  [addModal, editModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal(addModal, addModalContent);
+        closeModal(editModal, editModalContent);
+      }
+    });
+  });
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-secondary font-semibold"><div class="flex justify-around items-center h-16 px-spacing-xs"><a class="flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 text-text-secondary transition-colors duration-150" data-path="ungelesen" href="#"><span class="material-symbols-outlined text-[24px]">newspaper</span><span class="font-label-sm text-label-sm">Ungelesen</span></a><a class="flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 text-text-secondary transition-colors duration-150" data-path="gespeichert" href="#"><span class="material-symbols-outlined text-[24px]">bookmark</span><span class="font-label-sm text-label-sm">Gespeichert</span></a><a aria-current="page" class="relative flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 transition-colors duration-150 text-secondary font-semibold" data-path="feeds" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">rss_feed</span><span class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-status-ok ring-2 ring-surface"></span></div><span class="font-label-sm text-label-sm">Feeds</span></a><a class="flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 text-text-secondary transition-colors duration-150" data-path="einstellungen" href="#"><span class="material-symbols-outlined text-[24px]">tune</span><span class="font-label-sm text-label-sm">Einstellungen</span></a></div></nav>
+
+</body></html>

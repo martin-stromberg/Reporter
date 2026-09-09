@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="de"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#0b0f17;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "outline": "#a08e7a",
+        "inverse-primary": "#855300",
+        "inverse-surface": "#dfe2ee",
+        "on-secondary-fixed-variant": "#005236",
+        "background": "#0b0f17",
+        "surface-container-high": "#262a33",
+        "secondary": "#4edea3",
+        "tertiary-fixed-dim": "#ffb2b7",
+        "on-error": "#690005",
+        "surface-container-lowest": "#0a0e16",
+        "on-tertiary-fixed-variant": "#92002a",
+        "secondary-fixed-dim": "#4edea3",
+        "tertiary-container": "#ff919a",
+        "surface-tint": "#ffb95f",
+        "on-primary-fixed": "#2a1700",
+        "on-background": "#dfe2ee",
+        "primary-container": "#f59e0b",
+        "primary-fixed": "#ffddb8",
+        "secondary-fixed": "#6ffbbe",
+        "error": "#ffb4ab",
+        "primary-fixed-dim": "#ffb95f",
+        "tertiary": "#ffbbbe",
+        "outline-variant": "#534434",
+        "on-surface-variant": "#d8c3ad",
+        "on-tertiary": "#67001b",
+        "surface-container-low": "#181c24",
+        "on-primary": "#472a00",
+        "on-primary-fixed-variant": "#653e00",
+        "on-primary-container": "#613b00",
+        "on-tertiary-fixed": "#40000d",
+        "surface-dim": "#0f131c",
+        "surface-container-highest": "#31353e",
+        "tertiary-fixed": "#ffdadb",
+        "on-secondary-container": "#00311f",
+        "surface-variant": "#31353e",
+        "on-error-container": "#ffdad6",
+        "secondary-container": "#00a572",
+        "error-container": "#93000a",
+        "on-tertiary-container": "#8c0028",
+        "surface-bright": "#353942",
+        "on-surface": "#dfe2ee",
+        "inverse-on-surface": "#2c3039",
+        "surface-container": "#182234",
+        "primary": "#f59e0b",
+        "accent": "#f59e0b",
+        "on-secondary": "#003824",
+        "on-secondary-fixed": "#002113",
+        "surface": "#0b0f17",
+        "text-primary": "#f8fafc",
+        "text-secondary": "#94a3b8",
+        "text-muted": "#64748b",
+        "surface-card": "#182234",
+        "surface-subtle": "#101726",
+        "border-dark": "#334155",
+        "status-ok": "#10b981"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "spacing-md": "1rem",
+        "spacing-2xs": "0.25rem",
+        "spacing-xs": "0.5rem",
+        "spacing-sm": "0.75rem",
+        "margin-mobile": "1rem",
+        "spacing-lg": "1.25rem"
+      },
+      "fontFamily": {
+        "headline-sm": ["Newsreader", "serif"],
+        "headline-md": ["Newsreader", "serif"],
+        "headline-lg": ["Newsreader", "serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-lg": ["Inter", "sans-serif"],
+        "label-meta": ["Inter", "sans-serif"]
+      },
+      "fontSize": {
+        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+        "label-lg": ["14px", {"lineHeight": "18px", "fontWeight": "600"}],
+        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+        "label-meta": ["10px", {"lineHeight": "12px", "fontWeight": "500"}],
+        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+      }
+    }
+  }
+};</script></head><body class="bg-[#0b0f17] font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-primary/20"><header class="fixed top-0 inset-x-0 z-50 bg-[#0b0f17]/90 backdrop-blur-xl pt-safe border-b border-border-dark/60 shadow-lg shadow-black/20"><div class="h-16 px-margin-mobile flex items-center justify-between gap-spacing-sm"><div class="flex items-center gap-spacing-sm min-w-0"><img alt="Reporter Logo" class="h-8 w-auto object-contain shrink-0 rounded-md ring-1 ring-border-dark" src="https://lh3.googleusercontent.com/aida/AEtjO1V6qixdzCRwzPwk8HatGPb8tG9n89psf-UXDba-H03DzYgNWKA_TYMfhuhDn8h5x2ebTlLynqk7voJGqTRTLJlKlbOdVn6ehKr8k1AOYPLV-q5S9OsFp-m-GTLQVBjUxTKwAZwefrL-2aG6SePO7e4Zy7lPQYJmbewXYGV5JrTNsRPlJILeL7c46VOXk99yp7dZjBrSwlmoET2BFvRttvk8sGlqd5KDfIW49H6r9TeQkJwEDd6mS-FCLgI"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight truncate">Einstellungen</span><div class="flex items-center gap-spacing-2xs text-text-secondary"><span class="material-symbols-outlined text-[12px] text-status-ok shrink-0">sync</span><span class="font-label-meta text-label-meta truncate text-text-muted">Gerade synchronisiert</span></div></div></div><div class="flex items-center gap-spacing-xs shrink-0"><button aria-label="Aktualisieren" class="w-11 h-11 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-container active:scale-95 transition-all"><span class="material-symbols-outlined text-[20px]">refresh</span></button><div class="w-8 h-8 rounded-full bg-surface-subtle ring-1 ring-border-dark flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-[#0b0f17]"><div class="flex flex-col w-full px-margin-mobile py-spacing-md gap-spacing-lg">
+<!-- Interactive Feedback Toast -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-text-primary border border-border-dark px-spacing-md py-spacing-xs rounded-full shadow-2xl flex items-center gap-spacing-xs opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2" id="toast">
+<span class="material-symbols-outlined text-[16px] text-status-ok">check_circle</span>
+<span class="font-label-md text-label-md" id="toast-text">Änderungen gespeichert</span>
+</div>
+<!-- Sektion 1: Aufbewahrungsdauer & Speicherbereinigung -->
+<section class="flex flex-col gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs px-spacing-xs">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">auto_delete</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Aufbewahrungsdauer &amp; Speicher</h2>
+</div>
+<div class="bg-surface-card border border-border-dark rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-md">
+<div>
+<div class="flex justify-between items-baseline mb-spacing-xs">
+<label class="font-label-md text-label-md text-text-primary" for="retention-slider">Gelesene Artikel aufbewahren</label>
+<span class="font-label-lg text-label-lg text-primary"><span class="font-bold" id="retention-val">30</span> Tage</span>
+</div>
+<input class="w-full h-1.5 bg-[#0a0e16] rounded-full appearance-none cursor-pointer accent-primary border border-border-dark/40" id="retention-slider" max="365" min="1" oninput="document.getElementById('retention-val').innerText = this.value" type="range" value="30"/>
+<div class="flex justify-between font-label-meta text-label-meta text-text-muted mt-1.5">
+<span class="">1 Tag</span>
+<span class="">90 Tage</span>
+<span class="">180 Tage</span>
+<span class="">365 Tage</span>
+</div>
+</div>
+<div class="flex items-start gap-spacing-xs p-spacing-sm bg-surface-subtle border border-border-dark/50 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">info</span>
+<p class="font-body-sm text-body-sm text-text-secondary leading-snug">
+          Ungelesene und mit Sternchen markierte gespeicherte Artikel bleiben dauerhaft erhalten.
+        </p>
+</div>
+<button class="w-full py-spacing-sm px-spacing-md bg-surface-subtle hover:bg-border-dark/40 active:scale-[0.98] border border-border-dark/60 transition-all rounded-lg flex items-center justify-between text-text-primary" id="clear-cache-btn" onclick="clearCache()">
+<div class="flex items-center gap-spacing-xs">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">cleaning_services</span>
+<span class="font-label-md text-label-md">Lokalen Cache leeren</span>
+</div>
+<span class="font-label-meta text-label-meta px-2 py-0.5 bg-[#1e293b] border border-border-dark/80 rounded-full shadow-xs text-text-secondary" id="cache-size">48 MB</span>
+</button>
+</div>
+</section>
+<!-- Sektion 2: Keyword-Filter (Ausschlussfilter / Blacklist) -->
+<section class="flex flex-col gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs px-spacing-xs">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">filter_alt</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Keyword-Filter (Blacklist)</h2>
+</div>
+<div class="bg-surface-card border border-border-dark rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-md">
+<form class="relative flex items-center" onsubmit="addKeyword(event)">
+<span class="material-symbols-outlined absolute left-3 text-[18px] text-text-muted">tag</span>
+<input class="w-full pl-9 pr-24 py-2.5 bg-surface-subtle border border-border-dark text-text-primary rounded-lg font-body-md text-body-md outline-none focus:border-primary placeholder:text-text-muted transition-all" id="keyword-input" placeholder="Schlagwort eingeben..." type="text"/>
+<button class="absolute right-1.5 px-3 py-1 bg-primary text-black font-label-md text-label-md font-semibold rounded-md hover:bg-amber-400 active:scale-95 transition-all" type="submit">
+          + Hinzufügen
+        </button>
+</form>
+<!-- Active Keyword Tags -->
+<div class="flex flex-wrap gap-1.5 min-h-[32px]" id="tag-container">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-subtle border border-border-dark rounded-full font-label-md text-label-md text-text-primary animate-fadeIn">
+          Werbung
+          <button class="text-text-muted hover:text-red-400 flex items-center transition-colors" onclick="this.parentElement.remove()" type="button"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-subtle border border-border-dark rounded-full font-label-md text-label-md text-text-primary animate-fadeIn">
+          Gewinnspiel
+          <button class="text-text-muted hover:text-red-400 flex items-center transition-colors" onclick="this.parentElement.remove()" type="button"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-subtle border border-border-dark rounded-full font-label-md text-label-md text-text-primary animate-fadeIn">
+          Sponsoring
+          <button class="text-text-muted hover:text-red-400 flex items-center transition-colors" onclick="this.parentElement.remove()" type="button"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+</div>
+<div class="pt-spacing-xs border-t border-border-dark/40">
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-text-primary">Teilwort &amp; Case-Insensitive</span>
+<span class="font-body-sm text-body-sm text-text-muted">Erkennt auch Varianten innerhalb von Wörtern</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#0f172a] border border-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#0b0f17] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#f8fafc] after:border-border-dark after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:border-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Sektion 3: Synchronisation & Leseverhalten -->
+<section class="flex flex-col gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs px-spacing-xs">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">sync_saved_locally</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Synchronisation &amp; Lesefluss</h2>
+</div>
+<div class="bg-surface-card border border-border-dark rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-md">
+<!-- Sync Background Toggle -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-text-primary">Automatische Hintergrund-Aktualisierung</span>
+<span class="font-body-sm text-body-sm text-text-muted">Feeds periodisch im Hintergrund laden</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="sync-toggle" onchange="toggleSyncOptions()" type="checkbox"/>
+<div class="w-11 h-6 bg-[#0f172a] border border-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#0b0f17] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#f8fafc] after:border-border-dark after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:border-primary"></div>
+</label>
+</div>
+<!-- Intervall Picker -->
+<div class="flex items-center justify-between p-spacing-sm bg-surface-subtle border border-border-dark/50 rounded-lg transition-opacity duration-200" id="sync-interval-row">
+<span class="font-label-md text-label-md text-text-secondary">Abruf-Intervall</span>
+<select class="bg-[#1e293b] border border-border-dark text-text-primary font-label-md text-label-md rounded-md px-2.5 py-1.5 shadow-xs outline-none cursor-pointer focus:border-primary">
+<option class="bg-[#182234] text-text-primary">Alle 15 Minuten</option>
+<option class="bg-[#182234] text-text-primary" selected="">Alle 30 Minuten</option>
+<option class="bg-[#182234] text-text-primary">Stündlich</option>
+<option class="bg-[#182234] text-text-primary">Alle 4 Stunden</option>
+</select>
+</div>
+<!-- Auto-mark as read Toggle -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-text-primary">Automatisch als gelesen markieren</span>
+<span class="font-body-sm text-body-sm text-text-muted">Beim Scrollen durch den Lese-Modus</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="read-toggle" onchange="toggleReadDelay()" type="checkbox"/>
+<div class="w-11 h-6 bg-[#0f172a] border border-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#0b0f17] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#f8fafc] after:border-border-dark after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:border-primary"></div>
+</label>
+</div>
+<!-- Verzögerung bis Markierung -->
+<div class="flex items-center justify-between p-spacing-sm bg-surface-subtle border border-border-dark/50 rounded-lg transition-opacity duration-200" id="read-delay-row">
+<span class="font-label-md text-label-md text-text-secondary">Verzögerung bis Markierung</span>
+<select class="bg-[#1e293b] border border-border-dark text-text-primary font-label-md text-label-md rounded-md px-2.5 py-1.5 shadow-xs outline-none cursor-pointer focus:border-primary">
+<option class="bg-[#182234] text-text-primary">Sofort</option>
+<option class="bg-[#182234] text-text-primary">1 Sekunde</option>
+<option class="bg-[#182234] text-text-primary" selected="">3 Sekunden</option>
+<option class="bg-[#182234] text-text-primary">5 Sekunden</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Sektion 4: Benachrichtigungen & Ruhezeiten -->
+<section class="flex flex-col gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs px-spacing-xs">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">bedtime</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Benachrichtigungen &amp; Ruhezeiten</h2>
+</div>
+<div class="bg-surface-card border border-border-dark rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-md">
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-text-primary">Push-Benachrichtigungen</span>
+<span class="font-body-sm text-body-sm text-text-muted">Eilmeldungen &amp; favorisierte Feeds</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#0f172a] border border-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#0b0f17] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#f8fafc] after:border-border-dark after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:border-primary"></div>
+</label>
+</div>
+<div class="bg-surface-subtle border border-border-dark/50 rounded-lg p-spacing-sm flex flex-col gap-spacing-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-text-primary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">nightlight</span>
+            Ruhezeit (Nicht stören)
+          </span>
+<span class="font-label-meta text-label-meta px-2 py-0.5 bg-primary/15 border border-primary/30 text-primary rounded-full font-medium">Aktiv</span>
+</div>
+<div class="grid grid-cols-2 gap-spacing-xs mt-1">
+<div class="bg-surface-card border border-border-dark rounded-md p-2 flex flex-col">
+<span class="font-label-meta text-label-meta text-text-muted">VON</span>
+<input class="font-label-lg text-label-lg text-text-primary bg-transparent outline-none focus:text-primary [color-scheme:dark]" type="time" value="22:00"/>
+</div>
+<div class="bg-surface-card border border-border-dark rounded-md p-2 flex flex-col">
+<span class="font-label-meta text-label-meta text-text-muted">BIS</span>
+<input class="font-label-lg text-label-lg text-text-primary bg-transparent outline-none focus:text-primary [color-scheme:dark]" type="time" value="07:00"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sektion 5: Lokale Datenbank & Systemstatus -->
+<section class="flex flex-col gap-spacing-xs mb-spacing-md">
+<div class="flex items-center gap-spacing-xs px-spacing-xs">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">database</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Datenbank &amp; Datensicherung</h2>
+</div>
+<div class="bg-surface-card border border-border-dark rounded-xl p-spacing-md shadow-sm flex flex-col gap-spacing-md">
+<!-- Database Status Details -->
+<div class="flex items-center justify-between p-spacing-sm bg-surface-subtle border border-border-dark/50 rounded-lg">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<span class="material-symbols-outlined text-[20px] text-status-ok shrink-0">storage</span>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md text-text-primary font-medium truncate">SQLite Datenbank</span>
+<span class="w-1.5 h-1.5 rounded-full bg-status-ok animate-pulse"></span>
+</div>
+<span class="font-body-sm text-body-sm text-text-muted truncate">1.420 Einträge • 14.2 MB</span>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-status-ok/15 border border-status-ok/30 text-status-ok rounded-full font-label-meta text-label-meta font-medium shrink-0">Normal</span>
+</div>
+<!-- Export Actions -->
+<div class="grid grid-cols-2 gap-spacing-xs">
+<button class="py-2.5 px-3 bg-surface-subtle border border-border-dark hover:border-primary/50 hover:bg-surface-container active:scale-95 transition-all rounded-lg flex items-center justify-center gap-1.5 text-text-primary" onclick="exportData('OPML')">
+<span class="material-symbols-outlined text-[18px] text-primary">feed</span>
+<span class="font-label-md text-label-md">OPML Export</span>
+</button>
+<button class="py-2.5 px-3 bg-surface-subtle border border-border-dark hover:border-primary/50 hover:bg-surface-container active:scale-95 transition-all rounded-lg flex items-center justify-center gap-1.5 text-text-primary" onclick="exportData('JSON')">
+<span class="material-symbols-outlined text-[18px] text-primary">data_object</span>
+<span class="font-label-md text-label-md">JSON Backup</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<script>
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toast-text');
+    toastText.innerText = message;
+    toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 2400);
+  }
+
+  function clearCache() {
+    const sizeSpan = document.getElementById('cache-size');
+    const btn = document.getElementById('clear-cache-btn');
+    btn.classList.add('opacity-50', 'pointer-events-none');
+    setTimeout(() => {
+      sizeSpan.innerText = '0 KB';
+      btn.classList.remove('opacity-50', 'pointer-events-none');
+      showToast('Cache erfolgreich geleert (48 MB freigegeben)');
+    }, 450);
+  }
+
+  function addKeyword(e) {
+    e.preventDefault();
+    const input = document.getElementById('keyword-input');
+    const val = input.value.trim();
+    if (!val) return;
+
+    const container = document.getElementById('tag-container');
+    const tag = document.createElement('span');
+    tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 bg-surface-subtle border border-border-dark rounded-full font-label-md text-label-md text-text-primary transition-all';
+    tag.innerHTML = `${val} <button type="button" onclick="this.parentElement.remove()" class="text-text-muted hover:text-red-400 flex items-center transition-colors"><span class="material-symbols-outlined text-[14px]">close</span></button>`;
+    container.appendChild(tag);
+    input.value = '';
+    showToast(`Filter "${val}" hinzugefügt`);
+  }
+
+  function toggleSyncOptions() {
+    const isChecked = document.getElementById('sync-toggle').checked;
+    const row = document.getElementById('sync-interval-row');
+    row.style.opacity = isChecked ? '1' : '0.4';
+    row.style.pointerEvents = isChecked ? 'auto' : 'none';
+  }
+
+  function toggleReadDelay() {
+    const isChecked = document.getElementById('read-toggle').checked;
+    const row = document.getElementById('read-delay-row');
+    row.style.opacity = isChecked ? '1' : '0.4';
+    row.style.pointerEvents = isChecked ? 'auto' : 'none';
+  }
+
+  function exportData(format) {
+    showToast(`${format}-Datei erfolgreich generiert`);
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-[#0b0f17]/95 backdrop-blur-xl border-t border-border-dark/60 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]" data-active-classes="text-primary font-semibold"><div class="flex justify-around items-center h-16 px-spacing-xs"><a class="flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 text-text-secondary hover:text-text-primary transition-colors duration-150" data-path="ungelesen" href="#"><span class="material-symbols-outlined text-[24px]">newspaper</span><span class="font-label-sm text-label-sm">Ungelesen</span></a><a class="flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 text-text-secondary hover:text-text-primary transition-colors duration-150" data-path="gespeichert" href="#"><span class="material-symbols-outlined text-[24px]">bookmark</span><span class="font-label-sm text-label-sm">Gespeichert</span></a><a class="relative flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 text-text-secondary hover:text-text-primary transition-colors duration-150" data-path="feeds" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">rss_feed</span><span class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-status-ok ring-2 ring-[#0b0f17]"></span></div><span class="font-label-sm text-label-sm">Feeds</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-spacing-2xs w-16 h-12 transition-colors duration-150 text-primary font-semibold" data-path="einstellungen" href="#"><span class="material-symbols-outlined text-[24px]">tune</span><span class="font-label-sm text-label-sm">Einstellungen</span></a></div></nav>
+</body></html>
