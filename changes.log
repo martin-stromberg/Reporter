@@ -1,0 +1,40 @@
+## 2026-09-09 — XML-Dokumentation und csproj-xmldoc-Hook umgesetzt
+
+- `<GenerateDocumentationFile>true</GenerateDocumentationFile>` und `<WarningsAsErrors>CS1591</WarningsAsErrors>` in alle `.csproj` aufgenommen.
+- XML-Dokumentation (`<summary>`, `<param>`, `<returns>`) für alle öffentlichen Typen und Member ergänzt.
+- `Colors.xaml`/`Styles.xaml` mit `x:Class` und Code-Behind versehen, `x:ClassModifier="Internal"`, damit SourceGen-Helper nicht `CS1591` auslösen.
+- ResourceDictionary-Loading in `App.xaml.cs` über C#-Instanzen.
+- `AppResources.Designer.cs` auf auto-properties umgestellt.
+
+## 2026-09-09 — Git-Hooks übernommen
+
+- Git-Hooks aus `https://github.com/martin-stromberg/Pattern-Collection/tree/main/Git-Hooks` in `.githooks` übernommen.
+- `core.hooksPath` auf `.githooks` gesetzt.
+- RESX-Dateien um `reader`/`writer`-Header ergänzt, damit `translation-check.py` besteht.
+- `README.md` um Git-Hooks-Abschnitt ergänzt.
+
+## 2026-09-09 — RESX-Lokalisierung an UI gebunden
+
+- `AppResources.resx` / `AppResources.de.resx` um Seiten- und Tab-Titel sowie Platzhaltertexte erweitert.
+- `AppResources.Designer.cs` als typisierter Zugriff auf RESX-Texte hinzugefügt.
+- ViewModels (`UnreadViewModel`, `FeedsViewModel`, `LaterViewModel`, `SettingsViewModel`) verwenden `AppResources` für `Title`.
+- `AppShell` setzt Tab-Titel über `AppResources`.
+- Pages binden Platzhaltertexte per `x:Static` auf `AppResources`.
+
+## 2026-09-09 — Design-System aus design-draft umgesetzt
+
+- Einbindung der Schriftarten **Newsreader** und **Inter** (inkl. Regular, Medium, SemiBold und Newsreader Italic).
+- Entfernung der OpenSans-Template-Fonts.
+- Neuerstellung von `Colors.xaml` mit den Farb-Token für Light- und Dark-Theme aus dem `design-draft`.
+- Neuerstellung von `Styles.xaml` mit Typografie-Styles (Display, Headline, Body, Meta, UI-Label) und Basis-Stilen für Page, Shell, Button, Entry, Editor usw.
+- Anpassung der Pages (`UnreadPage`, `FeedsPage`, `LaterPage`, `SettingsPage`) an die neuen Typografie-Styles.
+- Aktualisierung von `README.md` und `docs/help/anwendung/architektur.md`.
+
+## 2026-09-09 — .NET MAUI-Projektscaffolding und Basisarchitektur
+
+- Erstellung der Solution `Reporter.sln` mit den vier Projekten `Reporter`, `Reporter.Core`, `Reporter.Data` und `Reporter.Tests`.
+- Einrichtung der MAUI-Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
+- Einrichtung von `Microsoft.Extensions.DependencyInjection` sowie ViewModel-Basen auf Basis von `CommunityToolkit.Mvvm`.
+- Anlage der Design-System-Grundlagen (Light/Dark) und der RESX-Lokalisierungsrüstung für Deutsch und Englisch.
+- Aktualisierung der `README.md` und Anlage der `docs/help`-Dokumentation.
+- Durchführung eines technischen Code-Reviews.
