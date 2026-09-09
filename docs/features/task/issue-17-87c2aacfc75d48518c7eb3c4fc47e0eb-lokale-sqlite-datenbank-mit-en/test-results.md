@@ -3,11 +3,13 @@
 **Ausführung:** 2026-09-09
 
 ```
-Bestanden!   : Fehler:     0, erfolgreich:     3, übersprungen:     0, gesamt:     3
+Bestanden!   : Fehler:     0, erfolgreich:     5, übersprungen:     0, gesamt:     5
 ```
 
 Durchgeführte Tests:
-- `ReporterDbContextTests.CanCreateSchemaAndPersistEntities`
+- `ReporterDbContextTests_Schema.EnsureCreatedAsync_CreatesQueryableTables`
+- `ReporterDbContextTests_Persistence.SaveChangesAsync_PersistsFeedWithCategory`
+- `ReporterDbContextTests_Persistence.Items_WithInclude_ReturnsFeedAndCategory`
 - `ArticleRepositoryTests.GetUnreadAsync_ReturnsEmptyList`
 - `ArticleRepositoryTests.GetArticlesAsync_ReturnsEmptyList`
 
