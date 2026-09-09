@@ -84,7 +84,7 @@ namespace Reporter.Data.Migrations
                     title = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     link = table.Column<string>(type: "TEXT", maxLength: 2048, nullable: true),
                     published_at = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    guid_or_hash = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    guid_or_hash = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     is_read = table.Column<bool>(type: "INTEGER", nullable: false),
                     is_saved_for_later = table.Column<bool>(type: "INTEGER", nullable: false),
                     read_at = table.Column<DateTime>(type: "TEXT", nullable: true),

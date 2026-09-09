@@ -11,7 +11,7 @@ using Reporter.Data;
 namespace Reporter.Data.Migrations
 {
     [DbContext(typeof(ReporterDbContext))]
-    [Migration("20260909213704_InitialCreate")]
+    [Migration("20260909214617_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -103,6 +103,7 @@ namespace Reporter.Data.Migrations
                         .HasColumnName("feed_id");
 
                     b.Property<string>("GuidOrHash")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("TEXT")
                         .HasColumnName("guid_or_hash");

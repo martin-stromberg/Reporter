@@ -100,6 +100,7 @@ namespace Reporter.Data.Migrations
                         .HasColumnName("feed_id");
 
                     b.Property<string>("GuidOrHash")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("TEXT")
                         .HasColumnName("guid_or_hash");

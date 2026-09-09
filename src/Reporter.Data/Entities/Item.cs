@@ -33,7 +33,7 @@ public class Item
     /// <summary>
     /// Gets or sets the original GUID or hash of the item.
     /// </summary>
-    public string? GuidOrHash { get; set; }
+    public string GuidOrHash { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether the item has been read.

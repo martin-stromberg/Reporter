@@ -32,7 +32,7 @@
 | `Title` | `string` | Titel des Artikels. |
 | `Link` | `string?` | Link zum Originalartikel. |
 | `PublishedAt` | `DateTime?` | Veröffentlichungszeitpunkt. |
-| `GuidOrHash` | `string?` | Original-GUID oder Hash. |
+| `GuidOrHash` | `string` | Original-GUID oder Hash. |
 | `IsRead` | `bool` | Gibt an, ob der Artikel gelesen wurde. |
 | `IsSavedForLater` | `bool` | Gibt an, ob der Artikel für später bewahrt wurde. |
 | `ReadAt` | `DateTime?` | Zeitpunkt, an dem der Artikel gelesen wurde. |

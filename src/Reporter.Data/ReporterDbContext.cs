@@ -98,7 +98,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(500).IsRequired();
         entity.Property(e => e.Link).HasColumnName("link").HasMaxLength(2048);
         entity.Property(e => e.PublishedAt).HasColumnName("published_at");
-        entity.Property(e => e.GuidOrHash).HasColumnName("guid_or_hash").HasMaxLength(500);
+        entity.Property(e => e.GuidOrHash).HasColumnName("guid_or_hash").HasMaxLength(500).IsRequired();
         entity.Property(e => e.IsRead).HasColumnName("is_read");
         entity.Property(e => e.IsSavedForLater).HasColumnName("is_saved_for_later");
         entity.Property(e => e.ReadAt).HasColumnName("read_at");
