@@ -5,9 +5,10 @@
              Title="{Binding Title}">
     <VerticalStackLayout Spacing="20" Padding="20">
         <Label Text="{Binding Title}"
-               FontSize="24"
+               Style="{StaticResource HeadlineStyle}"
                HorizontalOptions="Center" />
         <Label Text="Hier erscheinen Artikel, die du dir für später merkst."
+               Style="{StaticResource BodySmallStyle}"
                HorizontalOptions="Center" />
     </VerticalStackLayout>
 </ContentPage>

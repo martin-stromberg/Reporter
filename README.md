@@ -9,6 +9,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 - .NET MAUI-App mit Shell-Navigation
 - Untere Navigationsleiste mit **Ungelesen**, **Feeds**, **Später** und **Einstellungen**
 - Light/Dark-Theme-Unterstützung über .NET MAUI `AppThemeBinding`
+- Design-System mit den Schriftarten **Newsreader** und **Inter** sowie Farb- und Typografie-Tokens aus dem `design-draft`
 - Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
 - ViewModel-Basen mit `CommunityToolkit.Mvvm`
 - Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch)
@@ -55,6 +56,7 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 
 - `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
 - `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
+- `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
 - `Reporter.Core` enthält das Domänenmodell (`Article`), `IArticleRepository` und `IArticleService`.
 - `Reporter.Data` stellt `ArticleRepository` bereit.
 - `BaseViewModel` dient als Basis für alle ViewModels.

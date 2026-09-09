@@ -17,8 +17,13 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Inter-Regular.ttf", "InterRegular");
+                fonts.AddFont("Inter-Medium.ttf", "InterMedium");
+                fonts.AddFont("Inter-SemiBold.ttf", "InterSemiBold");
+                fonts.AddFont("Newsreader-Regular.ttf", "NewsreaderRegular");
+                fonts.AddFont("Newsreader-Medium.ttf", "NewsreaderMedium");
+                fonts.AddFont("Newsreader-SemiBold.ttf", "NewsreaderSemiBold");
+                fonts.AddFont("Newsreader-Italic.ttf", "NewsreaderItalic");
             });
 
         builder.Services
