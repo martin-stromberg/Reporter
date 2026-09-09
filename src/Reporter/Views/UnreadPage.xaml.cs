@@ -1,8 +1,8 @@
 namespace Reporter.Views;
 
-public partial class FeedsPage : ContentPage
+public partial class UnreadPage : ContentPage
 {
-    public FeedsPage(ViewModels.FeedsViewModel viewModel)
+    public UnreadPage(ViewModels.UnreadViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;

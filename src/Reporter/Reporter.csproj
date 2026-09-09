@@ -75,15 +75,4 @@
 		<ProjectReference Include="..\Reporter.Data\Reporter.Data.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<EmbeddedResource Update="Resources\Strings\AppResources.resx">
-			<Generator>ResXFileCodeGenerator</Generator>
-			<LastGenOutput>AppResources.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
-		<EmbeddedResource Update="Resources\Strings\AppResources.de.resx">
-			<Generator>ResXFileCodeGenerator</Generator>
-			<LastGenOutput>AppResources.de.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
-	</ItemGroup>
-
 </Project>

@@ -4,16 +4,16 @@ namespace Reporter;
 
 public partial class App : Application
 {
-    public static IServiceProvider? Services { get; private set; }
+    private readonly IServiceProvider _services;
 
     public App(IServiceProvider services)
     {
-        Services = services;
+        _services = services;
         InitializeComponent();
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new AppShell());
+        return new Window(_services.GetRequiredService<AppShell>());
     }
 }

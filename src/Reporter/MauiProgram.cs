@@ -4,6 +4,7 @@ using Reporter.Core.Interfaces;
 using Reporter.Core.Services;
 using Reporter.Data.Repositories;
 using Reporter.ViewModels;
+using Reporter.Views;
 
 namespace Reporter;
 
@@ -23,10 +24,15 @@ public static class MauiProgram
         builder.Services
             .AddSingleton<IArticleRepository, ArticleRepository>()
             .AddSingleton<IArticleService, ArticleService>()
-            .AddSingleton<UngelesenViewModel>()
+            .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
-            .AddSingleton<SpaeterViewModel>()
-            .AddSingleton<EinstellungenViewModel>();
+            .AddSingleton<LaterViewModel>()
+            .AddSingleton<SettingsViewModel>()
+            .AddTransient<UnreadPage>()
+            .AddTransient<FeedsPage>()
+            .AddTransient<LaterPage>()
+            .AddTransient<SettingsPage>()
+            .AddTransient<AppShell>();
 
 #if DEBUG
         builder.Logging.AddDebug();

@@ -34,6 +34,10 @@ graph TD
 - `MauiProgram.CreateMauiApp()` — Konfiguriert DI, Fonts und MAUI.
 - `AppShell` — Definiert die Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
 - `BaseViewModel` — Basisklasse für alle ViewModels, erbt von `ObservableObject`.
+- `UnreadPage` / `UnreadViewModel` — Ansicht und ViewModel für ungelesene Artikel.
+- `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds.
+- `LaterPage` / `LaterViewModel` — Ansicht und ViewModel für später gemerkte Artikel.
+- `SettingsPage` / `SettingsViewModel` — Ansicht und ViewModel für Einstellungen.
 - `Article` — Domänenmodell für einen Artikel (`Id`, `Title`, `IsRead`).
 - `IArticleRepository` / `ArticleRepository` — Schnittstelle und Implementierung für den Artikel-Zugriff.
 - `IArticleService` / `ArticleService` — Anwendungs-Service für Artikel-Operationen.

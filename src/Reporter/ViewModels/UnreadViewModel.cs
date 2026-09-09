@@ -3,13 +3,13 @@ using Reporter.Core.Services;
 
 namespace Reporter.ViewModels;
 
-public partial class FeedsViewModel : BaseViewModel
+public partial class UnreadViewModel : BaseViewModel
 {
     private readonly IArticleService _articleService;
-    private string _title = "Feeds";
+    private string _title = "Ungelesen";
     private IReadOnlyList<Article> _articles = new List<Article>();
 
-    public FeedsViewModel(IArticleService articleService)
+    public UnreadViewModel(IArticleService articleService)
     {
         _articleService = articleService;
     }

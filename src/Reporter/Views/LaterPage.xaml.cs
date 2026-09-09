@@ -1,8 +1,8 @@
 namespace Reporter.Views;
 
-public partial class FeedsPage : ContentPage
+public partial class LaterPage : ContentPage
 {
-    public FeedsPage(ViewModels.FeedsViewModel viewModel)
+    public LaterPage(ViewModels.LaterViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;
