@@ -428,3 +428,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 issue.md
+AGENTS.md
+.agents/*
