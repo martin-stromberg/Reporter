@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Reporter.Data;
 
 namespace Reporter;
 
@@ -20,6 +22,18 @@ public partial class App : Application
 
         Resources.MergedDictionaries.Add(new Resources.Styles.Colors());
         Resources.MergedDictionaries.Add(new Resources.Styles.Styles());
+    }
+
+    /// <summary>
+    /// Initializes the application and applies pending database migrations.
+    /// </summary>
+    protected override async void OnStart()
+    {
+        base.OnStart();
+
+        using var scope = _services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
+        await context.Database.MigrateAsync();
     }
 
     /// <summary>
