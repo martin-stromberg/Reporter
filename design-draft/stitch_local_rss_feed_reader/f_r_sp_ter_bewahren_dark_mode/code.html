@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="de"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#0f131c;color:#dfe2ee;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "outline": "#a08e7a",
+          "inverse-primary": "#855300",
+          "inverse-surface": "#dfe2ee",
+          "on-secondary-fixed-variant": "#005236",
+          "background": "#0f131c",
+          "surface-container-high": "#262a33",
+          "secondary": "#4edea3",
+          "tertiary-fixed-dim": "#ffb2b7",
+          "on-error": "#690005",
+          "surface-container-lowest": "#0a0e16",
+          "on-tertiary-fixed-variant": "#92002a",
+          "secondary-fixed-dim": "#4edea3",
+          "tertiary-container": "#ff919a",
+          "surface-tint": "#ffb95f",
+          "on-primary-fixed": "#2a1700",
+          "on-background": "#dfe2ee",
+          "primary-container": "#f59e0b",
+          "primary-fixed": "#ffddb8",
+          "secondary-fixed": "#6ffbbe",
+          "error": "#ffb4ab",
+          "primary-fixed-dim": "#ffb95f",
+          "tertiary": "#ffbbbe",
+          "outline-variant": "#534434",
+          "on-surface-variant": "#d8c3ad",
+          "on-tertiary": "#67001b",
+          "surface-container-low": "#181c24",
+          "on-primary": "#472a00",
+          "on-primary-fixed-variant": "#653e00",
+          "on-primary-container": "#613b00",
+          "on-tertiary-fixed": "#40000d",
+          "surface-dim": "#0f131c",
+          "surface-container-highest": "#31353e",
+          "tertiary-fixed": "#ffdadb",
+          "on-secondary-container": "#00311f",
+          "surface-variant": "#31353e",
+          "on-error-container": "#ffdad6",
+          "secondary-container": "#00a572",
+          "error-container": "#93000a",
+          "on-tertiary-container": "#8c0028",
+          "surface-bright": "#353942",
+          "on-surface": "#dfe2ee",
+          "inverse-on-surface": "#2c3039",
+          "surface-container": "#1c2028",
+          "primary": "#ffc174",
+          "on-secondary": "#003824",
+          "on-secondary-fixed": "#002113",
+          "surface": "#0f131c",
+          "bookmark-gold": "#f59e0b"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-sm": "0.75rem",
+          "space-2xl": "3rem",
+          "gutter-tablet": "1.5rem",
+          "gutter-desktop": "2rem",
+          "space-2xs": "0.25rem",
+          "reading-measure": "68ch",
+          "space-lg": "1.5rem",
+          "stream-width": "26rem",
+          "space-xs": "0.5rem",
+          "space-md": "1rem",
+          "sidebar-width": "18rem",
+          "space-xl": "2rem",
+          "space-3xl": "4.5rem",
+          "gutter-mobile": "1rem"
+        },
+        "fontFamily": {
+          "lead": ["Newsreader"],
+          "body-sm": ["Inter"],
+          "headline-sm": ["Newsreader"],
+          "caption": ["Inter"],
+          "ui-label-md": ["Inter"],
+          "ui-label-lg": ["Inter"],
+          "ui-label-mono": ["JetBrains Mono"],
+          "body-md": ["Inter"],
+          "body-lg": ["Newsreader"],
+          "headline-lg": ["Newsreader"],
+          "display": ["Newsreader"],
+          "headline-md": ["Newsreader"],
+          "headline-lg-mobile": ["Newsreader"]
+        },
+        "fontSize": {
+          "lead": ["22px", {"lineHeight": "32px", "letterSpacing": "-0.005em", "fontWeight": "400"}],
+          "body-sm": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+          "ui-label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+          "ui-label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+          "ui-label-mono": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+          "body-md": ["15px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "body-lg": ["19px", {"lineHeight": "32px", "fontWeight": "400"}],
+          "headline-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.015em", "fontWeight": "500"}],
+          "display": ["44px", {"lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "400"}],
+          "headline-md": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+          "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "500"}]
+        }
+      }
+    }
+  };
+</script></head><body class="bg-background font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-primary-container/25"><header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl pt-safe border-b border-surface-container-high/60 shadow-[0_2px_12px_rgba(0,0,0,0.4)]"><div class="h-16 px-gutter-mobile flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="Reporter Logo" class="h-8 w-8 object-contain shrink-0 rounded-lg ring-1 ring-white/10" src="https://lh3.googleusercontent.com/aida/AEtjO1V6qixdzCRwzPwk8HatGPb8tG9n89psf-UXDba-H03DzYgNWKA_TYMfhuhDn8h5x2ebTlLynqk7voJGqTRTLJlKlbOdVn6ehKr8k1AOYPLV-q5S9OsFp-m-GTLQVBjUxTKwAZwefrL-2aG6SePO7e4Zy7lPQYJmbewXYGV5JrTNsRPlJILeL7c46VOXk99yp7dZjBrSwlmoET2BFvRttvk8sGlqd5KDfIW49H6r9TeQkJwEDd6mS-FCLgI"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-on-surface truncate">Gespeichert</span><div class="flex items-center gap-space-2xs text-secondary"><span class="material-symbols-outlined text-[12px] text-secondary shrink-0">sync</span><span class="font-caption text-caption text-secondary/80 truncate">Gerade synchronisiert</span></div></div></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Aktualisieren" class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface/70 hover:text-on-surface hover:bg-surface-container-high/60 transition-colors"><span class="material-symbols-outlined text-[20px]">refresh</span></button><div class="w-8 h-8 rounded-full bg-surface-container-highest ring-1 ring-white/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-background"><div class="flex flex-col w-full">
+<div class="px-gutter-mobile pt-space-sm pb-space-xs flex flex-col gap-space-sm">
+<div class="bg-surface-container-low border border-surface-container-highest/60 p-space-sm rounded-xl flex items-center gap-space-sm shadow-sm">
+<div class="w-8 h-8 rounded-full bg-sky-950/70 border border-sky-800/40 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-sky-400 text-[18px]">verified_user</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-ui-label-lg text-ui-label-lg text-on-surface">Dauerhafte Archivierung</span>
+<span class="font-body-sm text-body-sm text-on-surface/65">Lesezeichen werden niemals automatisch bereinigt oder gelöscht.</span>
+</div>
+</div>
+<div class="relative flex items-center w-full">
+<span class="material-symbols-outlined absolute left-space-sm text-slate-400 text-[18px] pointer-events-none">search</span>
+<input class="w-full bg-[#182234] border border-slate-700/60 text-slate-100 placeholder:text-slate-400 font-body-md text-body-md pl-10 pr-9 py-2.5 rounded-xl focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors shadow-inner" id="bookmark-search" placeholder="Artikel oder Quelle durchsuchen..." type="text"/>
+<button aria-label="Eingabe löschen" class="absolute right-space-xs w-7 h-7 hidden items-center justify-center rounded-full text-slate-400 hover:text-slate-200 transition-colors" id="clear-search-btn">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+</button>
+</div>
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-space-2xs -mx-gutter-mobile px-gutter-mobile" id="category-chips">
+<button class="chip-item active px-space-sm py-1.5 rounded-full bg-primary-container text-on-primary-container font-medium flex items-center gap-space-xs shrink-0 shadow-sm transition-transform active:scale-95" data-filter="all">
+<span class="font-ui-label-md text-ui-label-md font-semibold">Alle Gespeicherten</span>
+<span class="font-ui-label-mono text-ui-label-mono px-1.5 py-0.5 rounded-full bg-black/20 text-on-primary-container font-semibold">7</span>
+</button>
+<button class="chip-item px-space-sm py-1.5 rounded-full bg-surface-container-high/80 border border-surface-container-highest/60 text-on-surface/70 hover:text-on-surface flex items-center gap-space-xs shrink-0 transition-transform active:scale-95" data-filter="tech">
+<span class="font-ui-label-md text-ui-label-md">Technologie</span>
+<span class="font-ui-label-mono text-ui-label-mono px-1.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface/60">4</span>
+</button>
+<button class="chip-item px-space-sm py-1.5 rounded-full bg-surface-container-high/80 border border-surface-container-highest/60 text-on-surface/70 hover:text-on-surface flex items-center gap-space-xs shrink-0 transition-transform active:scale-95" data-filter="econ">
+<span class="font-ui-label-md text-ui-label-md">Wirtschaft</span>
+<span class="font-ui-label-mono text-ui-label-mono px-1.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface/60">2</span>
+</button>
+<button class="chip-item px-space-sm py-1.5 rounded-full bg-surface-container-high/80 border border-surface-container-highest/60 text-on-surface/70 hover:text-on-surface flex items-center gap-space-xs shrink-0 transition-transform active:scale-95" data-filter="science">
+<span class="font-ui-label-md text-ui-label-md">Wissenschaft</span>
+<span class="font-ui-label-mono text-ui-label-mono px-1.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface/60">1</span>
+</button>
+</div>
+</div>
+<div class="px-gutter-mobile flex flex-col gap-space-sm mt-space-xs pb-space-xl" id="articles-container">
+<article class="article-card bg-surface-container rounded-xl p-space-md border border-surface-container-highest/50 shadow-sm transition-all duration-200 hover:border-outline-variant flex flex-col gap-space-xs" data-category="tech">
+<div class="flex items-center justify-between gap-space-xs">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-4 h-4 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[10px] text-primary">code</span>
+</div>
+<span class="font-caption text-caption text-on-surface/70 truncate">ACM Queue</span>
+<span class="text-on-surface/30">•</span>
+<span class="font-caption text-caption text-on-surface/50 shrink-0">14. Okt. 2024</span>
+</div>
+<button aria-label="Lesezeichen aktiviert" class="bookmark-toggle text-bookmark-gold shrink-0 p-1 rounded-full hover:bg-surface-container-high transition-colors" title="Gespeichert">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</button>
+</div>
+<div class="flex gap-space-sm items-start">
+<div class="flex flex-col flex-1 min-w-0">
+<h2 class="font-headline-md text-headline-sm text-slate-100 line-clamp-2 leading-snug">
+            Die Zukunft der lokalen Datenbankarchitekturen mit SQLite
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface/65 mt-space-2xs line-clamp-2">
+            Wie moderne Edge-Computing-Muster und leichtgewichtige relationale Speichermodelle das Paradigma zentralisierter Datenspeicher ablösen.
+          </p>
+</div>
+<div class="w-18 h-18 rounded-lg overflow-hidden shrink-0 bg-surface-container-highest border border-white/5">
+<img class="w-16 h-16 object-cover rounded-lg" data-alt="Close-up macro photography of vintage metallic server transistors and copper data wires glowing faintly in cold blue tones, representing modern high-efficiency local database storage architecture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDtT5jgWSe-XEcqOGS5YIEa9veAhaTED6jEAqIBnVlHiLPAnAg5VcPgUldDL_MBb37dGDON6ioSxWRPKgoV-6_rFm3duvIKtJcxRUnqFcuC0cWV15T52ID9zquVRdWiceTl6TyEvozoyelmEcI0o_W9Hml61ndQKPzhTddmmIhcjvQDbyw1goNZ2ggMO60jQYsshtYKVHHPaeCBfXBEv46wAmplWpkkFVPYFzxRIDwR2G9lCUhEf-W"/>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs mt-space-2xs">
+<div class="flex items-center gap-space-2xs text-on-surface/50">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption text-on-surface/60">6 Min. Lesezeit</span>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Als ungesehen markieren" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="unread">
+<span class="material-symbols-outlined text-[15px]">mark_email_unread</span>
+<span class="font-caption text-caption hidden sm:inline">Ungelesen</span>
+</button>
+<button aria-label="Artikel teilen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="share">
+<span class="material-symbols-outlined text-[15px]">ios_share</span>
+<span class="font-caption text-caption hidden sm:inline">Teilen</span>
+</button>
+<button aria-label="Lesezeichen entfernen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-error hover:bg-error-container/30 transition-colors" data-action="remove">
+<span class="material-symbols-outlined text-[15px]">bookmark_remove</span>
+<span class="font-caption text-caption hidden sm:inline">Entfernen</span>
+</button>
+</div>
+</div>
+</article>
+<article class="article-card bg-surface-container rounded-xl p-space-md border border-surface-container-highest/50 shadow-sm transition-all duration-200 hover:border-outline-variant flex flex-col gap-space-xs" data-category="tech">
+<div class="flex items-center justify-between gap-space-xs">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-4 h-4 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[10px] text-secondary">format_paint</span>
+</div>
+<span class="font-caption text-caption text-on-surface/70 truncate">Smashing Magazine</span>
+<span class="text-on-surface/30">•</span>
+<span class="font-caption text-caption text-on-surface/50 shrink-0">02. Okt. 2024</span>
+</div>
+<button aria-label="Lesezeichen aktiviert" class="bookmark-toggle text-bookmark-gold shrink-0 p-1 rounded-full hover:bg-surface-container-high transition-colors" title="Gespeichert">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</button>
+</div>
+<div class="flex gap-space-sm items-start">
+<div class="flex flex-col flex-1 min-w-0">
+<h2 class="font-headline-md text-headline-sm text-slate-100 line-clamp-2 leading-snug">
+            Design-Systeme für iOS: Typografie und Rhythmus
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface/65 mt-space-2xs line-clamp-2">
+            Praktische Strategien zur Verknüpfung von Dynamic Type mit redaktionellem Grundlinienraster in nativen Swift-Interfaces.
+          </p>
+</div>
+<div class="w-18 h-18 rounded-lg overflow-hidden shrink-0 bg-surface-container-highest border border-white/5">
+<img class="w-16 h-16 object-cover rounded-lg" data-alt="Artistic studio still life of a minimal architectural layout ruler alongside fine parchment paper displaying clean typographic serif matrices under soft morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbNCQ1ZOt9vOBuGWZaRq6KaRV3IY2YpQqCBQLLEhYTEIC4ZzwcAh4CHcAN4unI1hGDG9U539IEXxnu-p39ANhMkYb63T9mheAnM6ybEPrUxEZM6AFX1Alvo53UsqOpsIN96TKQBhQa1MgQsZV6kgcqRYW4LyZfypReagyiyJHLDrqXE6JzgAJg-ByZRksns9PuLkCspK2TBM-eA_fOtqDOmJO5oxjcLUXWk-cEC8FmH25urlu8veQV"/>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs mt-space-2xs">
+<div class="flex items-center gap-space-2xs text-on-surface/50">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption text-on-surface/60">4 Min. Lesezeit</span>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Als ungesehen markieren" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="unread">
+<span class="material-symbols-outlined text-[15px]">mark_email_unread</span>
+<span class="font-caption text-caption hidden sm:inline">Ungelesen</span>
+</button>
+<button aria-label="Artikel teilen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="share">
+<span class="material-symbols-outlined text-[15px]">ios_share</span>
+<span class="font-caption text-caption hidden sm:inline">Teilen</span>
+</button>
+<button aria-label="Lesezeichen entfernen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-error hover:bg-error-container/30 transition-colors" data-action="remove">
+<span class="material-symbols-outlined text-[15px]">bookmark_remove</span>
+<span class="font-caption text-caption hidden sm:inline">Entfernen</span>
+</button>
+</div>
+</div>
+</article>
+<article class="article-card bg-surface-container rounded-xl p-space-md border border-surface-container-highest/50 shadow-sm transition-all duration-200 hover:border-outline-variant flex flex-col gap-space-xs" data-category="science">
+<div class="flex items-center justify-between gap-space-xs">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-4 h-4 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[10px] text-secondary">science</span>
+</div>
+<span class="font-caption text-caption text-on-surface/70 truncate">Spektrum.de</span>
+<span class="text-on-surface/30">•</span>
+<span class="font-caption text-caption text-on-surface/50 shrink-0">28. Sept. 2024</span>
+</div>
+<button aria-label="Lesezeichen aktiviert" class="bookmark-toggle text-bookmark-gold shrink-0 p-1 rounded-full hover:bg-surface-container-high transition-colors" title="Gespeichert">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</button>
+</div>
+<div class="flex gap-space-sm items-start">
+<div class="flex flex-col flex-1 min-w-0">
+<h2 class="font-headline-md text-headline-sm text-slate-100 line-clamp-2 leading-snug">
+            Klimamodelle und Rechenleistung: Der aktuelle Forschungsstand
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface/65 mt-space-2xs line-clamp-2">
+            Wie Exascale-Supercomputer die Auflösung atmosphärischer Strömungssimulationen drastisch präzisieren.
+          </p>
+</div>
+<div class="w-18 h-18 rounded-lg overflow-hidden shrink-0 bg-surface-container-highest border border-white/5">
+<img class="w-16 h-16 object-cover rounded-lg" data-alt="Abstract cinematic visualization of earth atmosphere fluid dynamics with subtle swirling oceanic currents rendered in muted jade and slate tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXH2csiNtLWf58QDr9Dk5LM4se70EVTikHJ_cEUgyAzm6K5kNgmz_fUTTtjcDjAssZmA5GGKmE0GM9IPHuZ-Ds_N6BpZHDu4VjSqTLOBByYb848-EqV8ngfMKmUjrH0hiI4PLSyZ9wrsgLw-2xjCcxZqtkdDUpjlHvrDbN-nfkF-717etqKKjCkcThLheFhHQUpIrNrOgB_Hyr5l772TL4cB7upb1V7_FskzJYhM8K-Ruc_FfQ5ExC"/>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs mt-space-2xs">
+<div class="flex items-center gap-space-2xs text-on-surface/50">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption text-on-surface/60">8 Min. Lesezeit</span>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Als ungesehen markieren" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="unread">
+<span class="material-symbols-outlined text-[15px]">mark_email_unread</span>
+<span class="font-caption text-caption hidden sm:inline">Ungelesen</span>
+</button>
+<button aria-label="Artikel teilen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="share">
+<span class="material-symbols-outlined text-[15px]">ios_share</span>
+<span class="font-caption text-caption hidden sm:inline">Teilen</span>
+</button>
+<button aria-label="Lesezeichen entfernen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-error hover:bg-error-container/30 transition-colors" data-action="remove">
+<span class="material-symbols-outlined text-[15px]">bookmark_remove</span>
+<span class="font-caption text-caption hidden sm:inline">Entfernen</span>
+</button>
+</div>
+</div>
+</article>
+<article class="article-card bg-surface-container rounded-xl p-space-md border border-surface-container-highest/50 shadow-sm transition-all duration-200 hover:border-outline-variant flex flex-col gap-space-xs" data-category="econ">
+<div class="flex items-center justify-between gap-space-xs">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-4 h-4 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[10px] text-tertiary">query_stats</span>
+</div>
+<span class="font-caption text-caption text-on-surface/70 truncate">Handelsblatt</span>
+<span class="text-on-surface/30">•</span>
+<span class="font-caption text-caption text-on-surface/50 shrink-0">15. Sept. 2024</span>
+</div>
+<button aria-label="Lesezeichen aktiviert" class="bookmark-toggle text-bookmark-gold shrink-0 p-1 rounded-full hover:bg-surface-container-high transition-colors" title="Gespeichert">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</button>
+</div>
+<div class="flex gap-space-sm items-start">
+<div class="flex flex-col flex-1 min-w-0">
+<h2 class="font-headline-md text-headline-sm text-slate-100 line-clamp-2 leading-snug">
+            Monetäre Stabilität im digitalen Zeitalter
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface/65 mt-space-2xs line-clamp-2">
+            Die Herausforderungen für Notenbanken zwischen dezentralen Zahlungssystemen und programmierbarem Zentralbankgeld.
+          </p>
+</div>
+<div class="w-18 h-18 rounded-lg overflow-hidden shrink-0 bg-surface-container-highest border border-white/5">
+<img class="w-16 h-16 object-cover rounded-lg" data-alt="Monochromatic fine art composition of classic banking stone architecture pillars meeting sleek modern glass geometry in deep charcoal and warm ivory hues." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALmNU-i0JXLTSEV2B0RgEuPpYAOrL2i6MVK36CO34zcdJdUxB7p8Fr7sCPhRBqxfdCWiA3kYciZ6KqAkMNLPXuN2aP1JxIzjiAqor9OoEuU4Gu0TAYEF0zbksxmRYLG0RCFiQc6BEIyXxYREXFykjmwSFIPok9dah0i0-KzggZmtla5wC7cn3P56zAT87Xbnqu-xZoa1vGwHMAAj44B-0vuhg0Fw52Aa_zZ-1tS7L8MHOuA-fUoS_U"/>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs mt-space-2xs">
+<div class="flex items-center gap-space-2xs text-on-surface/50">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-caption text-caption text-on-surface/60">5 Min. Lesezeit</span>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Als ungesehen markieren" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="unread">
+<span class="material-symbols-outlined text-[15px]">mark_email_unread</span>
+<span class="font-caption text-caption hidden sm:inline">Ungelesen</span>
+</button>
+<button aria-label="Artikel teilen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-on-surface hover:bg-surface-bright transition-colors" data-action="share">
+<span class="material-symbols-outlined text-[15px]">ios_share</span>
+<span class="font-caption text-caption hidden sm:inline">Teilen</span>
+</button>
+<button aria-label="Lesezeichen entfernen" class="quick-action-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high/80 text-on-surface/75 hover:text-error hover:bg-error-container/30 transition-colors" data-action="remove">
+<span class="material-symbols-outlined text-[15px]">bookmark_remove</span>
+<span class="font-caption text-caption hidden sm:inline">Entfernen</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+<div class="hidden flex-col items-center justify-center py-space-2xl px-gutter-mobile text-center" id="empty-state">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-space-sm text-on-surface/40">
+<span class="material-symbols-outlined text-[32px]">bookmark_border</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Keine Artikel gefunden</h3>
+<p class="font-body-sm text-body-sm text-on-surface/60 max-w-xs">
+      Passe deine Suchbegriffe an oder wähle eine andere Kategorie, um deine Lesezeichen zu finden.
+    </p>
+</div>
+<div class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-white/10 text-on-surface px-space-md py-space-xs rounded-full shadow-2xl flex items-center gap-space-xs opacity-0 pointer-events-none transition-all duration-300 z-50" id="toast">
+<span class="material-symbols-outlined text-[18px] text-secondary" id="toast-icon">check_circle</span>
+<span class="font-ui-label-md text-ui-label-md" id="toast-text">Aktion ausgeführt</span>
+</div>
+</div>
+<script>
+  (function() {
+    const searchInput = document.getElementById('bookmark-search');
+    const clearBtn = document.getElementById('clear-search-btn');
+    const chips = document.querySelectorAll('.chip-item');
+    const articles = document.querySelectorAll('.article-card');
+    const emptyState = document.getElementById('empty-state');
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toast-text');
+    const toastIcon = document.getElementById('toast-icon');
+
+    let currentFilter = 'all';
+    let currentQuery = '';
+    let toastTimeout;
+
+    function showToast(message, iconName = 'check_circle', isError = false) {
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastText.textContent = message;
+      toastIcon.textContent = iconName;
+      toastIcon.className = `material-symbols-outlined text-[18px] ${isError ? 'text-error' : 'text-secondary'}`;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+      }, 2500);
+    }
+
+    function applyFilter() {
+      let visibleCount = 0;
+      articles.forEach(card => {
+        const matchesCategory = (currentFilter === 'all' || card.getAttribute('data-category') === currentFilter);
+        const textContent = card.innerText.toLowerCase();
+        const matchesSearch = !currentQuery || textContent.includes(currentQuery.toLowerCase());
+
+        if (matchesCategory && matchesSearch) {
+          card.style.display = 'flex';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+      } else {
+        emptyState.classList.remove('flex');
+        emptyState.classList.add('hidden');
+      }
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      currentQuery = e.target.value.trim();
+      if (currentQuery.length > 0) {
+        clearBtn.classList.remove('hidden');
+        clearBtn.classList.add('flex');
+      } else {
+        clearBtn.classList.remove('flex');
+        clearBtn.classList.add('hidden');
+      }
+      applyFilter();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      currentQuery = '';
+      clearBtn.classList.remove('flex');
+      clearBtn.classList.add('hidden');
+      applyFilter();
+      searchInput.focus();
+    });
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => {
+          c.classList.remove('active', 'bg-primary-container', 'text-on-primary-container', 'font-medium');
+          c.classList.add('bg-surface-container-high/80', 'border', 'border-surface-container-highest/60', 'text-on-surface/70');
+          const countBadge = c.querySelector('.font-ui-label-mono');
+          if (countBadge) {
+            countBadge.classList.remove('bg-black/20', 'text-on-primary-container');
+            countBadge.classList.add('bg-surface-container-lowest', 'text-on-surface/60');
+          }
+        });
+
+        chip.classList.add('active', 'bg-primary-container', 'text-on-primary-container', 'font-medium');
+        chip.classList.remove('bg-surface-container-high/80', 'border', 'border-surface-container-highest/60', 'text-on-surface/70');
+        const activeBadge = chip.querySelector('.font-ui-label-mono');
+        if (activeBadge) {
+          activeBadge.classList.remove('bg-surface-container-lowest', 'text-on-surface/60');
+          activeBadge.classList.add('bg-black/20', 'text-on-primary-container');
+        }
+
+        currentFilter = chip.getAttribute('data-filter');
+        applyFilter();
+      });
+    });
+
+    document.querySelectorAll('.quick-action-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = button.getAttribute('data-action');
+        const card = button.closest('.article-card');
+        const titleEl = card.querySelector('h2');
+        const title = titleEl ? titleEl.innerText.trim() : 'Artikel';
+
+        if (action === 'remove') {
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.95)';
+          card.style.transition = 'all 0.25s ease';
+          setTimeout(() => {
+            card.remove();
+            applyFilter();
+            showToast('Lesezeichen entfernt', 'bookmark_remove');
+          }, 250);
+        } else if (action === 'unread') {
+          showToast('Als ungesehen markiert', 'mark_email_unread');
+        } else if (action === 'share') {
+          if (navigator.share) {
+            navigator.share({ title: title, text: title, url: window.location.href }).catch(() => {});
+          } else {
+            showToast('Link in Zwischenablage kopiert', 'share');
+          }
+        }
+      });
+    });
+
+    document.querySelectorAll('.bookmark-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const icon = btn.querySelector('.material-symbols-outlined');
+        const isSaved = icon.innerText === 'bookmark';
+        if (isSaved) {
+          icon.innerText = 'bookmark_border';
+          icon.style.fontVariationSettings = "'FILL' 0";
+          btn.classList.remove('text-bookmark-gold');
+          btn.classList.add('text-on-surface/40');
+          showToast('Lesezeichen aufgehoben', 'bookmark_border');
+        } else {
+          icon.innerText = 'bookmark';
+          icon.style.fontVariationSettings = "'FILL' 1";
+          btn.classList.remove('text-on-surface/40');
+          btn.classList.add('text-bookmark-gold');
+          showToast('Gespeichert für später', 'bookmark');
+        }
+      });
+    });
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl border-t border-surface-container-highest/60 shadow-[0_-2px_12px_rgba(0,0,0,0.5)]"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center gap-space-2xs w-16 h-12 text-on-surface/60 hover:text-on-surface transition-colors duration-150" data-path="ungelesen" href="#"><span class="material-symbols-outlined text-[24px]">newspaper</span><span class="font-caption text-[11px]">Ungelesen</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-space-2xs w-16 h-12 transition-colors duration-150 text-primary-container font-semibold" data-path="gespeichert" href="#"><span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">bookmark</span><span class="font-caption text-[11px] font-semibold text-primary-container">Gespeichert</span></a><a class="relative flex flex-col items-center justify-center gap-space-2xs w-16 h-12 text-on-surface/60 hover:text-on-surface transition-colors duration-150" data-path="feeds" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">rss_feed</span><span class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><span class="font-caption text-[11px]">Feeds</span></a><a class="flex flex-col items-center justify-center gap-space-2xs w-16 h-12 text-on-surface/60 hover:text-on-surface transition-colors duration-150" data-path="einstellungen" href="#"><span class="material-symbols-outlined text-[24px]">tune</span><span class="font-caption text-[11px]">Einstellungen</span></a></div></nav>
+</body></html>

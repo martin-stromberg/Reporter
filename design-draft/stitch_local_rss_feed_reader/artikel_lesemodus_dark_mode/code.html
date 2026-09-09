@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="de"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#0f131c;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;color:#dfe2ee;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "outline": "#a08e7a",
+        "inverse-primary": "#855300",
+        "inverse-surface": "#dfe2ee",
+        "on-secondary-fixed-variant": "#005236",
+        "background": "#0f131c",
+        "surface-container-high": "#262a33",
+        "secondary": "#4edea3",
+        "tertiary-fixed-dim": "#ffb2b7",
+        "on-error": "#690005",
+        "surface-container-lowest": "#0a0e16",
+        "on-tertiary-fixed-variant": "#92002a",
+        "secondary-fixed-dim": "#4edea3",
+        "tertiary-container": "#ff919a",
+        "surface-tint": "#ffb95f",
+        "on-primary-fixed": "#2a1700",
+        "on-background": "#dfe2ee",
+        "primary-container": "#f59e0b",
+        "primary-fixed": "#ffddb8",
+        "secondary-fixed": "#6ffbbe",
+        "error": "#ffb4ab",
+        "primary-fixed-dim": "#ffb95f",
+        "tertiary": "#ffbbbe",
+        "outline-variant": "#534434",
+        "on-surface-variant": "#d8c3ad",
+        "on-tertiary": "#67001b",
+        "surface-container-low": "#181c24",
+        "on-primary": "#472a00",
+        "on-primary-fixed-variant": "#653e00",
+        "on-primary-container": "#613b00",
+        "on-tertiary-fixed": "#40000d",
+        "surface-dim": "#0f131c",
+        "surface-container-highest": "#31353e",
+        "tertiary-fixed": "#ffdadb",
+        "on-secondary-container": "#00311f",
+        "surface-variant": "#31353e",
+        "on-error-container": "#ffdad6",
+        "secondary-container": "#00a572",
+        "error-container": "#93000a",
+        "on-tertiary-container": "#8c0028",
+        "surface-bright": "#353942",
+        "on-surface": "#dfe2ee",
+        "inverse-on-surface": "#2c3039",
+        "surface-container": "#1c2028",
+        "primary": "#ffc174",
+        "on-secondary": "#003824",
+        "on-secondary-fixed": "#002113",
+        "surface": "#0f131c"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "margin-desktop": "2.5rem",
+        "spacing-md": "1rem",
+        "spacing-2xs": "0.25rem",
+        "margin-tablet": "1.5rem",
+        "spacing-xs": "0.5rem",
+        "spacing-sm": "0.75rem",
+        "reader-max-width": "42rem",
+        "spacing-3xl": "3rem",
+        "gutter-stream": "0.75rem",
+        "spacing-lg": "1.25rem",
+        "margin-mobile": "1rem",
+        "spacing-xl": "1.5rem",
+        "spacing-2xl": "2rem"
+      },
+      "fontFamily": {
+        "headline-md": ["Newsreader", "serif"],
+        "label-lg": ["Inter", "sans-serif"],
+        "body-reading-mobile": ["Newsreader", "serif"],
+        "body-reading": ["Newsreader", "serif"],
+        "headline-lg": ["Newsreader", "serif"],
+        "display-lg-mobile": ["Newsreader", "serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "body-lg": ["Newsreader", "serif"],
+        "display-lg": ["Newsreader", "serif"],
+        "headline-sm": ["Newsreader", "serif"],
+        "label-sm": ["Inter", "sans-serif"],
+        "label-meta": ["Inter", "sans-serif"],
+        "headline-lg-mobile": ["Newsreader", "serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"]
+      },
+      "fontSize": {
+        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+        "label-lg": ["14px", {"lineHeight": "18px", "fontWeight": "600"}],
+        "body-reading-mobile": ["17px", {"lineHeight": "28px", "fontWeight": "400"}],
+        "body-reading": ["19px", {"lineHeight": "32px", "fontWeight": "400"}],
+        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+        "display-lg-mobile": ["30px", {"lineHeight": "38px", "fontWeight": "600"}],
+        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+        "body-lg": ["17px", {"lineHeight": "26px", "fontWeight": "400"}],
+        "display-lg": ["40px", {"lineHeight": "48px", "fontWeight": "600"}],
+        "headline-sm": ["17px", {"lineHeight": "24px", "fontWeight": "500"}],
+        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+        "label-meta": ["10px", {"lineHeight": "12px", "fontWeight": "600"}],
+        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+      }
+    }
+  }
+};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-primary/30 selection:text-primary-fixed"><header class="fixed top-0 inset-x-0 z-50 bg-[#111827]/90 backdrop-blur-xl pt-safe border-b border-[#1f293d] shadow-[0_4px_20px_rgba(0,0,0,0.4)]"><div class="h-16 px-margin-mobile flex items-center justify-between gap-spacing-sm"><div class="flex items-center gap-spacing-xs min-w-0"><button aria-label="Zurück" class="w-11 h-11 -ml-spacing-xs flex items-center justify-center text-slate-300 hover:text-primary transition-colors" onclick="history.back()"><span class="material-symbols-outlined text-[22px]">arrow_back_ios_new</span></button><img alt="Reporter Logo" class="h-7 w-7 rounded object-contain shrink-0 ring-1 ring-white/10" src="https://lh3.googleusercontent.com/aida/AEtjO1V6qixdzCRwzPwk8HatGPb8tG9n89psf-UXDba-H03DzYgNWKA_TYMfhuhDn8h5x2ebTlLynqk7voJGqTRTLJlKlbOdVn6ehKr8k1AOYPLV-q5S9OsFp-m-GTLQVBjUxTKwAZwefrL-2aG6SePO7e4Zy7lPQYJmbewXYGV5JrTNsRPlJILeL7c46VOXk99yp7dZjBrSwlmoET2BFvRttvk8sGlqd5KDfIW49H6r9TeQkJwEDd6mS-FCLgI"/><div class="flex flex-col min-w-0"><h1 class="font-headline-sm text-headline-sm text-slate-100 truncate">Artikel Details</h1><span class="font-label-meta text-label-meta text-slate-400 truncate">Reporter • Artikelansicht</span></div></div><div class="flex items-center gap-spacing-xs shrink-0"><button aria-label="Leseansicht anpassen" class="w-11 h-11 flex items-center justify-center rounded-full text-slate-300 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">format_size</span></button><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary font-semibold flex items-center justify-center shrink-0 shadow-sm"><span class="material-symbols-outlined text-slate-900 text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-[#0f131c]"><div class="flex flex-col w-full pb-28">
+<!-- Reading Progress Bar (Fixed beneath shell header) -->
+<div class="fixed top-16 inset-x-0 z-40 h-[3px] bg-slate-800/80 pointer-events-none">
+<div class="h-full bg-gradient-to-r from-amber-500 to-primary transition-[width] duration-150 ease-out" id="read-progress" style="width: 14%;"></div>
+</div>
+<!-- Editorial Canvas -->
+<div class="w-full max-w-reader-max-width mx-auto px-margin-mobile pt-spacing-lg flex flex-col gap-spacing-md">
+<!-- Status & Automation Pill Banner -->
+<div class="flex items-center justify-between gap-spacing-xs bg-[#182234] border border-slate-700/50 px-spacing-sm py-spacing-xs rounded-full shadow-inner">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.6)] shrink-0 transition-colors duration-300" id="read-status-dot"></span>
+<span class="font-label-meta text-label-meta uppercase tracking-wider text-secondary font-semibold truncate" id="read-status-label">Gelesen</span>
+</div>
+<div class="flex items-center gap-spacing-xs shrink-0">
+<span class="font-label-meta text-label-meta text-slate-400 hidden xs:inline-block sm:inline-block">Auto-Gelesen (5s)</span>
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input checked="" class="sr-only peer" id="auto-read-toggle" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-slate-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+<!-- Article Header Meta -->
+<header class="flex flex-col gap-spacing-sm pt-spacing-xs">
+<div class="flex items-center justify-between gap-spacing-sm flex-wrap">
+<div class="flex items-center gap-spacing-xs min-w-0">
+<div class="w-5 h-5 rounded-full bg-amber-500/20 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[13px] text-primary">newspaper</span>
+</div>
+<span class="font-label-sm text-label-sm text-slate-200 font-semibold truncate">Heise Online</span>
+<span class="font-label-meta text-label-meta text-slate-500">•</span>
+<span class="font-label-sm text-label-sm text-slate-400">Heute, 10:45 Uhr</span>
+</div>
+<div class="flex items-center gap-spacing-2xs bg-[#182234] border border-slate-700/50 px-spacing-xs py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+<span class="font-label-meta text-label-meta text-slate-300">4 Min. Lesezeit</span>
+</div>
+</div>
+<!-- Headline -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-[#f8fafc] tracking-tight leading-snug font-medium">
+        Open-Source AI Modelle erreichen neuen Meilenstein im Edge-Computing
+      </h1>
+<!-- Subtitle -->
+<p class="font-body-lg text-body-lg text-[#d8c3ad] leading-relaxed italic">
+        Effiziente Quantisierung ermöglicht komplexe Sprachmodelle direkt auf mobiler Hardware ohne Cloud-Abhängigkeit.
+      </p>
+<!-- Editorial Author / Tag Bar -->
+<div class="flex items-center gap-spacing-sm pt-spacing-2xs flex-wrap">
+<div class="flex items-center gap-spacing-2xs">
+<div class="w-6 h-6 rounded-full bg-primary-container text-[#472a00] text-[11px] font-bold flex items-center justify-center">
+            JS
+          </div>
+<span class="font-label-sm text-label-sm text-slate-300">Jens Schmitz</span>
+</div>
+<span class="font-label-meta text-label-meta text-slate-500">•</span>
+<span class="bg-[#1c2028] border border-slate-700/40 px-2 py-0.5 rounded font-label-meta text-label-meta text-slate-300 uppercase">Hardware &amp; KI</span>
+<span class="bg-[#1c2028] border border-slate-700/40 px-2 py-0.5 rounded font-label-meta text-label-meta text-slate-300 uppercase">Open Source</span>
+<span class="inline-flex items-center gap-spacing-2xs bg-amber-500/15 text-primary border border-amber-500/30 px-2 py-0.5 rounded font-label-meta text-label-meta font-semibold uppercase shadow-sm">
+<span class="material-symbols-outlined text-[13px]">summarize</span>Feed-Zusammenfassung
+</span>
+</div>
+</header>
+<!-- Visual Editorial Lead Image -->
+<figure class="my-spacing-xs rounded-xl overflow-hidden bg-[#181c24] border border-slate-800/80 shadow-md flex flex-col">
+<div class="w-full aspect-[16/9] relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Editorial close-up photograph of a contemporary smartphone resting on a minimalist slate desk displaying real-time neural network tensor weights. Ambient cool blue and warm paper tones reflect on the sleek glass edge. Soft natural directional studio light illuminates the high-tech circuitry textures with gentle depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdxN2Qs6fC5pIlreZuW7EfX_aZO3YXQ6uFARLKY35UIZWA3U_Z-tVDAGc4XhJ03gPlN6SnQLLEuMGoBh8wih5SZDsjMbRnZaXntEiq0dBXUZbgql8hA1xin_V2l1cetUnwyjnAqBmXY2DoUqOkNuoQVSJNb5XREHImnl52MhOGDClKnA_bcye0pc7bFI97Ws5M-hDsxzvlpkjjU8rKuesXWIlPXlhW5uvTrzYwO5EbLqKaKvpNnfS-"/>
+<div class="absolute bottom-2 right-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-0.5 rounded text-amber-200 border border-amber-500/30 font-label-meta text-label-meta shadow-sm">
+          Edge-Cluster NPU v4
+        </div>
+</div>
+<figcaption class="p-spacing-xs font-label-meta text-label-meta text-slate-400 bg-[#141821] border-t border-slate-800/60 flex justify-between items-center">
+<span class="">Mikroelektronische NPU-Auslastung während der lokalen Inferenz.</span>
+<span class="text-slate-500">Foto: heise dev/lab</span>
+</figcaption>
+</figure>
+<!-- Typography Body Container with Interactive Scaler Target -->
+<article class="flex flex-col gap-spacing-lg text-[#e2e8f0] transition-all duration-200 font-lead" id="article-body">
+<p class="font-body-reading-mobile text-body-reading-mobile leading-relaxed text-[#dfe2ee]">
+        Die Ära der zwingenden Anbindung an gigantische Serverzentren für generative Künstliche Intelligenz könnte sich deutlich schneller dem Ende zuneigen als erwartet. Neue mathematische Durchbrüche bei der ternären und 2-Bit-Quantisierung gestatten es Forschenden nun, vollwertige 8-Milliarden-Parameter-Modelle auf Smartphone-Chipsätzen mit erstaunlichen Inferenzraten von über 35 Tokens pro Sekunde auszuführen.
+      </p>
+<p class="font-body-reading-mobile text-body-reading-mobile leading-relaxed text-[#dfe2ee]">
+        Was bisher gigantische Serverracks mit enormer Leistungsaufnahme erforderte, wird durch algorithmische Optimierung handhabbar. Im Zentrum steht hierbei die Reduktion redundanter Gewichte in tiefen neuronalen Schichten, ohne das semantische Begriffsverständnis messbar zu beeinträchtigen.
+      </p>
+<!-- Editorial Pull Quote -->
+<aside class="my-spacing-xs bg-[#182234] border-l-4 border-primary-container p-spacing-lg rounded-r-xl rounded-l-sm flex flex-col gap-spacing-xs relative shadow-lg">
+<div class="flex items-center gap-spacing-xs text-primary">
+<span class="material-symbols-outlined text-[24px]">format_quote</span>
+<span class="font-label-meta text-label-meta uppercase tracking-wider font-semibold text-primary">Leitsatz der Studie</span>
+</div>
+<blockquote class="font-headline-md text-headline-md italic text-slate-100 leading-relaxed">
+          „Datensouveränität beginnt dort, wo kein Byte den lokalen Speicher des Endnutzers verlassen muss, um komplexe logische Schlüsse zu ziehen.“
+        </blockquote>
+<cite class="font-label-sm text-label-sm text-slate-400 not-italic mt-spacing-2xs">
+          — Dr. Helena Vance, Center for Distributed AI Architecture
+        </cite>
+</aside>
+<h2 class="font-headline-sm text-headline-sm text-[#f8fafc] pt-spacing-xs font-semibold">
+        Vorteile für Privatsphäre und Energiehaushalt
+      </h2>
+<p class="font-body-reading-mobile text-body-reading-mobile leading-relaxed text-[#dfe2ee]">
+        Neben dem evidenten Vorteil vollständiger Privatsphäre – private Dokumente, medizinische Anamnesen und vertrauliche Firmenkorrespondenz bleiben hermetisch auf dem Gerät isoliert – verringert sich auch der globale Energiebedarf. Drahtlose Mobilfunk-Übertragungen in die Cloud beanspruchen oft mehr Wattstunden als die optimierte NPU-Berechnung im Ruhezustand des Telefons.
+      </p>
+<!-- Key Insights Box -->
+<div class="bg-[#182234] p-spacing-md rounded-xl border border-slate-700/60 shadow-md flex flex-col gap-spacing-sm">
+<div class="flex items-center gap-spacing-xs">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="font-label-lg text-label-lg text-slate-100">Eckdaten der Neuerung</span>
+</div>
+<div class="grid grid-cols-2 gap-spacing-xs">
+<div class="bg-[#101520] border border-slate-800 p-spacing-xs rounded-lg flex flex-col">
+<span class="font-label-meta text-label-meta text-slate-400">RAM-Bedarf</span>
+<span class="font-label-lg text-label-lg text-slate-100 font-semibold">3,8 GB</span>
+<span class="font-label-meta text-label-meta text-secondary font-medium">-68% vs. FP16</span>
+</div>
+<div class="bg-[#101520] border border-slate-800 p-spacing-xs rounded-lg flex flex-col">
+<span class="font-label-meta text-label-meta text-slate-400">Geschwindigkeit</span>
+<span class="font-label-lg text-label-lg text-slate-100 font-semibold">36 Tok/s</span>
+<span class="font-label-meta text-label-meta text-secondary font-medium">Echtzeit-Lesen</span>
+</div>
+</div>
+</div>
+<p class="font-body-reading-mobile text-body-reading-mobile leading-relaxed text-[#dfe2ee]">
+        Erste Implementierungen stehen der Entwickler-Community bereits über offene Repositories zur freien Verfügung. Für Anwender zeichnet sich damit ein Paradigmenwechsel ab: Statt monatlicher Server-Abonnements rückt die geräteeigene Leistung wieder in den Vordergrund redaktioneller und analytischer Workflows.
+      </p>
+</article>
+<!-- Article Footer / Source Reference Card -->
+<div class="my-spacing-md p-spacing-md bg-[#182234] rounded-xl border border-amber-500/25 shadow-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-spacing-md"><div class="flex items-start gap-spacing-sm min-w-0"><div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center shrink-0 text-[#472a00] shadow-sm"><span class="material-symbols-outlined text-[20px] text-[#2a1700]">menu_book</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-spacing-xs"><h3 class="font-label-lg text-label-lg text-slate-100 font-semibold truncate">Vollständiger Artikel verfügbar</h3><span class="font-label-meta text-label-meta px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-amber-500/20 uppercase">Original</span></div><p class="font-body-sm text-body-sm text-slate-400 leading-snug mt-0.5">Dies ist eine redaktionelle Zusammenfassung aus dem RSS-Feed. Lesen Sie den ungekürzten Beitrag direkt auf heise online.</p></div></div><a class="inline-flex items-center justify-center gap-spacing-xs px-spacing-md py-spacing-xs bg-primary-container text-[#2a1700] hover:bg-amber-400 active:scale-95 rounded-xl font-label-sm text-label-sm font-bold transition-all shadow-[0_0_12px_rgba(245,158,11,0.25)] shrink-0 whitespace-nowrap" href="https://www.heise.de/developer/meldung/ai-edge-quantization" rel="noopener noreferrer" target="_blank"><span class="material-symbols-outlined text-[18px]">open_in_browser</span><span class="">Vollständigen Originalartikel lesen</span><span class="material-symbols-outlined text-[16px]">arrow_forward</span></a></div><div class="mt-spacing-lg mb-spacing-xl p-spacing-md bg-[#181c24] rounded-xl border border-slate-800 flex flex-col gap-spacing-xs">
+<span class="font-label-meta text-label-meta uppercase tracking-wider text-slate-400 font-semibold">Quellenangabe &amp; Verweis</span>
+<p class="font-body-sm text-body-sm text-slate-400">
+        Dieser Beitrag basiert auf dem Preprint der Stanford/LMU Forschungsgruppe „Quantized Neural Systems 2025“. Vollständige Benchmarks und Quelldateien sind über das Heise Open Repositorium abrufbar.
+      </p>
+<a class="inline-flex items-center gap-spacing-xs text-primary font-label-sm text-label-sm font-semibold pt-spacing-2xs hover:underline" href="https://heise.de" rel="noopener noreferrer" target="_blank">
+<span class="">heise.de/developer/meldung/ai-edge-quantization</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Ambient Floating Bottom Action Bar (Native iOS Glass Pill) -->
+<aside class="fixed bottom-3 inset-x-0 z-50 flex justify-center px-margin-mobile pointer-events-none">
+<nav class="pointer-events-auto w-full max-w-[420px] h-[54px] bg-[#111827]/92 backdrop-blur-2xl rounded-full border border-slate-700/60 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center justify-between px-spacing-sm">
+<!-- Bookmark Button -->
+<button aria-label="Für später speichern" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-primary active:scale-95 transition-all" id="btn-bookmark">
+<span class="material-symbols-outlined text-[22px]" id="bookmark-icon">bookmark</span>
+</button>
+<!-- Font Size Scaler Pill (A / A+) -->
+<div class="flex items-center bg-slate-800/90 border border-slate-700/50 rounded-full p-0.5">
+<button aria-label="Schrift verkleinern" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700/60 active:scale-95 transition-all" id="btn-font-smaller">
+<span class="font-label-sm text-label-sm font-semibold">A</span>
+</button>
+<button aria-label="Schrift vergrößern" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700/60 active:scale-95 transition-all" id="btn-font-larger">
+<span class="font-label-lg text-label-lg font-bold">A+</span>
+</button>
+</div>
+<!-- Mark as Read / Unread Toggle Button -->
+<button aria-label="Als gelesen markieren" class="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:bg-secondary/10 active:scale-95 transition-all" id="btn-toggle-read">
+<span class="material-symbols-outlined text-[22px] text-secondary shadow-[0_0_10px_rgba(78,222,163,0.3)]" id="read-toggle-icon" style='font-variation-settings: "FILL" 1;'>check_circle</span>
+</button>
+<!-- Share Button -->
+<button aria-label="Artikel teilen" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:scale-95 transition-all" id="btn-share">
+<span class="material-symbols-outlined text-[22px]">ios_share</span>
+</button>
+<!-- Open in Safari / External Browser -->
+<a aria-label="Im Webbrowser öffnen" class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-container text-[#2a1700] hover:bg-amber-400 active:scale-95 transition-all shadow-[0_0_12px_rgba(245,158,11,0.3)]" href="https://www.heise.de" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-[20px] font-medium">open_in_browser</span>
+</a>
+</nav>
+</aside>
+<!-- Interactive Feedback Toast -->
+<div class="fixed top-20 inset-x-0 mx-auto w-max max-w-[80vw] z-50 bg-slate-900/95 border border-slate-700/80 backdrop-blur-md text-slate-100 px-spacing-md py-spacing-xs rounded-full shadow-2xl flex items-center gap-spacing-xs transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none" id="toast-message">
+<span class="material-symbols-outlined text-[18px] text-secondary" id="toast-icon">schedule</span>
+<span class="font-label-sm text-label-sm truncate" id="toast-text">Automatisch als gelesen markiert (5s)</span>
+</div>
+</div>
+<script>
+  (() => {
+    // Interactive State Variables
+    let isRead = false;
+    let isBookmarked = false;
+    let currentScale = 1; // 0 = standard, 1 = medium, 2 = large
+    const fontScaleClasses = ['text-[17px] leading-[28px]', 'text-[19px] leading-[32px]', 'text-[21px] leading-[35px]'];
+
+    // DOM Elements
+    const bodyContainer = document.getElementById('article-body');
+    const readStatusDot = document.getElementById('read-status-dot');
+    const readStatusLabel = document.getElementById('read-status-label');
+    const btnToggleRead = document.getElementById('btn-toggle-read');
+    const readToggleIcon = document.getElementById('read-toggle-icon');
+    const btnBookmark = document.getElementById('btn-bookmark');
+    const bookmarkIcon = document.getElementById('bookmark-icon');
+    const btnFontSmaller = document.getElementById('btn-font-smaller');
+    const btnFontLarger = document.getElementById('btn-font-larger');
+    const btnShare = document.getElementById('btn-share');
+    const autoReadToggle = document.getElementById('auto-read-toggle');
+    const progressBar = document.getElementById('read-progress');
+    const toast = document.getElementById('toast-message');
+    const toastText = document.getElementById('toast-text');
+    const toastIcon = document.getElementById('toast-icon');
+
+    // Toast Messenger
+    let toastTimeout = null;
+    function showToast(msg, icon = 'check') {
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastText.textContent = msg;
+      toastIcon.textContent = icon;
+      toast.classList.remove('opacity-0', '-translate-y-2', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    // Mark Read Handler
+    function updateReadState(read) {
+      isRead = read;
+      if (isRead) {
+        readStatusDot.className = 'w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.6)] shrink-0 transition-colors duration-300';
+        readStatusLabel.textContent = 'Gelesen';
+        readStatusLabel.className = 'font-label-meta text-label-meta uppercase tracking-wider text-secondary font-semibold truncate';
+        readToggleIcon.style.fontVariationSettings = "'FILL' 1";
+        readToggleIcon.className = 'material-symbols-outlined text-[22px] text-secondary shadow-[0_0_10px_rgba(78,222,163,0.3)]';
+      } else {
+        readStatusDot.className = 'w-2 h-2 rounded-full bg-slate-500 shrink-0 transition-colors duration-300';
+        readStatusLabel.textContent = 'Ungelesen';
+        readStatusLabel.className = 'font-label-meta text-label-meta uppercase tracking-wider text-slate-400 font-semibold truncate';
+        readToggleIcon.style.fontVariationSettings = "'FILL' 0";
+        readToggleIcon.className = 'material-symbols-outlined text-[22px] text-slate-400';
+      }
+    }
+
+    btnToggleRead.addEventListener('click', () => {
+      updateReadState(!isRead);
+      showToast(isRead ? 'Als gelesen markiert' : 'Als ungelesen markiert', isRead ? 'done_all' : 'mark_chat_unread');
+    });
+
+    // Auto-Read Timer (5 seconds trigger)
+    let autoReadTimer = null;
+    function setupAutoRead() {
+      if (autoReadToggle.checked && !isRead) {
+        autoReadTimer = setTimeout(() => {
+          if (!isRead && autoReadToggle.checked) {
+            updateReadState(true);
+            showToast('Automatisch als gelesen markiert (5s)', 'schedule');
+          }
+        }, 5000);
+      }
+    }
+    setupAutoRead();
+
+    autoReadToggle.addEventListener('change', () => {
+      if (!autoReadToggle.checked && autoReadTimer) {
+        clearTimeout(autoReadTimer);
+        showToast('Auto-Gelesen deaktiviert', 'alarm_off');
+      } else if (autoReadToggle.checked) {
+        setupAutoRead();
+        showToast('Auto-Gelesen aktiviert', 'alarm_on');
+      }
+    });
+
+    // Bookmark Action
+    btnBookmark.addEventListener('click', () => {
+      isBookmarked = !isBookmarked;
+      if (isBookmarked) {
+        bookmarkIcon.style.fontVariationSettings = "'FILL' 1";
+        btnBookmark.classList.add('text-primary');
+        btnBookmark.classList.remove('text-slate-300');
+        showToast('Für später gespeichert', 'bookmark_added');
+      } else {
+        bookmarkIcon.style.fontVariationSettings = "'FILL' 0";
+        btnBookmark.classList.remove('text-primary');
+        btnBookmark.classList.add('text-slate-300');
+        showToast('Aus Leseliste entfernt', 'bookmark_remove');
+      }
+    });
+
+    // Typography Scaler
+    function applyFontScale() {
+      const paragraphs = bodyContainer.querySelectorAll('p');
+      paragraphs.forEach(p => {
+        p.classList.remove('text-[17px]', 'leading-[28px]', 'text-[19px]', 'leading-[32px]', 'text-[21px]', 'leading-[35px]');
+        if (currentScale === 0) {
+          p.classList.add('text-[17px]', 'leading-[28px]');
+        } else if (currentScale === 1) {
+          p.classList.add('text-[19px]', 'leading-[32px]');
+        } else {
+          p.classList.add('text-[21px]', 'leading-[35px]');
+        }
+      });
+    }
+
+    btnFontLarger.addEventListener('click', () => {
+      if (currentScale < 2) {
+        currentScale++;
+        applyFontScale();
+        showToast(`Schriftgröße erhöht (${currentScale === 2 ? 'Groß' : 'Standard'})`, 'format_size');
+      }
+    });
+
+    btnFontSmaller.addEventListener('click', () => {
+      if (currentScale > 0) {
+        currentScale--;
+        applyFontScale();
+        showToast(`Schriftgröße verringert (${currentScale === 0 ? 'Kompakt' : 'Standard'})`, 'format_size');
+      }
+    });
+
+    // Share Trigger
+    btnShare.addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Open-Source AI Modelle erreichen neuen Meilenstein',
+            text: 'Effiziente Quantisierung ermöglicht komplexe Sprachmodelle direkt auf mobiler Hardware.',
+            url: window.location.href,
+          });
+        } catch (e) {
+          // Cancelled or unsupported
+        }
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Artikel-Link kopiert', 'content_copy');
+      }
+    });
+
+    // Scroll Progress Tracker
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight > 0) {
+        const progress = Math.min(100, Math.max(0, Math.round((scrollTop / scrollHeight) * 100)));
+        progressBar.style.width = progress + '%';
+        if (progress > 85 && !isRead) {
+          updateReadState(true);
+        }
+      }
+    }, { passive: true });
+  })();
+</script></main></body></html>
