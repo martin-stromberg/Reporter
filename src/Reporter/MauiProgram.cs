@@ -8,8 +8,15 @@ using Reporter.Views;
 
 namespace Reporter;
 
+/// <summary>
+/// Configures and builds the .NET MAUI application.
+/// </summary>
 public static class MauiProgram
 {
+    /// <summary>
+    /// Creates and configures the <see cref="MauiApp"/>.
+    /// </summary>
+    /// <returns>A configured <see cref="MauiApp"/> instance.</returns>
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();

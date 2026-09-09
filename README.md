@@ -37,6 +37,29 @@ dotnet build Reporter.sln
 
 Auf Windows wird automatisch das `net10.0-windows10.0.19041.0`-Ziel gebaut. Für iOS ist die entsprechende Xcode-Umgebung auf macOS erforderlich.
 
+## Git Hooks
+
+Die Repository enthält Git-Hooks im Ordner `.githooks` (aus dem [Pattern-Collection](https://github.com/martin-stromberg/Pattern-Collection/tree/main/Git-Hooks)-Repo).
+
+Aktivieren:
+
+```bash
+git config --local core.hooksPath .githooks
+```
+
+Oder unter Windows `install-hooks.cmd` / unter macOS/Linux `install-hooks.sh` ausführen.
+
+Die Hooks prüfen unter anderem:
+- Konsistenz der RESX-Lokalisierung (`translation-check.py`)
+- Platzhalter-Implementierungen (`no-notimplemented-check.py`)
+- Razor-Lokalisierung und -Verwendung (`razor-l10n-check.py`, `razor-usage-check.py`)
+- Enum-Testabdeckung (`enum-coverage-check.py`)
+- XML-Dokumentation in `.cs`/`.csproj` (`csproj-xmldoc-check.py`)
+
+Hinweis: `pre-push` blockiert direkte Pushes auf `main` und `staging`.
+
+Die Projekte sind bereits so konfiguriert, dass `GenerateDocumentationFile` aktiviert und `CS1591` als Fehler behandelt wird. Neue öffentliche APIs müssen also mit XML-Dokumentation (`<summary>`, `<param>`, `<returns>`) versehen werden.
+
 ## Starten
 
 Auf Windows:

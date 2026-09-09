@@ -1,3 +1,18 @@
+## 2026-09-09 — XML-Dokumentation und csproj-xmldoc-Hook umgesetzt
+
+- `<GenerateDocumentationFile>true</GenerateDocumentationFile>` und `<WarningsAsErrors>CS1591</WarningsAsErrors>` in alle `.csproj` aufgenommen.
+- XML-Dokumentation (`<summary>`, `<param>`, `<returns>`) für alle öffentlichen Typen und Member ergänzt.
+- `Colors.xaml`/`Styles.xaml` mit `x:Class` und Code-Behind versehen, `x:ClassModifier="Internal"`, damit SourceGen-Helper nicht `CS1591` auslösen.
+- ResourceDictionary-Loading in `App.xaml.cs` über C#-Instanzen.
+- `AppResources.Designer.cs` auf auto-properties umgestellt.
+
+## 2026-09-09 — Git-Hooks übernommen
+
+- Git-Hooks aus `https://github.com/martin-stromberg/Pattern-Collection/tree/main/Git-Hooks` in `.githooks` übernommen.
+- `core.hooksPath` auf `.githooks` gesetzt.
+- RESX-Dateien um `reader`/`writer`-Header ergänzt, damit `translation-check.py` besteht.
+- `README.md` um Git-Hooks-Abschnitt ergänzt.
+
 ## 2026-09-09 — RESX-Lokalisierung an UI gebunden
 
 - `AppResources.resx` / `AppResources.de.resx` um Seiten- und Tab-Titel sowie Platzhaltertexte erweitert.

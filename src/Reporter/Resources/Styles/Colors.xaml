@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="Reporter.Resources.Styles.Colors"
+    x:ClassModifier="Internal">
 
     <!-- Design-System-Farben aus dem design-draft (Editorial Feed / Reporter Editorial Dark) -->
     <!-- Jeweils Light- und Dark-Werte; Styles greifen per AppThemeBinding darauf zu. -->
