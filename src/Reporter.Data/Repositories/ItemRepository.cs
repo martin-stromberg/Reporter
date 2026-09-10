@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -129,6 +131,7 @@ public class ItemRepository : IItemRepository
                 i.PublishedAt,
                 i.IsRead,
                 i.IsSavedForLater,
+                i.ContentHtml,
                 FeedTitle = i.Feed.Title,
                 CategoryId = i.Feed.CategoryId,
                 CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
@@ -147,6 +150,8 @@ public class ItemRepository : IItemRepository
             FeedTitle = e.FeedTitle,
             CategoryId = e.CategoryId,
             CategoryName = e.CategoryName,
+            ImageUrl = ExtractImageUrl(e.ContentHtml),
+            Summary = ExtractSummary(e.ContentHtml),
         }).ToList();
     }
 
@@ -265,6 +270,37 @@ public class ItemRepository : IItemRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.FeedId == feedId && i.GuidOrHash == guidOrHash);
         return entity is null ? null : MapToModel(entity);
+    }
+
+    private static string? ExtractImageUrl(string? contentHtml)
+    {
+        if (string.IsNullOrWhiteSpace(contentHtml))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(contentHtml, "<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value.Trim() : null;
+    }
+
+    private static string? ExtractSummary(string? contentHtml)
+    {
+        if (string.IsNullOrWhiteSpace(contentHtml))
+        {
+            return null;
+        }
+
+        var plain = Regex.Replace(contentHtml, "<.*?>", string.Empty);
+        plain = WebUtility.HtmlDecode(plain);
+        plain = plain.Replace('\n', ' ').Replace('\r', ' ').Trim();
+
+        if (string.IsNullOrWhiteSpace(plain))
+        {
+            return null;
+        }
+
+        const int MaxLength = 120;
+        return plain.Length <= MaxLength ? plain : plain[..MaxLength] + "…";
     }
 
     private static Item MapToModel(ItemEntity entity)

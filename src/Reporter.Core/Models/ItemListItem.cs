@@ -54,4 +54,14 @@ public class ItemListItem
     /// Gets the display name of the category, or <c>null</c> if no category is assigned.
     /// </summary>
     public string? CategoryName { get; init; }
+
+    /// <summary>
+    /// Gets the optional image URL extracted from the article content.
+    /// </summary>
+    public string? ImageUrl { get; init; }
+
+    /// <summary>
+    /// Gets a plain-text summary of the article content.
+    /// </summary>
+    public string? Summary { get; init; }
 }
