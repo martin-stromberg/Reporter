@@ -24,15 +24,17 @@ jobs:
       - name: Check if staging is behind main
         id: diff
         run: |
-          commits_behind="$(git rev-list HEAD..origin/staging --count)"
+          commits_behind="$(git rev-list origin/staging..HEAD --count)"
           echo "commits_behind=$commits_behind" >> "$GITHUB_OUTPUT"
 
       - name: Ensure automated-backmerge label exists
+        if: steps.diff.outputs.commits_behind > 0
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh label create automated-backmerge --color "1D76DB" --description "Automated PR from main to staging" --force
 
       - name: Create backmerge pull request
+        if: steps.diff.outputs.commits_behind > 0
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
