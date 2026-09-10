@@ -1,6 +1,8 @@
 # Release Notes
 
-## Unreleased
+## 0.0.1
+
+Erste Release-Version mit vollständigem CI/CD-Grundgerüst.
 
 ### CI/CD-Grundgerüst
 
