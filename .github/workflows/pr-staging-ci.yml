@@ -74,6 +74,7 @@ jobs:
       - name: Test
         run: >
           dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --no-build
+          --settings src/Reporter.Tests/coverlet.runsettings
           --collect:"XPlat Code Coverage"
           --logger "trx;LogFileName=test-results.trx"
           --logger "console;verbosity=normal"
