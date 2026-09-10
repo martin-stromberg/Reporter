@@ -2,8 +2,13 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:Reporter.Converters"
     x:Class="Reporter.Resources.Styles.Styles"
     x:ClassModifier="Internal">
+
+    <!-- Value Converters -->
+
+    <converters:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBoolConverter" />
 
     <!-- Typografie-Styles -->
 
