@@ -15,11 +15,12 @@ Tippe auf das App-Icon **Reporter**. Nach dem Start-Screen erscheint die Navigat
 
 ### 2. Zwischen den Bereichen wechseln
 
-Tippe auf einen der vier Tabs:
+Tippe auf einen der fünf Tabs:
 
 - **Ungelesen** — Übersicht neuer Artikel.
 - **Feeds** — Übersicht deiner Feeds.
 - **Später** — Artikel, die du für später markiert hast.
+- **Kategorien** — Kategorien für Feeds verwalten.
 - **Einstellungen** — App-Einstellungen.
 
 ## Ergebnis

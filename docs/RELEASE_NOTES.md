@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.0.2
+
+### Kategorieverwaltung
+
+- Neuer Tab **Kategorien** mit MAUI-Seite und ViewModel.
+- Kategorien können erstellt, umbenannt und gelöscht werden.
+- Validierung: leerer Name und Duplikate werden abgelehnt.
+- `ICategoryRepository.GetAllWithFeedCountAsync()` liefert Kategorie plus Anzahl zugeordneter Feeds.
+- Beim Löschen einer Kategorie setzt EF Core `DeleteBehavior.SetNull` die `category_id` zugeordneter Feeds auf `NULL`.
+- Unit- und Integrationstests für Repository und ViewModel in `Reporter.Tests` hinzugefügt.
+
 ## 0.0.1
 
 Erste Release-Version mit vollständigem CI/CD-Grundgerüst.

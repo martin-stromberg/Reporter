@@ -13,15 +13,15 @@ Branch: `task/issue-20-39ffe6d8699449baaa2bab58759ef7b9-kategorieverwaltung`
 | [x] | 5a | Offene Punkte prüfen | `plan.md` (aktualisiert) |
 | [x] | 5b | Plan gegen Anforderung und Testbedarf prüfen | `plan-check.md` |
 | [x] | 5c | Planungscommit | – |
-| [ ] | 6 | Implementierung | Codeänderungen |
-| [ ] | 7 | Plan-Review | `review.md` |
-| [ ] | 8 | Usability-Review | `review-usability.md` |
-| [ ] | 9 | Code-Review | `review-code.md` |
-| [ ] | 10 | Tests ausführen | `test-results.md` |
-| [ ] | – | Iteration oder Abschluss entscheiden | – |
+| [x] | 6 | Implementierung | Codeänderungen |
+| [x] | 7 | Plan-Review | `review.md` |
+| [x] | 8 | Usability-Review | `review-usability.md` |
+| [x] | 9 | Code-Review | `review-code.md` |
+| [x] | 10 | Tests ausführen | `test-results.md` |
+| [x] | – | Iteration oder Abschluss entscheiden | – |
 | [ ] | 11 | Folgeaufgaben dokumentieren | `continue.md` |
-| [ ] | 12 | Dokumentation erstellen | `docs/help/` |
-| [ ] | 12b | README aktualisieren | `README.md` |
-| [ ] | 12c | Release Notes aktualisieren | `docs/RELEASE_NOTES.md` |
+| [x] | 12 | Dokumentation erstellen | `docs/help/` |
+| [x] | 12b | README aktualisieren | `README.md` |
+| [x] | 12c | Release Notes aktualisieren | `docs/RELEASE_NOTES.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | – | Commit durchführen | – |

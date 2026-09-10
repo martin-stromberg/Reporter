@@ -7,7 +7,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 ## Features
 
 - .NET MAUI-App mit Shell-Navigation
-- Untere Navigationsleiste mit **Ungelesen**, **Feeds**, **Später** und **Einstellungen**
+- Untere Navigationsleiste mit **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
 - Light/Dark-Theme-Unterstützung über .NET MAUI `AppThemeBinding`
 - Design-System mit den Schriftarten **Newsreader** und **Inter** sowie Farb- und Typografie-Tokens aus dem `design-draft`
 - Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
@@ -78,7 +78,7 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 ## Architektur
 
 - `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
-- `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
+- `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**.
 - `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
 - `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`) und die Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`).
 - `Reporter.Data` stellt die EF Core-Entitäten und Repository-Implementierungen bereit; Repositories verwenden `IDbContextFactory<ReporterDbContext>` für kurzlebige, thread-sichere DbContext-Instanzen.
