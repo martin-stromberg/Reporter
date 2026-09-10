@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter"
+             x:Class="Reporter.Views.ArticleDetailPage"
+             x:DataType="vm:ArticleDetailViewModel"
+             Shell.NavBarIsVisible="False"
+             SafeAreaEdges="All"
+             Title="{Binding Item.Title, TargetNullValue='Artikel'}">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
+          Padding="0"
+          RowSpacing="0">
+        <!-- Status pill -->
+        <Grid Grid.Row="0"
+              Padding="16,12,16,0"
+              ColumnDefinitions="*,Auto">
+            <HorizontalStackLayout Grid.Column="0"
+                                   Spacing="6"
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding Item.IsRead, FallbackValue=False}">
+                <BoxView WidthRequest="8"
+                         HeightRequest="8"
+                         CornerRadius="4"
+                         Color="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}"
+                         VerticalOptions="Center"/>
+                <Label Text="Gelesen"
+                       Style="{StaticResource MetaStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Grid.Column="1"
+                                   Spacing="6"
+                                   VerticalOptions="Center">
+                <Label Text="{Binding AutoMarkReadLabel}"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"/>
+                <Switch IsToggled="{Binding IsAutoMarkRead, Mode=TwoWay}"
+                        OnColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
+                        ThumbColor="{AppThemeBinding Light={StaticResource LightOnSecondary}, Dark={StaticResource DarkOnSecondary}}"
+                        MinimumHeightRequest="44"
+                        MinimumWidthRequest="44"
+                        VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="1"
+                             Padding="16,8"
+                             Spacing="4">
+            <FlexLayout Wrap="Wrap"
+                        Direction="Row"
+                        JustifyContent="Start"
+                        AlignItems="Center"
+                        AlignContent="Start">
+                <Image Source="{Binding FeedIconUrl}"
+                       IsVisible="{Binding FeedIconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                       WidthRequest="16"
+                       HeightRequest="16"
+                       Margin="0,0,6,0"
+                       VerticalOptions="Center"/>
+                <BoxView WidthRequest="8"
+                         HeightRequest="8"
+                         CornerRadius="4"
+                         Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+                         Margin="0,0,8,0"
+                         VerticalOptions="Center"/>
+                <Label Text="{Binding FeedName}"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="1"
+                       Margin="0,0,4,0"/>
+                <Label Text="•"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       Margin="0,0,4,0"/>
+                <Label Text="{Binding PublishedAtText}"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       Margin="0,0,4,0"/>
+                <Label Text="•"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding ReadingTime, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                       Margin="0,0,4,0"/>
+                <Label Text="{Binding ReadingTime}"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding ReadingTime, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                       MaxLines="1"
+                       LineBreakMode="TailTruncation"/>
+            </FlexLayout>
+            <Label Text="{Binding Item.Title}"
+                   Style="{StaticResource HeadlineSmallStyle}"
+                   LineBreakMode="WordWrap"
+                   MaxLines="0"/>
+        </VerticalStackLayout>
+
+        <!-- WebView -->
+        <WebView Grid.Row="2"
+                 x:Name="ArticleWebView"
+                 VerticalOptions="Fill"
+                 HorizontalOptions="Fill">
+            <WebView.Source>
+                <HtmlWebViewSource Html="{Binding HtmlSource}"/>
+            </WebView.Source>
+        </WebView>
+
+        <!-- Source footer -->
+        <Border Grid.Row="3"
+                Padding="16,12"
+                Margin="16,8"
+                StrokeShape="RoundRectangle 12"
+                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+                Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
+                <VerticalStackLayout Grid.Column="0"
+                                     VerticalOptions="Center">
+                    <Label Text="Vollständiger Artikel verfügbar"
+                           Style="{StaticResource BodySmallStyle}"
+                           LineBreakMode="WordWrap"
+                           MaxLines="2"/>
+                    <Label Text="{Binding Item.Link}"
+                           Style="{StaticResource MetaStyle}"
+                           MaxLines="1"
+                           LineBreakMode="TailTruncation"
+                           IsVisible="{Binding Item.Link, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+                </VerticalStackLayout>
+                <Button Grid.Column="1"
+                        Text="Im Browser öffnen"
+                        Command="{Binding OpenInBrowserCommand}"
+                        MinimumHeightRequest="44"
+                        MinimumWidthRequest="44"
+                        VerticalOptions="Center"
+                        HorizontalOptions="End"/>
+            </Grid>
+        </Border>
+
+        <!-- Bottom action bar -->
+        <Grid Grid.Row="4"
+              Padding="8,8,8,24"
+              ColumnDefinitions="*,*,*,*,*,*"
+              Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+            <Border Grid.Column="0"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 22"
+                    Background="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Zurück">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoBackCommand}"/>
+                </Border.GestureRecognizers>
+                <Path Data="M18,8 L10,16 L18,24"
+                      Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                      StrokeThickness="2"
+                      StrokeLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Aspect="Uniform"
+                      WidthRequest="22"
+                      HeightRequest="22"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"
+                      Fill="Transparent"/>
+            </Border>
+            <Border Grid.Column="1"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 22"
+                    Background="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{Binding BookmarkButtonLabel}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleSavedForLaterCommand}"/>
+                </Border.GestureRecognizers>
+                <Path Data="M6,4 L22,4 L22,26 L14,20 L6,26 Z"
+                      Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                      StrokeThickness="2"
+                      StrokeLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Aspect="Uniform"
+                      WidthRequest="18"
+                      HeightRequest="18"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"
+                      Fill="Transparent">
+                    <Path.Triggers>
+                        <DataTrigger TargetType="Path" Binding="{Binding Item.IsSavedForLater}" Value="True">
+                            <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                        </DataTrigger>
+                    </Path.Triggers>
+                </Path>
+            </Border>
+            <Border Grid.Column="2"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 22"
+                    Background="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Schriftgröße wechseln">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleFontSizeCommand}"/>
+                </Border.GestureRecognizers>
+                <Label Text="{Binding FontSizeLabel}"
+                       Style="{StaticResource UiLabelStyle}"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+            </Border>
+            <Border Grid.Column="3"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 22"
+                    Background="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{Binding MarkAsReadButtonLabel}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleMarkReadCommand}"/>
+                </Border.GestureRecognizers>
+                <Path Data="M4,14 L12,22 L26,8"
+                      Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                      StrokeThickness="2"
+                      StrokeLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Aspect="Uniform"
+                      WidthRequest="18"
+                      HeightRequest="18"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"
+                      Fill="Transparent">
+                    <Path.Triggers>
+                        <DataTrigger TargetType="Path" Binding="{Binding Item.IsRead}" Value="True">
+                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+                        </DataTrigger>
+                    </Path.Triggers>
+                </Path>
+            </Border>
+            <Border Grid.Column="4"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 22"
+                    Background="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Teilen">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShareCommand}"/>
+                </Border.GestureRecognizers>
+                <Path Data="M20,8 L30,16 L20,24 M30,16 L8,16"
+                      Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                      StrokeThickness="2"
+                      StrokeLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Aspect="Uniform"
+                      WidthRequest="22"
+                      HeightRequest="22"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"
+                      Fill="Transparent"/>
+            </Border>
+            <Border Grid.Column="5"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 22"
+                    Background="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Im Browser öffnen">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenInBrowserCommand}"/>
+                </Border.GestureRecognizers>
+                <Path Data="M2,8 L30,8 M2,8 L2,28 L30,28 L30,8 M8,4 L8,8"
+                      Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                      StrokeThickness="2"
+                      StrokeLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Aspect="Uniform"
+                      WidthRequest="22"
+                      HeightRequest="22"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"
+                      Fill="Transparent"/>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -1,4 +1,5 @@
-using Reporter.Core.Models;
+using System.Diagnostics;
+using Microsoft.Maui.Controls;
 using Reporter.Core.Resources.Strings;
 using Reporter.Core.ViewModels;
 
@@ -26,7 +27,14 @@ public partial class UnreadPage : ContentPage
 
         if (BindingContext is UnreadViewModel viewModel)
         {
-            await viewModel.LoadCommand.ExecuteAsync(null);
+            try
+            {
+                await viewModel.LoadCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UnreadPage.OnAppearing failed: {ex}");
+            }
         }
     }
 
@@ -52,7 +60,14 @@ public partial class UnreadPage : ContentPage
         var selected = viewModel.Categories.FirstOrDefault(c => c.Name == action);
         if (selected is not null)
         {
-            await viewModel.SelectCategoryCommand.ExecuteAsync(selected);
+            try
+            {
+                await viewModel.SelectCategoryCommand.ExecuteAsync(selected);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"OnFilterClicked failed: {ex}");
+            }
         }
     }
 }
