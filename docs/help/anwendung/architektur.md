@@ -24,9 +24,14 @@
 ```mermaid
 graph TD
     A[UI / View] --> B[ViewModel]
-    B --> C[ArticleService]
-    C --> D[IArticleRepository]
-    D --> E[ArticleRepository]
+    B --> C[IFeedSyncService]
+    C --> D[HttpClient]
+    C --> E[IFeedRepository]
+    C --> F[IItemRepository]
+    C --> G[ISyncLogRepository]
+    E --> H[FeedRepository]
+    F --> I[ItemRepository]
+    G --> J[SyncLogRepository]
 ```
 
 ## Wichtige Klassen
@@ -39,9 +44,10 @@ graph TD
 - `AppResources` — Typisierter Zugriff auf RESX-Lokalisierung (EN/DE).
 - `BaseViewModel` — Basisklasse für alle ViewModels, erbt von `ObservableObject`.
 - `UnreadPage` / `UnreadViewModel` — Ansicht und ViewModel für ungelesene Artikel.
-- `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds.
+- `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds (inkl. Refresh-Buttons).
 - `LaterPage` / `LaterViewModel` — Ansicht und ViewModel für später gemerkte Artikel.
 - `SettingsPage` / `SettingsViewModel` — Ansicht und ViewModel für Einstellungen.
-- `Article` — Domänenmodell für einen Artikel (`Id`, `Title`, `IsRead`).
-- `IArticleRepository` / `ArticleRepository` — Schnittstelle und Implementierung für den Artikel-Zugriff.
-- `IArticleService` / `ArticleService` — Anwendungs-Service für Artikel-Operationen.
+- `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten.
+- `Item` — Domänenmodell für einen Artikel (`Id`, `Title`, `IsRead`, `ContentHtml`).
+- `IItemRepository` / `ItemRepository` — Schnittstelle und Implementierung für den Artikel-Zugriff.
+- `ISyncLogRepository` / `SyncLogRepository` — Schnittstelle und Implementierung für Synchronisations-Logs.

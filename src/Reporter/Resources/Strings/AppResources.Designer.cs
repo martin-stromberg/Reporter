@@ -126,6 +126,16 @@ public static class AppResources
     public static string ButtonDelete { get; private set; } = null!;
 
     /// <summary>
+    /// Gets the localized refresh button text.
+    /// </summary>
+    public static string ButtonRefresh { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized refresh all button text.
+    /// </summary>
+    public static string ButtonRefreshAll { get; private set; } = null!;
+
+    /// <summary>
     /// Gets the localized no button text.
     /// </summary>
     public static string ButtonNo { get; private set; } = null!;
@@ -176,6 +186,11 @@ public static class AppResources
     public static string LabelFeedHealthStatus { get; private set; } = null!;
 
     /// <summary>
+    /// Gets the localized label for the feed action column.
+    /// </summary>
+    public static string LabelFeedActions { get; private set; } = null!;
+
+    /// <summary>
     /// Gets the localized label for the feed last check timestamp.
     /// </summary>
     public static string LabelFeedLastCheck { get; private set; } = null!;
@@ -199,6 +214,11 @@ public static class AppResources
     /// Gets the localized placeholder text for the feed URL.
     /// </summary>
     public static string PlaceholderFeedUrl { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized synchronization error message.
+    /// </summary>
+    public static string SyncStatusError { get; private set; } = null!;
 
     static AppResources()
     {
@@ -225,6 +245,8 @@ public static class AppResources
         ButtonSave = GetString(nameof(ButtonSave));
         ButtonEdit = GetString(nameof(ButtonEdit));
         ButtonDelete = GetString(nameof(ButtonDelete));
+        ButtonRefresh = GetString(nameof(ButtonRefresh));
+        ButtonRefreshAll = GetString(nameof(ButtonRefreshAll));
         ButtonNo = GetString(nameof(ButtonNo));
         ButtonYes = GetString(nameof(ButtonYes));
         CategoryNone = GetString(nameof(CategoryNone));
@@ -235,11 +257,13 @@ public static class AppResources
         ErrorFeedUrlInvalid = GetString(nameof(ErrorFeedUrlInvalid));
         LabelFeedCategory = GetString(nameof(LabelFeedCategory));
         LabelFeedHealthStatus = GetString(nameof(LabelFeedHealthStatus));
+        LabelFeedActions = GetString(nameof(LabelFeedActions));
         LabelFeedLastCheck = GetString(nameof(LabelFeedLastCheck));
         LabelFeedTitle = GetString(nameof(LabelFeedTitle));
         LabelFeedUnreadCount = GetString(nameof(LabelFeedUnreadCount));
         PlaceholderFeedTitle = GetString(nameof(PlaceholderFeedTitle));
         PlaceholderFeedUrl = GetString(nameof(PlaceholderFeedUrl));
+        SyncStatusError = GetString(nameof(SyncStatusError));
     }
 
     private static string GetString(string name)

@@ -26,7 +26,9 @@
                 ItemDisplayBinding="{Binding Name}" />
         <Button Text="{x:Static strings:AppResources.ButtonSave}"
                 Command="{Binding SaveCommand}" />
-        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto"
+        <Button Text="{x:Static strings:AppResources.ButtonRefreshAll}"
+                Command="{Binding RefreshAllCommand}" />
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
               Padding="0,8">
             <Label Text="{x:Static strings:AppResources.LabelFeedTitle}"
                    Style="{StaticResource UiLabelStyle}" />
@@ -46,12 +48,16 @@
                    Style="{StaticResource UiLabelStyle}"
                    Grid.Column="4"
                    Margin="10,0" />
+            <Label Text="{x:Static strings:AppResources.LabelFeedActions}"
+                   Style="{StaticResource UiLabelStyle}"
+                   Grid.Column="5"
+                   Margin="10,0" />
         </Grid>
         <CollectionView ItemsSource="{Binding Feeds}"
                         HeightRequest="300">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto"
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                           Padding="0,4">
                         <Label Text="{Binding Title}"
                                VerticalOptions="Center" />
@@ -83,13 +89,17 @@
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
+                        <Button Text="{x:Static strings:AppResources.ButtonRefresh}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FeedsViewModel}}, Path=RefreshCommand}"
+                                CommandParameter="{Binding .}"
+                                Grid.Column="5" />
                         <Button Text="{x:Static strings:AppResources.ButtonEdit}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FeedsViewModel}}, Path=EditCommand}"
                                 CommandParameter="{Binding .}"
-                                Grid.Column="5" />
+                                Grid.Column="6" />
                         <Button Text="{x:Static strings:AppResources.ButtonDelete}"
                                 Clicked="OnDeleteClicked"
-                                Grid.Column="6" />
+                                Grid.Column="7" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

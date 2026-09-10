@@ -13,6 +13,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 - Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
 - ViewModel-Basen mit `CommunityToolkit.Mvvm`
 - Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch), Tab-Titel und Platzhaltertexte sind bereits an `AppResources` gebunden
+- RSS-/Atom-Feed-Abruf, Parsing und Speicherung neuer Artikel inklusive Feed-Health (`OK`/`Warning`/`Error`) und Sync-Log
 
 ## Projektstruktur
 
@@ -80,9 +81,10 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 - `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
 - `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**.
 - `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
-- `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`) und die Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`).
+- `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`), Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`) und den Anwendungs-Service `IFeedSyncService` / `FeedSyncService`.
 - `Reporter.Data` stellt die EF Core-Entitäten und Repository-Implementierungen bereit; Repositories verwenden `IDbContextFactory<ReporterDbContext>` für kurzlebige, thread-sichere DbContext-Instanzen.
-- `BaseViewModel` dient als Basis für alle ViewModels.
+- `Reporter` (MAUI-Projekt) enthält `BaseViewModel`, `FeedsViewModel`/`FeedsPage` und die übrige UI.
+- `FeedsViewModel` nutzt `IFeedSyncService` für manuelles Refresh einzelner oder aller Feeds.
 
 ## Tests
 

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Services;
 using Reporter.Resources.Strings;
 
 namespace Reporter.ViewModels;
@@ -13,10 +14,12 @@ public partial class FeedsViewModel : BaseViewModel
 {
     private readonly IFeedRepository _feedRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IFeedSyncService _feedSyncService;
 
     private string _newUrl = string.Empty;
     private string _newTitle = string.Empty;
     private string _errorMessage = string.Empty;
+    private bool _isSyncing;
     private FeedListItem? _selectedFeed;
     private Category? _selectedCategory;
     private ObservableCollection<FeedListItem> _feeds = [];
@@ -27,14 +30,18 @@ public partial class FeedsViewModel : BaseViewModel
     /// </summary>
     /// <param name="feedRepository">The feed repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
-    public FeedsViewModel(IFeedRepository feedRepository, ICategoryRepository categoryRepository)
+    /// <param name="feedSyncService">The feed synchronization service.</param>
+    public FeedsViewModel(IFeedRepository feedRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService)
     {
         _feedRepository = feedRepository;
         _categoryRepository = categoryRepository;
+        _feedSyncService = feedSyncService;
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         EditCommand = new AsyncRelayCommand<FeedListItem?>(EditAsync);
         DeleteCommand = new AsyncRelayCommand<FeedListItem?>(DeleteAsync);
+        RefreshCommand = new AsyncRelayCommand<FeedListItem?>(RefreshAsync, _ => !IsSyncing);
+        RefreshAllCommand = new AsyncRelayCommand(RefreshAllAsync, () => !IsSyncing);
     }
 
     /// <summary>
@@ -56,6 +63,16 @@ public partial class FeedsViewModel : BaseViewModel
     /// Gets the command that deletes a feed.
     /// </summary>
     public AsyncRelayCommand<FeedListItem?> DeleteCommand { get; }
+
+    /// <summary>
+    /// Gets the command that refreshes a single feed.
+    /// </summary>
+    public AsyncRelayCommand<FeedListItem?> RefreshCommand { get; }
+
+    /// <summary>
+    /// Gets the command that refreshes all feeds.
+    /// </summary>
+    public AsyncRelayCommand RefreshAllCommand { get; }
 
     /// <summary>
     /// Gets or sets the URL for a new or edited feed.
@@ -94,6 +111,22 @@ public partial class FeedsViewModel : BaseViewModel
     /// Gets a value indicating whether an error message is present.
     /// </summary>
     public bool HasError => _errorMessage.Length > 0;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a synchronization is in progress.
+    /// </summary>
+    public bool IsSyncing
+    {
+        get => _isSyncing;
+        set
+        {
+            if (SetProperty(ref _isSyncing, value))
+            {
+                RefreshCommand.NotifyCanExecuteChanged();
+                RefreshAllCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets the feed currently selected for editing.
@@ -243,6 +276,66 @@ public partial class FeedsViewModel : BaseViewModel
             NewUrl = string.Empty;
             NewTitle = string.Empty;
             SelectedCategory = Categories.FirstOrDefault();
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task RefreshAsync(FeedListItem? feed)
+    {
+        if (feed is null || IsSyncing)
+        {
+            return;
+        }
+
+        IsSyncing = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var result = await _feedSyncService.SyncFeedAsync(feed.Id);
+            if (result.Status == FeedHealth.Error)
+            {
+                ErrorMessage = result.Message ?? AppResources.SyncStatusError;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task RefreshAllAsync()
+    {
+        if (IsSyncing)
+        {
+            return;
+        }
+
+        IsSyncing = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var result = await _feedSyncService.SyncAllAsync();
+            if (result.Status == FeedHealth.Error)
+            {
+                ErrorMessage = result.Message ?? AppResources.SyncStatusError;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSyncing = false;
         }
 
         await LoadAsync();

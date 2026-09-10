@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 using Reporter.Data;
 using Reporter.Data.Repositories;
@@ -46,6 +47,8 @@ public static class MauiProgram
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()
+            .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
             .AddSingleton<LaterViewModel>()

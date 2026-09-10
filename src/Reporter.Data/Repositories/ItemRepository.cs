@@ -137,6 +137,16 @@ public class ItemRepository : IItemRepository
         return entities.Select(MapToModel).ToList();
     }
 
+    /// <inheritdoc />
+    public async Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.FeedId == feedId && i.GuidOrHash == guidOrHash);
+        return entity is null ? null : MapToModel(entity);
+    }
+
     private static Item MapToModel(ItemEntity entity)
     {
         return new Item

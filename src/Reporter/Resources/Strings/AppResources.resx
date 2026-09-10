@@ -75,6 +75,12 @@
   <data name="ButtonDelete" xml:space="preserve">
     <value>Delete</value>
   </data>
+  <data name="ButtonRefresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="ButtonRefreshAll" xml:space="preserve">
+    <value>Refresh all</value>
+  </data>
   <data name="ButtonNo" xml:space="preserve">
     <value>No</value>
   </data>
@@ -105,6 +111,9 @@
   <data name="LabelFeedHealthStatus" xml:space="preserve">
     <value>Health</value>
   </data>
+  <data name="LabelFeedActions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
   <data name="LabelFeedLastCheck" xml:space="preserve">
     <value>Last check</value>
   </data>
@@ -119,5 +128,8 @@
   </data>
   <data name="PlaceholderFeedUrl" xml:space="preserve">
     <value>https://example.com/feed</value>
+  </data>
+  <data name="SyncStatusError" xml:space="preserve">
+    <value>Synchronization failed.</value>
   </data>
 </root>
