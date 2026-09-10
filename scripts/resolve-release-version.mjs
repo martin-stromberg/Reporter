@@ -104,7 +104,7 @@ function runSemanticReleaseDryRun() {
     }
   );
   const output = (result.stdout || "") + (result.stderr || "");
-  const match = output.match(/The next release version is ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?)/);
+  const match = output.match(/the next release version is ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?)/i);
   return match ? match[1] : null;
 }
 

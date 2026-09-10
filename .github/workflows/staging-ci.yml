@@ -152,7 +152,7 @@ jobs:
 
           version=""
           changed="false"
-          if [[ "$output" =~ The\ next\ release\ version\ is\ ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?) ]]; then
+          if [[ "$output" =~ [Tt]he\ next\ release\ version\ is\ ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?) ]]; then
             version="${BASH_REMATCH[1]}"
             changed="true"
           fi
