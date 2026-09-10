@@ -33,6 +33,27 @@ public class CategoryRepository : ICategoryRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<CategoryWithCount>> GetAllWithFeedCountAsync()
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = await context.Categories
+            .AsNoTracking()
+            .GroupJoin(
+                context.Feeds.AsNoTracking(),
+                c => c.Id,
+                f => f.CategoryId,
+                (c, feeds) => new CategoryWithCount
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    FeedCount = feeds.Count(),
+                })
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        return query;
+    }
+
+    /// <inheritdoc />
     public async Task<Category?> GetByIdAsync(Guid id)
     {
         await using var context = await _factory.CreateDbContextAsync();

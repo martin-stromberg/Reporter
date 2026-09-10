@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:Reporter.Resources.Strings;assembly=Reporter"
+             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
+             x:Class="Reporter.Views.CategoriesPage"
+             Title="{x:Static strings:AppResources.PageTitleCategories}">
+    <VerticalStackLayout Spacing="16" Padding="20">
+        <Label Text="{x:Static strings:AppResources.PageTitleCategories}"
+               Style="{StaticResource HeadlineStyle}"
+               HorizontalOptions="Center" />
+        <Entry x:Name="CategoryNameEntry"
+               Text="{Binding NewCategoryName}"
+               Placeholder="{x:Static strings:AppResources.LabelCategoryName}"
+               ReturnCommand="{Binding SaveCommand}" />
+        <Label Text="{Binding ErrorMessage}"
+               TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+               IsVisible="{Binding HasError}"
+               HorizontalOptions="Center" />
+        <Button Text="{x:Static strings:AppResources.ButtonSave}"
+                Command="{Binding SaveCommand}" />
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto"
+              Padding="0,8">
+            <Label Text="{x:Static strings:AppResources.LabelCategoryName}"
+                   Style="{StaticResource UiLabelStyle}" />
+            <Label Text="{x:Static strings:AppResources.LabelCategoryFeedCount}"
+                   Style="{StaticResource UiLabelStyle}"
+                   Grid.Column="1"
+                   Margin="10,0" />
+        </Grid>
+        <CollectionView ItemsSource="{Binding Categories}"
+                        x:Name="CategoriesCollectionView"
+                        HeightRequest="300">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto"
+                          Padding="0,4">
+                        <Label Text="{Binding Name}"
+                               VerticalOptions="Center" />
+                        <Label Text="{Binding FeedCount}"
+                               VerticalOptions="Center"
+                               Grid.Column="1"
+                               Margin="10,0" />
+                        <Button Text="{x:Static strings:AppResources.ButtonEdit}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CategoriesViewModel}}, Path=EditCommand}"
+                                CommandParameter="{Binding .}"
+                                Grid.Column="2" />
+                        <Button Text="{x:Static strings:AppResources.ButtonDelete}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CategoriesViewModel}}, Path=DeleteCommand}"
+                                CommandParameter="{Binding .}"
+                                Grid.Column="3" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

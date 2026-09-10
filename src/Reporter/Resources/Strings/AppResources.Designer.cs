@@ -85,6 +85,46 @@ public static class AppResources
     /// </summary>
     public static string PlaceholderSettings { get; private set; } = null!;
 
+    /// <summary>
+    /// Gets the localized title for the categories page.
+    /// </summary>
+    public static string PageTitleCategories { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized label for the categories tab.
+    /// </summary>
+    public static string TabCategories { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized placeholder text for the categories page.
+    /// </summary>
+    public static string PlaceholderCategories { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized header for the category name column.
+    /// </summary>
+    public static string LabelCategoryName { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized header for the feed count column.
+    /// </summary>
+    public static string LabelCategoryFeedCount { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized save button text.
+    /// </summary>
+    public static string ButtonSave { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized edit button text.
+    /// </summary>
+    public static string ButtonEdit { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized delete button text.
+    /// </summary>
+    public static string ButtonDelete { get; private set; } = null!;
+
     static AppResources()
     {
         ResourceManager = new ResourceManager("Reporter.Resources.Strings.AppResources", typeof(AppResources).Assembly);
@@ -102,6 +142,14 @@ public static class AppResources
         PlaceholderFeeds = GetString(nameof(PlaceholderFeeds));
         PlaceholderLater = GetString(nameof(PlaceholderLater));
         PlaceholderSettings = GetString(nameof(PlaceholderSettings));
+        PageTitleCategories = GetString(nameof(PageTitleCategories));
+        TabCategories = GetString(nameof(TabCategories));
+        PlaceholderCategories = GetString(nameof(PlaceholderCategories));
+        LabelCategoryName = GetString(nameof(LabelCategoryName));
+        LabelCategoryFeedCount = GetString(nameof(LabelCategoryFeedCount));
+        ButtonSave = GetString(nameof(ButtonSave));
+        ButtonEdit = GetString(nameof(ButtonEdit));
+        ButtonDelete = GetString(nameof(ButtonDelete));
     }
 
     private static string GetString(string name)

@@ -26,6 +26,9 @@ public partial class AppShell : Shell
         var laterTab = new Tab { Title = AppResources.TabLater };
         laterTab.Items.Add(new ShellContent { Title = AppResources.TabLater, Content = services.GetRequiredService<LaterPage>() });
 
+        var categoriesTab = new Tab { Title = AppResources.TabCategories };
+        categoriesTab.Items.Add(new ShellContent { Title = AppResources.TabCategories, Content = services.GetRequiredService<CategoriesPage>() });
+
         var settingsTab = new Tab { Title = AppResources.TabSettings };
         settingsTab.Items.Add(new ShellContent { Title = AppResources.TabSettings, Content = services.GetRequiredService<SettingsPage>() });
 
@@ -33,6 +36,7 @@ public partial class AppShell : Shell
         tabBar.Items.Add(unreadTab);
         tabBar.Items.Add(feedsTab);
         tabBar.Items.Add(laterTab);
+        tabBar.Items.Add(categoriesTab);
         tabBar.Items.Add(settingsTab);
 
         Items.Add(tabBar);

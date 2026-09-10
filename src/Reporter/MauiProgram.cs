@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Reporter.Core.Interfaces;
+using Reporter.Core.ViewModels;
 using Reporter.Data;
 using Reporter.Data.Repositories;
 using Reporter.ViewModels;
@@ -48,10 +49,12 @@ public static class MauiProgram
             .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
             .AddSingleton<LaterViewModel>()
+            .AddSingleton<CategoriesViewModel>()
             .AddSingleton<SettingsViewModel>()
             .AddTransient<UnreadPage>()
             .AddTransient<FeedsPage>()
             .AddTransient<LaterPage>()
+            .AddTransient<CategoriesPage>()
             .AddTransient<SettingsPage>()
             .AddTransient<AppShell>();
 

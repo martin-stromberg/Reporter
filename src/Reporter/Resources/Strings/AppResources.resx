@@ -51,4 +51,28 @@
   <data name="PlaceholderSettings" xml:space="preserve">
     <value>Settings will appear here.</value>
   </data>
+  <data name="PageTitleCategories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="TabCategories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="PlaceholderCategories" xml:space="preserve">
+    <value>Categories will appear here.</value>
+  </data>
+  <data name="LabelCategoryName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="LabelCategoryFeedCount" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ButtonEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="ButtonDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
 </root>
