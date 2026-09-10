@@ -1,0 +1,34 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-scan:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload restore Reporter.sln
+
+      - name: Restore
+        run: dotnet restore Reporter.sln
+
+      - name: Security scan
+        uses: ./.github/actions/security-scan
+        with:
+          solution-path: Reporter.sln
+          artifact-name: vulnerable-packages-weekly

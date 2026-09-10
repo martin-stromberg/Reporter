@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### CI/CD-Grundgerüst
+
+- GitHub Actions-Workflows für PR-Qualitätsgates nach `staging` eingerichtet.
+- `verify-pr-source.yml` erlaubt PRs nach `main` nur aus `staging`.
+- `pr-staging-ci.yml` führt `static checks` (Format, Security-Scan, statische Analyse) und `build & test` (Coverage ≥ 70 %) parallel aus.
+- `security-scan.yml` führt einen wöchentlichen Vulnerability-Scan aus.
+- Wiederverwendbare Composite Action `.github/actions/security-scan` für den Sicherheits-Scan.
+
 ### Repository-Schicht und Domänenmodelle
 
 - Domänenmodelle `Feed`, `Category`, `Item`, `Keyword`, `Settings` und `SyncLog` in `Reporter.Core.Models` hinzugefügt.
