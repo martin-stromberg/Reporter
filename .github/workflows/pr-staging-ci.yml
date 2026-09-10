@@ -35,7 +35,7 @@ jobs:
         run: dotnet workload restore Reporter.sln
 
       - name: Restore
-        run: dotnet restore Reporter.sln
+        run: dotnet restore Reporter.sln -r win-x64
 
       - name: Format check
         run: dotnet format Reporter.sln --verify-no-changes --no-restore --severity error
@@ -66,7 +66,7 @@ jobs:
         run: dotnet workload restore Reporter.sln
 
       - name: Restore
-        run: dotnet restore Reporter.sln
+        run: dotnet restore Reporter.sln -r win-x64
 
       - name: Build
         run: dotnet build Reporter.sln --configuration Release --no-restore
