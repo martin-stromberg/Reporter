@@ -83,6 +83,42 @@ public class FeedRepository : IFeedRepository
         await context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FeedListItem>> GetAllWithDetailsAsync()
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var items = context.Items.AsNoTracking();
+
+        var details = await context.Feeds
+            .AsNoTracking()
+            .OrderBy(f => f.Title)
+            .Select(f => new FeedListItem
+            {
+                Id = f.Id,
+                Title = f.Title,
+                Url = f.Url,
+                CategoryId = f.CategoryId,
+                CategoryName = f.Category == null ? null : f.Category.Name,
+                LastCheckedAt = f.LastCheckedAt,
+                HealthStatus = f.HealthStatus,
+                HealthLastChange = f.HealthLastChange,
+                UnreadCount = items.Count(i => i.FeedId == f.Id && !i.IsRead),
+            })
+            .ToListAsync();
+
+        return details;
+    }
+
+    /// <inheritdoc />
+    public async Task<Feed?> GetByUrlAsync(string url)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Feeds
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Url == url);
+        return entity is null ? null : MapToModel(entity);
+    }
+
     private static Feed MapToModel(FeedEntity entity)
     {
         return new Feed
