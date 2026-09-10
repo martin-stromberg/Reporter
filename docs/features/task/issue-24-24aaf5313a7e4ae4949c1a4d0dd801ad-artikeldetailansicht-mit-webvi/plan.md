@@ -30,7 +30,7 @@ Nutzer können einen Artikel in einer lesefreundlichen Detailansicht öffnen. Be
 ### 1. Domain-/Daten-Layer prüfen und ergänzen (falls nötig)
 - [ ] `src/Reporter.Core/Models/Item.cs` und `IItemRepository` bestätigen, dass `ContentHtml`, `IsRead`, `IsSavedForLater`, `Link`, `PublishedAt`, `Title` vollständig verfügbar sind.
 - [ ] `GetByIdAsync` für Detailansicht integrieren; `MarkAsReadAsync`/`ToggleSavedForLaterAsync` direkt nutzen.
-- [ ] Prüfen, ob `FeedName` / Feed-Icon bereits über `FeedId` verfügbar sind; falls nicht, entsprechende Zuordnung ergänzen.
+- [x] Prüfen, ob `FeedName` / Feed-Icon bereits über `FeedId` verfügbar sind. `FeedName` ist verfügbar, Feed-Icon ist nicht umsetzbar, weil `Feed` kein Icon/Image-Property besitzt (Out-of-Scope für dieses Arbeitspaket; Platzhalter-BoxView wird angezeigt).
 
 ### 2. ViewModel erstellen
 - [ ] `src/Reporter.Core/ViewModels/ArticleDetailViewModel.cs` anlegen.
@@ -99,7 +99,7 @@ Nutzer können einen Artikel in einer lesefreundlichen Detailansicht öffnen. Be
 - `ContentHtml` wird in einem generierten HTML-Wrapper geladen, damit Schrift, Dark Mode und Floating Bar dem Design-Draft entsprechen.
 - Automatische Gelesen-Verzögerung wird zunächst mit einem 5-Sekunden-Fallback und einem `Auto-Gelesen`-Toggle umgesetzt; sobald das Einstellungen-Arbeitspaket verfügbar ist, wird der konfigurierbare Wert an die Initialisierung in `ArticleDetailViewModel` angebunden (siehe Schritt 6).
 - Floating Reader Control Bar und Quellen-Footer-Karte bleiben native MAUI-`Grid`/Border-Elemente außerhalb des WebView, damit Touch-Targets und `AppThemeBinding` sichergestellt sind.
-- Feed-Icon wird aus der verknüpften Feed-Quelle genutzt, sofern verfügbar; ansonsten ein Platzhalter.
+- Feed-Icon ist in diesem Arbeitspaket Out-of-Scope, weil `Feed` (Domain-Modell und Daten-Entität) kein Icon-/Image-Property enthält. Stattdessen wird ein farbiger Platzhalter-BoxView im Header angezeigt.
 - Untertitel, Autor- und Tag-Leiste werden nur umgesetzt, wenn die Metadaten im `Item`-Objekt oder dem `ContentHtml` bereits enthalten sind; ansonsten als `Out-of-Scope` für dieses Arbeitspaket markiert.
 - Teilen über `Microsoft.Maui.ApplicationModel.DataTransfer.Share` vorausgesetzt.
 

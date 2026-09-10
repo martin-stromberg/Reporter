@@ -1,6 +1,7 @@
+using System.Diagnostics;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 using Reporter.Core.Models;
 
 namespace Reporter.Views;
@@ -47,7 +48,7 @@ public partial class ArticleCardView : ContentView
     }
 
     /// <summary>
-    /// Gets or sets the command that opens the original article.
+    /// Gets or sets the command that opens the article detail page.
     /// </summary>
     public ICommand? OpenArticleCommand
     {
@@ -75,9 +76,18 @@ public partial class ArticleCardView : ContentView
 
     private static async Task OpenArticleAsync(ItemListItem? item)
     {
-        if (item is not null && !string.IsNullOrEmpty(item.Link))
+        if (item is null)
         {
-            await Browser.OpenAsync(item.Link, BrowserLaunchMode.SystemPreferred);
+            return;
+        }
+
+        try
+        {
+            await Shell.Current.GoToAsync($"articledetail?itemId={item.Id}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"OpenArticleAsync failed: {ex}");
         }
     }
 }

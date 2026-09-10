@@ -1,5 +1,11 @@
 # Release Notes
 
+## Unreleased
+
+### Artikeldetailansicht mit WebView und Lesestatus (Issue #24)
+
+- Neue `ItemDetailPage` mit `WebView` und visuellem Lesestatus für Artikel.
+
 ## 0.0.4
 
 ### Ungelesen-Dashboard mit Kategoriefilter, Pull-to-Refresh und Infinity-Scroll

@@ -59,3 +59,14 @@ Design-Entwurf folgen.
 - Geprüft auf 390 × 844 pt (Windows-Handy-Fenster).
 - Verwendet dieselbe `ArticleCardView` wie das Ungelesen-Dashboard.
 - Lesezeichen-Icon füllt sich, wenn der Artikel gespeichert ist.
+
+### Artikeldetailansicht (issue-24)
+- Geprüft gegen `design-draft/stitch_local_rss_feed_reader/artikel_lesemodus/screen.png` und `artikel_lesemodus_dark_mode/screen.png`.
+- Implementiert als `Grid` mit `RowDefinitions="Auto,Auto,*,Auto,Auto"`; der `WebView` füllt die verbleibende Höhe und übernimmt das Scrolling nativ.
+- Keine verschachtelten `CollectionView`/`ScrollView`.
+- Touch-Ziele der Floating Bottom Action Bar und des `Switch` sind mindestens 44 × 44 pt (`WidthRequest="44"` / `HeightRequest="44"` bzw. `MinimumWidthRequest="44"` `MinimumHeightRequest="44"`).
+- Farben und Symbole nutzen durchgehend `AppThemeBinding` (`Light...` / `Dark...`).
+- `WebView`-Inhalte verwenden `color-scheme: light dark` und `prefers-color-scheme` CSS für den Dark Mode.
+- Getestete Größen: 390 × 844 pt und 768 × 1024 pt.
+- Iteration 2: Status-Pille mit grünem Dot, "Auto-Gelesen (X s)"-Beschriftung, Header per `FlexLayout`, 44 × 44 pt Touch-Targets für "Im Browser öffnen" und "Alle gelesen", Safe-Area-Padding am unteren Action-Bar, DI-Registrierung und Auto-Mark-Timer-Disposal ergänzt.
+- **Offen:** UI-Review-Screenshots (Light/Dark, 390 × 844 pt) müssen noch in diesen Abschnitt eingefügt werden (siehe `continue.md`).

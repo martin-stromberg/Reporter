@@ -14,6 +14,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 - ViewModel-Basen mit `CommunityToolkit.Mvvm`
 - Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch), Tab-Titel und Platzhaltertexte sind bereits an `AppResources` gebunden
 - RSS-/Atom-Feed-Abruf, Parsing und Speicherung neuer Artikel inklusive Feed-Health (`OK`/`Warning`/`Error`) und Sync-Log
+- Artikeldetailansicht mit WebView-Volltextdarstellung, automatischem Gelesen-Markieren, `Für später bewahren`-Toggle, Teilen und Öffnen im Browser (Issue #24)
 
 ## Projektstruktur
 
