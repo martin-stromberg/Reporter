@@ -24,4 +24,4 @@ Branch: `task/issue-21-2a27cc49e8354c2e8973f1660ea7f55c-feed-verwaltung-inkl-kat
 | [ ] | 12b | README aktualisieren | `README.md` |
 | [ ] | 12c | Release Notes aktualisieren | `docs/RELEASE_NOTES.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | – | Commit durchführen | – |
