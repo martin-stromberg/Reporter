@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Welcome" xml:space="preserve">
+    <value>Willkommen bei Reporter.</value>
+  </data>
+  <data name="PageTitleUnread" xml:space="preserve">
+    <value>Ungelesen</value>
+  </data>
+  <data name="PageTitleFeeds" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="PageTitleLater" xml:space="preserve">
+    <value>Später</value>
+  </data>
+  <data name="PageTitleSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="TabUnread" xml:space="preserve">
+    <value>Ungelesen</value>
+  </data>
+  <data name="TabFeeds" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="TabLater" xml:space="preserve">
+    <value>Später</value>
+  </data>
+  <data name="TabSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="PlaceholderUnread" xml:space="preserve">
+    <value>Hier erscheinen ungelesene Artikel.</value>
+  </data>
+  <data name="PlaceholderFeeds" xml:space="preserve">
+    <value>Hier erscheinen Feeds.</value>
+  </data>
+  <data name="PlaceholderLater" xml:space="preserve">
+    <value>Hier erscheinen Artikel, die du dir für später merkst.</value>
+  </data>
+  <data name="PlaceholderSettings" xml:space="preserve">
+    <value>Hier erscheinen Einstellungen.</value>
+  </data>
+  <data name="PageTitleCategories" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="TabCategories" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="PlaceholderCategories" xml:space="preserve">
+    <value>Hier erscheinen Kategorien.</value>
+  </data>
+  <data name="LabelCategoryName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="LabelCategoryFeedCount" xml:space="preserve">
+    <value>Feeds</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="ButtonEdit" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="ButtonDelete" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="ButtonFilter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="ButtonRefresh" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="ButtonRefreshAll" xml:space="preserve">
+    <value>Alle aktualisieren</value>
+  </data>
+  <data name="ButtonNo" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="ButtonYes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="CategoryNone" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
+    <value>Alle zugehörigen Artikel werden ebenfalls gelöscht. Fortfahren?</value>
+  </data>
+  <data name="ConfirmDeleteFeedTitle" xml:space="preserve">
+    <value>Feed löschen?</value>
+  </data>
+  <data name="ErrorFeedDuplicate" xml:space="preserve">
+    <value>Ein Feed mit dieser URL existiert bereits.</value>
+  </data>
+  <data name="ErrorFeedTitleEmpty" xml:space="preserve">
+    <value>Bitte gib einen Anzeigetitel ein.</value>
+  </data>
+  <data name="ErrorFeedUrlInvalid" xml:space="preserve">
+    <value>Bitte gib eine gültige Feed-URL ein.</value>
+  </data>
+  <data name="LabelFeedCategory" xml:space="preserve">
+    <value>Kategorie</value>
+  </data>
+  <data name="LabelFeedHealthStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="LabelFeedActions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="LabelFeedLastCheck" xml:space="preserve">
+    <value>Letzter Abruf</value>
+  </data>
+  <data name="LabelFeedTitle" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="LabelFeedUnreadCount" xml:space="preserve">
+    <value>Ungelesen</value>
+  </data>
+  <data name="PlaceholderFeedTitle" xml:space="preserve">
+    <value>Anzeigetitel</value>
+  </data>
+  <data name="PlaceholderFeedUrl" xml:space="preserve">
+    <value>https://beispiel.de/feed</value>
+  </data>
+  <data name="SyncStatusError" xml:space="preserve">
+    <value>Synchronisation fehlgeschlagen.</value>
+  </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="ActionSheetTitleFeed" xml:space="preserve">
+    <value>Feed-Aktionen</value>
+  </data>
+  <data name="ActionSheetTitleCategory" xml:space="preserve">
+    <value>Kategorie-Aktionen</value>
+  </data>
+  <data name="HealthStatusOkLabel" xml:space="preserve">
+    <value>In Ordnung</value>
+  </data>
+  <data name="HealthStatusWarningLabel" xml:space="preserve">
+    <value>Warnung</value>
+  </data>
+  <data name="HealthStatusErrorLabel" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="LabelNoItems" xml:space="preserve">
+    <value>Keine Einträge</value>
+  </data>
+  <data name="ActionSheetArticle" xml:space="preserve">
+    <value>Artikel-Aktionen</value>
+  </data>
+  <data name="ButtonBookmark" xml:space="preserve">
+    <value>Lesezeichen</value>
+  </data>
+  <data name="ButtonMarkAllRead" xml:space="preserve">
+    <value>Alles gelesen</value>
+  </data>
+  <data name="ButtonMarkAsRead" xml:space="preserve">
+    <value>Als gelesen</value>
+  </data>
+  <data name="ButtonOpen" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="LabelPullToRefresh" xml:space="preserve">
+    <value>Zum Aktualisieren nach unten ziehen</value>
+  </data>
+  <data name="LabelUnreadArticles" xml:space="preserve">
+    <value>ungelesene Artikel</value>
+  </data>
+</root>

@@ -83,4 +83,4 @@ Die App verwendet eine saubere Schichtung:
 - `Reporter.Data.Repositories` implementiert die Schnittstellen mit Entity Framework Core und SQLite.
 - `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>`, um pro Operation einen neuen `DbContext` zu erzeugen.
 - `Settings` wird als Singleton verwaltet; es existiert immer genau ein Datensatz.
-- `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie und gespeicherte Artikel.
+- `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie, gespeicherte Artikel und `GetByGuidOrHashAsync` für die Dublettenerkennung pro Feed.

@@ -1,3 +1,11 @@
+## 2026-09-10 — Kategorieverwaltung umgesetzt
+
+- `CategoriesPage` und `CategoriesViewModel` für das Anlegen, Bearbeiten und Löschen von Kategorien.
+- Neuer Tab **Kategorien** in `AppShell`.
+- `ICategoryRepository.GetAllWithFeedCountAsync()` inklusive `CategoryWithCount`-Modell.
+- `AppResources.resx` / `AppResources.de.resx` um Kategorien-spezifische Titel und Labels erweitert.
+- Unit- und Integrationstests für Repository und ViewModel.
+
 ## 2026-09-09 — XML-Dokumentation und csproj-xmldoc-Hook umgesetzt
 
 - `<GenerateDocumentationFile>true</GenerateDocumentationFile>` und `<WarningsAsErrors>CS1591</WarningsAsErrors>` in alle `.csproj` aufgenommen.

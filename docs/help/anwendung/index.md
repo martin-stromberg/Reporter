@@ -1,10 +1,12 @@
 # Anwendung
 
-Reporter ist ein lokaler RSS-/Feed-Reader als .NET MAUI-App. In der aktuellen Version ist das Grundgerüst mit Navigation und den vier Hauptbereichen vorhanden; Feeds und Artikel werden noch nicht geladen.
+Reporter ist ein lokaler RSS-/Feed-Reader als .NET MAUI-App. Feeds können über die Feeds-Seite manuell abgerufen und in die lokale Datenbank synchronisiert werden; neue ungelesene Artikel erscheinen danach in der Datenbank.
 
 ## Inhalt
 
 - [Beschreibung](beschreibung.md)
 - [Ablauf für Anwender](ablauf-anwender.md)
+- [Kategorien verwalten](kategorien.md)
+- [Feeds synchronisieren](synchronisation.md)
 - [Architektur](architektur.md)
 - [Datenmodell](datenmodell.md)

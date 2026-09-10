@@ -22,6 +22,8 @@ jobs:
     name: static checks
     runs-on: windows-latest
     timeout-minutes: 20
+    env:
+      IncludeIosTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -53,6 +55,8 @@ jobs:
     name: build & test
     runs-on: windows-latest
     timeout-minutes: 30
+    env:
+      IncludeIosTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7

@@ -1,3 +1,5 @@
+using Reporter.Core.ViewModels;
+
 namespace Reporter.Views;
 
 /// <summary>
@@ -9,9 +11,20 @@ public partial class LaterPage : ContentPage
     /// Initializes a new instance of the <see cref="LaterPage"/> class.
     /// </summary>
     /// <param name="viewModel">The view model for the page.</param>
-    public LaterPage(ViewModels.LaterViewModel viewModel)
+    public LaterPage(LaterViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;
+    }
+
+    /// <inheritdoc />
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (BindingContext is LaterViewModel viewModel)
+        {
+            await viewModel.LoadCommand.ExecuteAsync(null);
+        }
     }
 }

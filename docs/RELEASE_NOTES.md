@@ -1,5 +1,41 @@
 # Release Notes
 
+## 0.0.4
+
+### Ungelesen-Dashboard mit Kategoriefilter, Pull-to-Refresh und Infinity-Scroll
+
+- Neues Domänenmodell `ItemListItem` für Artikelkarten mit Feed-Titel und Kategorie.
+- `IItemRepository` erweitert um seitenweises Laden, Ungelesen-Zähler, Kategoriefilter, "Alle als gelesen" und Lesezeichen-Toggle.
+- `UnreadViewModel` komplett überarbeitet: Paging, Kategorie-Chips, Sync, Aktionen.
+- `UnreadPage` mit Kategoriefilter-Chips, `RefreshView`, `CollectionView`-Karten und ActionSheet für Artikelaktionen.
+- Neue Lokalisierungsschlüssel für Filter- und Artikelaktionen.
+- Unit- und Integrationstests für `ItemRepository` und `UnreadViewModel` in `Reporter.Tests` hinzugefügt.
+
+## 0.0.3
+
+### RSS/Atom-Synchronisation, Artikelabruf und Feed-Health
+
+- `IFeedSyncService` / `FeedSyncService` implementiert Abruf, Parsing und Speicherung neuer Artikel aus RSS-/Atom-Feeds.
+- Artikel werden anhand ihrer GUID oder eines SHA256-Hashs (Titel + Link + `PublishedAt`) pro Feed dedupliziert.
+- Feed-Health wird bei jedem Abruf aktualisiert: `OK`, `Warning` oder `Error`.
+- Sync-Log-Eintrag wird für jeden Abruf mit Startzeit, Endzeit, Status und Nachricht geschrieben.
+- Fehler (nicht erreichbar, ungültiges XML) löschen bestehende Artikel nicht.
+- `IItemRepository.GetByGuidOrHashAsync` ermöglicht effiziente Dublettenprüfung.
+- `FeedsViewModel`/`FeedsPage` bieten Buttons für "Aktualisieren" und "Alle aktualisieren".
+- Lokalisierungen für Refresh-Texte in `AppResources.resx` / `AppResources.de.resx` hinzugefügt.
+- Integrationstests in `Reporter.Tests/FeedSyncServiceTests.cs` für Happy Path, Duplikate, Fehlerfälle, Warnungen und Sync-All hinzugefügt.
+
+## 0.0.2
+
+### Kategorieverwaltung
+
+- Neuer Tab **Kategorien** mit MAUI-Seite und ViewModel.
+- Kategorien können erstellt, umbenannt und gelöscht werden.
+- Validierung: leerer Name und Duplikate werden abgelehnt.
+- `ICategoryRepository.GetAllWithFeedCountAsync()` liefert Kategorie plus Anzahl zugeordneter Feeds.
+- Beim Löschen einer Kategorie setzt EF Core `DeleteBehavior.SetNull` die `category_id` zugeordneter Feeds auf `NULL`.
+- Unit- und Integrationstests für Repository und ViewModel in `Reporter.Tests` hinzugefügt.
+
 ## 0.0.1
 
 Erste Release-Version mit vollständigem CI/CD-Grundgerüst.

@@ -14,6 +14,12 @@ public interface ICategoryRepository
     Task<IReadOnlyList<Category>> GetAllAsync();
 
     /// <summary>
+    /// Gets all categories with the number of assigned feeds asynchronously.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the list of categories with feed counts.</returns>
+    Task<IReadOnlyList<CategoryWithCount>> GetAllWithFeedCountAsync();
+
+    /// <summary>
     /// Gets the category with the specified identifier asynchronously.
     /// </summary>
     /// <param name="id">The category identifier.</param>

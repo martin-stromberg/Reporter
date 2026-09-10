@@ -15,12 +15,20 @@ Tippe auf das App-Icon **Reporter**. Nach dem Start-Screen erscheint die Navigat
 
 ### 2. Zwischen den Bereichen wechseln
 
-Tippe auf einen der vier Tabs:
+Tippe auf einen der fünf Tabs:
 
 - **Ungelesen** — Übersicht neuer Artikel.
-- **Feeds** — Übersicht deiner Feeds.
+- **Feeds** — Übersicht deiner Feeds. Hier kannst du einen oder alle Feeds aktualisieren.
 - **Später** — Artikel, die du für später markiert hast.
+- **Kategorien** — Kategorien für Feeds verwalten.
 - **Einstellungen** — App-Einstellungen.
+
+### 3. Feeds synchronisieren
+
+- Öffne **Feeds**.
+- Tippe auf **Alle aktualisieren**, um alle Feeds abzurufen.
+- Oder tippe in einer Feed-Zeile auf **Aktualisieren**, um nur diesen Feed abzurufen.
+- Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
 
 ## Ergebnis
 

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Reporter.Core.Models;
 using Reporter.Data.Repositories;
 
@@ -114,5 +115,71 @@ public class CategoryRepositoryTests : IDisposable
     public async Task DeleteAsync_NonExisting_DoesNotThrow()
     {
         await _repository.DeleteAsync(Guid.NewGuid());
+    }
+
+    /// <summary>
+    /// Verifies that GetAllWithFeedCountAsync returns the correct number of feeds per category.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetAllWithFeedCountAsync_ReturnsCountOfFeedsPerCategory()
+    {
+        var categoryA = new Category { Id = Guid.NewGuid(), Name = "A" };
+        var categoryB = new Category { Id = Guid.NewGuid(), Name = "B" };
+        await _repository.AddAsync(categoryA);
+        await _repository.AddAsync(categoryB);
+
+        using var context = _factory.CreateDbContext();
+        context.Feeds.AddRange(
+            new Data.Entities.Feed { Id = Guid.NewGuid(), Url = "https://a.example/feed", Title = "A Feed", CategoryId = categoryA.Id },
+            new Data.Entities.Feed { Id = Guid.NewGuid(), Url = "https://b1.example/feed", Title = "B Feed 1", CategoryId = categoryB.Id },
+            new Data.Entities.Feed { Id = Guid.NewGuid(), Url = "https://b2.example/feed", Title = "B Feed 2", CategoryId = categoryB.Id });
+        await context.SaveChangesAsync();
+
+        var result = await _repository.GetAllWithFeedCountAsync();
+
+        Assert.Equal(2, result.Count);
+        var a = result.Single(c => c.Name == "A");
+        var b = result.Single(c => c.Name == "B");
+        Assert.Equal(1, a.FeedCount);
+        Assert.Equal(2, b.FeedCount);
+    }
+
+    /// <summary>
+    /// Verifies that updating a category to a duplicate name throws a database exception.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_DuplicateName_ThrowsDbUpdateException()
+    {
+        var first = new Category { Id = Guid.NewGuid(), Name = "First" };
+        var second = new Category { Id = Guid.NewGuid(), Name = "Second" };
+        await _repository.AddAsync(first);
+        await _repository.AddAsync(second);
+
+        await Assert.ThrowsAnyAsync<DbUpdateException>(() => _repository.UpdateAsync(new Category { Id = second.Id, Name = "First" }));
+    }
+
+    /// <summary>
+    /// Verifies that deleting a category with assigned feeds sets the feed's category to null.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_WithAssignedFeeds_SetsCategoryIdToNull()
+    {
+        var category = new Category { Id = Guid.NewGuid(), Name = "ToDelete" };
+        await _repository.AddAsync(category);
+
+        using (var context = _factory.CreateDbContext())
+        {
+            context.Feeds.Add(new Data.Entities.Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed", CategoryId = category.Id });
+            await context.SaveChangesAsync();
+        }
+
+        await _repository.DeleteAsync(category.Id);
+
+        using var after = _factory.CreateDbContext();
+        var feed = await after.Feeds.SingleAsync();
+        Assert.Null(feed.CategoryId);
     }
 }
