@@ -1,0 +1,46 @@
+name: Backmerge Main to Staging
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fetch staging
+        run: git fetch origin staging
+
+      - name: Check if staging is behind main
+        id: diff
+        run: |
+          commits_behind="$(git rev-list HEAD..origin/staging --count)"
+          echo "commits_behind=$commits_behind" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure automated-backmerge label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh label create automated-backmerge --color "1D76DB" --description "Automated PR from main to staging" --force
+
+      - name: Create backmerge pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing="$(gh pr list --base staging --head main --state open --json number)"
+          if [ "$(echo "$existing" | jq length)" -eq 0 ]; then
+            gh pr create \
+              --base staging --head main \
+              --title "Backmerge from main to staging" \
+              --body "Automated back-merge PR after a promotion to main. Please merge with **Create a merge commit** (not Rebase) so the new release tag remains reachable from staging for future version calculations." \
+              --label "automated-backmerge"
+          fi

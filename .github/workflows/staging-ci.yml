@@ -1,0 +1,232 @@
+name: Pre-Release
+
+on:
+  push:
+    branches:
+      - staging
+
+concurrency:
+  group: staging-ci
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  detect-backmerge:
+    runs-on: ubuntu-latest
+    outputs:
+      is_backmerge: ${{ steps.check.outputs.is_backmerge }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check whether this push is a pure back-merge from main
+        id: check
+        run: |
+          git fetch origin main:refs/remotes/origin/main --no-tags
+
+          main_sha="$(git rev-parse origin/main)"
+          is_main_merge_parent=false
+          for parent in $(git show -s --format=%P HEAD); do
+            if [[ "$parent" == "$main_sha" ]]; then
+              is_main_merge_parent=true
+              break
+            fi
+          done
+
+          if [[ "$is_main_merge_parent" == "true" ]]; then
+            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet origin/main HEAD; then
+            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_backmerge=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  static-checks:
+    name: static checks
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload restore Reporter.sln
+
+      - name: Restore
+        run: dotnet restore Reporter.sln
+
+      - name: Format check
+        run: dotnet format Reporter.sln --verify-no-changes --no-restore --severity error
+
+      - name: Security scan
+        uses: ./.github/actions/security-scan
+        with:
+          solution-path: Reporter.sln
+          artifact-name: vulnerable-packages-staging
+
+      - name: Static analysis
+        run: dotnet build Reporter.sln --configuration Release --no-restore -p:TreatWarningsAsErrors=true
+
+  build-and-test:
+    name: build & test
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload restore Reporter.sln
+
+      - name: Restore
+        run: dotnet restore Reporter.sln
+
+      - name: Build
+        run: dotnet build Reporter.sln --configuration Release --no-restore
+
+      - name: Test
+        run: >
+          dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --no-build
+          --collect:"XPlat Code Coverage"
+          --logger "trx;LogFileName=test-results.trx"
+          --logger "console;verbosity=normal"
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.11
+
+      - name: Generate coverage report
+        shell: bash
+        run: reportgenerator "-reports:**/TestResults/**/coverage.cobertura.xml" "-targetdir:coverage-report" "-reporttypes:TextSummary"
+
+      - name: Enforce coverage threshold
+        shell: bash
+        env:
+          COVERAGE_THRESHOLD: '70'
+        run: |
+          set -euo pipefail
+          summary="coverage-report/Summary.txt"
+          if ! grep -q "Line coverage:" "$summary"; then
+            echo "Could not determine line coverage from the generated report." >&2
+            exit 1
+          fi
+          coverage="$(grep -m1 "Line coverage:" "$summary" | grep -oE '[0-9]+([.,][0-9]+)?' | head -n1 | tr ',' '.')"
+          threshold="$COVERAGE_THRESHOLD"
+          echo "Line coverage: ${coverage}% (threshold: ${threshold}%)"
+          awk -v cov="$coverage" -v thr="$threshold" 'BEGIN { exit !(cov >= thr) }'
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report-staging
+          path: coverage-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-staging
+          path: src/Reporter.Tests/TestResults/*.trx
+          retention-days: 14
+
+  version:
+    name: version
+    needs: [detect-backmerge, static-checks, build-and-test]
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      changed: ${{ steps.semver.outputs.changed }}
+      version: ${{ steps.semver.outputs.version }}
+      rc_tag: ${{ steps.rc.outputs.rc_tag }}
+      rc_version: ${{ steps.rc.outputs.rc_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine next version
+        id: semver
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          output="$(npx semantic-release --dry-run --no-ci --branches staging 2>&1 | tee /dev/stderr)"
+
+          version=""
+          changed="false"
+          if [[ "$output" =~ The\ next\ release\ version\ is\ ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?) ]]; then
+            version="${BASH_REMATCH[1]}"
+            changed="true"
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Determine RC number
+        if: steps.semver.outputs.changed == 'true'
+        id: rc
+        run: |
+          version="${{ steps.semver.outputs.version }}"
+          rc_number=$(( $(git tag --list "v${version}-rc.*" | wc -l) + 1 ))
+          echo "rc_number=$rc_number" >> "$GITHUB_OUTPUT"
+          echo "rc_tag=v${version}-rc.${rc_number}" >> "$GITHUB_OUTPUT"
+          echo "rc_version=${version}-rc.${rc_number}" >> "$GITHUB_OUTPUT"
+
+  prerelease:
+    name: prerelease
+    needs: [detect-backmerge, version]
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true' && needs.version.outputs.changed == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build and package release candidate
+        uses: ./.github/actions/build-and-package
+        with:
+          release-version: ${{ needs.version.outputs.rc_version }}
+          release-tag: ${{ needs.version.outputs.rc_tag }}
+
+      - name: Create GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ needs.version.outputs.rc_tag }}"
+          gh release create "$tag" release-win-x64.zip update.json \
+            --target "$GITHUB_SHA" \
+            --title "$tag" \
+            --prerelease \
+            --generate-notes

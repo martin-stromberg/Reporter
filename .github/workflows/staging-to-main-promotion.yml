@@ -1,0 +1,62 @@
+name: Staging to Main Promotion
+
+on:
+  workflow_run:
+    workflows: ["Pre-Release"]
+    types: [completed]
+    branches: [staging]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: staging-to-main-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Check if main is behind staging
+        id: diff
+        run: |
+          changed="$(git diff --name-only origin/main HEAD)"
+          if [ -z "$changed" ]; then
+            echo "commits_ahead=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "commits_ahead=$(git rev-list origin/main..HEAD --count)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ensure automated-promotion label exists
+        if: steps.diff.outputs.commits_ahead != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh label create automated-promotion --color "0E8A16" --description "Automated PR from staging to main" --force
+
+      - name: Create promotion pull request
+        if: steps.diff.outputs.commits_ahead != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing="$(gh pr list --base main --head staging --state open --json number)"
+          if [ "$(echo "$existing" | jq length)" -eq 0 ]; then
+            gh pr create \
+              --base main --head staging \
+              --title "Automated promotion from staging to main" \
+              --body "Automated promotion from staging to main. Contains all changes that have been integrated and successfully validated on staging. Requires manual review and merge by a maintainer." \
+              --draft \
+              --label "automated-promotion"
+          fi
