@@ -111,3 +111,4 @@ Siehe [changes.log](changes.log).
 
 - [Hilfe / Anwenderdokumentation](docs/help/index.md)
 - [Code-Review des aktuellen Branches](docs/features/task/issue-16-7860f6e24bde49d788fdd9a6ed58f33d-net-maui-projektscaffolding-un/review-code.md)
+Dummy change for CI pipeline test v3
