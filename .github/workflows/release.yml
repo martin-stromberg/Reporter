@@ -13,6 +13,8 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    env:
+      IncludeIosTarget: false
     concurrency:
       group: release
       cancel-in-progress: false

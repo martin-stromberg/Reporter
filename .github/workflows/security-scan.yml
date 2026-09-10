@@ -12,6 +12,8 @@ jobs:
   security-scan:
     runs-on: windows-latest
     timeout-minutes: 15
+    env:
+      IncludeIosTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
