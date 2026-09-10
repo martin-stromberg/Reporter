@@ -1,9 +1,11 @@
+using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
 
 /// <summary>
-/// Page for displaying unread articles.
+/// Page for displaying unread articles with filter, pull-to-refresh and infinite scroll.
 /// </summary>
 public partial class UnreadPage : ContentPage
 {
@@ -18,13 +20,39 @@ public partial class UnreadPage : ContentPage
     }
 
     /// <inheritdoc />
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
         if (BindingContext is UnreadViewModel viewModel)
         {
-            viewModel.LoadCommand.Execute(null);
+            await viewModel.LoadCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Opens an action sheet to select a category filter.
+    /// </summary>
+    /// <param name="sender">The view that received the tap.</param>
+    /// <param name="e">The event args.</param>
+    private async void OnFilterClicked(object? sender, EventArgs e)
+    {
+        if (BindingContext is not UnreadViewModel viewModel || viewModel.Categories.Count == 0)
+        {
+            return;
+        }
+
+        var options = viewModel.Categories.Select(c => c.Name).ToArray();
+        var action = await DisplayActionSheetAsync(
+            AppResources.ActionSheetTitleCategory,
+            AppResources.ButtonCancel,
+            null,
+            options);
+
+        var selected = viewModel.Categories.FirstOrDefault(c => c.Name == action);
+        if (selected is not null)
+        {
+            await viewModel.SelectCategoryCommand.ExecuteAsync(selected);
         }
     }
 }

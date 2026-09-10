@@ -95,7 +95,16 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("ButtonDelete", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Filter ähnelt.
+        /// </summary>
+        public static string ButtonFilter {
+            get {
+                return ResourceManager.GetString("ButtonFilter", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Edit ähnelt.
         /// </summary>
@@ -480,6 +489,78 @@ namespace Reporter.Core.Resources.Strings {
         public static string Welcome {
             get {
                 return ResourceManager.GetString("Welcome", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Article actions ähnelt.
+        /// </summary>
+        public static string ActionSheetArticle {
+            get {
+                return ResourceManager.GetString("ActionSheetArticle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Bookmark ähnelt.
+        /// </summary>
+        public static string ButtonBookmark {
+            get {
+                return ResourceManager.GetString("ButtonBookmark", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die All read ähnelt.
+        /// </summary>
+        public static string ButtonMarkAllRead {
+            get {
+                return ResourceManager.GetString("ButtonMarkAllRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark as read ähnelt.
+        /// </summary>
+        public static string ButtonMarkAsRead {
+            get {
+                return ResourceManager.GetString("ButtonMarkAsRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Open ähnelt.
+        /// </summary>
+        public static string ButtonOpen {
+            get {
+                return ResourceManager.GetString("ButtonOpen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die All ähnelt.
+        /// </summary>
+        public static string FilterAll {
+            get {
+                return ResourceManager.GetString("FilterAll", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Pull down to refresh ähnelt.
+        /// </summary>
+        public static string LabelPullToRefresh {
+            get {
+                return ResourceManager.GetString("LabelPullToRefresh", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die unread articles ähnelt.
+        /// </summary>
+        public static string LabelUnreadArticles {
+            get {
+                return ResourceManager.GetString("LabelUnreadArticles", resourceCulture);
             }
         }
     }

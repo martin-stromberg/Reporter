@@ -75,6 +75,9 @@
   <data name="ButtonDelete" xml:space="preserve">
     <value>Delete</value>
   </data>
+  <data name="ButtonFilter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
   <data name="ButtonRefresh" xml:space="preserve">
     <value>Refresh</value>
   </data>
@@ -152,5 +155,29 @@
   </data>
   <data name="LabelNoItems" xml:space="preserve">
     <value>No items</value>
+  </data>
+  <data name="ActionSheetArticle" xml:space="preserve">
+    <value>Article actions</value>
+  </data>
+  <data name="ButtonBookmark" xml:space="preserve">
+    <value>Bookmark</value>
+  </data>
+  <data name="ButtonMarkAllRead" xml:space="preserve">
+    <value>All read</value>
+  </data>
+  <data name="ButtonMarkAsRead" xml:space="preserve">
+    <value>Mark as read</value>
+  </data>
+  <data name="ButtonOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="LabelPullToRefresh" xml:space="preserve">
+    <value>Pull down to refresh</value>
+  </data>
+  <data name="LabelUnreadArticles" xml:space="preserve">
+    <value>unread articles</value>
   </data>
 </root>

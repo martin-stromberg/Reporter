@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -99,6 +101,129 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        var entities = await query
+            .OrderByDescending(i => i.PublishedAt)
+            .ThenBy(i => i.Id)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .Select(i => new
+            {
+                i.Id,
+                i.FeedId,
+                i.Title,
+                i.Link,
+                i.PublishedAt,
+                i.IsRead,
+                i.IsSavedForLater,
+                i.ContentHtml,
+                FeedTitle = i.Feed.Title,
+                CategoryId = i.Feed.CategoryId,
+                CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
+            })
+            .ToListAsync();
+
+        return entities.Select(e => new ItemListItem
+        {
+            Id = e.Id,
+            FeedId = e.FeedId,
+            Title = e.Title,
+            Link = e.Link,
+            PublishedAt = e.PublishedAt,
+            IsRead = e.IsRead,
+            IsSavedForLater = e.IsSavedForLater,
+            FeedTitle = e.FeedTitle,
+            CategoryId = e.CategoryId,
+            CategoryName = e.CategoryName,
+            ImageUrl = ExtractImageUrl(e.ContentHtml),
+            Summary = ExtractSummary(e.ContentHtml),
+        }).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetUnreadCountAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        return await query.CountAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkAllAsReadAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items.Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        await query.ExecuteUpdateAsync(setters => setters
+            .SetProperty(i => i.IsRead, true)
+            .SetProperty(i => i.ReadAt, DateTime.UtcNow));
+    }
+
+    /// <inheritdoc />
+    public async Task ToggleSavedForLaterAsync(Guid id)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items.FindAsync(id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        entity.IsSavedForLater = !entity.IsSavedForLater;
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkAsReadAsync(Guid id)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items.FindAsync(id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        entity.IsRead = true;
+        entity.ReadAt = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId)
     {
         await using var context = await _factory.CreateDbContextAsync();
@@ -126,15 +251,44 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Item>> GetSavedForLaterAsync()
+    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync()
     {
         await using var context = await _factory.CreateDbContextAsync();
         var entities = await context.Items
             .AsNoTracking()
             .Where(i => i.IsSavedForLater)
             .OrderByDescending(i => i.PublishedAt)
+            .Select(i => new
+            {
+                i.Id,
+                i.FeedId,
+                i.Title,
+                i.Link,
+                i.PublishedAt,
+                i.IsRead,
+                i.IsSavedForLater,
+                i.ContentHtml,
+                FeedTitle = i.Feed.Title,
+                CategoryId = i.Feed.CategoryId,
+                CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
+            })
             .ToListAsync();
-        return entities.Select(MapToModel).ToList();
+
+        return entities.Select(e => new ItemListItem
+        {
+            Id = e.Id,
+            FeedId = e.FeedId,
+            Title = e.Title,
+            Link = e.Link,
+            PublishedAt = e.PublishedAt,
+            IsRead = e.IsRead,
+            IsSavedForLater = e.IsSavedForLater,
+            FeedTitle = e.FeedTitle,
+            CategoryId = e.CategoryId,
+            CategoryName = e.CategoryName,
+            ImageUrl = ExtractImageUrl(e.ContentHtml),
+            Summary = ExtractSummary(e.ContentHtml),
+        }).ToList();
     }
 
     /// <inheritdoc />
@@ -145,6 +299,37 @@ public class ItemRepository : IItemRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.FeedId == feedId && i.GuidOrHash == guidOrHash);
         return entity is null ? null : MapToModel(entity);
+    }
+
+    private static string? ExtractImageUrl(string? contentHtml)
+    {
+        if (string.IsNullOrWhiteSpace(contentHtml))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(contentHtml, "<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value.Trim() : null;
+    }
+
+    private static string? ExtractSummary(string? contentHtml)
+    {
+        if (string.IsNullOrWhiteSpace(contentHtml))
+        {
+            return null;
+        }
+
+        var plain = Regex.Replace(contentHtml, "<.*?>", string.Empty);
+        plain = WebUtility.HtmlDecode(plain);
+        plain = plain.Replace('\n', ' ').Replace('\r', ' ').Trim();
+
+        if (string.IsNullOrWhiteSpace(plain))
+        {
+            return null;
+        }
+
+        const int MaxLength = 120;
+        return plain.Length <= MaxLength ? plain : plain[..MaxLength] + "…";
     }
 
     private static Item MapToModel(ItemEntity entity)

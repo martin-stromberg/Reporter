@@ -378,4 +378,116 @@ public class ItemRepositoryTests : IDisposable
 
         Assert.Empty(result);
     }
+
+    /// <summary>
+    /// Verifies that GetUnreadByDateAsync returns a paged list of unread items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_Paged_ReturnsPage()
+    {
+        var feedId = await SeedFeedAsync();
+        for (var i = 0; i < 5; i++)
+        {
+            await _repository.AddAsync(new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = $"Item {i}",
+                GuidOrHash = $"item-{i}",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 1).AddDays(i),
+            });
+        }
+
+        var result = await _repository.GetUnreadByDateAsync(0, 2, null);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Item 4", result[0].Title);
+    }
+
+    /// <summary>
+    /// Verifies that GetUnreadCountAsync returns the number of unread items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadCountAsync_ReturnsCorrectCount()
+    {
+        var feedId = await SeedFeedAsync();
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Unread",
+            GuidOrHash = "unread",
+            IsRead = false,
+            IsSavedForLater = false,
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Read",
+            GuidOrHash = "read",
+            IsRead = true,
+            IsSavedForLater = false,
+        });
+
+        var result = await _repository.GetUnreadCountAsync();
+
+        Assert.Equal(1, result);
+    }
+
+    /// <summary>
+    /// Verifies that MarkAsReadAsync sets the item as read.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task MarkAsReadAsync_SetsIsRead()
+    {
+        var feedId = await SeedFeedAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "ToRead",
+            GuidOrHash = "toread",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.MarkAsReadAsync(item.Id);
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.True(result.IsRead);
+    }
+
+    /// <summary>
+    /// Verifies that ToggleSavedForLaterAsync toggles the saved state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ToggleSavedForLaterAsync_TogglesState()
+    {
+        var feedId = await SeedFeedAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "ToToggle",
+            GuidOrHash = "totoggle",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.ToggleSavedForLaterAsync(item.Id);
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.True(result.IsSavedForLater);
+    }
 }
