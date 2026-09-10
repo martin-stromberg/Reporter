@@ -15,42 +15,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  detect-backmerge:
-    runs-on: ubuntu-latest
-    outputs:
-      is_backmerge: ${{ steps.check.outputs.is_backmerge }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Check whether this push is a pure back-merge from main
-        id: check
-        run: |
-          git fetch origin main:refs/remotes/origin/main --no-tags
-
-          main_sha="$(git rev-parse origin/main)"
-          is_main_merge_parent=false
-          for parent in $(git show -s --format=%P HEAD); do
-            if [[ "$parent" == "$main_sha" ]]; then
-              is_main_merge_parent=true
-              break
-            fi
-          done
-
-          if [[ "$is_main_merge_parent" == "true" ]]; then
-            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet origin/main HEAD; then
-            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_backmerge=false" >> "$GITHUB_OUTPUT"
-          fi
-
   static-checks:
     name: static checks
-    needs: detect-backmerge
-    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -82,8 +48,6 @@ jobs:
 
   build-and-test:
     name: build & test
-    needs: detect-backmerge
-    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -153,8 +117,8 @@ jobs:
 
   version:
     name: version
-    needs: [detect-backmerge, static-checks, build-and-test]
-    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
+    needs: [static-checks, build-and-test]
+    if: success()
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -207,8 +171,8 @@ jobs:
 
   prerelease:
     name: prerelease
-    needs: [detect-backmerge, version]
-    if: needs.detect-backmerge.outputs.is_backmerge != 'true' && needs.version.outputs.changed == 'true'
+    needs: [version]
+    if: needs.version.outputs.changed == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
