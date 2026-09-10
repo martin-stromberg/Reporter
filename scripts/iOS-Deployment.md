@@ -9,7 +9,7 @@ offene Probleme sowie moegliche Weiterfuehrungen zusammen.
 auf einem Mac folgende Aktionen ermoeglichen:
 
 - `build`    : iOS-App bauen (optional mit Codesigning -> `.ipa`)
-- `simulator`: iOS-App bauen und im iOS-Simulator starten
+- `simulator`: iOS-App bauen, im iOS-Simulator starten und Screenshot speichern
 - `device`   : iOS-App bauen und auf einem physischen Geraet starten
 
 ## Was aktuell funktioniert
@@ -35,6 +35,11 @@ eine `.ipa` via `dotnet publish -p:ArchiveOnBuild=true`.
 
 Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 (außer Pair-to-Mac-Parameter natuerlich nicht noetig).
+
+Fuer `simulator` wird die App per `xcrun simctl` gebootet, installiert,
+gestartet und ein Screenshot gespeichert. Der Screenshot liegt unter
+`src/Reporter/bin/<config>/net10.0-ios/<rid>/simulator-screenshot-<zeitstempel>.png`
+und wird automatisch in der Vorschau geoeffnet.
 
 ## Bekannte Probleme und Limitierungen
 
@@ -78,30 +83,36 @@ Waehrend der Fehlersuche wurde das Pair-to-Mac-Passwort im Terminal-Output
 angezeigt. Das Skript maskiert es inzwischen (`***`), das Passwort sollte
 trotzdem erneuert werden.
 
-## Moegliche Weiterfuehrung (SSH-basiertes Deployment)
+## Moegliche Weiterfuehrung
+
+### SSH-basiertes Deployment von Windows aus
 
 Damit `simulator` / `device` auch auf Windows funktionieren, koennte das
 Skript nach einem erfolgreichen `dotnet build` selbst per SSH auf den Mac
-wechseln und dort deployen:
+wechseln und dort die gleichen `xcrun simctl`-Befehle ausfuehren, die
+`Invoke-SimulatorMac` bereits auf dem Mac nutzt:
 
-1. `.app`-Bundle im Pair-to-Mac-Cache finden, z. B. unter
-   `/Users/<user>/Library/Caches/Xamarin/mtbs/builds/<AppName>/<session>/...`
+1. `.app`-Bundle auf dem Mac finden
 2. Simulator booten: `xcrun simctl boot <udid>`
-3. App installieren: `xcrun simctl install booted <app-path>`
-4. App starten: `xcrun simctl launch booted <bundle-id>`
-
-Fuer physische Geraete koennte `xcrun devicectl` (Xcode 15+) oder
-`ideviceinstaller`/`ios-deploy` genutzt werden.
+3. App installieren: `xcrun simctl install <udid> <app-path>`
+4. App starten: `xcrun simctl launch <udid> <bundle-id>`
+5. Screenshot erstellen: `xcrun simctl io <udid> screenshot <pfad>`
 
 Voraussetzungen dafuer:
 - Passwortloser SSH vom Windows-Rechner zum Mac (Visual Studio legt beim
   ersten Pair-to-Mac SSH-Keys an).
 - Oder ein Tool, um das Passwort an `ssh` zu uebergeben (`sshpass`, `plink`).
-- Stabile Pfad- und UDID-Behandlung, da der Pair-to-Mac-Cache dynamische
-  Session-IDs enthaelt.
 
 Dieser Workaround ist **nicht offiziell unterstuetzt** und koennte bei
 .NET-/Xcode-Updates wieder brechen.
+
+### Automatisierte UI-Tests mit Appium / WinAppDriver
+
+Fuer eine echte autonome Erkennung von Layout-Problemen auf Windows koennte
+ein UI-Test-Projekt mit Appium + WinAppDriver aufgesetzt werden. Das
+Windows-Fenster laesst sich dabei in Handysize starten (siehe
+`src/Reporter/App.xaml.cs`) und Tests koennen pruefen, ob Elemente
+ausserhalb des sichtbaren Bereichs liegen oder Screenshots erzeugen.
 
 ## Hilfreiche Links
 

@@ -43,6 +43,16 @@ public partial class App : Application
     /// <returns>The main application window.</returns>
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(_services.GetRequiredService<AppShell>());
+        var window = new Window(_services.GetRequiredService<AppShell>());
+
+        if (OperatingSystem.IsWindows())
+        {
+            // Fenster standardmaessig in Smartphone-Groesse starten, damit
+            // mobile UI-Probleme auf dem Windows-Target direkt sichtbar werden.
+            window.Width = 390;
+            window.Height = 844;
+        }
+
+        return window;
     }
 }

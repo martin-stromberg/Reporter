@@ -83,6 +83,9 @@ Microsoft unterstuetzt `dotnet build -t:Run` fuer iOS/tvOS aktuell **nicht von W
 Auf Windows koennen mit `build` die iOS-Kompilate (bzw. mit Codesigning `.ipa`) erzeugt werden;
 das Deployment muss dann ueber Visual Studio oder manuell auf dem Mac erfolgen.
 
+Auf dem Mac startet `simulator` die App im iOS-Simulator, wartet kurz und speichert
+einen Screenshot unter `src/Reporter/bin/<config>/net10.0-ios/<rid>/`.
+
 ```powershell
 # Menue starten
 .\scripts\iOS-Deployment.ps1

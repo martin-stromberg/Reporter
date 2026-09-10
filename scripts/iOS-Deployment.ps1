@@ -5,7 +5,7 @@
 
     Moegliche Aktionen:
         build     -> iOS-App bauen (mit Codesigning: .ipa)
-        simulator -> App bauen und im iOS-Simulator starten (nur auf macOS)
+        simulator -> App bauen, im iOS-Simulator starten und Screenshot speichern (nur auf macOS)
         device    -> App bauen und auf einem echten iOS-Geraet starten (nur auf macOS)
         list      -> Verfuegbare Simulatoren/Geraete anzeigen (nur macOS)
         menu      -> Interaktives Menue
@@ -85,6 +85,43 @@ function Get-Configuration {
     if ($Configuration) { return $Configuration }
     if ($Action -eq "simulator") { return "Debug" }
     return "Release"
+}
+
+function Get-SimulatorUdid {
+    if ($Device) { return $Device }
+
+    Write-Host "Suche verfuegbaren iPhone-Simulator..." -ForegroundColor Cyan
+    $list = & xcrun simctl list devices available -j 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fehler: xcrun simctl konnte keine Simulatoren auflisten." -ForegroundColor Red
+        exit 1
+    }
+
+    $json = $list | ConvertFrom-Json
+    $devices = $json.devices.PSObject.Properties.Value | ForEach-Object { $_ } | Where-Object {
+        $_.isAvailable -and $_.deviceTypeIdentifier -match 'iPhone'
+    } | Sort-Object name
+
+    if (-not $devices) {
+        Write-Host "Fehler: Kein verfuegbarer iPhone-Simulator gefunden." -ForegroundColor Red
+        Write-Host "Bitte -Device mit einer UDID angeben oder einen Simulator in Xcode erstellen." -ForegroundColor Yellow
+        exit 1
+    }
+
+    $selected = $devices | Select-Object -First 1
+    Write-Host "Verwende Simulator: $($selected.name) ($($selected.udid))" -ForegroundColor Green
+    return $selected.udid
+}
+
+function Get-BundleId {
+    param([string]$AppPath)
+    $plist = Join-Path $AppPath "Contents/Info.plist"
+    $bundleId = (& /usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' $plist 2>$null).Trim()
+    if (-not $bundleId) {
+        Write-Host "Fehler: Bundle-ID konnte aus $plist nicht gelesen werden." -ForegroundColor Red
+        exit 1
+    }
+    return $bundleId
 }
 
 function Assert-PairToMacAvailable {
@@ -223,6 +260,76 @@ function Invoke-Build {
     }
 }
 
+function Invoke-SimulatorMac {
+    $rid = Get-RuntimeIdentifier -Action "simulator"
+    $config = Get-Configuration -Action "simulator"
+    $udid = Get-SimulatorUdid
+    $appPath = Join-Path (Get-Location).Path "src/Reporter/bin/$config/$framework/$rid/Reporter.app"
+    $screenshotDir = Join-Path (Get-Location).Path "src/Reporter/bin/$config/$framework/$rid"
+    $screenshotPath = Join-Path $screenshotDir "simulator-screenshot-$(Get-Date -Format 'yyyyMMdd-HHmmss').png"
+
+    if (-not (Test-Path $appPath)) {
+        Write-Host "Baue iOS-Simulator-App ..." -ForegroundColor Cyan
+        $buildArgs = @("build", $projectPath, "-f", $framework, "-c", $config, "-p:RuntimeIdentifier=$rid")
+        & dotnet @buildArgs
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Build fehlgeschlagen." -ForegroundColor Red
+            exit 1
+        }
+    }
+    else {
+        Write-Host "Vorhandene App wird verwendet: $appPath" -ForegroundColor Gray
+    }
+
+    Write-Host "Boote Simulator ($udid) ..." -ForegroundColor Cyan
+    $bootOutput = & xcrun simctl boot $udid 2>&1
+    if ($LASTEXITCODE -ne 0 -and $bootOutput -notmatch 'already booted') {
+        Write-Host "Fehler beim Booten des Simulators: $bootOutput" -ForegroundColor Red
+        exit 1
+    }
+
+    $bundleId = Get-BundleId -AppPath $appPath
+    Write-Host "Bundle-ID: $bundleId" -ForegroundColor Gray
+
+    Write-Host "Installiere App im Simulator ..." -ForegroundColor Cyan
+    $installOutput = & xcrun simctl install $udid $appPath 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        if ($installOutput -match 'already installed') {
+            Write-Host "App bereits installiert, deinstalliere und installiere neu ..." -ForegroundColor Yellow
+            & xcrun simctl uninstall $udid $bundleId 2>&1 | Out-Null
+            & xcrun simctl install $udid $appPath
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Fehler: Installation fehlgeschlagen." -ForegroundColor Red
+                exit 1
+            }
+        }
+        else {
+            Write-Host "Fehler bei der Installation: $installOutput" -ForegroundColor Red
+            exit 1
+        }
+    }
+
+    Write-Host "Starte App im Simulator ..." -ForegroundColor Cyan
+    & xcrun simctl launch $udid $bundleId
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fehler beim Starten der App." -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "Warte 5 Sekunden auf Rendering ..." -ForegroundColor Gray
+    Start-Sleep -Seconds 5
+
+    Write-Host "Erstelle Screenshot ..." -ForegroundColor Cyan
+    & xcrun simctl io $udid screenshot $screenshotPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fehler beim Erstellen des Screenshots." -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "Screenshot gespeichert: $screenshotPath" -ForegroundColor Green
+    & open $screenshotPath
+}
+
 function Invoke-Run {
     param([string]$Action)
     if ($isWindows) {
@@ -232,6 +339,10 @@ function Invoke-Run {
         Write-Host "  2) Visual Studio verwenden." -ForegroundColor Yellow
         Write-Host "  3) Zuerst 'build' ausfuehren und die .app/.ipa manuell auf dem Mac deployen." -ForegroundColor Yellow
         exit 1
+    }
+    if ($isMacOS -and $Action -eq "simulator") {
+        Invoke-SimulatorMac
+        return
     }
     $rid = Get-RuntimeIdentifier -Action $Action
     $config = Get-Configuration -Action $Action
