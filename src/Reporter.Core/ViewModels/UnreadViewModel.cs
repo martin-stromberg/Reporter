@@ -389,6 +389,8 @@ public partial class UnreadViewModel : BaseViewModel
                 FeedTitle = updated.FeedTitle,
                 CategoryId = updated.CategoryId,
                 CategoryName = updated.CategoryName,
+                ImageUrl = updated.ImageUrl,
+                Summary = updated.Summary,
             };
         }
     }
