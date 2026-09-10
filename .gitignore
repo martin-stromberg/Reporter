@@ -433,3 +433,4 @@ reporter.db
 issue.md
 AGENTS.md
 .agents/*
+coverage-report/
