@@ -187,6 +187,7 @@ jobs:
           release-tag: ${{ needs.version.outputs.rc_tag }}
 
       - name: Create GitHub pre-release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
