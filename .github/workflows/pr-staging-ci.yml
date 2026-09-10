@@ -21,7 +21,7 @@ jobs:
   static-checks:
     name: static checks
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v7
