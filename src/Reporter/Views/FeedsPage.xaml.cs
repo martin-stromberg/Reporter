@@ -1,6 +1,6 @@
 using Reporter.Core.Models;
-using Reporter.Core.ViewModels;
 using Reporter.Core.Resources.Strings;
+using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
 
@@ -31,31 +31,46 @@ public partial class FeedsPage : ContentPage
     }
 
     /// <summary>
-    /// Handles the delete button click by asking for confirmation and then deleting the feed.
+    /// Shows an action sheet for the tapped feed and routes the selected action
+    /// to the view model.
     /// </summary>
-    /// <param name="sender">The button that was clicked.</param>
-    /// <param name="e">The event arguments.</param>
-    private async void OnDeleteClicked(object? sender, EventArgs e)
+    /// <param name="sender">The view that received the tap.</param>
+    /// <param name="e">Event args containing the tapped feed as <see cref="TappedEventArgs.Parameter"/>.</param>
+    private async void OnFeedTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is not Button button || button.BindingContext is not FeedListItem feed)
+        if (e.Parameter is not FeedListItem feed || BindingContext is not FeedsViewModel viewModel)
         {
             return;
         }
 
-        if (BindingContext is not FeedsViewModel viewModel)
+        var action = await DisplayActionSheetAsync(
+            AppResources.ActionSheetTitleFeed,
+            AppResources.ButtonCancel,
+            null,
+            AppResources.ButtonRefresh,
+            AppResources.ButtonEdit,
+            AppResources.ButtonDelete);
+
+        if (action == AppResources.ButtonRefresh)
         {
-            return;
+            await viewModel.RefreshCommand.ExecuteAsync(feed);
         }
-
-        var confirmed = await DisplayAlertAsync(
-            AppResources.ConfirmDeleteFeedTitle,
-            AppResources.ConfirmDeleteFeedMessage,
-            AppResources.ButtonYes,
-            AppResources.ButtonNo);
-
-        if (confirmed)
+        else if (action == AppResources.ButtonEdit)
         {
-            await viewModel.DeleteCommand.ExecuteAsync(feed);
+            await viewModel.EditCommand.ExecuteAsync(feed);
+        }
+        else if (action == AppResources.ButtonDelete)
+        {
+            var confirmed = await DisplayAlertAsync(
+                AppResources.ConfirmDeleteFeedTitle,
+                AppResources.ConfirmDeleteFeedMessage,
+                AppResources.ButtonYes,
+                AppResources.ButtonNo);
+
+            if (confirmed)
+            {
+                await viewModel.DeleteCommand.ExecuteAsync(feed);
+            }
         }
     }
 }

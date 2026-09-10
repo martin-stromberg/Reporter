@@ -2,56 +2,63 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
-             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
              x:Class="Reporter.Views.CategoriesPage"
-             Title="{x:Static strings:AppResources.PageTitleCategories}">
-    <VerticalStackLayout Spacing="16" Padding="20">
-        <Label Text="{x:Static strings:AppResources.PageTitleCategories}"
-               Style="{StaticResource HeadlineStyle}"
-               HorizontalOptions="Center" />
-        <Entry x:Name="CategoryNameEntry"
-               Text="{Binding NewCategoryName}"
-               Placeholder="{x:Static strings:AppResources.LabelCategoryName}"
-               ReturnCommand="{Binding SaveCommand}" />
-        <Label Text="{Binding ErrorMessage}"
-               TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
-               IsVisible="{Binding HasError}"
-               HorizontalOptions="Center" />
-        <Button Text="{x:Static strings:AppResources.ButtonSave}"
-                Command="{Binding SaveCommand}" />
-        <Grid ColumnDefinitions="*,Auto,Auto,Auto"
-              Padding="0,8">
-            <Label Text="{x:Static strings:AppResources.LabelCategoryName}"
-                   Style="{StaticResource UiLabelStyle}" />
-            <Label Text="{x:Static strings:AppResources.LabelCategoryFeedCount}"
-                   Style="{StaticResource UiLabelStyle}"
-                   Grid.Column="1"
-                   Margin="10,0" />
-        </Grid>
-        <CollectionView ItemsSource="{Binding Categories}"
-                        x:Name="CategoriesCollectionView"
-                        HeightRequest="300">
+             Title="{x:Static strings:AppResources.PageTitleCategories}"
+             Shell.NavBarIsVisible="False">
+    <Grid RowDefinitions="Auto,*"
+          Padding="16,8"
+          RowSpacing="12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="{x:Static strings:AppResources.PageTitleCategories}"
+                   Style="{StaticResource HeadlineStyle}"/>
+            <Border Padding="16"
+                    StrokeShape="RoundRectangle 12"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                <VerticalStackLayout Spacing="12">
+                    <Entry x:Name="CategoryNameEntry"
+                           Text="{Binding NewCategoryName}"
+                           Placeholder="{x:Static strings:AppResources.LabelCategoryName}"
+                           ReturnCommand="{Binding SaveCommand}"/>
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                           IsVisible="{Binding HasError}"
+                           Style="{StaticResource BodySmallStyle}"/>
+                    <Button Text="{x:Static strings:AppResources.ButtonSave}"
+                            Command="{Binding SaveCommand}"/>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Categories}"
+                        EmptyView="{x:Static strings:AppResources.PlaceholderCategories}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto"
-                          Padding="0,4">
-                        <Label Text="{Binding Name}"
-                               VerticalOptions="Center" />
-                        <Label Text="{Binding FeedCount}"
-                               VerticalOptions="Center"
-                               Grid.Column="1"
-                               Margin="10,0" />
-                        <Button Text="{x:Static strings:AppResources.ButtonEdit}"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CategoriesViewModel}}, Path=EditCommand}"
-                                CommandParameter="{Binding .}"
-                                Grid.Column="2" />
-                        <Button Text="{x:Static strings:AppResources.ButtonDelete}"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CategoriesViewModel}}, Path=DeleteCommand}"
-                                CommandParameter="{Binding .}"
-                                Grid.Column="3" />
-                    </Grid>
+                    <Border Padding="16"
+                            Margin="0,6"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCategoryTapped"
+                                                  CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8">
+                            <VerticalStackLayout Spacing="4"
+                                                   VerticalOptions="Center">
+                                <Label Text="{Binding Name}"
+                                       Style="{StaticResource HeadlineSmallStyle}"/>
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label Text="{x:Static strings:AppResources.LabelCategoryFeedCount}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                    <Label Text="{Binding FeedCount}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </VerticalStackLayout>
+    </Grid>
 </ContentPage>

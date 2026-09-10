@@ -16,4 +16,15 @@ public partial class UnreadPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+
+    /// <inheritdoc />
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (BindingContext is UnreadViewModel viewModel)
+        {
+            viewModel.LoadCommand.Execute(null);
+        }
+    }
 }

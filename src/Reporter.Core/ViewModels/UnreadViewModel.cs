@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
@@ -20,7 +21,13 @@ public partial class UnreadViewModel : BaseViewModel
     public UnreadViewModel(IItemRepository itemRepository)
     {
         _itemRepository = itemRepository;
+        LoadCommand = new AsyncRelayCommand(LoadAsync);
     }
+
+    /// <summary>
+    /// Gets the command that loads unread articles.
+    /// </summary>
+    public AsyncRelayCommand LoadCommand { get; }
 
     /// <summary>
     /// Gets or sets the page title.
@@ -38,5 +45,10 @@ public partial class UnreadViewModel : BaseViewModel
     {
         get => _articles;
         set => SetProperty(ref _articles, value);
+    }
+
+    private async Task LoadAsync()
+    {
+        Articles = await _itemRepository.GetUnreadByDateAsync();
     }
 }

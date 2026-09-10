@@ -16,4 +16,15 @@ public partial class LaterPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+
+    /// <inheritdoc />
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (BindingContext is LaterViewModel viewModel)
+        {
+            viewModel.LoadCommand.Execute(null);
+        }
+    }
 }

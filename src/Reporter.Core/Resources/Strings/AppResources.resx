@@ -132,4 +132,25 @@
   <data name="SyncStatusError" xml:space="preserve">
     <value>Synchronization failed.</value>
   </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ActionSheetTitleFeed" xml:space="preserve">
+    <value>Feed actions</value>
+  </data>
+  <data name="ActionSheetTitleCategory" xml:space="preserve">
+    <value>Category actions</value>
+  </data>
+  <data name="HealthStatusOkLabel" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="HealthStatusWarningLabel" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="HealthStatusErrorLabel" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="LabelNoItems" xml:space="preserve">
+    <value>No items</value>
+  </data>
 </root>

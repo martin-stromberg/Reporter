@@ -61,6 +61,33 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Category actions ähnelt.
+        /// </summary>
+        public static string ActionSheetTitleCategory {
+            get {
+                return ResourceManager.GetString("ActionSheetTitleCategory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed actions ähnelt.
+        /// </summary>
+        public static string ActionSheetTitleFeed {
+            get {
+                return ResourceManager.GetString("ActionSheetTitleFeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Cancel ähnelt.
+        /// </summary>
+        public static string ButtonCancel {
+            get {
+                return ResourceManager.GetString("ButtonCancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Delete ähnelt.
         /// </summary>
         public static string ButtonDelete {
@@ -178,6 +205,33 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Error ähnelt.
+        /// </summary>
+        public static string HealthStatusErrorLabel {
+            get {
+                return ResourceManager.GetString("HealthStatusErrorLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die OK ähnelt.
+        /// </summary>
+        public static string HealthStatusOkLabel {
+            get {
+                return ResourceManager.GetString("HealthStatusOkLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Warning ähnelt.
+        /// </summary>
+        public static string HealthStatusWarningLabel {
+            get {
+                return ResourceManager.GetString("HealthStatusWarningLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Feeds ähnelt.
         /// </summary>
         public static string LabelCategoryFeedCount {
@@ -246,6 +300,15 @@ namespace Reporter.Core.Resources.Strings {
         public static string LabelFeedUnreadCount {
             get {
                 return ResourceManager.GetString("LabelFeedUnreadCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No items ähnelt.
+        /// </summary>
+        public static string LabelNoItems {
+            get {
+                return ResourceManager.GetString("LabelNoItems", resourceCulture);
             }
         }
         

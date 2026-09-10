@@ -16,4 +16,15 @@ public partial class SettingsPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+
+    /// <inheritdoc />
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (BindingContext is SettingsViewModel viewModel)
+        {
+            viewModel.LoadCommand.Execute(null);
+        }
+    }
 }

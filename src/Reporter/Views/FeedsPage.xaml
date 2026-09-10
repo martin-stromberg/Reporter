@@ -4,105 +4,124 @@
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
              x:Class="Reporter.Views.FeedsPage"
-             Title="{x:Static strings:AppResources.PageTitleFeeds}">
-    <VerticalStackLayout Spacing="16" Padding="20">
-        <Label Text="{x:Static strings:AppResources.PageTitleFeeds}"
-               Style="{StaticResource HeadlineStyle}"
-               HorizontalOptions="Center" />
-        <Label Text="{Binding ErrorMessage}"
-               TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
-               IsVisible="{Binding HasError}"
-               HorizontalOptions="Center" />
-        <Entry Text="{Binding NewUrl}"
-               Placeholder="{x:Static strings:AppResources.PlaceholderFeedUrl}"
-               Keyboard="Url"
-               ReturnCommand="{Binding SaveCommand}" />
-        <Entry Text="{Binding NewTitle}"
-               Placeholder="{x:Static strings:AppResources.PlaceholderFeedTitle}"
-               ReturnCommand="{Binding SaveCommand}" />
-        <Picker ItemsSource="{Binding Categories}"
-                SelectedItem="{Binding SelectedCategory}"
-                Title="{x:Static strings:AppResources.LabelFeedCategory}"
-                ItemDisplayBinding="{Binding Name}" />
-        <Button Text="{x:Static strings:AppResources.ButtonSave}"
-                Command="{Binding SaveCommand}" />
-        <Button Text="{x:Static strings:AppResources.ButtonRefreshAll}"
-                Command="{Binding RefreshAllCommand}" />
-        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-              Padding="0,8">
-            <Label Text="{x:Static strings:AppResources.LabelFeedTitle}"
-                   Style="{StaticResource UiLabelStyle}" />
-            <Label Text="{x:Static strings:AppResources.LabelFeedCategory}"
-                   Style="{StaticResource UiLabelStyle}"
-                   Grid.Column="1"
-                   Margin="10,0" />
-            <Label Text="{x:Static strings:AppResources.LabelFeedLastCheck}"
-                   Style="{StaticResource UiLabelStyle}"
-                   Grid.Column="2"
-                   Margin="10,0" />
-            <Label Text="{x:Static strings:AppResources.LabelFeedUnreadCount}"
-                   Style="{StaticResource UiLabelStyle}"
-                   Grid.Column="3"
-                   Margin="10,0" />
-            <Label Text="{x:Static strings:AppResources.LabelFeedHealthStatus}"
-                   Style="{StaticResource UiLabelStyle}"
-                   Grid.Column="4"
-                   Margin="10,0" />
-            <Label Text="{x:Static strings:AppResources.LabelFeedActions}"
-                   Style="{StaticResource UiLabelStyle}"
-                   Grid.Column="5"
-                   Margin="10,0" />
-        </Grid>
-        <CollectionView ItemsSource="{Binding Feeds}"
-                        HeightRequest="300">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                          Padding="0,4">
-                        <Label Text="{Binding Title}"
-                               VerticalOptions="Center" />
-                        <Label Text="{Binding CategoryName, TargetNullValue='—'}"
-                               VerticalOptions="Center"
-                               Grid.Column="1"
-                               Margin="10,0" />
-                        <Label Text="{Binding LastCheckedAt, StringFormat='{0:g}', TargetNullValue='—'}"
-                               VerticalOptions="Center"
-                               Grid.Column="2"
-                               Margin="10,0" />
-                        <Label Text="{Binding UnreadCount}"
-                               VerticalOptions="Center"
-                               Grid.Column="3"
-                               Margin="10,0" />
-                        <Label Text="{Binding HealthStatus, TargetNullValue='—'}"
-                               VerticalOptions="Center"
-                               Grid.Column="4"
-                               Margin="10,0">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="OK">
-                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Warning">
-                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Error">
-                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                        <Button Text="{x:Static strings:AppResources.ButtonRefresh}"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FeedsViewModel}}, Path=RefreshCommand}"
-                                CommandParameter="{Binding .}"
-                                Grid.Column="5" />
-                        <Button Text="{x:Static strings:AppResources.ButtonEdit}"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FeedsViewModel}}, Path=EditCommand}"
-                                CommandParameter="{Binding .}"
-                                Grid.Column="6" />
-                        <Button Text="{x:Static strings:AppResources.ButtonDelete}"
-                                Clicked="OnDeleteClicked"
-                                Grid.Column="7" />
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </VerticalStackLayout>
+             Title="{x:Static strings:AppResources.PageTitleFeeds}"
+             Shell.NavBarIsVisible="False">
+    <Grid RowDefinitions="Auto,*"
+          Padding="16,8"
+          RowSpacing="12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="{x:Static strings:AppResources.PageTitleFeeds}"
+                   Style="{StaticResource HeadlineStyle}"/>
+            <Border Padding="16"
+                    StrokeShape="RoundRectangle 12"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                <VerticalStackLayout Spacing="12">
+                    <Entry Text="{Binding NewUrl}"
+                           Placeholder="{x:Static strings:AppResources.PlaceholderFeedUrl}"
+                           Keyboard="Url"
+                           ReturnCommand="{Binding SaveCommand}"/>
+                    <Entry Text="{Binding NewTitle}"
+                           Placeholder="{x:Static strings:AppResources.PlaceholderFeedTitle}"
+                           ReturnCommand="{Binding SaveCommand}"/>
+                    <Picker ItemsSource="{Binding Categories}"
+                            SelectedItem="{Binding SelectedCategory}"
+                            Title="{x:Static strings:AppResources.LabelFeedCategory}"
+                            ItemDisplayBinding="{Binding Name}"/>
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                           IsVisible="{Binding HasError}"
+                           Style="{StaticResource BodySmallStyle}"/>
+                    <Button Text="{x:Static strings:AppResources.ButtonSave}"
+                            Command="{Binding SaveCommand}"/>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsSyncing}"
+                     Command="{Binding RefreshAllCommand}">
+            <CollectionView ItemsSource="{Binding Feeds}"
+                            EmptyView="{x:Static strings:AppResources.PlaceholderFeeds}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="16"
+                                Margin="0,6"
+                                StrokeShape="RoundRectangle 12"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFeedTapped"
+                                                      CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto"
+                                  RowSpacing="8"
+                                  ColumnSpacing="8">
+                                <Label Text="{Binding Title}"
+                                       Style="{StaticResource HeadlineSmallStyle}"
+                                       VerticalOptions="Center"/>
+                                <BoxView WidthRequest="12"
+                                         HeightRequest="12"
+                                         CornerRadius="6"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="End"
+                                         Grid.Column="1">
+                                    <BoxView.Triggers>
+                                        <DataTrigger TargetType="BoxView" Binding="{Binding HealthStatus}" Value="OK">
+                                            <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="BoxView" Binding="{Binding HealthStatus}" Value="Warning">
+                                            <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="BoxView" Binding="{Binding HealthStatus}" Value="Error">
+                                            <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}" />
+                                        </DataTrigger>
+                                    </BoxView.Triggers>
+                                </BoxView>
+
+                                <HorizontalStackLayout Grid.Row="1"
+                                                       Spacing="8"
+                                                       VerticalOptions="Center">
+                                    <Label Text="{Binding CategoryName, TargetNullValue='—'}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                    <Label Text="•"
+                                           Style="{StaticResource MetaStyle}"/>
+                                    <Label Text="{Binding LastCheckedAt, StringFormat='{0:g}', TargetNullValue='—'}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Grid.Row="1"
+                                                       Grid.Column="1"
+                                                       Spacing="8"
+                                                       VerticalOptions="Center">
+                                    <Label Text="{x:Static strings:AppResources.LabelFeedUnreadCount}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                    <Label Text="{Binding UnreadCount}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </HorizontalStackLayout>
+
+                                <Label Grid.Row="2"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding HealthStatus}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="OK">
+                                            <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusOkLabel}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Warning">
+                                            <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusWarningLabel}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Error">
+                                            <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusErrorLabel}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
 </ContentPage>

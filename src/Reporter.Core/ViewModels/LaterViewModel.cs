@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
@@ -20,7 +21,13 @@ public partial class LaterViewModel : BaseViewModel
     public LaterViewModel(IItemRepository itemRepository)
     {
         _itemRepository = itemRepository;
+        LoadCommand = new AsyncRelayCommand(LoadAsync);
     }
+
+    /// <summary>
+    /// Gets the command that loads saved-for-later articles.
+    /// </summary>
+    public AsyncRelayCommand LoadCommand { get; }
 
     /// <summary>
     /// Gets or sets the page title.
@@ -38,5 +45,10 @@ public partial class LaterViewModel : BaseViewModel
     {
         get => _savedItems;
         set => SetProperty(ref _savedItems, value);
+    }
+
+    private async Task LoadAsync()
+    {
+        SavedItems = await _itemRepository.GetSavedForLaterAsync();
     }
 }
