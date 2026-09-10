@@ -29,25 +29,34 @@
                                        VerticalOptions="Center">
                     <Button Text="{x:Static strings:AppResources.ButtonFilter}"
                             Clicked="OnFilterClicked"
-                            MinimumHeightRequest="44"
-                            MinimumWidthRequest="44"
-                            Padding="12,6"
-                            FontSize="12"/>
-                    <Button Text="{x:Static strings:AppResources.ButtonRefresh}"
-                            Command="{Binding RefreshCommand}"
-                            MinimumHeightRequest="44"
-                            MinimumWidthRequest="44"
-                            Padding="12,6"
-                            FontSize="12"/>
-                    <Button Text="{x:Static strings:AppResources.ButtonMarkAllRead}"
-                            Command="{Binding MarkAllReadCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
                             TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-                            CornerRadius="20"
-                            Padding="12,6"
+                            CornerRadius="22"
+                            Padding="16,10"
                             FontSize="12"
-                            MinimumHeightRequest="36"
-                            MinimumWidthRequest="44"/>
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            BorderWidth="0"/>
+                    <Button Text="{x:Static strings:AppResources.ButtonRefresh}"
+                            Command="{Binding RefreshCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+                            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                            CornerRadius="22"
+                            Padding="16,10"
+                            FontSize="12"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            BorderWidth="0"/>
+                    <Button Text="{x:Static strings:AppResources.ButtonMarkAllRead}"
+                            Command="{Binding MarkAllReadCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+                            TextColor="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"
+                            CornerRadius="22"
+                            Padding="16,10"
+                            FontSize="12"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            BorderWidth="0"/>
                 </HorizontalStackLayout>
             </Grid>
 
