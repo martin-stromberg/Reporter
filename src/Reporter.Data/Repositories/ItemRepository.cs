@@ -1,0 +1,173 @@
+using Microsoft.EntityFrameworkCore;
+using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
+using ItemEntity = Reporter.Data.Entities.Item;
+
+namespace Reporter.Data.Repositories;
+
+/// <summary>
+/// Provides data access for <see cref="Item"/> domain models.
+/// </summary>
+public class ItemRepository : IItemRepository
+{
+    private readonly IDbContextFactory<ReporterDbContext> _factory;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ItemRepository"/> class.
+    /// </summary>
+    /// <param name="factory">The database context factory.</param>
+    public ItemRepository(IDbContextFactory<ReporterDbContext> factory)
+    {
+        _factory = factory;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Item>> GetAllAsync()
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.Items
+            .AsNoTracking()
+            .OrderByDescending(i => i.PublishedAt)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<Item?> GetByIdAsync(Guid id)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == id);
+        return entity is null ? null : MapToModel(entity);
+    }
+
+    /// <inheritdoc />
+    public async Task AddAsync(Item item)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        context.Items.Add(MapToEntity(item));
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateAsync(Item item)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items.FindAsync(item.Id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        entity.FeedId = item.FeedId;
+        entity.Title = item.Title;
+        entity.Link = item.Link;
+        entity.PublishedAt = item.PublishedAt;
+        entity.GuidOrHash = item.GuidOrHash;
+        entity.IsRead = item.IsRead;
+        entity.IsSavedForLater = item.IsSavedForLater;
+        entity.ReadAt = item.ReadAt;
+        entity.ContentHtml = item.ContentHtml;
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAsync(Guid id)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items.FindAsync(id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        context.Items.Remove(entity);
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Item>> GetUnreadByDateAsync()
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead)
+            .OrderByDescending(i => i.PublishedAt)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.Items
+            .AsNoTracking()
+            .Where(i => i.FeedId == feedId)
+            .OrderByDescending(i => i.PublishedAt)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var feedIds = context.Feeds
+            .Where(f => f.CategoryId == categoryId)
+            .Select(f => f.Id);
+        var entities = await context.Items
+            .AsNoTracking()
+            .Where(i => feedIds.Contains(i.FeedId))
+            .OrderByDescending(i => i.PublishedAt)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Item>> GetSavedForLaterAsync()
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.Items
+            .AsNoTracking()
+            .Where(i => i.IsSavedForLater)
+            .OrderByDescending(i => i.PublishedAt)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    private static Item MapToModel(ItemEntity entity)
+    {
+        return new Item
+        {
+            Id = entity.Id,
+            FeedId = entity.FeedId,
+            Title = entity.Title,
+            Link = entity.Link,
+            PublishedAt = entity.PublishedAt,
+            GuidOrHash = entity.GuidOrHash,
+            IsRead = entity.IsRead,
+            IsSavedForLater = entity.IsSavedForLater,
+            ReadAt = entity.ReadAt,
+            ContentHtml = entity.ContentHtml,
+        };
+    }
+
+    private static ItemEntity MapToEntity(Item model)
+    {
+        return new ItemEntity
+        {
+            Id = model.Id,
+            FeedId = model.FeedId,
+            Title = model.Title,
+            Link = model.Link,
+            PublishedAt = model.PublishedAt,
+            GuidOrHash = model.GuidOrHash,
+            IsRead = model.IsRead,
+            IsSavedForLater = model.IsSavedForLater,
+            ReadAt = model.ReadAt,
+            ContentHtml = model.ContentHtml,
+        };
+    }
+}

@@ -73,3 +73,14 @@
 - Ein `Feed` gehört optional zu einer `Category` (`CategoryId`).
 - Ein `Item` gehört immer zu einem `Feed` (`FeedId`).
 - Ein `SyncLog` gehört optional zu einem `Feed` (`FeedId`).
+
+## Datenzugriff
+
+Die App verwendet eine saubere Schichtung:
+
+- `Reporter.Core.Models` enthält die Domänenmodelle.
+- `Reporter.Core.Interfaces` definiert Repository-Schnittstellen für alle Entitäten.
+- `Reporter.Data.Repositories` implementiert die Schnittstellen mit Entity Framework Core und SQLite.
+- `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>`, um pro Operation einen neuen `DbContext` zu erzeugen.
+- `Settings` wird als Singleton verwaltet; es existiert immer genau ein Datensatz.
+- `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie und gespeicherte Artikel.
