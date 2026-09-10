@@ -177,4 +177,7 @@
   <data name="LabelPullToRefresh" xml:space="preserve">
     <value>Zum Aktualisieren nach unten ziehen</value>
   </data>
+  <data name="LabelUnreadArticles" xml:space="preserve">
+    <value>ungelesene Artikel</value>
+  </data>
 </root>

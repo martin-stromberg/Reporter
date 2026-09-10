@@ -45,3 +45,12 @@ Design-Entwurf folgen.
 | Mehrere `Button`s nebeneinander in einer Zeile | `TapGestureRecognizer` + `DisplayActionSheet` oder `SwipeView` |
 | `Grid` mit vielen `Auto`-Spalten für Listen | Vertikale Karten mit `Border` |
 | Harte `WidthRequest`/`HeightRequest` | `MinimumWidthRequest` / `MinimumHeightRequest` und flexible Layouts |
+
+## UI-Verifizierungen
+
+### Ungelesen-Dashboard (issue-23)
+- Geprüft auf 390 × 844 pt (Windows-Handy-Fenster).
+- Runder Refresh-Button, Funnel-Filter-Button und "Alles gelesen"-Pill entsprechen dem Design-Entwurf.
+- Touch-Ziele der Header-Buttons: 44 × 44 pt.
+- Dark-Mode-Farben über `AppThemeBinding`.
+- Kartengestützte Artikelliste mit `TapGestureRecognizer` + `DisplayActionSheet` für Aktionen.

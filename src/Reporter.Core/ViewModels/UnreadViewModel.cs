@@ -29,6 +29,7 @@ public partial class UnreadViewModel : BaseViewModel
     private string _errorMessage = string.Empty;
     private string _lastSyncText = string.Empty;
     private string _selectedCategoryText = string.Empty;
+    private string _unreadCountText = string.Empty;
     private int _currentPage;
 
     /// <summary>
@@ -212,6 +213,15 @@ public partial class UnreadViewModel : BaseViewModel
     /// </summary>
     public int UnreadCount { get; private set; }
 
+    /// <summary>
+    /// Gets or sets the formatted unread count text.
+    /// </summary>
+    public string UnreadCountText
+    {
+        get => _unreadCountText;
+        set => SetProperty(ref _unreadCountText, value);
+    }
+
     private async Task LoadAsync()
     {
         ErrorMessage = string.Empty;
@@ -295,6 +305,7 @@ public partial class UnreadViewModel : BaseViewModel
                 SelectedCategory.Count = updatedCount;
                 UnreadCount = updatedCount;
                 SelectedCategoryText = $"{SelectedCategory.Name} ({SelectedCategory.Count})";
+                UpdateUnreadCountText();
             }
         }
         catch (Exception ex)
@@ -397,6 +408,8 @@ public partial class UnreadViewModel : BaseViewModel
             SelectedCategory.Count--;
         }
 
+        UpdateUnreadCountText();
+
         if (Articles.Count == 0)
         {
             await LoadAsync();
@@ -414,5 +427,12 @@ public partial class UnreadViewModel : BaseViewModel
         {
             category.IsSelected = category.CategoryId == SelectedCategory.CategoryId;
         }
+    }
+
+    private void UpdateUnreadCountText()
+    {
+        UnreadCountText = string.IsNullOrEmpty(LastSyncText)
+            ? $"{UnreadCount} {AppResources.LabelUnreadArticles}"
+            : $"{UnreadCount} {AppResources.LabelUnreadArticles} • {LastSyncText}";
     }
 }

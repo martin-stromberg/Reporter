@@ -554,5 +554,14 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("LabelPullToRefresh", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die unread articles ähnelt.
+        /// </summary>
+        public static string LabelUnreadArticles {
+            get {
+                return ResourceManager.GetString("LabelUnreadArticles", resourceCulture);
+            }
+        }
     }
 }
