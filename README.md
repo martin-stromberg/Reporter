@@ -90,6 +90,19 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 dotnet test Reporter.sln
 ```
 
+## CI/CD
+
+Das Repository verwendet GitHub Actions für Qualitätsgates:
+
+- `.github/workflows/pr-staging-ci.yml` — führt bei PRs nach `staging` parallel `static checks` (Format, Security-Scan, statische Analyse) und `build & test` (inkl. Coverage-Threshold 70 %) aus.
+- `.github/workflows/verify-pr-source.yml` — erlaubt PRs nach `main` nur aus `staging`.
+- `.github/workflows/security-scan.yml` — wöchentlicher Sicherheits-Scan der Abhängigkeiten.
+- `.github/actions/security-scan/action.yml` — wiederverwendbare Composite Action für den Vulnerability-Scan.
+
+**Manuelle Schritte nach dem Merge in `staging`:**
+- Branch-Protection für `staging` aktivieren und die Status Checks `static checks` und `build & test` als erforderlich markieren.
+- Labels `automated-promotion` (`0E8A16`) und `automated-backmerge` (`1D76DB`) anlegen.
+
 ## Changelog
 
 Siehe [changes.log](changes.log).

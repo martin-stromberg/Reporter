@@ -1,0 +1,28 @@
+name: Security scan
+
+inputs:
+  solution-path:
+    required: true
+  artifact-name:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Scan for vulnerable packages
+      shell: bash
+      run: |
+        set -o pipefail
+        output="$(dotnet list "${{ inputs.solution-path }}" package --vulnerable --include-transitive 2>&1 | tee vulnerable-packages.txt)"
+        if echo "$output" | grep -qi "has the following vulnerable packages\|Severity"; then
+          echo "::error::Vulnerable packages detected - see the uploaded report."
+          exit 1
+        fi
+
+    - name: Upload report
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: vulnerable-packages.txt
+        retention-days: 14

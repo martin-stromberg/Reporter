@@ -1,0 +1,17 @@
+name: Verify PR Source
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject PRs into main that do not come from staging
+        run: |
+          if [ "${{ github.head_ref }}" != "staging" ]; then
+            echo "::error::PRs into main are only allowed from staging (got '${{ github.head_ref }}')."
+            exit 1
+          fi

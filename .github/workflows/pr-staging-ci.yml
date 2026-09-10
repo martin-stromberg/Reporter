@@ -1,0 +1,118 @@
+name: PR CI for Staging
+
+on:
+  pull_request:
+    branches:
+      - staging
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: pr-staging-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  static-checks:
+    name: static checks
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload restore Reporter.sln
+
+      - name: Restore
+        run: dotnet restore Reporter.sln
+
+      - name: Format check
+        run: dotnet format Reporter.sln --verify-no-changes --no-restore --severity error
+
+      - name: Security scan
+        uses: ./.github/actions/security-scan
+        with:
+          solution-path: Reporter.sln
+          artifact-name: vulnerable-packages-pr
+
+      - name: Static analysis
+        run: dotnet build Reporter.sln --configuration Release --no-restore -p:TreatWarningsAsErrors=true
+
+  build-and-test:
+    name: build & test
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload restore Reporter.sln
+
+      - name: Restore
+        run: dotnet restore Reporter.sln
+
+      - name: Build
+        run: dotnet build Reporter.sln --configuration Release --no-restore
+
+      - name: Test
+        run: >
+          dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --no-build
+          --collect:"XPlat Code Coverage"
+          --logger "trx;LogFileName=test-results.trx"
+          --logger "console;verbosity=normal"
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.11
+
+      - name: Generate coverage report
+        shell: bash
+        run: reportgenerator "-reports:**/TestResults/**/coverage.cobertura.xml" "-targetdir:coverage-report" "-reporttypes:TextSummary"
+
+      - name: Enforce coverage threshold
+        shell: bash
+        env:
+          COVERAGE_THRESHOLD: '70'
+        run: |
+          set -euo pipefail
+          summary="coverage-report/Summary.txt"
+          if ! grep -q "Line coverage:" "$summary"; then
+            echo "Could not determine line coverage from the generated report." >&2
+            exit 1
+          fi
+          coverage="$(grep -m1 "Line coverage:" "$summary" | grep -oE '[0-9]+([.,][0-9]+)?' | head -n1 | tr ',' '.')"
+          threshold="$COVERAGE_THRESHOLD"
+          echo "Line coverage: ${coverage}% (threshold: ${threshold}%)"
+          awk -v cov="$coverage" -v thr="$threshold" 'BEGIN { exit !(cov >= thr) }'
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report-pr
+          path: coverage-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-pr
+          path: src/Reporter.Tests/TestResults/*.trx
+          retention-days: 14
