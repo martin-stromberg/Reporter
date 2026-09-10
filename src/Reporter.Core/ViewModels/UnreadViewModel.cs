@@ -28,6 +28,7 @@ public partial class UnreadViewModel : BaseViewModel
     private bool _hasMore;
     private string _errorMessage = string.Empty;
     private string _lastSyncText = string.Empty;
+    private string _selectedCategoryText = string.Empty;
     private int _currentPage;
 
     /// <summary>
@@ -124,8 +125,18 @@ public partial class UnreadViewModel : BaseViewModel
             if (SetProperty(ref _selectedCategory, value))
             {
                 UpdateCategorySelection();
+                SelectedCategoryText = value is not null ? $"{value.Name} ({value.Count})" : string.Empty;
             }
         }
+    }
+
+    /// <summary>
+    /// Gets or sets the text of the selected category filter.
+    /// </summary>
+    public string SelectedCategoryText
+    {
+        get => _selectedCategoryText;
+        set => SetProperty(ref _selectedCategoryText, value);
     }
 
     /// <summary>
@@ -283,6 +294,7 @@ public partial class UnreadViewModel : BaseViewModel
                 var updatedCount = await _itemRepository.GetUnreadCountAsync(SelectedCategory.CategoryId);
                 SelectedCategory.Count = updatedCount;
                 UnreadCount = updatedCount;
+                SelectedCategoryText = $"{SelectedCategory.Name} ({SelectedCategory.Count})";
             }
         }
         catch (Exception ex)

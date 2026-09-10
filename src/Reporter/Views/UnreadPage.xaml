@@ -6,7 +6,7 @@
              x:Class="Reporter.Views.UnreadPage"
              Title="{x:Static strings:AppResources.PageTitleUnread}"
              Shell.NavBarIsVisible="False">
-    <Grid RowDefinitions="Auto,Auto,*"
+    <Grid RowDefinitions="Auto,*"
           Padding="16,8"
           RowSpacing="12">
         <VerticalStackLayout Spacing="8">
@@ -25,7 +25,20 @@
 
                 <HorizontalStackLayout Grid.Column="1"
                                        Spacing="8"
-                                       HorizontalOptions="End">
+                                       HorizontalOptions="End"
+                                       VerticalOptions="Center">
+                    <Button Text="{x:Static strings:AppResources.ButtonFilter}"
+                            Clicked="OnFilterClicked"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            Padding="12,6"
+                            FontSize="12"/>
+                    <Button Text="{x:Static strings:AppResources.ButtonRefresh}"
+                            Command="{Binding RefreshCommand}"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            Padding="12,6"
+                            FontSize="12"/>
                     <Button Text="{x:Static strings:AppResources.ButtonMarkAllRead}"
                             Command="{Binding MarkAllReadCommand}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
@@ -37,50 +50,12 @@
                             MinimumWidthRequest="44"/>
                 </HorizontalStackLayout>
             </Grid>
+
+            <Label Text="{Binding SelectedCategoryText}"
+                   Style="{StaticResource MetaStyle}"/>
         </VerticalStackLayout>
 
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Categories}"
-                        ItemsLayout="HorizontalList"
-                        SelectionMode="None"
-                        HeightRequest="48">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border Padding="8,4"
-                            Margin="0,0,8,0"
-                            StrokeShape="RoundRectangle 16"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
-                            Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnCategoryTapped"
-                                                  CommandParameter="{Binding .}"/>
-                        </Border.GestureRecognizers>
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <HorizontalStackLayout Spacing="6"
-                                               VerticalOptions="Center">
-                            <Label Text="{Binding Name}"
-                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-                                   FontSize="14"
-                                   VerticalOptions="Center"/>
-                            <Border Padding="4,0"
-                                    StrokeShape="RoundRectangle 10"
-                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
-                                <Label Text="{Binding Count}"
-                                       FontSize="11"
-                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-                                       VerticalOptions="Center"/>
-                            </Border>
-                        </HorizontalStackLayout>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-
-        <RefreshView Grid.Row="2"
+        <RefreshView Grid.Row="1"
                      IsRefreshing="{Binding IsSyncing}"
                      Command="{Binding RefreshCommand}">
             <CollectionView x:Name="ArticlesCollection"
@@ -99,7 +74,7 @@
                                 <TapGestureRecognizer Tapped="OnArticleTapped"
                                                       CommandParameter="{Binding .}"/>
                             </Border.GestureRecognizers>
-                            <Grid RowDefinitions="Auto,Auto,Auto"
+                            <Grid RowDefinitions="Auto,Auto"
                                   ColumnDefinitions="*,Auto"
                                   RowSpacing="8"
                                   ColumnSpacing="12">
@@ -160,7 +135,7 @@
             </CollectionView>
         </RefreshView>
 
-        <ActivityIndicator Grid.Row="2"
+        <ActivityIndicator Grid.Row="1"
                            IsRunning="{Binding IsLoading}"
                            IsVisible="{Binding IsLoading}"
                            VerticalOptions="End"

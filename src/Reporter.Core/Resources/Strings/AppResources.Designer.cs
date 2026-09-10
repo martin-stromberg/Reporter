@@ -95,7 +95,16 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("ButtonDelete", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Filter ähnelt.
+        /// </summary>
+        public static string ButtonFilter {
+            get {
+                return ResourceManager.GetString("ButtonFilter", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Edit ähnelt.
         /// </summary>

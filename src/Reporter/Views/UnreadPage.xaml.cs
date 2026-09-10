@@ -31,18 +31,29 @@ public partial class UnreadPage : ContentPage
     }
 
     /// <summary>
-    /// Selects the tapped category filter.
+    /// Opens an action sheet to select a category filter.
     /// </summary>
     /// <param name="sender">The view that received the tap.</param>
-    /// <param name="e">Event args containing the tapped category as <see cref="TappedEventArgs.Parameter"/>.</param>
-    private async void OnCategoryTapped(object? sender, TappedEventArgs e)
+    /// <param name="e">The event args.</param>
+    private async void OnFilterClicked(object? sender, EventArgs e)
     {
-        if (e.Parameter is not CategoryFilterItem category || BindingContext is not UnreadViewModel viewModel)
+        if (BindingContext is not UnreadViewModel viewModel || viewModel.Categories.Count == 0)
         {
             return;
         }
 
-        await viewModel.SelectCategoryCommand.ExecuteAsync(category);
+        var options = viewModel.Categories.Select(c => c.Name).ToArray();
+        var action = await DisplayActionSheetAsync(
+            AppResources.ActionSheetTitleCategory,
+            AppResources.ButtonCancel,
+            null,
+            options);
+
+        var selected = viewModel.Categories.FirstOrDefault(c => c.Name == action);
+        if (selected is not null)
+        {
+            await viewModel.SelectCategoryCommand.ExecuteAsync(selected);
+        }
     }
 
     /// <summary>
