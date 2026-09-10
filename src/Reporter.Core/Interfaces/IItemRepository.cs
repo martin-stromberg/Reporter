@@ -102,7 +102,7 @@ public interface IItemRepository
     /// Gets all items saved for later asynchronously.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation. The task result contains the saved items.</returns>
-    Task<IReadOnlyList<Item>> GetSavedForLaterAsync();
+    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync();
 
     /// <summary>
     /// Gets the item with the specified GUID or hash for the specified feed asynchronously.

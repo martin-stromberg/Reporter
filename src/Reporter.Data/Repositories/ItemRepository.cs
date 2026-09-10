@@ -251,15 +251,44 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Item>> GetSavedForLaterAsync()
+    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync()
     {
         await using var context = await _factory.CreateDbContextAsync();
         var entities = await context.Items
             .AsNoTracking()
             .Where(i => i.IsSavedForLater)
             .OrderByDescending(i => i.PublishedAt)
+            .Select(i => new
+            {
+                i.Id,
+                i.FeedId,
+                i.Title,
+                i.Link,
+                i.PublishedAt,
+                i.IsRead,
+                i.IsSavedForLater,
+                i.ContentHtml,
+                FeedTitle = i.Feed.Title,
+                CategoryId = i.Feed.CategoryId,
+                CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
+            })
             .ToListAsync();
-        return entities.Select(MapToModel).ToList();
+
+        return entities.Select(e => new ItemListItem
+        {
+            Id = e.Id,
+            FeedId = e.FeedId,
+            Title = e.Title,
+            Link = e.Link,
+            PublishedAt = e.PublishedAt,
+            IsRead = e.IsRead,
+            IsSavedForLater = e.IsSavedForLater,
+            FeedTitle = e.FeedTitle,
+            CategoryId = e.CategoryId,
+            CategoryName = e.CategoryName,
+            ImageUrl = ExtractImageUrl(e.ContentHtml),
+            Summary = ExtractSummary(e.ContentHtml),
+        }).ToList();
     }
 
     /// <inheritdoc />

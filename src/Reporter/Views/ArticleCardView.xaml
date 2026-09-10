@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Name="Card"
+             x:Class="Reporter.Views.ArticleCardView">
+    <Border Padding="16"
+            Margin="0,6"
+            StrokeShape="RoundRectangle 16"
+            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+            Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+              ColumnDefinitions="*,Auto"
+              RowSpacing="10"
+              ColumnSpacing="14">
+            <HorizontalStackLayout Grid.Row="0"
+                                   Grid.Column="0"
+                                   Spacing="8"
+                                   VerticalOptions="Center">
+                <BoxView WidthRequest="8"
+                         HeightRequest="8"
+                         CornerRadius="4"
+                         BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+                         VerticalOptions="Center"/>
+                <Label Text="{Binding FeedTitle}"
+                       Style="{StaticResource BodySmallStyle}"
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="1"/>
+                <Label Text="•"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"/>
+                <Label Text="{Binding PublishedAt, StringFormat='{0:g}', TargetNullValue='—'}"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <Border Grid.Row="0"
+                    Grid.Column="1"
+                    Padding="8,3"
+                    StrokeShape="RoundRectangle 10"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+                    VerticalOptions="Center">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding CategoryName}" Value="">
+                        <Setter Property="IsVisible" Value="False"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding CategoryName}" Value="{x:Null}">
+                        <Setter Property="IsVisible" Value="False"/>
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{Binding CategoryName}"
+                       FontSize="11"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                       VerticalOptions="Center"
+                       FontAttributes="Bold"/>
+            </Border>
+
+            <Label Grid.Row="1"
+                   Grid.Column="0"
+                   Text="{Binding Title}"
+                   Style="{StaticResource HeadlineSmallStyle}"
+                   LineBreakMode="TailTruncation"
+                   MaxLines="2"
+                   VerticalOptions="Start"/>
+
+            <Border Grid.Row="1"
+                    Grid.RowSpan="2"
+                    Grid.Column="1"
+                    WidthRequest="80"
+                    HeightRequest="80"
+                    StrokeShape="RoundRectangle 12"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+                    VerticalOptions="Start">
+                <Image Source="{Binding ImageUrl}"
+                       Aspect="AspectFill"
+                       WidthRequest="80"
+                       HeightRequest="80"/>
+            </Border>
+
+            <Label Grid.Row="2"
+                   Grid.Column="0"
+                   Text="{Binding Summary}"
+                   Style="{StaticResource BodySmallStyle}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                   LineBreakMode="TailTruncation"
+                   MaxLines="2"
+                   IsVisible="{Binding Summary, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                   VerticalOptions="Start"/>
+
+            <Grid Grid.Row="3"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  ColumnDefinitions="*,Auto"
+                  RowDefinitions="Auto">
+                <HorizontalStackLayout Grid.Column="0"
+                                       Spacing="4"
+                                       VerticalOptions="Center">
+                    <Path Data="M24,4 A20,20 0 1,1 24,44 A20,20 0 1,1 24,4 Z M24,14 L24,26 M24,26 L18,20 M24,26 L30,20"
+                          Stroke="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                          StrokeThickness="2"
+                          StrokeLineCap="Round"
+                          StrokeLineJoin="Round"
+                          Aspect="Uniform"
+                          WidthRequest="16"
+                          HeightRequest="16"
+                          VerticalOptions="Center"
+                          Fill="Transparent"/>
+                    <Label Text="—"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Grid.Column="1"
+                                       Spacing="8"
+                                       VerticalOptions="Center">
+                    <Border WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
+                            Background="Transparent"
+                            VerticalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleSavedCommand, Source={x:Reference Card}}"
+                                                  CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+                        <Path Data="M6,4 L22,4 L22,26 L14,20 L6,26 Z"
+                              Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                              StrokeThickness="2"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Aspect="Uniform"
+                              WidthRequest="18"
+                              HeightRequest="18"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center"
+                              Fill="Transparent"/>
+                    </Border>
+
+                    <Border WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
+                            Background="Transparent"
+                            VerticalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding MarkReadCommand, Source={x:Reference Card}}"
+                                                  CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+                        <Path Data="M4,14 L12,22 L26,8"
+                              Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                              StrokeThickness="2"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Aspect="Uniform"
+                              WidthRequest="18"
+                              HeightRequest="18"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center"
+                              Fill="Transparent"/>
+                    </Border>
+                </HorizontalStackLayout>
+            </Grid>
+
+            <Grid Grid.Row="0"
+                  Grid.RowSpan="3"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Background="Transparent">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenArticleCommand, Source={x:Reference Card}}"
+                                          CommandParameter="{Binding .}"/>
+                </Grid.GestureRecognizers>
+            </Grid>
+        </Grid>
+    </Border>
+</ContentView>
