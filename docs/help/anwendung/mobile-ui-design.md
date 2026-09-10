@@ -53,4 +53,9 @@ Design-Entwurf folgen.
 - Runder Refresh-Button, Funnel-Filter-Button und "Alles gelesen"-Pill entsprechen dem Design-Entwurf.
 - Touch-Ziele der Header-Buttons: 44 × 44 pt.
 - Dark-Mode-Farben über `AppThemeBinding`.
-- Kartengestützte Artikelliste mit `TapGestureRecognizer` + `DisplayActionSheet` für Aktionen.
+- Kartengestützte Artikelliste mit `ArticleCardView`, Bild rechts, Teasertext und Aktions-Icons.
+
+### Später-Liste
+- Geprüft auf 390 × 844 pt (Windows-Handy-Fenster).
+- Verwendet dieselbe `ArticleCardView` wie das Ungelesen-Dashboard.
+- Lesezeichen-Icon füllt sich, wenn der Artikel gespeichert ist.

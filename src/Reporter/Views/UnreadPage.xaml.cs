@@ -20,13 +20,13 @@ public partial class UnreadPage : ContentPage
     }
 
     /// <inheritdoc />
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
         if (BindingContext is UnreadViewModel viewModel)
         {
-            viewModel.LoadCommand.Execute(null);
+            await viewModel.LoadCommand.ExecuteAsync(null);
         }
     }
 
