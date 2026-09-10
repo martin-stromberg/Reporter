@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Reporter.Resources.Strings;
+using Reporter.Core.Resources.Strings;
 using Reporter.Views;
 
 namespace Reporter;

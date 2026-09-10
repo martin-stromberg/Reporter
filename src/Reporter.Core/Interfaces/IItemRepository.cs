@@ -66,4 +66,12 @@ public interface IItemRepository
     /// </summary>
     /// <returns>A task that represents the asynchronous operation. The task result contains the saved items.</returns>
     Task<IReadOnlyList<Item>> GetSavedForLaterAsync();
+
+    /// <summary>
+    /// Gets the item with the specified GUID or hash for the specified feed asynchronously.
+    /// </summary>
+    /// <param name="feedId">The feed identifier.</param>
+    /// <param name="guidOrHash">The original GUID or hash.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the item, or <c>null</c> if not found.</returns>
+    Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash);
 }

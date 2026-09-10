@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net10.0-windows10.0.19041.0</TargetFrameworks>
+		<IncludeIosTarget Condition="'$(IncludeIosTarget)' == ''">true</IncludeIosTarget>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' == 'true'">net10.0-windows10.0.19041.0;net10.0-ios</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' != 'true'">net10.0-windows10.0.19041.0</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">net10.0-ios</TargetFrameworks>
 
 		<!-- Note for MacCatalyst:
