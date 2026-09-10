@@ -1,6 +1,6 @@
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
-using Reporter.Resources.Strings;
+using Reporter.Core.Resources.Strings;
 
 namespace Reporter.Core.ViewModels;
 

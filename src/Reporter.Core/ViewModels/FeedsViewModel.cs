@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
-using Reporter.Resources.Strings;
+using Reporter.Core.Resources.Strings;
 
 namespace Reporter.Core.ViewModels;
 

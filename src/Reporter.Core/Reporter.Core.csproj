@@ -17,7 +17,7 @@
     <EmbeddedResource Update="Resources\Strings\AppResources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>AppResources.Designer.cs</LastGenOutput>
-      <CustomToolNamespace>Reporter.Resources.Strings</CustomToolNamespace>
+      <CustomToolNamespace>Reporter.Core.Resources.Strings</CustomToolNamespace>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources\Strings\AppResources.de.resx" />
     <Compile Update="Resources\Strings\AppResources.Designer.cs">

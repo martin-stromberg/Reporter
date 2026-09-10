@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:strings="clr-namespace:Reporter.Resources.Strings;assembly=Reporter.Core"
+             xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
              x:Class="Reporter.Views.FeedsPage"
              Title="{x:Static strings:AppResources.PageTitleFeeds}">

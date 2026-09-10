@@ -76,6 +76,18 @@ dotnet build src/Reporter/Reporter.csproj -f net10.0-ios
 dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 ```
 
+Fuer gezieltes Build/Deployment (IPA, Simulator, physisches Geraet) steht `scripts/iOS-Deployment.ps1` bereit:
+
+```powershell
+# Menue starten
+.\scripts\iOS-Deployment.ps1
+
+# Beispiele
+.\scripts\iOS-Deployment.ps1 -Action build -CodesignKey "Apple Distribution: ..." -CodesignProvision "ReporterProfile" -ServerAddress 192.168.1.10 -ServerUser me
+.\scripts\iOS-Deployment.ps1 -Action simulator -Device "E25BBE37-69BA-4720-B6FD-D54C97791E79"
+.\scripts\iOS-Deployment.ps1 -Action device -Device "DEINE-UDID" -CodesignKey "..." -CodesignProvision "..."
+```
+
 ## Architektur
 
 - `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.

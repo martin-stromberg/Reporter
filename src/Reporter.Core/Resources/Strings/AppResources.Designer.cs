@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Reporter.Resources.Strings {
+namespace Reporter.Core.Resources.Strings {
     using System;
     
     
