@@ -125,6 +125,81 @@ public static class AppResources
     /// </summary>
     public static string ButtonDelete { get; private set; } = null!;
 
+    /// <summary>
+    /// Gets the localized no button text.
+    /// </summary>
+    public static string ButtonNo { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized yes button text.
+    /// </summary>
+    public static string ButtonYes { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized text for no category.
+    /// </summary>
+    public static string CategoryNone { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized delete confirmation message for a feed.
+    /// </summary>
+    public static string ConfirmDeleteFeedMessage { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized delete confirmation title for a feed.
+    /// </summary>
+    public static string ConfirmDeleteFeedTitle { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized error for a duplicate feed URL.
+    /// </summary>
+    public static string ErrorFeedDuplicate { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized error for a missing feed title.
+    /// </summary>
+    public static string ErrorFeedTitleEmpty { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized error for an invalid feed URL.
+    /// </summary>
+    public static string ErrorFeedUrlInvalid { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized label for the feed category.
+    /// </summary>
+    public static string LabelFeedCategory { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized label for the feed health status.
+    /// </summary>
+    public static string LabelFeedHealthStatus { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized label for the feed last check timestamp.
+    /// </summary>
+    public static string LabelFeedLastCheck { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized label for the feed title.
+    /// </summary>
+    public static string LabelFeedTitle { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized label for the unread feed item count.
+    /// </summary>
+    public static string LabelFeedUnreadCount { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized placeholder text for the feed title.
+    /// </summary>
+    public static string PlaceholderFeedTitle { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the localized placeholder text for the feed URL.
+    /// </summary>
+    public static string PlaceholderFeedUrl { get; private set; } = null!;
+
     static AppResources()
     {
         ResourceManager = new ResourceManager("Reporter.Resources.Strings.AppResources", typeof(AppResources).Assembly);
@@ -150,6 +225,21 @@ public static class AppResources
         ButtonSave = GetString(nameof(ButtonSave));
         ButtonEdit = GetString(nameof(ButtonEdit));
         ButtonDelete = GetString(nameof(ButtonDelete));
+        ButtonNo = GetString(nameof(ButtonNo));
+        ButtonYes = GetString(nameof(ButtonYes));
+        CategoryNone = GetString(nameof(CategoryNone));
+        ConfirmDeleteFeedMessage = GetString(nameof(ConfirmDeleteFeedMessage));
+        ConfirmDeleteFeedTitle = GetString(nameof(ConfirmDeleteFeedTitle));
+        ErrorFeedDuplicate = GetString(nameof(ErrorFeedDuplicate));
+        ErrorFeedTitleEmpty = GetString(nameof(ErrorFeedTitleEmpty));
+        ErrorFeedUrlInvalid = GetString(nameof(ErrorFeedUrlInvalid));
+        LabelFeedCategory = GetString(nameof(LabelFeedCategory));
+        LabelFeedHealthStatus = GetString(nameof(LabelFeedHealthStatus));
+        LabelFeedLastCheck = GetString(nameof(LabelFeedLastCheck));
+        LabelFeedTitle = GetString(nameof(LabelFeedTitle));
+        LabelFeedUnreadCount = GetString(nameof(LabelFeedUnreadCount));
+        PlaceholderFeedTitle = GetString(nameof(PlaceholderFeedTitle));
+        PlaceholderFeedUrl = GetString(nameof(PlaceholderFeedUrl));
     }
 
     private static string GetString(string name)

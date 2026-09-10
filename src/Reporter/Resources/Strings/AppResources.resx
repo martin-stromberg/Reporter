@@ -75,4 +75,49 @@
   <data name="ButtonDelete" xml:space="preserve">
     <value>Delete</value>
   </data>
+  <data name="ButtonNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="ButtonYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="CategoryNone" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
+    <value>All articles belonging to this feed will also be deleted. Continue?</value>
+  </data>
+  <data name="ConfirmDeleteFeedTitle" xml:space="preserve">
+    <value>Delete feed?</value>
+  </data>
+  <data name="ErrorFeedDuplicate" xml:space="preserve">
+    <value>A feed with this URL already exists.</value>
+  </data>
+  <data name="ErrorFeedTitleEmpty" xml:space="preserve">
+    <value>Please enter a display title.</value>
+  </data>
+  <data name="ErrorFeedUrlInvalid" xml:space="preserve">
+    <value>Please enter a valid feed URL.</value>
+  </data>
+  <data name="LabelFeedCategory" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="LabelFeedHealthStatus" xml:space="preserve">
+    <value>Health</value>
+  </data>
+  <data name="LabelFeedLastCheck" xml:space="preserve">
+    <value>Last check</value>
+  </data>
+  <data name="LabelFeedTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="LabelFeedUnreadCount" xml:space="preserve">
+    <value>Unread</value>
+  </data>
+  <data name="PlaceholderFeedTitle" xml:space="preserve">
+    <value>Display title</value>
+  </data>
+  <data name="PlaceholderFeedUrl" xml:space="preserve">
+    <value>https://example.com/feed</value>
+  </data>
 </root>
