@@ -78,6 +78,11 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 
 Fuer gezieltes Build/Deployment (IPA, Simulator, physisches Geraet) steht `scripts/iOS-Deployment.ps1` bereit:
 
+**Wichtig:** `simulator` und `device` setzen voraus, dass das Skript direkt auf einem Mac ausgefuehrt wird.
+Microsoft unterstuetzt `dotnet build -t:Run` fuer iOS/tvOS aktuell **nicht von Windows aus**.
+Auf Windows koennen mit `build` die iOS-Kompilate (bzw. mit Codesigning `.ipa`) erzeugt werden;
+das Deployment muss dann ueber Visual Studio oder manuell auf dem Mac erfolgen.
+
 ```powershell
 # Menue starten
 .\scripts\iOS-Deployment.ps1
