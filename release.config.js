@@ -7,7 +7,7 @@ const releasePlugins = [
       assets: [
         { path: process.env.RELEASE_ASSET_PATHS?.split(";")[0], name: "release-win-x64.zip" },
         { path: process.env.RELEASE_MANIFEST_PATH, name: "update.json" }
-      ],
+      ].filter((asset) => asset.path !== undefined),
       successComment: false,
       failComment: false
     }

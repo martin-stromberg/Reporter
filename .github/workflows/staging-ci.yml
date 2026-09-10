@@ -145,6 +145,7 @@ jobs:
         id: semver
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RESOLVE_DRY_RUN: 'true'
         run: |
           set -o pipefail
           output="$(npx semantic-release --dry-run --no-ci --branches staging 2>&1 | tee /dev/stderr)"
