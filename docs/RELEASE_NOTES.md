@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.0.4
+
+### Ungelesen-Dashboard mit Kategoriefilter, Pull-to-Refresh und Infinity-Scroll
+
+- Neues Domänenmodell `ItemListItem` für Artikelkarten mit Feed-Titel und Kategorie.
+- `IItemRepository` erweitert um seitenweises Laden, Ungelesen-Zähler, Kategoriefilter, "Alle als gelesen" und Lesezeichen-Toggle.
+- `UnreadViewModel` komplett überarbeitet: Paging, Kategorie-Chips, Sync, Aktionen.
+- `UnreadPage` mit Kategoriefilter-Chips, `RefreshView`, `CollectionView`-Karten und ActionSheet für Artikelaktionen.
+- Neue Lokalisierungsschlüssel für Filter- und Artikelaktionen.
+- Unit- und Integrationstests für `ItemRepository` und `UnreadViewModel` in `Reporter.Tests` hinzugefügt.
+
 ## 0.0.3
 
 ### RSS/Atom-Synchronisation, Artikelabruf und Feed-Health

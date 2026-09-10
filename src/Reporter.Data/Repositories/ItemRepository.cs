@@ -99,6 +99,126 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        var entities = await query
+            .OrderByDescending(i => i.PublishedAt)
+            .ThenBy(i => i.Id)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .Select(i => new
+            {
+                i.Id,
+                i.FeedId,
+                i.Title,
+                i.Link,
+                i.PublishedAt,
+                i.IsRead,
+                i.IsSavedForLater,
+                FeedTitle = i.Feed.Title,
+                CategoryId = i.Feed.CategoryId,
+                CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
+            })
+            .ToListAsync();
+
+        return entities.Select(e => new ItemListItem
+        {
+            Id = e.Id,
+            FeedId = e.FeedId,
+            Title = e.Title,
+            Link = e.Link,
+            PublishedAt = e.PublishedAt,
+            IsRead = e.IsRead,
+            IsSavedForLater = e.IsSavedForLater,
+            FeedTitle = e.FeedTitle,
+            CategoryId = e.CategoryId,
+            CategoryName = e.CategoryName,
+        }).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetUnreadCountAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        return await query.CountAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkAllAsReadAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items.Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        await query.ExecuteUpdateAsync(setters => setters
+            .SetProperty(i => i.IsRead, true)
+            .SetProperty(i => i.ReadAt, DateTime.UtcNow));
+    }
+
+    /// <inheritdoc />
+    public async Task ToggleSavedForLaterAsync(Guid id)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items.FindAsync(id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        entity.IsSavedForLater = !entity.IsSavedForLater;
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkAsReadAsync(Guid id)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entity = await context.Items.FindAsync(id);
+        if (entity is null)
+        {
+            return;
+        }
+
+        entity.IsRead = true;
+        entity.ReadAt = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId)
     {
         await using var context = await _factory.CreateDbContextAsync();

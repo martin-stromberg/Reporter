@@ -2,37 +2,168 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             x:Name="PageRoot"
              x:Class="Reporter.Views.UnreadPage"
              Title="{x:Static strings:AppResources.PageTitleUnread}"
              Shell.NavBarIsVisible="False">
-    <Grid RowDefinitions="Auto,*"
+    <Grid RowDefinitions="Auto,Auto,*"
           Padding="16,8"
           RowSpacing="12">
-        <Label Text="{x:Static strings:AppResources.PageTitleUnread}"
-               Style="{StaticResource HeadlineStyle}"/>
+        <VerticalStackLayout Spacing="8">
+            <Label Text="{x:Static strings:AppResources.PageTitleUnread}"
+                   Style="{StaticResource HeadlineStyle}"/>
+
+            <Grid ColumnDefinitions="*,Auto"
+                  RowSpacing="4">
+                <VerticalStackLayout Spacing="2"
+                                     VerticalOptions="Center">
+                    <Label Text="{Binding LastSyncText}"
+                           Style="{StaticResource MetaStyle}"/>
+                    <Label Text="{x:Static strings:AppResources.LabelPullToRefresh}"
+                           Style="{StaticResource MetaStyle}"/>
+                </VerticalStackLayout>
+
+                <HorizontalStackLayout Grid.Column="1"
+                                       Spacing="8"
+                                       HorizontalOptions="End">
+                    <Button Text="{x:Static strings:AppResources.ButtonMarkAllRead}"
+                            Command="{Binding MarkAllReadCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+                            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                            CornerRadius="20"
+                            Padding="12,6"
+                            FontSize="12"
+                            MinimumHeightRequest="36"
+                            MinimumWidthRequest="44"/>
+                </HorizontalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
 
         <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Articles}"
-                        EmptyView="{x:Static strings:AppResources.PlaceholderUnread}">
+                        ItemsSource="{Binding Categories}"
+                        ItemsLayout="HorizontalList"
+                        SelectionMode="None"
+                        HeightRequest="48">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="16"
-                            Margin="0,6"
-                            StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding Title}"
-                                   Style="{StaticResource HeadlineSmallStyle}"
-                                   LineBreakMode="TailTruncation"
-                                   MaxLines="2"/>
-                            <HorizontalStackLayout Spacing="8">
-                                <Label Text="{Binding PublishedAt, StringFormat='{0:g}', TargetNullValue='—'}"
-                                       Style="{StaticResource MetaStyle}"/>
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
+                    <Border Padding="8,4"
+                            Margin="0,0,8,0"
+                            StrokeShape="RoundRectangle 16"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+                            Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCategoryTapped"
+                                                  CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
+                            <Label Text="{Binding Name}"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                                   FontSize="14"
+                                   VerticalOptions="Center"/>
+                            <Border Padding="4,0"
+                                    StrokeShape="RoundRectangle 10"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                                <Label Text="{Binding Count}"
+                                       FontSize="11"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                        </HorizontalStackLayout>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <RefreshView Grid.Row="2"
+                     IsRefreshing="{Binding IsSyncing}"
+                     Command="{Binding RefreshCommand}">
+            <CollectionView x:Name="ArticlesCollection"
+                            ItemsSource="{Binding Articles}"
+                            RemainingItemsThreshold="2"
+                            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
+                            EmptyView="{x:Static strings:AppResources.PlaceholderUnread}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="16"
+                                Margin="0,6"
+                                StrokeShape="RoundRectangle 12"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+                                Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnArticleTapped"
+                                                      CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto"
+                                  RowSpacing="8"
+                                  ColumnSpacing="12">
+                                <HorizontalStackLayout Grid.Row="0"
+                                                       Grid.Column="0"
+                                                       Spacing="8"
+                                                       VerticalOptions="Center">
+                                    <BoxView WidthRequest="10"
+                                             HeightRequest="10"
+                                             CornerRadius="5"
+                                             BackgroundColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
+                                             VerticalOptions="Center"/>
+                                    <Label Text="{Binding FeedTitle}"
+                                           Style="{StaticResource BodySmallStyle}"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"/>
+                                    <Label Text="•"
+                                           Style="{StaticResource MetaStyle}"
+                                           VerticalOptions="Center"/>
+                                    <Label Text="{Binding PublishedAt, StringFormat='{0:g}', TargetNullValue='—'}"
+                                           Style="{StaticResource MetaStyle}"
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+
+                                <Border Grid.Row="0"
+                                        Grid.Column="1"
+                                        Padding="6,2"
+                                        StrokeShape="RoundRectangle 10"
+                                        Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding CategoryName}" Value="">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding CategoryName}" Value="{x:Null}">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="{Binding CategoryName}"
+                                           FontSize="11"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                           VerticalOptions="Center"/>
+                                </Border>
+
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Grid.Column="0"
+                                                     Grid.ColumnSpan="2"
+                                                     Spacing="4">
+                                    <Label Text="{Binding Title}"
+                                           Style="{StaticResource HeadlineSmallStyle}"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="2"/>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Grid.Row="2"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           VerticalOptions="End"
+                           HorizontalOptions="Center"/>
     </Grid>
 </ContentPage>

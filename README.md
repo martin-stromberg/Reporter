@@ -7,7 +7,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 ## Features
 
 - .NET MAUI-App mit Shell-Navigation
-- Untere Navigationsleiste mit **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
+- Untere Navigationsleiste mit **Ungelesen** (Dashboard mit Kategoriefilter, Pull-to-Refresh und Infinity-Scroll), **Feeds**, **Später**, **Kategorien** und **Einstellungen**
 - Light/Dark-Theme-Unterstützung über .NET MAUI `AppThemeBinding`
 - Design-System mit den Schriftarten **Newsreader** und **Inter** sowie Farb- und Typografie-Tokens aus dem `design-draft`
 - Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
