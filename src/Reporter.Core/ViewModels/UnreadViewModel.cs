@@ -2,7 +2,7 @@ using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Resources.Strings;
 
-namespace Reporter.ViewModels;
+namespace Reporter.Core.ViewModels;
 
 /// <summary>
 /// View model for the unread articles page.

@@ -1,7 +1,7 @@
 using Reporter.Core.Interfaces;
 using Reporter.Resources.Strings;
 
-namespace Reporter.ViewModels;
+namespace Reporter.Core.ViewModels;
 
 /// <summary>
 /// View model for the settings page.

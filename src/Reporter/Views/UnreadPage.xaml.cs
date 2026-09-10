@@ -1,3 +1,5 @@
+using Reporter.Core.ViewModels;
+
 namespace Reporter.Views;
 
 /// <summary>
@@ -9,7 +11,7 @@ public partial class UnreadPage : ContentPage
     /// Initializes a new instance of the <see cref="UnreadPage"/> class.
     /// </summary>
     /// <param name="viewModel">The view model for the page.</param>
-    public UnreadPage(ViewModels.UnreadViewModel viewModel)
+    public UnreadPage(UnreadViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;

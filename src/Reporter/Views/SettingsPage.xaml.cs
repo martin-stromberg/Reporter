@@ -1,3 +1,5 @@
+using Reporter.Core.ViewModels;
+
 namespace Reporter.Views;
 
 /// <summary>
@@ -9,7 +11,7 @@ public partial class SettingsPage : ContentPage
     /// Initializes a new instance of the <see cref="SettingsPage"/> class.
     /// </summary>
     /// <param name="viewModel">The view model for the page.</param>
-    public SettingsPage(ViewModels.SettingsViewModel viewModel)
+    public SettingsPage(SettingsViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;

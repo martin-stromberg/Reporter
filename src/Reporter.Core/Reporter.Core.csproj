@@ -13,4 +13,18 @@
     <PackageReference Include="System.ServiceModel.Syndication" Version="10.0.11" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings\AppResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>AppResources.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>Reporter.Resources.Strings</CustomToolNamespace>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Strings\AppResources.de.resx" />
+    <Compile Update="Resources\Strings\AppResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>AppResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

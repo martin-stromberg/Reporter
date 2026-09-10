@@ -5,7 +5,7 @@ using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Resources.Strings;
 
-namespace Reporter.ViewModels;
+namespace Reporter.Core.ViewModels;
 
 /// <summary>
 /// View model for managing feeds.
@@ -36,7 +36,7 @@ public partial class FeedsViewModel : BaseViewModel
         _feedRepository = feedRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
-        LoadCommand = new AsyncRelayCommand(LoadAsync);
+        LoadCommand = new AsyncRelayCommand(LoadCommandAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         EditCommand = new AsyncRelayCommand<FeedListItem?>(EditAsync);
         DeleteCommand = new AsyncRelayCommand<FeedListItem?>(DeleteAsync);
@@ -164,10 +164,14 @@ public partial class FeedsViewModel : BaseViewModel
         set => SetProperty(ref _feeds, value);
     }
 
-    private async Task LoadAsync()
+    private async Task LoadCommandAsync()
     {
         ErrorMessage = string.Empty;
+        await LoadAsync();
+    }
 
+    private async Task LoadAsync()
+    {
         var categories = new List<Category>
         {
             new Category { Id = Guid.Empty, Name = AppResources.CategoryNone },

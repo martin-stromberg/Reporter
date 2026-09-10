@@ -6,7 +6,6 @@ using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 using Reporter.Data;
 using Reporter.Data.Repositories;
-using Reporter.ViewModels;
 using Reporter.Views;
 
 namespace Reporter;

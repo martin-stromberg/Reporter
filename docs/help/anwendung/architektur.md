@@ -6,8 +6,8 @@
 
 | Komponente | Projekt | Rolle |
 |------------|---------|-------|
-| `Reporter` | `src/Reporter` | .NET MAUI-App mit UI, Navigation und ViewModels |
-| `Reporter.Core` | `src/Reporter.Core` | Domänenmodelle, Schnittstellen und Anwendungs-Services |
+| `Reporter` | `src/Reporter` | .NET MAUI-App mit UI und Navigation |
+| `Reporter.Core` | `src/Reporter.Core` | Domänenmodelle, Schnittstellen, ViewModels, mehrsprachige RESX-Ressourcen und Anwendungs-Services |
 | `Reporter.Data` | `src/Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | `src/Reporter.Tests` | Unit- und Integrationstests |
 

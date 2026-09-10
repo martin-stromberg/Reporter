@@ -19,8 +19,8 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 
 | Projekt | Verantwortlichkeit |
 | --- | --- |
-| `Reporter` | .NET MAUI-App, UI, ViewModels, Navigation |
-| `Reporter.Core` | Domänenmodelle, Schnittstellen, Anwendungs-Services |
+| `Reporter` | .NET MAUI-App, UI, Navigation |
+| `Reporter.Core` | Domänenmodelle, Schnittstellen, ViewModels, mehrsprachige RESX-Ressourcen und Anwendungs-Services |
 | `Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | Unit- und Integrationstests |
 
@@ -36,7 +36,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 dotnet build Reporter.sln
 ```
 
-Auf Windows wird automatisch das `net10.0-windows10.0.19041.0`-Ziel gebaut. Für iOS ist die entsprechende Xcode-Umgebung auf macOS erforderlich.
+`Reporter` ist auf `net10.0-windows10.0.19041.0` und `net10.0-ios` ausgerichtet; `dotnet build Reporter.sln` baut beide Ziele. Für iOS-Geräte-Deployment/Signing ist Xcode auf macOS erforderlich.
 
 ## Git Hooks
 
@@ -83,7 +83,8 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 - `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
 - `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`), Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`) und den Anwendungs-Service `IFeedSyncService` / `FeedSyncService`.
 - `Reporter.Data` stellt die EF Core-Entitäten und Repository-Implementierungen bereit; Repositories verwenden `IDbContextFactory<ReporterDbContext>` für kurzlebige, thread-sichere DbContext-Instanzen.
-- `Reporter` (MAUI-Projekt) enthält `BaseViewModel`, `FeedsViewModel`/`FeedsPage` und die übrige UI.
+- `Reporter` (MAUI-Projekt) enthält die Seiten (`FeedsPage` usw.) und das App-Shell-Setup.
+- `Reporter.Core` enthält `BaseViewModel`, die ViewModels (`FeedsViewModel`, `CategoriesViewModel`, `UnreadViewModel`, `LaterViewModel`, `SettingsViewModel`) und `AppResources`.
 - `FeedsViewModel` nutzt `IFeedSyncService` für manuelles Refresh einzelner oder aller Feeds.
 
 ## Tests
@@ -91,6 +92,9 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 ```bash
 dotnet test Reporter.sln
 ```
+
+- `Reporter.Tests` referenziert `Reporter.Core` und `Reporter.Data`, sodass ViewModels (z. B. `FeedsViewModel`) und Services direkt getestet werden können.
+- `FeedsViewModelTests` deckt die UI-nahen Refresh-Commands ab: Refresh für einen Feed, Refresh aller Feeds und Fehleranzeige.
 
 ## CI/CD
 
