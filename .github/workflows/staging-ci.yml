@@ -1,9 +1,9 @@
 name: Pre-Release
 
-on:
-  push:
-    branches:
-      - staging
+# on:
+#   push:
+#     branches:
+#       - staging
 
 concurrency:
   group: staging-ci
