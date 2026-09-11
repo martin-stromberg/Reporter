@@ -153,6 +153,9 @@
                                 </VerticalStackLayout>
                                 <Switch Grid.Column="1"
                                         IsToggled="{Binding AutoRefreshEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsAutoRefreshLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
                                         VerticalOptions="Center"/>
                             </Grid>
                             <Border Padding="10"
@@ -174,6 +177,9 @@
                                             ItemsSource="{Binding RefreshIntervalOptions}"
                                             SelectedItem="{Binding SelectedRefreshInterval}"
                                             ItemDisplayBinding="{Binding Label}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsRefreshIntervalLabel}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
                                             HorizontalTextAlignment="End"/>
                                 </Grid>
                             </Border>
@@ -187,6 +193,9 @@
                                 </VerticalStackLayout>
                                 <Switch Grid.Column="1"
                                         IsToggled="{Binding AutoMarkReadEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsAutoMarkReadLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
                                         VerticalOptions="Center"/>
                             </Grid>
                             <Border Padding="10"
@@ -208,6 +217,9 @@
                                             ItemsSource="{Binding AutoMarkReadDelayOptions}"
                                             SelectedItem="{Binding SelectedAutoMarkReadDelay}"
                                             ItemDisplayBinding="{Binding Label}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsAutoMarkReadDelayLabel}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
                                             HorizontalTextAlignment="End"/>
                                 </Grid>
                             </Border>
@@ -233,6 +245,9 @@
                                 </VerticalStackLayout>
                                 <Switch Grid.Column="1"
                                         IsToggled="{Binding NotificationsEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsNotificationsLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
                                         VerticalOptions="Center"/>
                             </Grid>
                             <Border Padding="10"
@@ -256,6 +271,9 @@
                                         </VerticalStackLayout>
                                         <Switch Grid.Column="1"
                                                 IsToggled="{Binding QuietHoursEnabled}"
+                                                SemanticProperties.Description="{x:Static strings:AppResources.SettingsQuietHoursLabel}"
+                                                MinimumWidthRequest="44"
+                                                MinimumHeightRequest="44"
                                                 VerticalOptions="Center"/>
                                     </Grid>
                                     <Grid ColumnDefinitions="*,*"
@@ -274,7 +292,10 @@
                                             <VerticalStackLayout Spacing="0">
                                                 <Label Text="{x:Static strings:AppResources.SettingsQuietHoursFrom}"
                                                        Style="{StaticResource MetaStyle}"/>
-                                                <TimePicker Time="{Binding QuietHoursStart}"/>
+                                                <TimePicker Time="{Binding QuietHoursStart}"
+                                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsQuietHoursFrom}"
+                                                            MinimumWidthRequest="44"
+                                                            MinimumHeightRequest="44"/>
                                             </VerticalStackLayout>
                                         </Border>
                                         <Border Grid.Column="1"
@@ -285,7 +306,10 @@
                                             <VerticalStackLayout Spacing="0">
                                                 <Label Text="{x:Static strings:AppResources.SettingsQuietHoursTo}"
                                                        Style="{StaticResource MetaStyle}"/>
-                                                <TimePicker Time="{Binding QuietHoursEnd}"/>
+                                                <TimePicker Time="{Binding QuietHoursEnd}"
+                                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsQuietHoursTo}"
+                                                            MinimumWidthRequest="44"
+                                                            MinimumHeightRequest="44"/>
                                             </VerticalStackLayout>
                                         </Border>
                                     </Grid>
@@ -310,6 +334,9 @@
                                     ItemsSource="{Binding ThemeOptions}"
                                     SelectedItem="{Binding SelectedTheme}"
                                     ItemDisplayBinding="{Binding Label}"
+                                    SemanticProperties.Description="{x:Static strings:AppResources.SettingsThemeLabel}"
+                                    MinimumWidthRequest="44"
+                                    MinimumHeightRequest="44"
                                     HorizontalTextAlignment="End"/>
                         </Grid>
                     </Border>

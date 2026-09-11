@@ -123,6 +123,10 @@ public class SettingsViewModelTests_Persist : IDisposable
 
         await TestWaitHelper.WaitUntilAsync(() => recordingRepository.SavedRetentionDays.Count == 1);
 
+        _timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await Task.Delay(50);
+
+        Assert.Single(recordingRepository.SavedRetentionDays);
         Assert.Equal(42, recordingRepository.SavedRetentionDays[0]);
     }
 

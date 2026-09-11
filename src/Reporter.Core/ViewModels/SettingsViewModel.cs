@@ -362,7 +362,7 @@ public partial class SettingsViewModel : BaseViewModel
 
     private static string FormatRetentionDays(double days)
     {
-        return string.Format(CultureInfo.CurrentCulture, AppResources.SettingsRetentionDaysFormat, (int)days);
+        return string.Format(CultureInfo.CurrentCulture, AppResources.SettingsRetentionDaysFormat, (int)Math.Round(days));
     }
 
     private async Task LoadAsync()
@@ -438,10 +438,21 @@ public partial class SettingsViewModel : BaseViewModel
 
     private void CancelRetentionDebounce()
     {
-        var cts = _retentionDebounceCts;
-        _retentionDebounceCts = null;
-        cts?.Cancel();
-        cts?.Dispose();
+        var cts = Interlocked.Exchange(ref _retentionDebounceCts, null);
+        if (cts is null)
+        {
+            return;
+        }
+
+        try
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // A completed debounced persist already disposed the source.
+        }
     }
 
     private async Task PersistRetentionDebouncedAsync(CancellationTokenSource cts)
@@ -455,7 +466,16 @@ public partial class SettingsViewModel : BaseViewModel
             return;
         }
 
-        if (_isLoading || cts.IsCancellationRequested)
+        // Ownership is claimed atomically: only the still-current debounce may
+        // persist, and CancelRetentionDebounce never cancels a disposed source.
+        if (Interlocked.Exchange(ref _retentionDebounceCts, null) != cts)
+        {
+            return;
+        }
+
+        cts.Dispose();
+
+        if (_isLoading)
         {
             return;
         }
