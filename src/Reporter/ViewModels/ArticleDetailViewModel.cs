@@ -40,7 +40,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
     private string _publishedAtText = string.Empty;
     private string _readingTime = string.Empty;
     private string _htmlSource = string.Empty;
-    private string _autoMarkReadLabel = "Auto-Gelesen (5 s)";
+    private string _autoMarkReadLabel = string.Format(CultureInfo.CurrentCulture, AppResources.ArticleAutoMarkReadDelayFormat, DefaultAutoMarkDelaySeconds);
     private bool _isAutoMarkRead = true;
     private bool _isAutoMarkReadAvailable = true;
     private int _fontSizeIndex;
@@ -264,7 +264,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
                 ? settings.AutoMarkReadDelaySeconds
                 : DefaultAutoMarkDelaySeconds;
             AutoMarkReadLabel = IsAutoMarkReadAvailable
-                ? $"Auto-Gelesen ({_autoMarkReadDelaySeconds} s)"
+                ? string.Format(CultureInfo.CurrentCulture, AppResources.ArticleAutoMarkReadDelayFormat, _autoMarkReadDelaySeconds)
                 : AppResources.ArticleAutoMarkReadDisabled;
 
             var item = await _itemRepository.GetByIdAsync(itemId);

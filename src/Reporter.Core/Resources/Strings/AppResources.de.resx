@@ -202,7 +202,7 @@
     <value>{0} Tage</value>
   </data>
   <data name="SettingsRetentionInfo" xml:space="preserve">
-    <value>Ungelesene und mit Sternchen markierte gespeicherte Artikel bleiben dauerhaft erhalten.</value>
+    <value>Ungelesene und mit Lesezeichen versehene Artikel (Tab „Später") bleiben dauerhaft erhalten.</value>
   </data>
   <data name="SettingsRetentionDayMarks" xml:space="preserve">
     <value>1 Tag – 90 Tage – 180 Tage – 365 Tage</value>
@@ -214,7 +214,7 @@
     <value>+ Hinzufügen</value>
   </data>
   <data name="SettingsKeywordMatchLabel" xml:space="preserve">
-    <value>Teilwort &amp; Case-Insensitive</value>
+    <value>Teilwort, Groß-/Kleinschreibung egal</value>
   </data>
   <data name="SettingsKeywordMatchHint" xml:space="preserve">
     <value>Erkennt auch Varianten innerhalb von Wörtern</value>
@@ -308,6 +308,9 @@
   </data>
   <data name="ArticleAutoMarkReadDisabled" xml:space="preserve">
     <value>Auto-Gelesen (in den Einstellungen deaktiviert)</value>
+  </data>
+  <data name="ArticleAutoMarkReadDelayFormat" xml:space="preserve">
+    <value>Auto-Gelesen ({0} s)</value>
   </data>
   <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
     <value>Schlagwort {0} entfernen</value>

@@ -8,6 +8,8 @@
 
 ## What's New
 
+- Retention slider: value changes (e.g. via keyboard) are now saved after a short delay (~0.5 s), not only when the slider is released.
+- Localization fixes: the auto-read label in the article detail now follows the UI language (previously hardcoded German); clearer info texts for retention and keyword matching on the Settings page.
 - Quiet hours can now be toggled on/off on the Settings page; when off, the from/to time pickers are disabled and no quiet hours are stored (defaults 10:00 PM–7:00 AM if never configured).
 - The local "auto mark as read" switch in the article detail view is disabled and dimmed when the global option is turned off.
 - Settings page polish: the fixed keyword-matching mode is shown as a non-interactive "Always active" badge; screen reader descriptions added for keyword chips and toggles.
@@ -28,6 +30,8 @@
 
 ## Neuerungen
 
+- Aufbewahrungsdauer-Regler: Wertänderungen (z. B. per Tastatur) werden jetzt nach kurzer Verzögerung (~0,5 s) gespeichert, nicht nur beim Loslassen des Reglers.
+- Lokalisierungs-Fixes: das „Auto-Gelesen“-Label in der Artikeldetailansicht folgt jetzt der UI-Sprache (vorher fest auf Deutsch); klarere Hinweistexte für Aufbewahrungsdauer und Keyword-Abgleich auf der Einstellungen-Seite.
 - Ruhezeiten lassen sich auf der Einstellungen-Seite jetzt ein- und ausschalten; bei ausgeschalteter Ruhezeit sind die VON/BIS-Felder deaktiviert und es werden keine Ruhezeiten gespeichert (Vorgabe 22:00–07:00, falls nie konfiguriert).
 - Der lokale „Auto-Gelesen"-Schalter in der Artikeldetailansicht ist deaktiviert und abgedunkelt, wenn die globale Option ausgeschaltet ist.
 - Feinschliff der Einstellungen-Seite: der feste Keyword-Matching-Modus wird als nicht-interaktives Badge „Immer aktiv" angezeigt; Screenreader-Beschreibungen für Keyword-Chips und Schalter ergänzt.

@@ -6,33 +6,28 @@
 
 ## Befunde
 
-### SettingsPage.xaml / AppResources.de.resx (Einstellungen – Sektion Aufbewahrungsdauer)
+### SettingsPage.xaml (Einstellungsseite)
 
-- **Erreichbarkeit** — Der Hinweistext unter dem Aufbewahrungs-Slider lautet „Ungelesene und mit Sternchen markierte gespeicherte Artikel bleiben dauerhaft erhalten." (`SettingsRetentionInfo`, `src/Reporter.Core/Resources/Strings/AppResources.de.resx`, Zeile 204–206). In der App gibt es jedoch keinerlei Sternchen: Artikel werden über ein Lesezeichen-/Band-Symbol gemerkt (`ArticleCardView.xaml` Zeile 125, `ArticleDetailPage.xaml` Zeile 187), die Accessibility-Beschriftung lautet „Lesezeichen setzen/entfernen" und der zugehörige Tab heißt „Später". Eine nicht-technische Anwenderin, die wissen will, welche Artikel vor der Löschung geschützt sind, sucht vergeblich nach einer Sternchen-Funktion und kann den Hinweis nicht mit der tatsächlichen Bedienung in Verbindung bringen.
+- **Erreichbarkeit** — Die vier Schalter (Automatische Hintergrund-Aktualisierung, Automatisch als gelesen markieren, Push-Benachrichtigungen, Ruhezeit), die drei Picker (Abruf-Intervall, Verzögerung bis Markierung, Farbschema) und die beiden TimePicker (Ruhezeit VON/BIS) haben weder `MinimumHeightRequest`/`MinimumWidthRequest` von 44 pt noch eine `SemanticProperties.Description`. Die native Höhe eines `Switch`/`Picker` liegt auf Mobilgeräten typischerweise deutlich unter 44 pt — eine Anwenderin trifft das Touch-Ziel auf dem Handy nur unzuverlässig, und Screenreader geben die Schalter ohne Bezug zur Beschriftung wieder. Das Projekt wendet das 44-pt-Minimum bereits konsequent an (Slider Z. 38, Keyword-„×"-Button Z. 99–102, Switch in `ArticleDetailPage.xaml` Z. 41–42) — auf der SettingsPage fehlt es durchgehend.
 
-  Empfehlung: Formulierung an die tatsächliche App-Terminologie anpassen, z. B. „Ungelesene und mit Lesezeichen versehene Artikel (Tab „Später") bleiben dauerhaft erhalten."
+  Empfehlung: Auf allen Switches, Pickern und TimePickern der Seite `MinimumHeightRequest="44"` (Switches zusätzlich `MinimumWidthRequest="44"`) sowie eine `SemanticProperties.Description` aus dem jeweiligen Label setzen — analog zum Switch in `ArticleDetailPage.xaml`. Alternativ die komplette Zeile (Label + Control) tappbar machen.
 
-### SettingsPage.xaml / AppResources.de.resx (Einstellungen – Sektion Keyword-Filter)
+### SettingsViewModel.cs (Einstellungsseite, Aufbewahrungs-Slider)
 
-- **Erreichbarkeit** — Die Statuszeile zum festen Match-Verhalten trägt die Beschriftung „Teilwort & Case-Insensitive" (`SettingsKeywordMatchLabel`, `src/Reporter.Core/Resources/Strings/AppResources.de.resx`, Zeile 216–218; eingeblendet in `src/Reporter/Views/SettingsPage.xaml`, Zeile 120). „Case-Insensitive" ist englischer Fachjargon in einer sonst konsequent deutschen Oberfläche; eine Laiin kann daraus nicht ableiten, dass Groß-/Kleinschreibung beim Filtern keine Rolle spielt. Der Hinweis darunter („Erkennt auch Varianten innerhalb von Wörtern") erklärt nur den Teilwort-Aspekt, nicht die Case-Regel. Betroffen ist die Interaktion „Keyword-Filter pflegen", weil die Anwenderin das tatsächliche Verhalten des Filters nicht sicher einschätzen kann (z. B. ob sie „News" und „news" getrennt eintragen muss).
+- **Erreichbarkeit** — Anzeige-/Persistenzabweichung beim Slider „Gelesene Artikel aufbewahren": `FormatRetentionDays` (Z. 363–366) schneidet Nachkommastellen ab (`(int)days`), gespeichert wird aber gerundet (`Math.Round` in Z. 421 und 475). Da der Slider gebrochene Werte liefert, kann die Anzeige „30 Tage" zeigen, während die App tatsächlich 31 Tage speichert — die Beschriftung verspricht der Anwenderin einen anderen Wert als angewendet wird.
 
-  Empfehlung: Beschriftung in Klartext formulieren, z. B. „Teilwort, Groß-/Kleinschreibung egal" bzw. Hinweistext zu „Erkennt Teilwörter und ignoriert Groß-/Kleinschreibung" erweitern.
+  Empfehlung: In `FormatRetentionDays` ebenfalls `Math.Round` verwenden, damit angezeigter und gespeicherter Wert immer übereinstimmen.
 
 ## Geprüfte Interaktionen
 
 Liste der aus der Anforderung geprüften Benutzerinteraktionen:
-- Aufbewahrungsdauer für gelesene Artikel ändern (1–365 Tage) → unauffällig (Slider mit Live-Anzeige „X Tage", Markierungen, Sofort-Persistierung)
-- Keyword-Filter hinzufügen → Befund vorhanden (Eingabefeld + „+ Hinzufügen"-Button + Return-Taste funktionieren; Dubletten-/Leer-/Längen-Fehlermeldungen lokalisiert; aber Match-Verhalten-Beschriftung unverständlich, siehe Befund 2)
-- Keyword-Filter entfernen → unauffällig (Chips mit „×"-Button, 44×44 pt, Accessibility-Beschreibung „Schlagwort {0} entfernen")
-- Automatische Hintergrund-Aktualisierung ein-/ausschalten und Intervall wählen → unauffällig (Switch + Picker mit Klartext-Optionen „Alle 15 Minuten" bis „Alle 4 Stunden"; deaktivierter Zustand ausgegraut)
-- „Automatisch als gelesen markieren" ein-/ausschalten und Verzögerung wählen → unauffällig (Switch + Picker „Sofort/1/3/5 Sekunden")
-- Push-Benachrichtigungen ein-/ausschalten → unauffällig (Switch mit Titel + Hinweistext)
-- Ruhezeit ein-/ausschalten und Von/Bis-Zeiten festlegen → unauffällig (eigener Switch, TimePicker mit VON/BIS-Beschriftung, Zeiten über Mitternacht möglich, Standard 22:00–07:00)
-- Erscheinungsbild wählen → unauffällig (Picker mit „System"/„Hell"/„Dunkel", wirkt sofort)
-- Einstellungsseite erreichen → unauffällig (eigener Tab „Einstellungen" in der TabBar)
-- Auto-Gelesen-Toggle in der Artikeldetailansicht bei global deaktivierter Option → unauffällig (Schalter deaktiviert und ausgegraut, Label „Auto-Gelesen (in den Einstellungen deaktiviert)" verweist auf den Ort der Aktivierung)
-- Interne/technische Kennungen eingeben → unauffällig (keine Id-/GUID-/Schlüssel-Eingaben an keiner Stelle erforderlich)
-- Auswahl aus benannten Mengen ohne Suche → unauffällig (alle Auswahlen sind kurze, feste Optionslisten mit Klartext; Keywords sind Freitext der Anwenderin, keine Auswahl aus bestehenden Entitäten)
+- Aufbewahrungsdauer (1–365 Tage) per Slider einstellen → Befund vorhanden (Anzeige rundet abweichend vom gespeicherten Wert)
+- Keyword-Filter: Schlagwort eingeben, hinzufügen, als Chip entfernen → unauffällig (Freitext-Eingabe mit Placeholder, „+ Hinzufügen"-Button und Return-Taste, „×"-Chips mit 44 pt und Screenreader-Label, Klartext-Fehlermeldungen bei leer/Dublette/zu lang; kein interner Schlüssel erforderlich)
+- Automatische Hintergrund-Aktualisierung ein-/ausschalten und Intervall wählen → Befund vorhanden (Touch-Ziel/Barrierefreiheit von Switch und Picker; Klartext-Optionen „Alle 15 Minuten" usw. selbst unauffällig)
+- „Automatisch als gelesen markieren" ein-/ausschalten und Verzögerung wählen → Befund vorhanden (Touch-Ziel/Barrierefreiheit von Switch und Picker)
+- Push-Benachrichtigungen ein-/ausschalten und Ruhezeit (Von/Bis) konfigurieren → Befund vorhanden (Touch-Ziel/Barrierefreiheit von Switch und TimePickern; Dimmen bei deaktivierten Unteroptionen unauffällig)
+- Erscheinungsbild wählen (System/Hell/Dunkel) → Befund vorhanden (Picker ohne Mindest-Touch-Höhe; Klartext-Optionen unauffällig)
+- Im Artikel: lokaler Auto-Gelesen-Schalter bei global deaktivierter Einstellung → unauffällig (Schalter deaktiviert, gedimmt und mit Klartext-Hinweis „in den Einstellungen deaktiviert")
 
 ## Geprüfte Dateien
 
@@ -40,12 +35,12 @@ Liste aller geprüften UI-Dateien:
 - `src/Reporter/Views/SettingsPage.xaml`
 - `src/Reporter/Views/SettingsPage.xaml.cs`
 - `src/Reporter/Views/ArticleDetailPage.xaml`
-- `src/Reporter/ViewModels/ArticleDetailViewModel.cs` (soweit Bedienelemente/Labels betroffen)
+- `src/Reporter/ViewModels/ArticleDetailViewModel.cs`
 - `src/Reporter.Core/ViewModels/SettingsViewModel.cs`
 - `src/Reporter.Core/ViewModels/RefreshIntervalOption.cs`
 - `src/Reporter.Core/ViewModels/AutoMarkReadDelayOption.cs`
 - `src/Reporter.Core/ViewModels/ThemeOption.cs`
 - `src/Reporter.Core/Resources/Strings/AppResources.resx`
 - `src/Reporter.Core/Resources/Strings/AppResources.de.resx`
-- `src/Reporter/App.xaml.cs` (Theme-Anwendung beim Start)
-- `src/Reporter/AppShell.xaml.cs` (Erreichbarkeit der Seite über TabBar)
+- `src/Reporter/App.xaml.cs` (Theme-Anwendung/Auto-Refresh-Start)
+- `src/Reporter/AppShell.xaml.cs` (Erreichbarkeit der Seite über Tab „Einstellungen")

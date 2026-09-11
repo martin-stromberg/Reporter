@@ -21,20 +21,18 @@ Nicht automatisierbarer Rest (gemäß Plan begründet, Abdeckung über manuelle 
 
 ## Zusammenfassung
 
-- Gesamt: 147
-- Bestanden: 147
+- Gesamt: 144
+- Bestanden: 144
 - Fehlgeschlagen: 0
 - Übersprungen: 0
 
 Ausgeführt mit: `dotnet build Reporter.sln --configuration Release` (0 Fehler, 0 Warnungen) und `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --settings src/Reporter.Tests/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --logger "console;verbosity=normal"`.
 
-Baseline-Check: 147 Tests entsprechen der erwarteten Baseline (144 aus dem Vorlauf + 3 neue Debounce-Tests: `RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce`, `RetentionDays_RapidChanges_PersistOnlyLastValue`, `RetentionDays_DragCompleted_PersistsImmediatelyAndCancelsDebounce` — alle bestanden).
-
 Hinweis: Der bekannte potenziell flaky Test `SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce` ist in diesem Lauf fehlerfrei durchgelaufen; keine Wiederholung nötig.
 
 ## Testabdeckung
 
-**Abdeckung:** 85,51 % Zeilen (1446/1691), 75,81 % Branches (370/488) — gemessen über `Reporter.Core` + `Reporter.Data` (Cobertura, `Reporter.Data.Migrations.*` per runsettings ausgeschlossen).
+**Abdeckung:** 85,35 % Zeilen (1422/1666), 75,63 % Branches (360/476) — gemessen über `Reporter.Core` + `Reporter.Data` (Cobertura, `Reporter.Data.Migrations.*` per runsettings ausgeschlossen).
 
 | Datei | Abdeckung |
 |-------|-----------|

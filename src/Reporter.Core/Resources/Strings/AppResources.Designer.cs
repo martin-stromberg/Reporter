@@ -718,7 +718,7 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Substring &amp; case-insensitive ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Partial match, case doesn't matter ähnelt.
         /// </summary>
         public static string SettingsKeywordMatchLabel {
             get {
@@ -835,7 +835,7 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Unread articles and articles saved with a bookmark are kept permanently. ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Unread articles and articles bookmarked via the "Later" tab are kept permanently. ähnelt.
         /// </summary>
         public static string SettingsRetentionInfo {
             get {
@@ -948,6 +948,15 @@ namespace Reporter.Core.Resources.Strings {
         public static string ArticleAutoMarkReadDisabled {
             get {
                 return ResourceManager.GetString("ArticleAutoMarkReadDisabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Auto-read ({0} s) ähnelt.
+        /// </summary>
+        public static string ArticleAutoMarkReadDelayFormat {
+            get {
+                return ResourceManager.GetString("ArticleAutoMarkReadDelayFormat", resourceCulture);
             }
         }
 

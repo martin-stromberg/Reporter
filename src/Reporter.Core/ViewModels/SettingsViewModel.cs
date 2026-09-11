@@ -21,11 +21,13 @@ public partial class SettingsViewModel : BaseViewModel
 
     private static readonly TimeSpan DefaultQuietHoursStart = new(22, 0, 0);
     private static readonly TimeSpan DefaultQuietHoursEnd = new(7, 0, 0);
+    private static readonly TimeSpan RetentionPersistDebounceDelay = TimeSpan.FromMilliseconds(500);
 
     private readonly ISettingsRepository _settingsRepository;
     private readonly IKeywordRepository _keywordRepository;
     private readonly IAutoRefreshService _autoRefreshService;
     private readonly IAppThemeService _appThemeService;
+    private readonly TimeProvider _timeProvider;
 
     private string _title = AppResources.PageTitleSettings;
     private Settings? _settings;
@@ -45,6 +47,7 @@ public partial class SettingsViewModel : BaseViewModel
     private string _errorMessage = string.Empty;
     private bool _isLoading;
     private readonly SemaphoreSlim _persistLock = new(1, 1);
+    private CancellationTokenSource? _retentionDebounceCts;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
@@ -53,16 +56,19 @@ public partial class SettingsViewModel : BaseViewModel
     /// <param name="keywordRepository">The keyword repository.</param>
     /// <param name="autoRefreshService">The auto refresh service.</param>
     /// <param name="appThemeService">The app theme service.</param>
+    /// <param name="timeProvider">The time provider used for the retention-days persist debounce.</param>
     public SettingsViewModel(
         ISettingsRepository settingsRepository,
         IKeywordRepository keywordRepository,
         IAutoRefreshService autoRefreshService,
-        IAppThemeService appThemeService)
+        IAppThemeService appThemeService,
+        TimeProvider? timeProvider = null)
     {
         _settingsRepository = settingsRepository;
         _keywordRepository = keywordRepository;
         _autoRefreshService = autoRefreshService;
         _appThemeService = appThemeService;
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         _retentionDaysText = FormatRetentionDays(_retentionDays);
 
@@ -163,6 +169,8 @@ public partial class SettingsViewModel : BaseViewModel
 
     /// <summary>
     /// Gets or sets the retention period in days shown by the slider.
+    /// Changes are persisted after a short debounce so adjustments without
+    /// drag completion (e.g. keyboard input) are saved as well.
     /// </summary>
     public double RetentionDays
     {
@@ -172,6 +180,7 @@ public partial class SettingsViewModel : BaseViewModel
             if (SetProperty(ref _retentionDays, value))
             {
                 RetentionDaysText = FormatRetentionDays(value);
+                ScheduleRetentionPersist();
             }
         }
     }
@@ -410,7 +419,48 @@ public partial class SettingsViewModel : BaseViewModel
     private void SaveRetention()
     {
         RetentionDays = Math.Clamp((int)Math.Round(RetentionDays), MinRetentionDays, MaxRetentionDays);
+        CancelRetentionDebounce();
         _ = PersistAsync();
+    }
+
+    private void ScheduleRetentionPersist()
+    {
+        if (_isLoading)
+        {
+            return;
+        }
+
+        CancelRetentionDebounce();
+        var cts = new CancellationTokenSource();
+        _retentionDebounceCts = cts;
+        _ = PersistRetentionDebouncedAsync(cts);
+    }
+
+    private void CancelRetentionDebounce()
+    {
+        var cts = _retentionDebounceCts;
+        _retentionDebounceCts = null;
+        cts?.Cancel();
+        cts?.Dispose();
+    }
+
+    private async Task PersistRetentionDebouncedAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await Task.Delay(RetentionPersistDebounceDelay, _timeProvider, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (_isLoading || cts.IsCancellationRequested)
+        {
+            return;
+        }
+
+        await PersistAsync();
     }
 
     private async Task PersistAsync()

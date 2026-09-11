@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Time.Testing;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.ViewModels;
@@ -15,6 +16,7 @@ public class SettingsViewModelTests_Persist : IDisposable
     private readonly KeywordRepository _keywordRepository;
     private readonly FakeAutoRefreshService _autoRefreshService;
     private readonly FakeAppThemeService _appThemeService;
+    private readonly FakeTimeProvider _timeProvider;
     private readonly SettingsViewModel _viewModel;
 
     /// <summary>
@@ -27,7 +29,8 @@ public class SettingsViewModelTests_Persist : IDisposable
         _keywordRepository = new KeywordRepository(_factory);
         _autoRefreshService = new FakeAutoRefreshService();
         _appThemeService = new FakeAppThemeService();
-        _viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService);
+        _timeProvider = new FakeTimeProvider();
+        _viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider);
     }
 
     /// <summary>
@@ -74,6 +77,77 @@ public class SettingsViewModelTests_Persist : IDisposable
         Assert.Equal(expected, _viewModel.RetentionDays);
         var settings = await _settingsRepository.GetAsync();
         Assert.Equal(expected, settings.RetentionDays);
+    }
+
+    /// <summary>
+    /// Verifies that a retention-days change without drag completion (e.g. keyboard input
+    /// on the slider) is persisted after the debounce delay instead of being silently
+    /// dropped (usability finding: value changes were only persisted via
+    /// <see cref="SettingsViewModel.SaveRetentionCommand"/>).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.RetentionDays = 42;
+        await Task.Delay(50);
+
+        var before = await _settingsRepository.GetAsync();
+        Assert.NotEqual(42, before.RetentionDays);
+
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(500));
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).RetentionDays == 42);
+
+        Assert.Equal(42, _viewModel.RetentionDays);
+    }
+
+    /// <summary>
+    /// Verifies that rapid consecutive retention-days changes within the debounce window
+    /// result in a single persist of the last value.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RetentionDays_RapidChanges_PersistOnlyLastValue()
+    {
+        var recordingRepository = new RecordingSettingsRepository(_settingsRepository);
+        var viewModel = new SettingsViewModel(recordingRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        recordingRepository.SavedRetentionDays.Clear();
+
+        viewModel.RetentionDays = 10;
+        viewModel.RetentionDays = 20;
+        viewModel.RetentionDays = 42;
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(500));
+
+        await TestWaitHelper.WaitUntilAsync(() => recordingRepository.SavedRetentionDays.Count == 1);
+
+        Assert.Equal(42, recordingRepository.SavedRetentionDays[0]);
+    }
+
+    /// <summary>
+    /// Verifies that the drag-completed path still persists immediately and cancels a
+    /// pending debounced persist so the value is not saved twice.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RetentionDays_DragCompleted_PersistsImmediatelyAndCancelsDebounce()
+    {
+        var recordingRepository = new RecordingSettingsRepository(_settingsRepository);
+        var viewModel = new SettingsViewModel(recordingRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        recordingRepository.SavedRetentionDays.Clear();
+
+        viewModel.RetentionDays = 42;
+        viewModel.SaveRetentionCommand.Execute(null);
+        await TestWaitHelper.WaitUntilAsync(() => recordingRepository.SavedRetentionDays.Count == 1);
+
+        _timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await Task.Delay(50);
+
+        Assert.Single(recordingRepository.SavedRetentionDays);
+        Assert.Equal(42, recordingRepository.SavedRetentionDays[0]);
     }
 
     /// <summary>
@@ -305,6 +379,29 @@ public class SettingsViewModelTests_Persist : IDisposable
         await TestWaitHelper.WaitUntilAsync(async () => !(await _settingsRepository.GetAsync()).NotificationsEnabled);
 
         Assert.Equal(1, _appThemeService.AppliedThemes.Count(t => t == "dark"));
+    }
+
+    private sealed class RecordingSettingsRepository : ISettingsRepository
+    {
+        private readonly ISettingsRepository _inner;
+
+        public RecordingSettingsRepository(ISettingsRepository inner)
+        {
+            _inner = inner;
+        }
+
+        public List<int> SavedRetentionDays { get; } = new();
+
+        public Task<Settings> GetAsync(CancellationToken cancellationToken = default)
+        {
+            return _inner.GetAsync(cancellationToken);
+        }
+
+        public async Task SaveAsync(Settings settings)
+        {
+            SavedRetentionDays.Add(settings.RetentionDays);
+            await _inner.SaveAsync(settings);
+        }
     }
 
     private sealed class GatedSettingsRepository : ISettingsRepository
