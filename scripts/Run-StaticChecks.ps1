@@ -4,19 +4,21 @@
     Fuehrt die Pruefungen des CI-Workflows "static-checks" lokal aus,
     damit vor einem Push geprueft werden kann, ob Korrekturen noetig sind.
 
+    Voraussetzung: Das .NET MAUI Workload muss lokal bereits installiert sein
+    (z. B. via Visual Studio Installer oder dotnet workload install).
+
     Beispiele:
         .\scripts\Run-StaticChecks.ps1
         .\scripts\Run-StaticChecks.ps1 -Check Format
         .\scripts\Run-StaticChecks.ps1 -Check Security
         .\scripts\Run-StaticChecks.ps1 -Check Build
-        .\scripts\Run-StaticChecks.ps1 -All -SkipWorkloadRestore
+        .\scripts\Run-StaticChecks.ps1 -Check Restore
 #>
 
 param(
     [ValidateSet("All", "Format", "Security", "Build", "Restore")]
     [string]$Check = "All",
 
-    [switch]$SkipWorkloadRestore,
     [switch]$SkipRestore
 )
 
@@ -31,16 +33,6 @@ $env:IncludeIosTarget = 'false'
 if (-not (Test-Path $solution)) {
     Write-Host "Fehler: $solution wurde nicht im aktuellen Verzeichnis gefunden. Bitte das Skript aus dem Repository-Root ausfuehren." -ForegroundColor Red
     exit 1
-}
-
-function Invoke-WorkloadRestore {
-    Write-Host "Installiere .NET MAUI Workload..." -ForegroundColor Cyan
-    & dotnet workload restore $solution
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Fehler: Workload-Restore fehlgeschlagen." -ForegroundColor Red
-        exit 1
-    }
-    Write-Host "Workload-Restore abgeschlossen." -ForegroundColor Green
 }
 
 function Invoke-PackageRestore {
@@ -89,10 +81,6 @@ function Invoke-StaticAnalysisBuild {
     Write-Host "Statische Analyse bestanden." -ForegroundColor Green
 }
 
-if (-not $SkipWorkloadRestore) {
-    Invoke-WorkloadRestore
-}
-
 if (-not $SkipRestore) {
     Invoke-PackageRestore
 }
@@ -113,7 +101,7 @@ switch ($Check) {
         Invoke-StaticAnalysisBuild
     }
     "Restore" {
-        Write-Host "Vorbereitung (Workload- und Paket-Restore) abgeschlossen." -ForegroundColor Green
+        Write-Host "Paket-Restore abgeschlossen." -ForegroundColor Green
     }
 }
 
