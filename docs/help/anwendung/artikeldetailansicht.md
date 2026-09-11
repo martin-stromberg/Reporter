@@ -16,7 +16,7 @@ Tippe auf einen Artikel in der Liste (z. B. unter **Ungelesen** oder **Später**
 
 ## Lesestatus
 
-Wenn **Auto-Gelesen** aktiv ist, wird der Artikel nach dem Öffnen automatisch als gelesen markiert. Sobald das Einstellungen-Arbeitspaket umgesetzt ist, kann die Verzögerung in den Einstellungen konfiguriert werden. Bis dahin gilt ein Fallback von fünf Sekunden, solange der Schalter eingeschaltet ist.
+Wenn **Auto-Gelesen** aktiv ist, wird der Artikel nach dem Öffnen automatisch als gelesen markiert. Zwei Bedingungen müssen erfüllt sein: Der globale Schalter **Automatisch als gelesen markieren** auf der Seite **Einstellungen** muss eingeschaltet sein, und der lokale **Auto-Gelesen**-Schalter in der Detailansicht darf für diese Sitzung nicht abgewählt worden sein. Die **Verzögerung bis Markierung** (*Sofort*, *1 Sekunde*, *3 Sekunden*, *5 Sekunden*) wird ebenfalls in den Einstellungen gewählt — siehe [Einstellungen](../einstellungen/index.md). Konnten die Einstellungen nicht geladen werden, gilt ein Fallback von fünf Sekunden.
 
 ## Dark Mode
 

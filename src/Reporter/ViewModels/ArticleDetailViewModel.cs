@@ -43,6 +43,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
     private bool _isAutoMarkRead = true;
     private int _fontSizeIndex;
     private int _autoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds;
+    private string? _autoMarkReadMode;
     private CancellationTokenSource? _autoMarkCts;
     private readonly object _autoMarkLock = new object();
 
@@ -242,10 +243,13 @@ public partial class ArticleDetailViewModel : BaseViewModel
                     AutoMarkReadMode = "on_open",
                     AutoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds,
                     NotificationsEnabled = true,
+                    AutoRefreshEnabled = true,
+                    RefreshIntervalMinutes = 30,
                 };
             }
 
-            _autoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds > 0
+            _autoMarkReadMode = settings.AutoMarkReadMode;
+            _autoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds >= 0
                 ? settings.AutoMarkReadDelaySeconds
                 : DefaultAutoMarkDelaySeconds;
             AutoMarkReadLabel = $"Auto-Gelesen ({_autoMarkReadDelaySeconds} s)";
@@ -266,7 +270,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
             ReadingTime = CalculateReadingTime(item.ContentHtml);
             RebuildHtml();
 
-            if (IsAutoMarkRead && !Item.IsRead)
+            if (IsAutoMarkRead && settings.AutoMarkReadMode != "off" && !Item.IsRead)
             {
                 _ = MarkReadDelayedAsync(TimeSpan.FromSeconds(_autoMarkReadDelaySeconds));
             }
@@ -385,7 +389,7 @@ blockquote {{
     {
         CancelAutoMarkRead();
 
-        if (IsAutoMarkRead && Item is not null && !Item.IsRead)
+        if (IsAutoMarkRead && _autoMarkReadMode != "off" && Item is not null && !Item.IsRead)
         {
             _ = MarkReadDelayedAsync(TimeSpan.FromSeconds(_autoMarkReadDelaySeconds));
         }

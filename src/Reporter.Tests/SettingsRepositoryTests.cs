@@ -74,6 +74,9 @@ public class SettingsRepositoryTests : IDisposable
             RetentionDays = 7,
             AutoMarkReadDelaySeconds = 10,
             NotificationsEnabled = false,
+            AutoRefreshEnabled = false,
+            RefreshIntervalMinutes = 15,
+            Theme = "dark",
         });
 
         var result = await _repository.GetAsync();
@@ -96,6 +99,9 @@ public class SettingsRepositoryTests : IDisposable
             RetentionDays = 14,
             AutoMarkReadDelaySeconds = 20,
             NotificationsEnabled = true,
+            AutoRefreshEnabled = true,
+            RefreshIntervalMinutes = 60,
+            Theme = "light",
         });
 
         var result = await _repository.GetAsync();
@@ -120,5 +126,30 @@ public class SettingsRepositoryTests : IDisposable
         var count = context.Settings.Count();
 
         Assert.Equal(1, count);
+    }
+
+    /// <summary>
+    /// Verifies that SaveAsync persists the new auto-refresh and theme fields.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveAsync_PersistsNewFields()
+    {
+        await _repository.SaveAsync(new Settings
+        {
+            Id = Settings.DefaultId,
+            RetentionDays = 30,
+            AutoMarkReadDelaySeconds = 5,
+            NotificationsEnabled = true,
+            AutoRefreshEnabled = false,
+            RefreshIntervalMinutes = 240,
+            Theme = "dark",
+        });
+
+        var result = await _repository.GetAsync();
+
+        Assert.False(result.AutoRefreshEnabled);
+        Assert.Equal(240, result.RefreshIntervalMinutes);
+        Assert.Equal("dark", result.Theme);
     }
 }

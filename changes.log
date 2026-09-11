@@ -1,3 +1,15 @@
+## 2026-09-11 — Einstellungen-Seite, Keyword-Filter und Hintergrund-Aktualisierung (Issue #26)
+
+- `SettingsPage` vollständig ausgebaut: fünf Sektions-Karten (Aufbewahrungsdauer & Speicher, Keyword-Filter (Blacklist), Synchronisation & Lesefluss, Benachrichtigungen & Ruhezeiten, Erscheinungsbild); `SettingsViewModel` persistiert jede Änderung sofort über `ISettingsRepository.SaveAsync` (Aufbewahrungsdauer über `Slider.DragCompleted`).
+- Neue `settings`-Spalten `auto_refresh_enabled`, `refresh_interval_minutes` und `theme` samt EF-Core-Migration `AddSettingsAutoRefreshAndTheme`; `Settings`-Modelle und `SettingsRepository` entsprechend erweitert.
+- Keyword-Blacklist: Keywords werden auf der Einstellungen-Seite als Chips verwaltet (`AddKeywordCommand`/`RemoveKeywordCommand` mit Validierung auf leer, Dublette, max. 500 Zeichen); neuer `IKeywordMatcher`/`KeywordMatcher` matcht Titel und HTML-Inhalt per Teilwort (`OrdinalIgnoreCase`).
+- `RetentionCleanupService.CleanupAsync` um die Keyword-Löschregel erweitert: gelesene, nicht gemerkte Artikel mit `(PublishedAt ?? ReadAt) < cutoff`, die ein Keyword enthalten, werden über die neuen `IItemRepository.GetExpiredKeywordCandidatesAsync`/`DeleteRangeAsync` gelöscht. Invarianten unverändert: niemals ungelesene, niemals „Später“-Artikel.
+- Neuer `IAutoRefreshService`/`AutoRefreshService` (`PeriodicTimer` über injiziertem `TimeProvider`, Overlap-Guard) startet in `App.OnStart` und ruft periodisch `IFeedSyncService.SyncAllAsync` auf; wählbare Intervalle 15/30/60/240 Minuten, Laufzeit nur bei geöffneter App.
+- Neuer `IAppThemeService`/`AppThemeService` setzt `Application.UserAppTheme` anhand der Einstellung (`system`/`light`/`dark`) — beim App-Start und sofort bei Änderung über den „Farbschema“-Picker.
+- `ArticleDetailViewModel` wertet die globale Einstellung „Automatisch als gelesen markieren“ aus (`AutoMarkReadMode != "off"`); Verzögerung konfigurierbar inklusive Option „Sofort“ (0 s).
+- Neue lokalisierte Strings in `AppResources.resx`/`.de.resx`; 38 neue Tests (`SettingsViewModelTests_*`, `KeywordMatcherTests`, `AutoRefreshServiceTests` mit `FakeTimeProvider`, erweiterte `RetentionCleanupServiceTests`/`ItemRepositoryTests`/`SettingsRepositoryTests`); manuelle UI-Verifikation 390 × 844 pt in Light/Dark in `test-results.md` dokumentiert.
+- Neuer Hilfe-Funktionsbereich `docs/help/einstellungen/` angelegt; `aufbewahrung.md`, `datenmodell.md`, `architektur.md`, `artikeldetailansicht.md`, `beschreibung.md`, `synchronisation.md`, `mobile-ui-design.md` und `index.md` unter `docs/help/anwendung/` sowie `docs/help/index.md` aktualisiert.
+
 ## 2026-09-11 — „Für später bewahren“-Funktion und automatische Aufbewahrung (Issue #25)
 
 - Automatische Retention-Löschung: Neuer `IRetentionCleanupService` / `RetentionCleanupService` (`Reporter.Core`), der in `App.OnStart` nach der Datenbank-Migration fehlerisoliert ausgeführt wird.

@@ -8,6 +8,7 @@ public class Settings
     /// <summary>
     /// Gets the default singleton identifier.
     /// </summary>
+    /// <value>The default singleton identifier.</value>
     public static readonly Guid DefaultId = new("a1f5c6d2-4b3e-4c8f-9d2a-1b2c3d4e5f6a");
 
     /// <summary>
@@ -44,4 +45,19 @@ public class Settings
     /// Gets or sets the end of quiet hours.
     /// </summary>
     public TimeSpan? QuietHoursEnd { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether automatic background refresh is enabled.
+    /// </summary>
+    public bool AutoRefreshEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the background refresh interval in minutes.
+    /// </summary>
+    public int RefreshIntervalMinutes { get; set; } = 30;
+
+    /// <summary>
+    /// Gets or sets the appearance theme ("system", "light" or "dark").
+    /// </summary>
+    public string? Theme { get; set; } = "system";
 }

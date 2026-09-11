@@ -563,5 +563,365 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("LabelUnreadArticles", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Please enter a keyword. ähnelt.
+        /// </summary>
+        public static string ErrorKeywordEmpty {
+            get {
+                return ResourceManager.GetString("ErrorKeywordEmpty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die This keyword already exists. ähnelt.
+        /// </summary>
+        public static string ErrorKeywordDuplicate {
+            get {
+                return ResourceManager.GetString("ErrorKeywordDuplicate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The keyword may be at most 500 characters long. ähnelt.
+        /// </summary>
+        public static string ErrorKeywordTooLong {
+            get {
+                return ResourceManager.GetString("ErrorKeywordTooLong", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Automatic background refresh ähnelt.
+        /// </summary>
+        public static string SettingsAutoRefreshLabel {
+            get {
+                return ResourceManager.GetString("SettingsAutoRefreshLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Periodically load feeds in the background ähnelt.
+        /// </summary>
+        public static string SettingsAutoRefreshHint {
+            get {
+                return ResourceManager.GetString("SettingsAutoRefreshHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark as read automatically ähnelt.
+        /// </summary>
+        public static string SettingsAutoMarkReadLabel {
+            get {
+                return ResourceManager.GetString("SettingsAutoMarkReadLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die When opening an article ähnelt.
+        /// </summary>
+        public static string SettingsAutoMarkReadHint {
+            get {
+                return ResourceManager.GetString("SettingsAutoMarkReadHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Delay until marking ähnelt.
+        /// </summary>
+        public static string SettingsAutoMarkReadDelayLabel {
+            get {
+                return ResourceManager.GetString("SettingsAutoMarkReadDelayLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Immediately ähnelt.
+        /// </summary>
+        public static string SettingsDelayImmediate {
+            get {
+                return ResourceManager.GetString("SettingsDelayImmediate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die 1 second ähnelt.
+        /// </summary>
+        public static string SettingsDelay1s {
+            get {
+                return ResourceManager.GetString("SettingsDelay1s", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die 3 seconds ähnelt.
+        /// </summary>
+        public static string SettingsDelay3s {
+            get {
+                return ResourceManager.GetString("SettingsDelay3s", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die 5 seconds ähnelt.
+        /// </summary>
+        public static string SettingsDelay5s {
+            get {
+                return ResourceManager.GetString("SettingsDelay5s", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Every 15 minutes ähnelt.
+        /// </summary>
+        public static string SettingsInterval15Min {
+            get {
+                return ResourceManager.GetString("SettingsInterval15Min", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Every 30 minutes ähnelt.
+        /// </summary>
+        public static string SettingsInterval30Min {
+            get {
+                return ResourceManager.GetString("SettingsInterval30Min", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Hourly ähnelt.
+        /// </summary>
+        public static string SettingsIntervalHourly {
+            get {
+                return ResourceManager.GetString("SettingsIntervalHourly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Every 4 hours ähnelt.
+        /// </summary>
+        public static string SettingsInterval4Hours {
+            get {
+                return ResourceManager.GetString("SettingsInterval4Hours", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die + Add ähnelt.
+        /// </summary>
+        public static string SettingsKeywordAdd {
+            get {
+                return ResourceManager.GetString("SettingsKeywordAdd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Substring &amp; case-insensitive ähnelt.
+        /// </summary>
+        public static string SettingsKeywordMatchLabel {
+            get {
+                return ResourceManager.GetString("SettingsKeywordMatchLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Also matches variants within words ähnelt.
+        /// </summary>
+        public static string SettingsKeywordMatchHint {
+            get {
+                return ResourceManager.GetString("SettingsKeywordMatchHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Filtered articles are deleted after the retention period based on their publication date. ähnelt.
+        /// </summary>
+        public static string SettingsKeywordInfo {
+            get {
+                return ResourceManager.GetString("SettingsKeywordInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Enter keyword… ähnelt.
+        /// </summary>
+        public static string SettingsKeywordPlaceholder {
+            get {
+                return ResourceManager.GetString("SettingsKeywordPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Push notifications ähnelt.
+        /// </summary>
+        public static string SettingsNotificationsLabel {
+            get {
+                return ResourceManager.GetString("SettingsNotificationsLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Breaking news &amp; favorite feeds ähnelt.
+        /// </summary>
+        public static string SettingsNotificationsHint {
+            get {
+                return ResourceManager.GetString("SettingsNotificationsHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Quiet hours (do not disturb) ähnelt.
+        /// </summary>
+        public static string SettingsQuietHoursLabel {
+            get {
+                return ResourceManager.GetString("SettingsQuietHoursLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die FROM ähnelt.
+        /// </summary>
+        public static string SettingsQuietHoursFrom {
+            get {
+                return ResourceManager.GetString("SettingsQuietHoursFrom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die TO ähnelt.
+        /// </summary>
+        public static string SettingsQuietHoursTo {
+            get {
+                return ResourceManager.GetString("SettingsQuietHoursTo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Keep read articles ähnelt.
+        /// </summary>
+        public static string SettingsRetentionLabel {
+            get {
+                return ResourceManager.GetString("SettingsRetentionLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} days ähnelt.
+        /// </summary>
+        public static string SettingsRetentionDaysFormat {
+            get {
+                return ResourceManager.GetString("SettingsRetentionDaysFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Unread articles and articles saved with a bookmark are kept permanently. ähnelt.
+        /// </summary>
+        public static string SettingsRetentionInfo {
+            get {
+                return ResourceManager.GetString("SettingsRetentionInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die 1 day – 90 days – 180 days – 365 days ähnelt.
+        /// </summary>
+        public static string SettingsRetentionDayMarks {
+            get {
+                return ResourceManager.GetString("SettingsRetentionDayMarks", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Retention &amp; storage ähnelt.
+        /// </summary>
+        public static string SettingsSectionRetention {
+            get {
+                return ResourceManager.GetString("SettingsSectionRetention", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Keyword filter (blacklist) ähnelt.
+        /// </summary>
+        public static string SettingsSectionKeywords {
+            get {
+                return ResourceManager.GetString("SettingsSectionKeywords", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Synchronization &amp; reading flow ähnelt.
+        /// </summary>
+        public static string SettingsSectionSync {
+            get {
+                return ResourceManager.GetString("SettingsSectionSync", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications &amp; quiet hours ähnelt.
+        /// </summary>
+        public static string SettingsSectionNotifications {
+            get {
+                return ResourceManager.GetString("SettingsSectionNotifications", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Appearance ähnelt.
+        /// </summary>
+        public static string SettingsSectionAppearance {
+            get {
+                return ResourceManager.GetString("SettingsSectionAppearance", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Fetch interval ähnelt.
+        /// </summary>
+        public static string SettingsRefreshIntervalLabel {
+            get {
+                return ResourceManager.GetString("SettingsRefreshIntervalLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Color scheme ähnelt.
+        /// </summary>
+        public static string SettingsThemeLabel {
+            get {
+                return ResourceManager.GetString("SettingsThemeLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die System ähnelt.
+        /// </summary>
+        public static string SettingsThemeSystem {
+            get {
+                return ResourceManager.GetString("SettingsThemeSystem", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Light ähnelt.
+        /// </summary>
+        public static string SettingsThemeLight {
+            get {
+                return ResourceManager.GetString("SettingsThemeLight", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Dark ähnelt.
+        /// </summary>
+        public static string SettingsThemeDark {
+            get {
+                return ResourceManager.GetString("SettingsThemeDark", resourceCulture);
+            }
+        }
     }
 }

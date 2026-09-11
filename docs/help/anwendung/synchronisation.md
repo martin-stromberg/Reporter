@@ -22,6 +22,10 @@
 2. Tippe auf **Alle aktualisieren** oberhalb der Feed-Liste.
 3. Alle konfigurierten Feeds werden nacheinander abgerufen.
 
+### Automatische Aktualisierung
+
+Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie **Alle aktualisieren**, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Die automatische Aktualisierung läuft nur, solange die App geöffnet ist; läuft gerade ein Abruf, wird der nächste Termin übersprungen statt Abrufe zu stapeln. Details siehe [Einstellungen](../einstellungen/index.md).
+
 ## Gesundheitsstatus
 
 | Status | Bedeutung |
