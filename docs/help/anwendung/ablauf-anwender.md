@@ -30,6 +30,12 @@ Tippe auf einen der fünf Tabs:
 - Oder tippe in einer Feed-Zeile auf **Aktualisieren**, um nur diesen Feed abzurufen.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
 
+### 4. Artikel für später merken
+
+- Tippe auf einer Artikelkarte auf das Lesezeichen-Symbol, um den Artikel zu merken.
+- Alle gemerkten Artikel findest du gesammelt unter **Später**. Ein erneutes Tippen auf das Lesezeichen-Symbol entfernt die Merkung.
+- Details siehe [Später — Artikel für später merken](spaeter.md).
+
 ## Ergebnis
 
 Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an.

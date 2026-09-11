@@ -1,3 +1,12 @@
+## 2026-09-11 — „Für später bewahren“-Funktion und automatische Aufbewahrung (Issue #25)
+
+- Automatische Retention-Löschung: Neuer `IRetentionCleanupService` / `RetentionCleanupService` (`Reporter.Core`), der in `App.OnStart` nach der Datenbank-Migration fehlerisoliert ausgeführt wird.
+- Neue Repository-Methode `IItemRepository.DeleteExpiredAsync(cutoff)` löscht per `ExecuteDeleteAsync` nur gelesene, nicht gemerkte Artikel, deren Stichtag (`ReadAt ?? PublishedAt`) älter als `Settings.RetentionDays` ist; `RetentionDays <= 0` deaktiviert das Aufräumen.
+- Lösch-Invariante verankert: Für später gemerkte Artikel (`IsSavedForLater`) können strukturell nie automatisch gelöscht werden; `DeleteAsync` (Einzellöschung) und die Feed-Löschkaskade sind dokumentierte Ausnahmen.
+- Bestehende „Später“-Bausteine verifiziert: Bookmark-Toggle auf `ArticleCardView` und `ArticleDetailPage`, Tab „Später“ (`LaterPage`/`LaterViewModel`), `GetSavedForLaterAsync`/`ToggleSavedForLaterAsync`.
+- Neue Tests: `LaterViewModelTests`, `RetentionCleanupServiceTests`, Erweiterungen in `ItemRepositoryTests`, `UnreadViewModelTests` und `FeedRepositoryTests`; Hilfsmethode `TestDataSeeder.SeedFeedAsync`.
+- Manuelle UI-Verifikation (390 × 844 pt, Light/Dark) in `test-results.md` und `docs/help/anwendung/mobile-ui-design.md` dokumentiert; neue Hilfeseiten `spaeter.md` und `aufbewahrung.md` unter `docs/help/anwendung/`.
+
 ## 2026-09-10 — Kategorieverwaltung umgesetzt
 
 - `CategoriesPage` und `CategoriesViewModel` für das Anlegen, Bearbeiten und Löschen von Kategorien.

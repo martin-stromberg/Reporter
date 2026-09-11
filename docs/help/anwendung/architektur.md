@@ -39,7 +39,7 @@ graph TD
 - `MauiProgram.CreateMauiApp()` — Konfiguriert DI, Fonts und MAUI.
 - `Colors.xaml` / `Styles.xaml` — Enthalten das Design-System (Farb- und Typografie-Tokens, Light/Dark-Styles). Beide haben ein `x:Class`-Code-Behind und werden in `App.xaml.cs` der `MergedDictionaries` hinzugefügt.
 - Alle `.csproj` erzwingen XML-Dokumentation (`GenerateDocumentationFile` + `CS1591` als Fehler).
-- `AppShell` — Definiert die Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später** und **Einstellungen**.
+- `AppShell` — Definiert die Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**.
 - `Newsreader` (Editorial-Headlines) und `Inter` (UI-Texte) — Eingebundene Schriftarten.
 - `AppResources` — Typisierter Zugriff auf RESX-Lokalisierung (EN/DE).
 - `BaseViewModel` — Basisklasse für alle ViewModels, erbt von `ObservableObject`.
@@ -48,6 +48,7 @@ graph TD
 - `LaterPage` / `LaterViewModel` — Ansicht und ViewModel für später gemerkte Artikel.
 - `SettingsPage` / `SettingsViewModel` — Ansicht und ViewModel für Einstellungen.
 - `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten.
+- `IRetentionCleanupService` / `RetentionCleanupService` — Service für das automatische Aufräumen gelesener Artikel nach `Settings.RetentionDays`; wird in `App.OnStart` aufgerufen, gemerkte Artikel bleiben erhalten. Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).
 - `Item` — Domänenmodell für einen Artikel (`Id`, `Title`, `IsRead`, `ContentHtml`).
 - `IItemRepository` / `ItemRepository` — Schnittstelle und Implementierung für den Artikel-Zugriff.
 - `ISyncLogRepository` / `SyncLogRepository` — Schnittstelle und Implementierung für Synchronisations-Logs.

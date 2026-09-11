@@ -84,3 +84,4 @@ Die App verwendet eine saubere Schichtung:
 - `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>`, um pro Operation einen neuen `DbContext` zu erzeugen.
 - `Settings` wird als Singleton verwaltet; es existiert immer genau ein Datensatz.
 - `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie, gespeicherte Artikel und `GetByGuidOrHashAsync` für die Dublettenerkennung pro Feed.
+- `IItemRepository.DeleteExpiredAsync` entfernt abgelaufene Artikel für die automatische Aufbewahrungsfrist (`IsRead && !IsSavedForLater && (ReadAt ?? PublishedAt) < cutoff`); Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).

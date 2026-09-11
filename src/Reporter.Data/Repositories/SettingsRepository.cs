@@ -22,18 +22,18 @@ public class SettingsRepository : ISettingsRepository
     }
 
     /// <inheritdoc />
-    public async Task<Settings> GetAsync()
+    public async Task<Settings> GetAsync(CancellationToken cancellationToken = default)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
         var entity = await context.Settings
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == SettingsEntity.DefaultId);
+            .FirstOrDefaultAsync(s => s.Id == SettingsEntity.DefaultId, cancellationToken);
 
         if (entity is null)
         {
             entity = new SettingsEntity();
             context.Settings.Add(entity);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
         }
 
         return MapToModel(entity);

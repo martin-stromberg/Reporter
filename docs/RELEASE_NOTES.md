@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### "Für später bewahren"-Funktion, Später-Ansicht und automatische Retention-Löschung (Issue #25)
+
+- Artikel können per Bookmark-Icon in der Artikelliste (`ArticleCardView` auf `UnreadPage` und `LaterPage`) sowie per Bookmark-Aktion in der `ArticleDetailPage` "für später bewahren" markiert werden (`IsSavedForLater`).
+- Neuer Tab **Später** (`LaterPage` + `LaterViewModel`): listet ausschließlich bewahrte Artikel, sortiert nach `PublishedAt` absteigend; das Entfernen der Bewahrung über das Bookmark-Icon lässt den Artikel aus der Ansicht verschwinden.
+- Neuer `RetentionCleanupService` (`IRetentionCleanupService`) läuft fehlerisoliert beim App-Start (`App.OnStart`) und löscht gelesene, nicht bewahrte Artikel, deren Stichtag `ReadAt ?? PublishedAt` älter als `Settings.RetentionDays` (Default: 30 Tage) ist; `RetentionDays <= 0` überspringt den Cleanup.
+- Neue Repository-Methode `IItemRepository.DeleteExpiredAsync(DateTime cutoff)` verankert die Schutz-Invariante strukturell: bewahrte Artikel werden nie automatisch gelöscht, ungelesene Artikel bleiben ebenfalls erhalten.
+- **Verhaltensänderung:** Ab dieser Version werden alte gelesene Artikel beim App-Start automatisch entfernt — nur "für später bewahrte" Artikel sind dauerhaft vor der Löschung geschützt.
+- Neue Tests `LaterViewModelTests` und `RetentionCleanupServiceTests`; `ItemRepositoryTests`, `UnreadViewModelTests` und `FeedRepositoryTests` ergänzt (u. a. Lösch-Invariante, Sortierung, Feed-Kaskade).
+
 ### Artikeldetailansicht mit WebView und Lesestatus (Issue #24)
 
 - Neue `ItemDetailPage` mit `WebView` und visuellem Lesestatus für Artikel.

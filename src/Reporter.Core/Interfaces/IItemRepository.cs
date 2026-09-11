@@ -36,6 +36,8 @@ public interface IItemRepository
 
     /// <summary>
     /// Deletes the item with the specified identifier asynchronously.
+    /// This method is intended for explicit single-item deletions and does not
+    /// enforce the saved-for-later invariant; it is not used by automatic cleanup.
     /// </summary>
     /// <param name="id">The item identifier.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -111,4 +113,16 @@ public interface IItemRepository
     /// <param name="guidOrHash">The original GUID or hash.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the item, or <c>null</c> if not found.</returns>
     Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash);
+
+    /// <summary>
+    /// Deletes all expired items asynchronously.
+    /// Only items with <c>IsRead == true</c> are eligible; items with
+    /// <c>IsSavedForLater == true</c> are never deleted. The effective timestamp
+    /// compared against the cutoff is <c>ReadAt</c>, falling back to
+    /// <c>PublishedAt</c>; items with both values <c>null</c> are kept.
+    /// </summary>
+    /// <param name="cutoff">The cutoff timestamp; items whose effective timestamp is older are deleted.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of deleted items.</returns>
+    Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default);
 }

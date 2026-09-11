@@ -15,6 +15,8 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App.
 - Mehrsprachigkeits-Rüstung über RESX-Dateien (Deutsch/Englisch), Tab-Titel und Platzhaltertexte sind bereits an `AppResources` gebunden
 - RSS-/Atom-Feed-Abruf, Parsing und Speicherung neuer Artikel inklusive Feed-Health (`OK`/`Warning`/`Error`) und Sync-Log
 - Artikeldetailansicht mit WebView-Volltextdarstellung, automatischem Gelesen-Markieren, `Für später bewahren`-Toggle, Teilen und Öffnen im Browser (Issue #24)
+- `Für später bewahren`-Funktion: Bookmark-Toggle in Artikelliste und Detailansicht; der Tab **Später** zeigt bewahrte Artikel nach `PublishedAt` absteigend sortiert und erlaubt das Entfernen der Bewahrung (Issue #25)
+- Automatische Retention-Löschung beim App-Start: `RetentionCleanupService` entfernt gelesene Artikel, deren Stichtag (`ReadAt ?? PublishedAt`) älter als `Settings.RetentionDays` ist — bewahrte Artikel (`IsSavedForLater`) sind davon ausgenommen
 
 ## Projektstruktur
 
@@ -102,7 +104,7 @@ einen Screenshot unter `src/Reporter/bin/<config>/net10.0-ios/<rid>/`.
 - `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
 - `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**.
 - `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
-- `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`), Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`) und den Anwendungs-Service `IFeedSyncService` / `FeedSyncService`.
+- `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`), Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`) und die Anwendungs-Services `IFeedSyncService` / `FeedSyncService` sowie `IRetentionCleanupService` / `RetentionCleanupService` (Retention-Löschung gelesener Artikel beim App-Start, ausgenommen `IsSavedForLater`).
 - `Reporter.Data` stellt die EF Core-Entitäten und Repository-Implementierungen bereit; Repositories verwenden `IDbContextFactory<ReporterDbContext>` für kurzlebige, thread-sichere DbContext-Instanzen.
 - `Reporter` (MAUI-Projekt) enthält die Seiten (`FeedsPage` usw.) und das App-Shell-Setup.
 - `Reporter.Core` enthält `BaseViewModel`, die ViewModels (`FeedsViewModel`, `CategoriesViewModel`, `UnreadViewModel`, `LaterViewModel`, `SettingsViewModel`) und `AppResources`.
