@@ -92,6 +92,6 @@ flowchart TD
 | Parameter | Typ | Standardwert | Beschreibung |
 |-----------|-----|--------------|--------------|
 | `Settings.RetentionDays` | `int` | `30` | Aufbewahrungsdauer in Tagen; Singleton-Datensatz, wird beim ersten Zugriff angelegt. `<= 0` deaktiviert das Aufräumen. |
-| `keywords`-Tabelle | Datensätze | leer | Schlagwortliste der Blacklist; `keyword_text` max. 500 Zeichen, Unique-Index. |
+| `keywords`-Tabelle | Datensätze | leer | Schlagwortliste des Keyword-Filters; `keyword_text` max. 500 Zeichen, Unique-Index. |
 
 Die Frist ist über den Schieberegler **Gelesene Artikel aufbewahren** (1–365 Tage) auf der Seite **Einstellungen** konfigurierbar; dort werden auch die Filter-Schlagworte als Chips verwaltet — Details siehe [Einstellungen](../einstellungen/index.md). Die `IsSavedForLater`-Ausnahme ist nicht abschaltbar.

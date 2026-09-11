@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Time.Testing;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -126,8 +127,9 @@ public class SettingsViewModelTests_Persist : IDisposable
         _timeProvider.Advance(TimeSpan.FromSeconds(5));
         await Task.Delay(50);
 
-        Assert.Single(recordingRepository.SavedRetentionDays);
-        Assert.Equal(42, recordingRepository.SavedRetentionDays[0]);
+        var saved = recordingRepository.SavedRetentionDays.ToArray();
+        Assert.Single(saved);
+        Assert.Equal(42, saved[0]);
     }
 
     /// <summary>
@@ -150,8 +152,9 @@ public class SettingsViewModelTests_Persist : IDisposable
         _timeProvider.Advance(TimeSpan.FromSeconds(5));
         await Task.Delay(50);
 
-        Assert.Single(recordingRepository.SavedRetentionDays);
-        Assert.Equal(42, recordingRepository.SavedRetentionDays[0]);
+        var saved = recordingRepository.SavedRetentionDays.ToArray();
+        Assert.Single(saved);
+        Assert.Equal(42, saved[0]);
     }
 
     /// <summary>
@@ -394,7 +397,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             _inner = inner;
         }
 
-        public List<int> SavedRetentionDays { get; } = new();
+        public ConcurrentQueue<int> SavedRetentionDays { get; } = new();
 
         public Task<Settings> GetAsync(CancellationToken cancellationToken = default)
         {
@@ -403,7 +406,7 @@ public class SettingsViewModelTests_Persist : IDisposable
 
         public async Task SaveAsync(Settings settings)
         {
-            SavedRetentionDays.Add(settings.RetentionDays);
+            SavedRetentionDays.Enqueue(settings.RetentionDays);
             await _inner.SaveAsync(settings);
         }
     }

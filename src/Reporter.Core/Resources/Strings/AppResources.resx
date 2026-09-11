@@ -184,7 +184,7 @@
     <value>Retention &amp; storage</value>
   </data>
   <data name="SettingsSectionKeywords" xml:space="preserve">
-    <value>Keyword filter (blacklist)</value>
+    <value>Keyword filter</value>
   </data>
   <data name="SettingsSectionSync" xml:space="preserve">
     <value>Synchronization &amp; reading flow</value>
@@ -205,7 +205,7 @@
     <value>Unread articles and articles bookmarked via the "Later" tab are kept permanently.</value>
   </data>
   <data name="SettingsRetentionDayMarks" xml:space="preserve">
-    <value>1 day – 90 days – 180 days – 365 days</value>
+    <value>1 day – 365 days</value>
   </data>
   <data name="SettingsKeywordPlaceholder" xml:space="preserve">
     <value>Enter keyword…</value>

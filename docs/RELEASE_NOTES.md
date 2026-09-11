@@ -36,7 +36,7 @@
 - Der lokale „Auto-Gelesen"-Schalter in der Artikeldetailansicht ist deaktiviert und abgedunkelt, wenn die globale Option ausgeschaltet ist.
 - Feinschliff der Einstellungen-Seite: der feste Keyword-Matching-Modus wird als nicht-interaktives Badge „Immer aktiv" angezeigt; Screenreader-Beschreibungen für Keyword-Chips und Schalter ergänzt.
 - Neue vollwertige Einstellungen-Seite: Aufbewahrungsdauer, Keyword-Filter, Synchronisation & Lesefluss, Benachrichtigungen & Ruhezeiten sowie Erscheinungsbild — jede Änderung wird sofort gespeichert.
-- Keyword-Filter (Blacklist): Keywords werden als Chips auf der Einstellungen-Seite verwaltet; der Abgleich erfolgt case-insensitiv als Teilwort auf Artikeltitel und -inhalt.
+- Schlagwort-Filter: Schlagworte werden als Chips auf der Einstellungen-Seite verwaltet; der Abgleich erfolgt case-insensitiv als Teilwort auf Artikeltitel und -inhalt.
 - Automatische Hintergrund-Aktualisierung: synchronisiert periodisch alle Feeds bei geöffneter App, wählbare Intervalle 15/30/60/240 Minuten.
 - Erscheinungsbild-Einstellung: helles, dunkles oder System-Theme, angewendet beim App-Start und sofort bei Änderung.
 - Globale Option „Automatisch als gelesen markieren" wird von der Artikeldetailansicht berücksichtigt; Verzögerung konfigurierbar inklusive „Sofort" (0 s).

@@ -28,19 +28,19 @@ Nicht automatisierbarer Rest (gemäß Plan begründet, Abdeckung über manuelle 
 
 Ausgeführt mit: `dotnet build Reporter.sln --configuration Release` (0 Fehler, 0 Warnungen) und `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --settings src/Reporter.Tests/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --logger "console;verbosity=normal"`.
 
-Baseline-Check: 147 Tests entsprechen der erwarteten Baseline (144 aus dem Vorlauf + 3 Debounce-Tests: `RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce`, `RetentionDays_RapidChanges_PersistOnlyLastValue` — jetzt mit striktem `Assert.Single` nach zusätzlichem Zeitvorschub —, `RetentionDays_DragCompleted_PersistsImmediatelyAndCancelsDebounce` — alle bestanden).
+Baseline-Check: 147 Tests entsprechen der erwarteten Baseline (144 aus dem Vorlauf + 3 neue Debounce-Tests: `RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce`, `RetentionDays_RapidChanges_PersistOnlyLastValue`, `RetentionDays_DragCompleted_PersistsImmediatelyAndCancelsDebounce` — alle bestanden).
 
 Hinweis: Der bekannte potenziell flaky Test `SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce` ist in diesem Lauf fehlerfrei durchgelaufen; keine Wiederholung nötig.
 
 ## Testabdeckung
 
-**Abdeckung:** 85,39 % Zeilen (1450/1698), 75,72 % Branches (368/486) — gemessen über `Reporter.Core` + `Reporter.Data` (Cobertura, `Reporter.Data.Migrations.*` per runsettings ausgeschlossen).
+**Abdeckung:** 85,51 % Zeilen (1446/1691), 75,81 % Branches (370/488) — gemessen über `Reporter.Core` + `Reporter.Data` (Cobertura, `Reporter.Data.Migrations.*` per runsettings ausgeschlossen).
 
 | Datei | Abdeckung |
 |-------|-----------|
-| `src/Reporter.Core/ViewModels/FeedsViewModel.cs` | ~47 % (älteres Feature, nicht Issue #26) |
+| `src/Reporter.Core/ViewModels/FeedsViewModel.cs` | 46,9 % (68/145 Zeilen) |
 
-Hinweis: `src/Reporter.Core/Resources/Strings/AppResources.Designer.cs` liegt ebenfalls unter 80 %, ist aber eine generierte Datei und daher nicht als Abdeckungslücke gewertet. Alle anderen Quelldateien ≥ 80 %.
+Hinweis: `src/Reporter.Core/Resources/Strings/AppResources.Designer.cs` (22,7 %) liegt ebenfalls unter 80 %, ist aber eine generierte Datei und daher nicht als Abdeckungslücke gewertet. Alle anderen Quelldateien ≥ 80 %.
 
 ## Fehlende Tests
 

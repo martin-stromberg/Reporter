@@ -21,7 +21,7 @@
 | Allgemeine Retention | `IsRead && !IsSavedForLater && (ReadAt ?? PublishedAt) < cutoff` | Lesezeitpunkt (`ReadAt`, Fallback `PublishedAt`) |
 | Keyword-Regel | `IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff` **und** Keyword-Match | Veröffentlichungsdatum (`PublishedAt`, Fallback `ReadAt`) |
 
-**Begründung:** Nutzt die Keyword-Regel denselben Zeitstempel wie die allgemeine Regel, wäre sie eine leere Teilmenge davon. Die Blacklist-Semantik verlangt, dass unerwünschte Artikel nach Ablauf der Frist seit ihrer Veröffentlichung entfernt werden — unabhängig davon, wann sie zuletzt gelesen wurden.
+**Begründung:** Nutzt die Keyword-Regel denselben Zeitstempel wie die allgemeine Regel, wäre sie eine leere Teilmenge davon. Die Filter-Semantik verlangt, dass unerwünschte Artikel nach Ablauf der Frist seit ihrer Veröffentlichung entfernt werden — unabhängig davon, wann sie zuletzt gelesen wurden.
 
 **Umsetzung:** `RetentionCleanupService.CleanupAsync` (Orchestrierung), `ItemRepository.GetExpiredKeywordCandidatesAsync` (Kandidaten), `ItemRepository.DeleteRangeAsync` (Löschung per IDs).
 

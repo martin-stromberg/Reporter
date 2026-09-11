@@ -36,6 +36,7 @@
                             <Slider Minimum="1"
                                     Maximum="365"
                                     MinimumHeightRequest="44"
+                                    SemanticProperties.Description="{x:Static strings:AppResources.SettingsRetentionLabel}"
                                     Value="{Binding RetentionDays}"
                                     DragCompletedCommand="{Binding SaveRetentionCommand}"/>
                             <Label Text="{x:Static strings:AppResources.SettingsRetentionDayMarks}"
@@ -65,6 +66,7 @@
                                   ColumnSpacing="8">
                                 <Entry Text="{Binding NewKeywordText}"
                                        Placeholder="{x:Static strings:AppResources.SettingsKeywordPlaceholder}"
+                                       SemanticProperties.Description="{x:Static strings:AppResources.SettingsKeywordPlaceholder}"
                                        ReturnCommand="{Binding AddKeywordCommand}"/>
                                 <Button Grid.Column="1"
                                         Text="{x:Static strings:AppResources.SettingsKeywordAdd}"
@@ -280,9 +282,13 @@
                                           ColumnSpacing="8"
                                           IsEnabled="{Binding QuietHoursEnabled}">
                                         <Grid.Triggers>
-                                            <DataTrigger TargetType="Grid" Binding="{Binding QuietHoursEnabled}" Value="False">
+                                            <MultiTrigger TargetType="Grid">
+                                                <MultiTrigger.Conditions>
+                                                    <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                                    <BindingCondition Binding="{Binding QuietHoursEnabled}" Value="False"/>
+                                                </MultiTrigger.Conditions>
                                                 <Setter Property="Opacity" Value="0.4"/>
-                                            </DataTrigger>
+                                            </MultiTrigger>
                                         </Grid.Triggers>
                                         <Border Grid.Column="0"
                                                 Padding="8"

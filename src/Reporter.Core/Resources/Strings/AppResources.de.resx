@@ -184,7 +184,7 @@
     <value>Aufbewahrungsdauer &amp; Speicher</value>
   </data>
   <data name="SettingsSectionKeywords" xml:space="preserve">
-    <value>Keyword-Filter (Blacklist)</value>
+    <value>Schlagwort-Filter</value>
   </data>
   <data name="SettingsSectionSync" xml:space="preserve">
     <value>Synchronisation &amp; Lesefluss</value>
@@ -205,7 +205,7 @@
     <value>Ungelesene und mit Lesezeichen versehene Artikel (Tab „Später") bleiben dauerhaft erhalten.</value>
   </data>
   <data name="SettingsRetentionDayMarks" xml:space="preserve">
-    <value>1 Tag – 90 Tage – 180 Tage – 365 Tage</value>
+    <value>1 Tag – 365 Tage</value>
   </data>
   <data name="SettingsKeywordPlaceholder" xml:space="preserve">
     <value>Schlagwort eingeben…</value>

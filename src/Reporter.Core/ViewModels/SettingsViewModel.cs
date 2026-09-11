@@ -45,7 +45,7 @@ public partial class SettingsViewModel : BaseViewModel
     private ThemeOption? _selectedTheme;
     private bool _hasError;
     private string _errorMessage = string.Empty;
-    private bool _isLoading;
+    private volatile bool _isLoading;
     private readonly SemaphoreSlim _persistLock = new(1, 1);
     private CancellationTokenSource? _retentionDebounceCts;
 
@@ -164,7 +164,13 @@ public partial class SettingsViewModel : BaseViewModel
     public string NewKeywordText
     {
         get => _newKeywordText;
-        set => SetProperty(ref _newKeywordText, value);
+        set
+        {
+            if (SetProperty(ref _newKeywordText, value))
+            {
+                HasError = false;
+            }
+        }
     }
 
     /// <summary>
@@ -177,9 +183,10 @@ public partial class SettingsViewModel : BaseViewModel
         get => _retentionDays;
         set
         {
-            if (SetProperty(ref _retentionDays, value))
+            var rounded = Math.Round(value);
+            if (SetProperty(ref _retentionDays, rounded))
             {
-                RetentionDaysText = FormatRetentionDays(value);
+                RetentionDaysText = FormatRetentionDays(rounded);
                 ScheduleRetentionPersist();
             }
         }
@@ -432,7 +439,8 @@ public partial class SettingsViewModel : BaseViewModel
 
         CancelRetentionDebounce();
         var cts = new CancellationTokenSource();
-        _retentionDebounceCts = cts;
+        var previous = Interlocked.Exchange(ref _retentionDebounceCts, cts);
+        previous?.Dispose();
         _ = PersistRetentionDebouncedAsync(cts);
     }
 
@@ -468,7 +476,7 @@ public partial class SettingsViewModel : BaseViewModel
 
         // Ownership is claimed atomically: only the still-current debounce may
         // persist, and CancelRetentionDebounce never cancels a disposed source.
-        if (Interlocked.Exchange(ref _retentionDebounceCts, null) != cts)
+        if (Interlocked.CompareExchange(ref _retentionDebounceCts, null, cts) != cts)
         {
             return;
         }

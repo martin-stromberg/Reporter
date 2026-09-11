@@ -4,7 +4,10 @@ Erstellt am: 2026-09-11 (Fortsetzungslauf 2, 3. Abbruch)
 Abbruchgrund: Kein Fortschritt zwischen den letzten zwei Iterationen (1 offener Punkt → 5 offene Punkte; jede Review-Runde findet neue Kleinigkeiten)
 Aktualisiert am: 2026-09-11 — alle 5 Restbefunde manuell behoben und verifiziert
 (Build Release 0 Warnungen, 147/147 Tests bestanden, `Run-StaticChecks.ps1` Exit-Code 0).
-Keine neue Review-Runde gestartet — Status daher „behoben, Review ausstehend".
+Abschließende Review-Runde (review-code.md, review-usability.md) fand 11 weitere
+Befunde (5 Code, 6 Usability, max. Schweregrad mittel) — alle ebenfalls behoben
+und verifiziert; siehe Nachträge in den Review-Dateien. Es verbleiben keine
+offenen Punkte; die Hinweise unten betreffen Folgearbeiten außerhalb von Issue #26.
 
 Die folgenden Aufgaben konnten im automatisierten Zyklus nicht abgeschlossen werden
 und wurden nachträglich manuell bearbeitet.
