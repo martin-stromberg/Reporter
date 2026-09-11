@@ -180,4 +180,139 @@
   <data name="LabelUnreadArticles" xml:space="preserve">
     <value>ungelesene Artikel</value>
   </data>
+  <data name="SettingsSectionRetention" xml:space="preserve">
+    <value>Aufbewahrungsdauer &amp; Speicher</value>
+  </data>
+  <data name="SettingsSectionKeywords" xml:space="preserve">
+    <value>Schlagwort-Filter</value>
+  </data>
+  <data name="SettingsSectionSync" xml:space="preserve">
+    <value>Synchronisation &amp; Lesefluss</value>
+  </data>
+  <data name="SettingsSectionNotifications" xml:space="preserve">
+    <value>Benachrichtigungen &amp; Ruhezeiten</value>
+  </data>
+  <data name="SettingsSectionAppearance" xml:space="preserve">
+    <value>Erscheinungsbild</value>
+  </data>
+  <data name="SettingsRetentionLabel" xml:space="preserve">
+    <value>Gelesene Artikel aufbewahren</value>
+  </data>
+  <data name="SettingsRetentionDaysFormat" xml:space="preserve">
+    <value>{0} Tage</value>
+  </data>
+  <data name="SettingsRetentionInfo" xml:space="preserve">
+    <value>Ungelesene und mit Lesezeichen versehene Artikel (Tab „Später") bleiben dauerhaft erhalten.</value>
+  </data>
+  <data name="SettingsRetentionDayMarks" xml:space="preserve">
+    <value>1 Tag – 365 Tage</value>
+  </data>
+  <data name="SettingsKeywordPlaceholder" xml:space="preserve">
+    <value>Schlagwort eingeben…</value>
+  </data>
+  <data name="SettingsKeywordAdd" xml:space="preserve">
+    <value>+ Hinzufügen</value>
+  </data>
+  <data name="SettingsKeywordMatchLabel" xml:space="preserve">
+    <value>Teilwort, Groß-/Kleinschreibung egal</value>
+  </data>
+  <data name="SettingsKeywordMatchHint" xml:space="preserve">
+    <value>Erkennt auch Varianten innerhalb von Wörtern</value>
+  </data>
+  <data name="SettingsKeywordMatchStatus" xml:space="preserve">
+    <value>Immer aktiv</value>
+  </data>
+  <data name="SettingsKeywordInfo" xml:space="preserve">
+    <value>Gefilterte Artikel werden nach Ablauf der Aufbewahrungsfrist anhand ihres Veröffentlichungsdatums gelöscht.</value>
+  </data>
+  <data name="SettingsAutoRefreshLabel" xml:space="preserve">
+    <value>Automatische Hintergrund-Aktualisierung</value>
+  </data>
+  <data name="SettingsAutoRefreshHint" xml:space="preserve">
+    <value>Feeds periodisch im Hintergrund laden</value>
+  </data>
+  <data name="SettingsRefreshIntervalLabel" xml:space="preserve">
+    <value>Abruf-Intervall</value>
+  </data>
+  <data name="SettingsInterval15Min" xml:space="preserve">
+    <value>Alle 15 Minuten</value>
+  </data>
+  <data name="SettingsInterval30Min" xml:space="preserve">
+    <value>Alle 30 Minuten</value>
+  </data>
+  <data name="SettingsIntervalHourly" xml:space="preserve">
+    <value>Stündlich</value>
+  </data>
+  <data name="SettingsInterval4Hours" xml:space="preserve">
+    <value>Alle 4 Stunden</value>
+  </data>
+  <data name="SettingsAutoMarkReadLabel" xml:space="preserve">
+    <value>Automatisch als gelesen markieren</value>
+  </data>
+  <data name="SettingsAutoMarkReadHint" xml:space="preserve">
+    <value>Beim Öffnen eines Artikels</value>
+  </data>
+  <data name="SettingsAutoMarkReadDelayLabel" xml:space="preserve">
+    <value>Verzögerung bis Markierung</value>
+  </data>
+  <data name="SettingsDelayImmediate" xml:space="preserve">
+    <value>Sofort</value>
+  </data>
+  <data name="SettingsDelay1s" xml:space="preserve">
+    <value>1 Sekunde</value>
+  </data>
+  <data name="SettingsDelay3s" xml:space="preserve">
+    <value>3 Sekunden</value>
+  </data>
+  <data name="SettingsDelay5s" xml:space="preserve">
+    <value>5 Sekunden</value>
+  </data>
+  <data name="SettingsNotificationsLabel" xml:space="preserve">
+    <value>Push-Benachrichtigungen</value>
+  </data>
+  <data name="SettingsNotificationsHint" xml:space="preserve">
+    <value>Eilmeldungen &amp; favorisierte Feeds</value>
+  </data>
+  <data name="SettingsQuietHoursLabel" xml:space="preserve">
+    <value>Ruhezeit (Nicht stören)</value>
+  </data>
+  <data name="SettingsQuietHoursHint" xml:space="preserve">
+    <value>Keine Benachrichtigungen in diesem Zeitraum</value>
+  </data>
+  <data name="SettingsQuietHoursFrom" xml:space="preserve">
+    <value>VON</value>
+  </data>
+  <data name="SettingsQuietHoursTo" xml:space="preserve">
+    <value>BIS</value>
+  </data>
+  <data name="SettingsThemeLabel" xml:space="preserve">
+    <value>Farbschema</value>
+  </data>
+  <data name="SettingsThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="SettingsThemeLight" xml:space="preserve">
+    <value>Hell</value>
+  </data>
+  <data name="SettingsThemeDark" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="ErrorKeywordEmpty" xml:space="preserve">
+    <value>Bitte gib ein Schlagwort ein.</value>
+  </data>
+  <data name="ErrorKeywordDuplicate" xml:space="preserve">
+    <value>Dieses Schlagwort existiert bereits.</value>
+  </data>
+  <data name="ErrorKeywordTooLong" xml:space="preserve">
+    <value>Das Schlagwort darf höchstens 500 Zeichen lang sein.</value>
+  </data>
+  <data name="ArticleAutoMarkReadDisabled" xml:space="preserve">
+    <value>Auto-Gelesen (in den Einstellungen deaktiviert)</value>
+  </data>
+  <data name="ArticleAutoMarkReadDelayFormat" xml:space="preserve">
+    <value>Auto-Gelesen ({0} s)</value>
+  </data>
+  <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
+    <value>Schlagwort {0} entfernen</value>
+  </data>
 </root>

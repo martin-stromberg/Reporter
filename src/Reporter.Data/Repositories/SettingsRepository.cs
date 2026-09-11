@@ -56,6 +56,9 @@ public class SettingsRepository : ISettingsRepository
         entity.NotificationsEnabled = settings.NotificationsEnabled;
         entity.QuietHoursStart = settings.QuietHoursStart;
         entity.QuietHoursEnd = settings.QuietHoursEnd;
+        entity.AutoRefreshEnabled = settings.AutoRefreshEnabled;
+        entity.RefreshIntervalMinutes = settings.RefreshIntervalMinutes;
+        entity.Theme = settings.Theme;
 
         await context.SaveChangesAsync();
     }
@@ -71,6 +74,9 @@ public class SettingsRepository : ISettingsRepository
             NotificationsEnabled = entity.NotificationsEnabled,
             QuietHoursStart = entity.QuietHoursStart,
             QuietHoursEnd = entity.QuietHoursEnd,
+            AutoRefreshEnabled = entity.AutoRefreshEnabled,
+            RefreshIntervalMinutes = entity.RefreshIntervalMinutes,
+            Theme = entity.Theme,
         };
     }
 }

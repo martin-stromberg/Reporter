@@ -702,4 +702,190 @@ public class ItemRepositoryTests : IDisposable
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => _repository.DeleteExpiredAsync(DateTime.UtcNow, cts.Token));
     }
+
+    /// <summary>
+    /// Verifies that GetExpiredKeywordCandidatesAsync returns read, unsaved items whose PublishedAt is older than the cutoff.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetExpiredKeywordCandidatesAsync_UsesPublishedAtOverReadAt()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var oldPublishedRecentlyRead = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "OldPublishedRecentlyRead",
+            GuidOrHash = "old-pub",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow.AddDays(-1),
+        };
+        var recentPublishedOldRead = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "RecentPublishedOldRead",
+            GuidOrHash = "recent-pub",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-5),
+            ReadAt = DateTime.UtcNow.AddDays(-60),
+        };
+        await _repository.AddAsync(oldPublishedRecentlyRead);
+        await _repository.AddAsync(recentPublishedOldRead);
+
+        var candidates = await _repository.GetExpiredKeywordCandidatesAsync(cutoff);
+
+        Assert.Single(candidates);
+        Assert.Equal(oldPublishedRecentlyRead.Id, candidates[0].Id);
+    }
+
+    /// <summary>
+    /// Verifies that GetExpiredKeywordCandidatesAsync keeps unread and saved-for-later items out of the result.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetExpiredKeywordCandidatesAsync_KeepsUnreadAndSaved()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var unread = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Unread",
+            GuidOrHash = "unread",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+        };
+        var saved = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Saved",
+            GuidOrHash = "saved",
+            IsRead = true,
+            IsSavedForLater = true,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow.AddDays(-40),
+        };
+        var eligible = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Eligible",
+            GuidOrHash = "eligible",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+        };
+        await _repository.AddAsync(unread);
+        await _repository.AddAsync(saved);
+        await _repository.AddAsync(eligible);
+
+        var candidates = await _repository.GetExpiredKeywordCandidatesAsync(cutoff);
+
+        Assert.Single(candidates);
+        Assert.Equal(eligible.Id, candidates[0].Id);
+    }
+
+    /// <summary>
+    /// Verifies that GetExpiredKeywordCandidatesAsync falls back to ReadAt and keeps items without timestamps.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetExpiredKeywordCandidatesAsync_FallsBackToReadAt()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var readAtOnly = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "ReadAtOnly",
+            GuidOrHash = "readat-only",
+            IsRead = true,
+            IsSavedForLater = false,
+            ReadAt = DateTime.UtcNow.AddDays(-60),
+        };
+        var noTimestamps = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "NoTimestamps",
+            GuidOrHash = "no-timestamps",
+            IsRead = true,
+            IsSavedForLater = false,
+        };
+        await _repository.AddAsync(readAtOnly);
+        await _repository.AddAsync(noTimestamps);
+
+        var candidates = await _repository.GetExpiredKeywordCandidatesAsync(cutoff);
+
+        Assert.Single(candidates);
+        Assert.Equal(readAtOnly.Id, candidates[0].Id);
+    }
+
+    /// <summary>
+    /// Verifies that DeleteRangeAsync deletes only the items with the given identifiers.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteRangeAsync_DeletesOnlyGivenIds()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var first = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "First",
+            GuidOrHash = "first",
+            IsRead = true,
+            IsSavedForLater = false,
+        };
+        var second = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Second",
+            GuidOrHash = "second",
+            IsRead = true,
+            IsSavedForLater = false,
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = true,
+            IsSavedForLater = false,
+        };
+        await _repository.AddAsync(first);
+        await _repository.AddAsync(second);
+        await _repository.AddAsync(kept);
+
+        var deleted = await _repository.DeleteRangeAsync(new List<Guid> { first.Id, second.Id });
+
+        Assert.Equal(2, deleted);
+        Assert.Null(await _repository.GetByIdAsync(first.Id));
+        Assert.Null(await _repository.GetByIdAsync(second.Id));
+        Assert.NotNull(await _repository.GetByIdAsync(kept.Id));
+    }
+
+    /// <summary>
+    /// Verifies that DeleteRangeAsync returns zero for an empty identifier list.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteRangeAsync_EmptyList_ReturnsZero()
+    {
+        var deleted = await _repository.DeleteRangeAsync(new List<Guid>());
+
+        Assert.Equal(0, deleted);
+    }
 }

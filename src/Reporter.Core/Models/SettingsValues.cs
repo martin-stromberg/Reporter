@@ -1,0 +1,47 @@
+namespace Reporter.Core.Models;
+
+/// <summary>
+/// Central constants for the persisted settings values.
+/// </summary>
+public static class SettingsValues
+{
+    /// <summary>
+    /// The auto-mark-as-read mode that marks articles as read when they are opened.
+    /// </summary>
+    public const string AutoMarkReadOnOpen = "on_open";
+
+    /// <summary>
+    /// The auto-mark-as-read mode that marks articles as read while scrolling (legacy seed default).
+    /// </summary>
+    public const string AutoMarkReadOnScroll = "on_scroll";
+
+    /// <summary>
+    /// The auto-mark-as-read mode that disables automatic marking.
+    /// </summary>
+    public const string AutoMarkReadOff = "off";
+
+    /// <summary>
+    /// The theme value that follows the operating system appearance.
+    /// </summary>
+    public const string ThemeSystem = "system";
+
+    /// <summary>
+    /// The theme value for the light appearance.
+    /// </summary>
+    public const string ThemeLight = "light";
+
+    /// <summary>
+    /// The theme value for the dark appearance.
+    /// </summary>
+    public const string ThemeDark = "dark";
+
+    /// <summary>
+    /// Determines whether the automatic mark-as-read feature is active for the given persisted mode.
+    /// </summary>
+    /// <param name="autoMarkReadMode">The persisted auto-mark-as-read mode, or <c>null</c>.</param>
+    /// <returns><c>true</c> for every mode except <see cref="AutoMarkReadOff"/>; otherwise <c>false</c>.</returns>
+    public static bool IsAutoMarkReadEnabled(string? autoMarkReadMode)
+    {
+        return autoMarkReadMode != AutoMarkReadOff;
+    }
+}

@@ -176,6 +176,12 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("auto_mark_read_mode");
 
+                    b.Property<bool>("AutoRefreshEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true)
+                        .HasColumnName("auto_refresh_enabled");
+
                     b.Property<bool>("NotificationsEnabled")
                         .HasColumnType("INTEGER")
                         .HasColumnName("notifications_enabled");
@@ -188,9 +194,20 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("quiet_hours_start");
 
+                    b.Property<int>("RefreshIntervalMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(30)
+                        .HasColumnName("refresh_interval_minutes");
+
                     b.Property<int>("RetentionDays")
                         .HasColumnType("INTEGER")
                         .HasColumnName("retention_days");
+
+                    b.Property<string>("Theme")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("theme");
 
                     b.HasKey("Id");
 
@@ -202,8 +219,11 @@ namespace Reporter.Data.Migrations
                             Id = new Guid("a1f5c6d2-4b3e-4c8f-9d2a-1b2c3d4e5f6a"),
                             AutoMarkReadDelaySeconds = 5,
                             AutoMarkReadMode = "on_scroll",
+                            AutoRefreshEnabled = true,
                             NotificationsEnabled = true,
-                            RetentionDays = 30
+                            RefreshIntervalMinutes = 30,
+                            RetentionDays = 30,
+                            Theme = "system"
                         });
                 });
 

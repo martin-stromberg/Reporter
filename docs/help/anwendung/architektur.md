@@ -46,9 +46,12 @@ graph TD
 - `UnreadPage` / `UnreadViewModel` — Ansicht und ViewModel für ungelesene Artikel.
 - `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds (inkl. Refresh-Buttons).
 - `LaterPage` / `LaterViewModel` — Ansicht und ViewModel für später gemerkte Artikel.
-- `SettingsPage` / `SettingsViewModel` — Ansicht und ViewModel für Einstellungen.
 - `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten.
-- `IRetentionCleanupService` / `RetentionCleanupService` — Service für das automatische Aufräumen gelesener Artikel nach `Settings.RetentionDays`; wird in `App.OnStart` aufgerufen, gemerkte Artikel bleiben erhalten. Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).
+- `IRetentionCleanupService` / `RetentionCleanupService` — Service für das automatische Aufräumen gelesener Artikel nach `Settings.RetentionDays` inkl. Keyword-Löschregel; wird in `App.OnStart` aufgerufen, ungelesene und gemerkte Artikel bleiben erhalten. Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).
+- `IKeywordMatcher` / `KeywordMatcher` — Zentrales Keyword-Matching (`OrdinalIgnoreCase`-Teilwort auf Titel und HTML-Inhalt) für den Cleanup und später das Benachrichtigungs-Paket.
+- `IAutoRefreshService` / `AutoRefreshService` — `PeriodicTimer`-basierter Hintergrund-Sync (`IFeedSyncService.SyncAllAsync`) mit `TimeProvider` und Overlap-Guard; startet in `App.OnStart`, wird bei Einstellungsänderungen neu konfiguriert.
+- `IAppThemeService` / `AppThemeService` (`src/Reporter/Services/`) — Setzt `Application.UserAppTheme` anhand `Settings.Theme`; Interface in `Reporter.Core`, Implementierung im MAUI-Projekt, da Core keine MAUI-Referenz hat.
+- `SettingsPage` / `SettingsViewModel` — Ausgebaute Einstellungsseite mit Sofort-Persistierung und Keyword-Verwaltung; Details siehe [Einstellungen](../einstellungen/index.md).
 - `Item` — Domänenmodell für einen Artikel (`Id`, `Title`, `IsRead`, `ContentHtml`).
 - `IItemRepository` / `ItemRepository` — Schnittstelle und Implementierung für den Artikel-Zugriff.
 - `ISyncLogRepository` / `SyncLogRepository` — Schnittstelle und Implementierung für Synchronisations-Logs.

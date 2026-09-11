@@ -14,9 +14,9 @@ Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
 - **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus.
 - **Später** — Zeigt Artikel, die du dir für später merkst.
 - **Kategorien** — Verwaltet Kategorien für Feeds.
-- **Einstellungen** — Ermöglicht die Konfiguration der App.
+- **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten und das Farbschema. Details siehe [Einstellungen](../einstellungen/index.md).
 
-Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt. Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
+Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt — ebenso gelesene Artikel, die ein Filter-Schlagwort enthalten. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 
 ## Beispiele
 

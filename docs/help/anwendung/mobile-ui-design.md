@@ -62,6 +62,15 @@ Design-Entwurf folgen.
 - Iteration issue-25: Erneute Prüfung gegen `design-draft/stitch_local_rss_feed_reader/f_r_sp_ter_bewahren/screen.png` und `..._dark_mode/screen.png`; AGENTS.md-Regeln erfüllt (44 × 44 pt Touch-Targets, `AppThemeBinding`, `CollectionView` füllt `Grid`-Row `*`, kein verschachteltes Scrollen). Abweichungen zum Entwurf (Info-Banner, Suchfeld, Kategorie-Chips) sind in `test-results.md` dokumentiert.
 - Iteration issue-25 (2): Laufzeit-Verifikation am Windows-Handy-Fenster 390 × 844 pt durchgeführt — Bewahren auf `Ungelesen` (Bookmark-Icon füllt sich, Artikel erscheint unter `Später`), Entfernen auf `Später` (Artikel verschwindet, `EmptyView` bei leerer Liste), Bookmark-Toggle in der `ArticleDetailPage`-Bottom-Bar (Icon füllt sich/leert sich) sowie Light- und Dark-Screenshots. Screenshots: `docs/help/anwendung/screenshots/issue-25/manual-*.png`.
 
+### Einstellungen (issue-26)
+- Geprüft gegen `design-draft/stitch_local_rss_feed_reader/einstellungen_filter/screen.png` und `einstellungen_filter_dark_mode/screen.png`.
+- Fünf Sektions-Karten als `Border` + `RoundRectangle 12` mit `AppThemeBinding SurfaceContainer` im `ScrollView` unter `Grid RowDefinitions="Auto,*"` — Formularseite, kein `CollectionView`, keine Scroll-Verschachtelung.
+- Slider 1–365 (`MinimumHeightRequest="44"`) mit `DragCompletedCommand`; Chips via `FlexLayout Wrap="Wrap"` + `BindableLayout`, ×-Button 44 × 44 pt.
+- Optionszeilen (Abruf-Intervall, Verzögerung, Ruhezeiten) per `IsEnabled`-Binding + `DataTrigger` (`Opacity` 0,4) ausgegraut; `TimePicker` ×2, drei `Picker`.
+- Alle Texte aus `AppResources`, Dark Mode ausschließlich über `AppThemeBinding`, `Shell.NavBarIsVisible="False"`.
+- Laufzeit-Verifikation am Windows-Handy-Fenster 390 × 844 pt: alle fünf Sektionen sichtbar (Light + Dark), Theme-Wechsel über „Farbschema" wirkt sofort und wird persistiert, Verzögerung „Sofort" markiert Artikel direkt beim Öffnen. Screenshots: `test-results/issue-26-manual-*.png`; Details in `test-results.md`.
+- Scope-Abweichungen zum Entwurf (nicht umgesetzt): „Lokalen Cache leeren", Sektion „Datenbank & Datensicherung", Ruhezeiten-Status-Badge, „Änderungen gespeichert"-Toast.
+
 ### Artikeldetailansicht (issue-24)
 - Geprüft gegen `design-draft/stitch_local_rss_feed_reader/artikel_lesemodus/screen.png` und `artikel_lesemodus_dark_mode/screen.png`.
 - Implementiert als `Grid` mit `RowDefinitions="Auto,Auto,*,Auto,Auto"`; der `WebView` füllt die verbleibende Höhe und übernimmt das Scrolling nativ.
