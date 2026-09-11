@@ -1,13 +1,13 @@
 name: PR CI for Staging
 
-on:
-  pull_request:
-    branches:
-      - staging
-    types:
-      - opened
-      - synchronize
-      - reopened
+# on:
+#   pull_request:
+#     branches:
+#       - staging
+#     types:
+#       - opened
+#       - synchronize
+#       - reopened
 
 concurrency:
   group: pr-staging-${{ github.event.pull_request.number }}
