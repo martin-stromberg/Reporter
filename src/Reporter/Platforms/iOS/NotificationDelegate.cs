@@ -26,6 +26,14 @@ public class NotificationDelegate : UNUserNotificationCenterDelegate
         UNNotificationResponse response,
         Action completionHandler)
     {
+        // Nur das Antippen der Mitteilung selbst (Default-Aktion) darf eine
+        // Navigation ausloesen; das Wegwischen (Dismiss) oder Aktions-Buttons nicht.
+        if (!response.IsDefaultAction)
+        {
+            completionHandler();
+            return;
+        }
+
         try
         {
             var userInfo = response.Notification.Request.Content.UserInfo;
@@ -55,7 +63,7 @@ public class NotificationDelegate : UNUserNotificationCenterDelegate
             // Fallback fuer den Kaltstart, wenn die Shell noch nicht bereit ist.
             if (!navigatedInApp && !string.IsNullOrEmpty(link))
             {
-                await Launcher.Default.OpenAsync(link);
+                await MainThread.InvokeOnMainThreadAsync(() => Launcher.Default.OpenAsync(link)).ConfigureAwait(false);
             }
         }
         catch (Exception)

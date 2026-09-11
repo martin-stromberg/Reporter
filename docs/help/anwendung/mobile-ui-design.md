@@ -78,6 +78,7 @@ Design-Entwurf folgen.
 - `SettingsPage`: Zeile „Sammel-Benachrichtigung" + Hint in der Karte „Benachrichtigungen & Ruhezeiten", per `IsEnabled`-Binding/`DataTrigger` mit den übrigen Optionen ausgegraut; Persistenz über App-Neustart verifiziert.
 - Keine horizontalen Tabellen, keine Scroll-Verschachtelung; alle neuen Texte aus `AppResources` (EN/DE), Dark Mode per `AppThemeBinding`.
 - Screenshots: `test-results/issue-27/manual-*.png`; Details in `test-results.md`.
+- Nacharbeiten (continue.md): Berechtigungsstatus unterscheidet jetzt `NotDetermined` (neutrale Zeile + Button **Benachrichtigungen erlauben**, 44-pt-Target, `SemanticProperties.Description`) und `Denied` (Zeile + **Einstellungen öffnen**); auf Nicht-iOS sind die Benachrichtigungs-Schalter (`SettingsPage`-Karte und `FeedsPage`-Formular) per `IsEnabled="{Binding NotificationsSupported}"` deaktiviert, auf Opazität 0,4 abgedunkelt und mit der Zeile „derzeit nur auf iOS verfügbar" versehen — unter Windows damit im laufenden Fenster sichtbar. Statisch geprüft (Muster identisch zu den verifizierten Zeilen); Laufzeit-Screenshots der neuen Zeilen stehen mit der iOS-Verifikation aus.
 - **Offen:** iOS-Simulator-Verifikation (`net10.0-ios`, `scripts/iOS-Deployment.ps1`) ist nur auf macOS möglich und steht als Folgeaufgabe aus.
 
 ### Artikeldetailansicht (issue-24)

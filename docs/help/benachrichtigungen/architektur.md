@@ -6,20 +6,21 @@
 |------------|-----|-------|
 | `INotificationService` (`src/Reporter.Core/Interfaces/INotificationService.cs`) | Interface | Entscheidungsservice: `NotifyNewItemsAsync(Feed, IReadOnlyList<Item>, CancellationToken)` |
 | `NotificationService` (`src/Reporter.Core/Services/NotificationService.cs`) | Klasse | Regelauswertung (Feed-Schalter, globaler Schalter, Ruhezeit via `TimeProvider`, Keyword-Filter) und Modus-Verzweigung Einzel-/Sammel-Versand inkl. Identifier-Bildung |
-| `ILocalNotificationService` (`src/Reporter.Core/Interfaces/ILocalNotificationService.cs`) | Interface | Plattformabstraktion: `IsSupported`, `RequestAuthorizationAsync`, `IsAuthorizedAsync`, `ShowAsync(title, body, identifier, userInfo?, ct)` |
+| `ILocalNotificationService` (`src/Reporter.Core/Interfaces/ILocalNotificationService.cs`) | Interface | Plattformabstraktion: `IsSupported`, `RequestAuthorizationAsync`, `GetAuthorizationStatusAsync` → `NotificationAuthorizationStatus` (`Unsupported`/`NotDetermined`/`Denied`/`Authorized`), `ShowAsync(title, body, identifier, userInfo?, ct)` |
+| `NotificationAuthorizationStatus` (`src/Reporter.Core/Models/NotificationAuthorizationStatus.cs`) | Enum | Berechtigungsstatus für die Einstellungs-UI — unterscheidet `NotDetermined` (nie angefragt) von `Denied` (verweigert) |
 | `LocalNotificationService` (`src/Reporter/Services/LocalNotificationService.cs`) | Klasse | iOS-Implementierung über `UserNotifications` (`#if IOS`); No-Op auf anderen Targets |
 | `NotificationDelegate` (`src/Reporter/Platforms/iOS/NotificationDelegate.cs`) | Klasse | `UNUserNotificationCenterDelegate`: Vordergrund-Darstellung (Banner/List/Sound) und Tap-Handling mit In-App-Navigation |
 | `AppDelegate` (`src/Reporter/Platforms/iOS/AppDelegate.cs`) | Klasse | Registriert den `NotificationDelegate` in `FinishedLaunching` |
 | `FeedSyncService` (`Reporter.Core`) | Service | Aufrufer: sammelt neue `Item`s in `RunSyncAsync` und ruft `INotificationService` fehlerisoliert auf |
-| `SettingsViewModel` (`Reporter.Core`) | ViewModel | Hauptschalter, Modus-Schalter, Berechtigungsanfrage beim Einschalten, `NotificationPermissionDenied`-Status für die Hinweiszeile |
-| `FeedsViewModel` (`Reporter.Core`) | ViewModel | Pro-Feed-Schalter `FeedNotificationsEnabled` im Feed-Formular |
+| `SettingsViewModel` (`Reporter.Core`) | ViewModel | Hauptschalter, Modus-Schalter, Berechtigungsanfrage beim Einschalten bzw. über `RequestNotificationPermissionCommand`, Status-Flags `NotificationPermissionDenied`/`NotificationPermissionNotDetermined` für die Hinweiszeilen, `NotificationsSupported`/`NotificationControlsEnabled` für die Plattform-Deaktivierung |
+| `FeedsViewModel` (`Reporter.Core`) | ViewModel | Pro-Feed-Schalter `FeedNotificationsEnabled` im Feed-Formular, `NotificationsSupported` deaktiviert den Schalter auf Nicht-iOS-Plattformen |
 | `AppResources` (`Reporter.Core/Resources/Strings`) | Ressourcen | Lokalisierte Labels, Hinweise und `NotificationSummaryFormat` (EN/DE) |
 
 ## Abhängigkeiten
 
 - `NotificationService` hängt von `ISettingsRepository`, `IKeywordRepository`, `IKeywordMatcher`, `ILocalNotificationService` und `TimeProvider` ab (Standard `TimeProvider.System`; Tests injizieren `FakeTimeProvider`).
 - `FeedSyncService` hat `INotificationService` als fünfte Konstruktor-Abhängigkeit.
-- `SettingsViewModel` hat `ILocalNotificationService` als **optionale** Abhängigkeit (nullable Parameter) — ältere Tests und Nicht-iOS-Szenarien funktionieren ohne.
+- `SettingsViewModel` und `FeedsViewModel` haben `ILocalNotificationService` als **optionale** Abhängigkeit (nullable Parameter) — ältere Tests und Nicht-iOS-Szenarien funktionieren ohne.
 - Registrierung in `MauiProgram.CreateMauiApp` als Singletons: `INotificationService → NotificationService`, `ILocalNotificationService → LocalNotificationService`.
 - Externes System: ausschließlich das lokale iOS-`UserNotifications`-Framework (lokale, nicht entfernte Benachrichtigungen — kein Push-Server, kein Netzwerkzugriff). Kein NuGet-Paket erforderlich.
 - `Platforms/iOS/Info.plist` benötigt keine zusätzlichen Schlüssel — die Laufzeit-Authorization genügt; `PrivacyInfo.xcprivacy` bleibt unverändert (`UserNotifications` ist keine Required-Reason-API).

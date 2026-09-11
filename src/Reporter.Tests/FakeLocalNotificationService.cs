@@ -1,4 +1,5 @@
 using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
 
 namespace Reporter.Tests;
 
@@ -20,10 +21,10 @@ public sealed class FakeLocalNotificationService : ILocalNotificationService
     public bool AuthorizationResult { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the value returned by <see cref="IsAuthorizedAsync"/>.
+    /// Gets or sets the value returned by <see cref="GetAuthorizationStatusAsync"/>.
     /// </summary>
-    /// <value>The value returned by <see cref="IsAuthorizedAsync"/>.</value>
-    public bool IsAuthorizedResult { get; set; } = true;
+    /// <value>The value returned by <see cref="GetAuthorizationStatusAsync"/>.</value>
+    public NotificationAuthorizationStatus AuthorizationStatus { get; set; } = NotificationAuthorizationStatus.Authorized;
 
     /// <summary>
     /// Gets or sets a value indicating whether the fake reports platform support for local notifications.
@@ -45,9 +46,9 @@ public sealed class FakeLocalNotificationService : ILocalNotificationService
     }
 
     /// <inheritdoc />
-    public Task<bool> IsAuthorizedAsync(CancellationToken cancellationToken = default)
+    public Task<NotificationAuthorizationStatus> GetAuthorizationStatusAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(IsAuthorizedResult);
+        return Task.FromResult(AuthorizationStatus);
     }
 
     /// <inheritdoc />

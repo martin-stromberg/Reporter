@@ -10,9 +10,9 @@
 1. Datenbank prüfen: `settings.notifications_enabled = 1` und `feeds.notifications_enabled = 1` für den betroffenen Feed.
 2. Ruhezeit prüfen: `settings.quiet_hours_start`/`quiet_hours_end` — liegt die lokale Uhrzeit im Intervall (Wrap-around beachten: `Start > End` bedeutet über Mitternacht), wird verworfen.
 3. Keyword-Filter prüfen: Enthält `Title` oder `ContentHtml` des Artikels ein Schlagwort aus `keywords` (Teilwort, `OrdinalIgnoreCase`), wird er nicht benachrichtigt.
-4. iOS-Berechtigungsstatus prüfen: `UNAuthorizationStatus` via `GetNotificationSettingsAsync` — `Denied` unterdrückt den Versand still (`EnsureAuthorizedAsync` bricht ab). In der App sichtbar über `SettingsViewModel.NotificationPermissionDenied` (Hinweiszeile „Einstellungen öffnen").
+4. iOS-Berechtigungsstatus prüfen: `UNAuthorizationStatus` via `GetNotificationSettingsAsync` — `Denied` unterdrückt den Versand still (`EnsureAuthorizedAsync` bricht ab). In der App sichtbar über `SettingsViewModel.NotificationPermissionDenied` (Hinweiszeile „Einstellungen öffnen"); `NotDetermined` zeigt stattdessen die neutrale Zeile „Benachrichtigungen erlauben" (`NotificationPermissionNotDetermined`).
 5. Debug-Ausgabe prüfen: `FeedSyncService notification failed: …` (Fehler im Benachrichtigungspfad), `Failed to request notification authorization: …`, `Failed to query notification authorization: …`.
-6. Plattform prüfen: Auf Nicht-iOS-Targets ist `LocalNotificationService.IsSupported == false` und `ShowAsync` ein No-Op.
+6. Plattform prüfen: Auf Nicht-iOS-Targets ist `LocalNotificationService.IsSupported == false` und `ShowAsync` ein No-Op — die Benachrichtigungs-Schalter in Einstellungen und Feed-Formular sind dort deaktiviert (`NotificationsSupported == false`), mit Hinweis „derzeit nur auf iOS verfügbar".
 
 > **Hinweis:** Benachrichtigungen entstehen nur, wenn der Sync tatsächlich neue `Item`s einfügt (`newItemEntities.Count > 0`) — ein zweiter Sync ohne neue Artikel sendet nichts (Dedup auf DB-Ebene).
 
@@ -31,11 +31,11 @@
 
 **Symptom:** Die rote Hinweiszeile in der Karte **Benachrichtigungen & Ruhezeiten** verschwindet nicht, obwohl iOS die Berechtigung erteilt hat.
 
-**Ursache:** `NotificationPermissionDenied` wird nur beim Laden der Einstellungsseite (`LoadAsync` → `RefreshNotificationPermissionAsync` via `IsAuthorizedAsync`) und beim Umschalten des Hauptschalters aktualisiert. Eine Änderung in den iOS-Systemeinstellungen, während die Seite geöffnet ist, wird nicht live erkannt.
+**Ursache:** `NotificationPermissionDenied` wird nur beim Laden der Einstellungsseite (`LoadAsync` → `RefreshNotificationPermissionAsync` via `GetAuthorizationStatusAsync`) und beim Umschalten des Hauptschalters bzw. über die „Benachrichtigungen erlauben"-Zeile aktualisiert. Eine Änderung in den iOS-Systemeinstellungen, während die Seite geöffnet ist, wird nicht live erkannt.
 
 **Lösung:**
 1. Einstellungen-Seite verlassen und erneut öffnen — `OnAppearing` lädt neu und aktualisiert den Status.
-2. Prüfen, ob `IsAuthorizedAsync` eine Exception wirft (Debug-Ausgabe `Failed to query notification authorization`) — dann bleibt der Status `false`.
+2. Prüfen, ob `GetAuthorizationStatusAsync` eine Exception wirft (Debug-Ausgabe `Failed to query notification authorization`) — dann bleiben beide Status-Flags `false`.
 
 ## Sammel-Benachrichtigung dupliziert sich im Mitteilungszentrum
 

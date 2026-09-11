@@ -339,4 +339,13 @@
   <data name="NotificationDeniedOpenSettings" xml:space="preserve">
     <value>Einstellungen öffnen</value>
   </data>
+  <data name="NotificationNotDeterminedMessage" xml:space="preserve">
+    <value>Benachrichtigungen sind noch nicht erlaubt. Erlaube sie, um über neue Artikel informiert zu werden.</value>
+  </data>
+  <data name="NotificationNotDeterminedAllow" xml:space="preserve">
+    <value>Benachrichtigungen erlauben</value>
+  </data>
+  <data name="NotificationsIosOnlyHint" xml:space="preserve">
+    <value>Benachrichtigungen sind derzeit nur auf iOS verfügbar.</value>
+  </data>
 </root>

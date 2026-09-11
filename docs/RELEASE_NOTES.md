@@ -44,7 +44,8 @@
 - Keyword-gefilterte Artikel lösen keine Benachrichtigung aus (gleiche Schlagwort-Liste wie beim automatischen Löschen).
 - Optionaler Sammel-Modus in den Einstellungen: eine Sammel-Benachrichtigung pro Feed und Abgleich statt einer Benachrichtigung pro Artikel.
 - Antippen einer Benachrichtigung öffnet direkt den Artikel; bei einer Sammel-Benachrichtigung öffnet sich die Ansicht „Ungelesen".
-- Die iOS-Benachrichtigungs-Berechtigung wird beim Aktivieren in den Einstellungen angefragt; bei Verweigerung zeigt die Einstellungsseite einen Hinweis mit Schaltfläche „Einstellungen öffnen".
+- Die iOS-Benachrichtigungs-Berechtigung wird beim Aktivieren in den Einstellungen angefragt; bei Verweigerung zeigt die Einstellungsseite einen Hinweis mit Schaltfläche „Einstellungen öffnen". Wurde die Berechtigung noch nie angefragt, bietet eine neutrale Zeile „Benachrichtigungen erlauben" den direkten Weg zum System-Dialog. Auf Plattformen ohne Benachrichtigungen (derzeit nur iOS) sind die Schalter deaktiviert und mit einem Hinweis versehen.
+- Das Wegwischen einer Benachrichtigung (Dismiss) löst keine Navigation mehr aus — nur das Antippen öffnet den Artikel bzw. die Ansicht „Ungelesen".
 - Benachrichtigungen erscheinen höchstens einmal pro Artikel (Deduplizierung über stabile Kennungen).
 - Aufbewahrungsdauer-Regler: Wertänderungen (z. B. per Tastatur) werden jetzt nach kurzer Verzögerung (~0,5 s) gespeichert, nicht nur beim Loslassen des Reglers.
 - Lokalisierungs-Fixes: das „Auto-Gelesen“-Label in der Artikeldetailansicht folgt jetzt der UI-Sprache (vorher fest auf Deutsch); klarere Hinweistexte für Aufbewahrungsdauer und Keyword-Abgleich auf der Einstellungen-Seite.

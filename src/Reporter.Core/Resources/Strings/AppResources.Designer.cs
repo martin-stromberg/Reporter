@@ -1040,5 +1040,32 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("NotificationDeniedOpenSettings", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications are not allowed yet. Allow them to get notified about new articles. ähnelt.
+        /// </summary>
+        public static string NotificationNotDeterminedMessage {
+            get {
+                return ResourceManager.GetString("NotificationNotDeterminedMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Allow notifications ähnelt.
+        /// </summary>
+        public static string NotificationNotDeterminedAllow {
+            get {
+                return ResourceManager.GetString("NotificationNotDeterminedAllow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications are currently only available on iOS. ähnelt.
+        /// </summary>
+        public static string NotificationsIosOnlyHint {
+            get {
+                return ResourceManager.GetString("NotificationsIosOnlyHint", resourceCulture);
+            }
+        }
     }
 }

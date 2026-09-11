@@ -63,13 +63,13 @@
 **Beschreibung:** iOS erlaubt den System-Berechtigungsdialog nur einmal pro Installation. Die Anfrage wird daher beim bewussten Einschalten des Hauptschalters gestellt — mit lazy Fallback vor jedem Versand.
 
 **Verhalten:**
-- `SettingsViewModel.NotificationsEnabled` → `true` (außerhalb `LoadAsync`) startet `RequestNotificationAuthorizationAsync`; verweigert → `NotificationPermissionDenied = true` + Ereignis `NotificationAuthorizationDenied` (Dialog „Einstellungen öffnen" / „Abbrechen").
+- `SettingsViewModel.NotificationsEnabled` → `true` (außerhalb `LoadAsync`) startet `RequestNotificationAuthorizationAsync`; der anschließend gelesene Status (`GetAuthorizationStatusAsync`) steuert die Anzeige: `Denied` → `NotificationPermissionDenied = true` + Ereignis `NotificationAuthorizationDenied` (Dialog „Einstellungen öffnen" / „Abbrechen"); `NotDetermined` → `NotificationPermissionNotDetermined = true` (neutrale Zeile mit Button „Benachrichtigungen erlauben" → `RequestNotificationPermissionCommand`).
 - `LocalNotificationService.EnsureAuthorizedAsync` fragt zusätzlich vor jedem `ShowAsync` nach, solange der Status `NotDetermined` ist; `Denied`/`Authorized` werden nicht erneut angefragt.
 - Als autorisiert gelten `Authorized`, `Provisional` und `Ephemeral`.
-- `SettingsViewModel.LoadAsync` fragt den Status ohne Dialog nach (`IsAuthorizedAsync`) und steuert die Hinweiszeile; auf Nicht-iOS (`IsSupported == false`) und bei ausgeschaltetem Hauptschalter bleibt `NotificationPermissionDenied` `false`.
+- `SettingsViewModel.LoadAsync` fragt den Status ohne Dialog nach (`GetAuthorizationStatusAsync`) und steuert die Hinweiszeilen; auf Nicht-iOS (`IsSupported == false` → `NotificationsSupported == false`) und bei ausgeschaltetem Hauptschalter bleiben beide Flags `false` — stattdessen sind die Benachrichtigungs-Schalter deaktiviert und ein Hinweis „derzeit nur auf iOS verfügbar" eingeblendet.
 - `App.OnStart` enthält bewusst keine Anfrage — ein ungefragter Dialog beim ersten Start ohne Benutzerkontext wurde vermieden.
 
-**Umsetzung:** `SettingsViewModel.RequestNotificationAuthorizationAsync`/`RefreshNotificationPermissionAsync`, `LocalNotificationService.EnsureAuthorizedAsync`/`IsAuthorized`, `SettingsPage` (MultiTrigger-Hinweiszeile + `AppInfo.ShowSettingsUI`).
+**Umsetzung:** `SettingsViewModel.RequestNotificationAuthorizationAsync`/`RefreshNotificationPermissionAsync`/`ApplyAuthorizationStatus`, `LocalNotificationService.EnsureAuthorizedAsync`/`MapStatus`/`IsAuthorized`, `SettingsPage` (MultiTrigger-Hinweiszeilen + `AppInfo.ShowSettingsUI` + `NotificationsSupported`-Deaktivierung).
 
 ## Tap-Navigation mit Browser-Fallback
 

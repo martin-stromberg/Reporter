@@ -1,3 +1,5 @@
+using Reporter.Core.Models;
+
 namespace Reporter.Core.Interfaces;
 
 /// <summary>
@@ -24,8 +26,8 @@ public interface ILocalNotificationService
     /// Queries the current system authorization status without prompting the user.
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> when notifications are currently authorized.</returns>
-    Task<bool> IsAuthorizedAsync(CancellationToken cancellationToken = default);
+    /// <returns>A task that represents the asynchronous operation. The task result is the current <see cref="NotificationAuthorizationStatus"/> (<see cref="NotificationAuthorizationStatus.Unsupported"/> on platforms without notification support).</returns>
+    Task<NotificationAuthorizationStatus> GetAuthorizationStatusAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Shows a local notification immediately. A pending or delivered notification with the

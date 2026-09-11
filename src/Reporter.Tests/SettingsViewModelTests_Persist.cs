@@ -201,7 +201,7 @@ public class SettingsViewModelTests_Persist : IDisposable
     [Fact]
     public async Task NotificationsEnabled_TurnedOn_Denied_RaisesNotificationAuthorizationDenied()
     {
-        var localNotifications = new FakeLocalNotificationService { AuthorizationResult = false };
+        var localNotifications = new FakeLocalNotificationService { AuthorizationResult = false, AuthorizationStatus = NotificationAuthorizationStatus.Denied };
         var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
         var deniedRaised = false;
         viewModel.NotificationAuthorizationDenied += () =>
@@ -252,13 +252,53 @@ public class SettingsViewModelTests_Persist : IDisposable
     [Fact]
     public async Task NotificationsEnabled_TurnedOff_ClearsNotificationPermissionDenied()
     {
-        var localNotifications = new FakeLocalNotificationService { IsAuthorizedResult = false };
+        var localNotifications = new FakeLocalNotificationService { AuthorizationStatus = NotificationAuthorizationStatus.Denied };
         var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
         await viewModel.LoadCommand.ExecuteAsync(null);
         Assert.True(viewModel.NotificationPermissionDenied);
 
         viewModel.NotificationsEnabled = false;
 
+        Assert.False(viewModel.NotificationPermissionDenied);
+    }
+
+    /// <summary>
+    /// Verifies that switching notifications off also clears a previously detected
+    /// not-determined authorization state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationsEnabled_TurnedOff_ClearsNotificationPermissionNotDetermined()
+    {
+        var localNotifications = new FakeLocalNotificationService { AuthorizationStatus = NotificationAuthorizationStatus.NotDetermined };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(viewModel.NotificationPermissionNotDetermined);
+
+        viewModel.NotificationsEnabled = false;
+
+        Assert.False(viewModel.NotificationPermissionNotDetermined);
+    }
+
+    /// <summary>
+    /// Verifies that the "allow notifications" command requests the platform
+    /// authorization and clears the not-determined hint once granted (usability
+    /// finding: a <c>NotDetermined</c> status needs a direct allow action because the
+    /// iOS system settings entry does not exist before the first request).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RequestNotificationPermission_NotDetermined_RequestsAndClearsHint()
+    {
+        var localNotifications = new FakeLocalNotificationService { AuthorizationStatus = NotificationAuthorizationStatus.NotDetermined };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(viewModel.NotificationPermissionNotDetermined);
+
+        await viewModel.RequestNotificationPermissionCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, localNotifications.RequestAuthorizationCallCount);
+        Assert.False(viewModel.NotificationPermissionNotDetermined);
         Assert.False(viewModel.NotificationPermissionDenied);
     }
 

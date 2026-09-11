@@ -41,6 +41,7 @@ public partial class SettingsViewModel : BaseViewModel
     private AutoMarkReadDelayOption? _selectedAutoMarkReadDelay;
     private bool _notificationsEnabled = true;
     private bool _notificationPermissionDenied;
+    private bool _notificationPermissionNotDetermined;
     private bool _notificationSummaryEnabled;
     private bool _quietHoursEnabled;
     private TimeSpan? _quietHoursStart;
@@ -103,6 +104,7 @@ public partial class SettingsViewModel : BaseViewModel
         AddKeywordCommand = new AsyncRelayCommand(AddKeywordAsync);
         RemoveKeywordCommand = new AsyncRelayCommand<Keyword>(RemoveKeywordAsync);
         SaveRetentionCommand = new RelayCommand(SaveRetention);
+        RequestNotificationPermissionCommand = new AsyncRelayCommand(RequestNotificationAuthorizationAsync);
     }
 
     /// <summary>
@@ -124,6 +126,12 @@ public partial class SettingsViewModel : BaseViewModel
     /// Gets the command that persists the retention days value after the slider drag completed.
     /// </summary>
     public RelayCommand SaveRetentionCommand { get; }
+
+    /// <summary>
+    /// Gets the command that requests the platform notification authorization,
+    /// invoked from the not-yet-allowed hint row on the settings page.
+    /// </summary>
+    public AsyncRelayCommand RequestNotificationPermissionCommand { get; }
 
     /// <summary>
     /// Gets the configured keyword filters.
@@ -289,8 +297,10 @@ public partial class SettingsViewModel : BaseViewModel
                 if (!value)
                 {
                     NotificationPermissionDenied = false;
+                    NotificationPermissionNotDetermined = false;
                 }
 
+                OnPropertyChanged(nameof(NotificationControlsEnabled));
                 PersistOnChange();
                 if (value && !_isLoading)
                 {
@@ -301,6 +311,20 @@ public partial class SettingsViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets a value indicating whether the current platform supports local notifications.
+    /// When <c>false</c>, the settings page disables the notification controls and
+    /// shows a platform hint instead.
+    /// </summary>
+    public bool NotificationsSupported => _localNotificationService?.IsSupported == true;
+
+    /// <summary>
+    /// Gets a value indicating whether the notification detail controls (summary mode,
+    /// quiet hours) are editable: the platform supports notifications and the main
+    /// switch is on.
+    /// </summary>
+    public bool NotificationControlsEnabled => NotificationsSupported && NotificationsEnabled;
+
+    /// <summary>
     /// Gets a value indicating whether notifications are switched on in the app but
     /// the system authorization for local notifications is currently denied.
     /// The settings page surfaces this state as a hint with a link to the system settings.
@@ -309,6 +333,18 @@ public partial class SettingsViewModel : BaseViewModel
     {
         get => _notificationPermissionDenied;
         private set => SetProperty(ref _notificationPermissionDenied, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether notifications are switched on in the app but
+    /// the system authorization has not been requested yet (<c>NotDetermined</c>).
+    /// The settings page surfaces this state as a neutral hint with an
+    /// "allow notifications" action.
+    /// </summary>
+    public bool NotificationPermissionNotDetermined
+    {
+        get => _notificationPermissionNotDetermined;
+        private set => SetProperty(ref _notificationPermissionNotDetermined, value);
     }
 
     /// <summary>
@@ -482,17 +518,19 @@ public partial class SettingsViewModel : BaseViewModel
         if (_localNotificationService is null || !_localNotificationService.IsSupported || !NotificationsEnabled)
         {
             NotificationPermissionDenied = false;
+            NotificationPermissionNotDetermined = false;
             return;
         }
 
         try
         {
-            NotificationPermissionDenied = !await _localNotificationService.IsAuthorizedAsync();
+            ApplyAuthorizationStatus(await _localNotificationService.GetAuthorizationStatusAsync());
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to query notification authorization: {ex}");
             NotificationPermissionDenied = false;
+            NotificationPermissionNotDetermined = false;
         }
     }
 
@@ -506,8 +544,11 @@ public partial class SettingsViewModel : BaseViewModel
         try
         {
             var granted = await _localNotificationService.RequestAuthorizationAsync();
-            NotificationPermissionDenied = !granted;
-            if (!granted && NotificationAuthorizationDenied is not null)
+            var status = granted
+                ? NotificationAuthorizationStatus.Authorized
+                : await _localNotificationService.GetAuthorizationStatusAsync();
+            ApplyAuthorizationStatus(status);
+            if (status == NotificationAuthorizationStatus.Denied && NotificationAuthorizationDenied is not null)
             {
                 await NotificationAuthorizationDenied.Invoke();
             }
@@ -516,6 +557,12 @@ public partial class SettingsViewModel : BaseViewModel
         {
             Debug.WriteLine($"Failed to request notification authorization: {ex}");
         }
+    }
+
+    private void ApplyAuthorizationStatus(NotificationAuthorizationStatus status)
+    {
+        NotificationPermissionDenied = status == NotificationAuthorizationStatus.Denied;
+        NotificationPermissionNotDetermined = status == NotificationAuthorizationStatus.NotDetermined;
     }
 
     private void SaveRetention()

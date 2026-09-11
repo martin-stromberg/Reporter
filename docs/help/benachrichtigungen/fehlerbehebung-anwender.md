@@ -8,7 +8,7 @@
 
 **Lösung:**
 1. Öffne **Einstellungen** → Karte **Benachrichtigungen & Ruhezeiten** und prüfe, ob **Benachrichtigungen** eingeschaltet ist.
-2. Siehst du darunter eine Hinweiszeile *„Benachrichtigungen sind für diese App in den Systemeinstellungen deaktiviert …"*, tippe auf **Einstellungen öffnen** und erlaube Benachrichtigungen in den iOS-Einstellungen der App.
+2. Siehst du darunter eine Hinweiszeile *„Benachrichtigungen sind für diese App in den Systemeinstellungen deaktiviert …"*, tippe auf **Einstellungen öffnen** und erlaube Benachrichtigungen in den iOS-Einstellungen der App. Steht dort stattdessen *„Benachrichtigungen sind noch nicht erlaubt …"*, tippe auf **Benachrichtigungen erlauben** — iOS fragt dann direkt nach.
 3. Prüfe die **Ruhezeit (Nicht stören)**: Liegt die aktuelle Uhrzeit zwischen **VON** und **BIS**, werden Benachrichtigungen verworfen — sie werden nicht nachgeholt.
 4. Öffne **Feeds**, tippe den betroffenen Feed an, wähle **Bearbeiten** und prüfe den Schalter **Benachrichtigungen** des Feeds.
 5. Prüfe die **Schlagwort-Filter**: Enthält der Artikel ein eingerichtetes Schlagwort in Titel oder Text, wird er nicht benachrichtigt.
@@ -21,8 +21,9 @@
 **Ursache:** iOS fragt nur einmal pro App-Installation. War die Erlaubnis schon erteilt oder verweigert, kommt kein Dialog mehr.
 
 **Lösung:**
-1. Erscheint die Hinweiszeile mit **Einstellungen öffnen**, war die Berechtigung verweigert — dort freischalten.
-2. Erscheint keine Hinweiszeile, ist die Berechtigung bereits erteilt — alles in Ordnung.
+1. Erscheint die Hinweiszeile mit **Benachrichtigungen erlauben**, tippe darauf — iOS zeigt den Dialog.
+2. Erscheint die Hinweiszeile mit **Einstellungen öffnen**, war die Berechtigung verweigert — dort freischalten.
+3. Erscheint keine Hinweiszeile, ist die Berechtigung bereits erteilt — alles in Ordnung.
 
 ## Statt vieler Benachrichtigungen kommt nur eine
 

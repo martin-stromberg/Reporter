@@ -1,4 +1,5 @@
 using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
 #if IOS
 using Foundation;
 using UserNotifications;
@@ -37,16 +38,16 @@ public class LocalNotificationService : ILocalNotificationService
     }
 
     /// <inheritdoc />
-    public async Task<bool> IsAuthorizedAsync(CancellationToken cancellationToken = default)
+    public async Task<NotificationAuthorizationStatus> GetAuthorizationStatusAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 #if IOS
         var settings = await UNUserNotificationCenter.Current.GetNotificationSettingsAsync()
             .WaitAsync(cancellationToken)
             .ConfigureAwait(false);
-        return IsAuthorized(settings.AuthorizationStatus);
+        return MapStatus(settings.AuthorizationStatus);
 #else
-        return await Task.FromResult(false);
+        return await Task.FromResult(NotificationAuthorizationStatus.Unsupported);
 #endif
     }
 
@@ -98,6 +99,16 @@ public class LocalNotificationService : ILocalNotificationService
         }
 
         return IsAuthorized(settings.AuthorizationStatus);
+    }
+
+    private static NotificationAuthorizationStatus MapStatus(UNAuthorizationStatus status)
+    {
+        return status switch
+        {
+            UNAuthorizationStatus.NotDetermined => NotificationAuthorizationStatus.NotDetermined,
+            UNAuthorizationStatus.Denied => NotificationAuthorizationStatus.Denied,
+            _ => NotificationAuthorizationStatus.Authorized,
+        };
     }
 
     private static NSDictionary BuildUserInfo(IReadOnlyDictionary<string, string>? userInfo)

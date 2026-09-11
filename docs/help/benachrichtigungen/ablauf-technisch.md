@@ -35,25 +35,28 @@ Beteiligte Komponenten:
 
 - `ShowAsync`: ruft zuerst `EnsureAuthorizedAsync` auf; bei fehlender Berechtigung Rückkehr ohne Anzeige. Danach `UNMutableNotificationContent` (`Title`, `Body`, `Sound = UNNotificationSound.Default`, `UserInfo` via `NSDictionary.FromObjectsAndKeys` aus den String-Paaren) und `UNNotificationRequest.FromIdentifier(identifier, content, trigger: null)` (sofortiger Versand) → `UNUserNotificationCenter.Current.AddNotificationRequestAsync`. iOS ersetzt zugestellte/ausstehende Requests mit identischem Identifier statt zu duplizieren (Dedup).
 - `EnsureAuthorizedAsync`: `GetNotificationSettingsAsync` → `NotDetermined` löst `RequestAuthorizationAsync(Alert | Badge | Sound)` aus (lazy Fallback vor jedem Versand); als autorisiert gelten `Authorized`, `Provisional` und `Ephemeral`.
-- `RequestAuthorizationAsync` / `IsAuthorizedAsync`: öffentliche Pendants für den Einstellungs-Flow (s. Schritt 3); auf Nicht-iOS immer `false`.
+- `RequestAuthorizationAsync` / `GetAuthorizationStatusAsync`: öffentliche Pendants für den Einstellungs-Flow (s. Schritt 3). `GetAuthorizationStatusAsync` bildet den `UNAuthorizationStatus` via `MapStatus` auf `NotificationAuthorizationStatus` ab (`NotDetermined` → `NotDetermined`, `Denied` → `Denied`, `Authorized`/`Provisional`/`Ephemeral` → `Authorized`); auf Nicht-iOS liefert `RequestAuthorizationAsync` `false` und `GetAuthorizationStatusAsync` `Unsupported`.
 
 Beteiligte Komponenten:
-- `LocalNotificationService` (`IsSupported`, `RequestAuthorizationAsync`, `IsAuthorizedAsync`, `ShowAsync`, `EnsureAuthorizedAsync`, `BuildUserInfo`, `IsAuthorized`)
+- `LocalNotificationService` (`IsSupported`, `RequestAuthorizationAsync`, `GetAuthorizationStatusAsync`, `ShowAsync`, `EnsureAuthorizedAsync`, `BuildUserInfo`, `MapStatus`, `IsAuthorized`)
 - `UNUserNotificationCenter`, `UNMutableNotificationContent`, `UNNotificationRequest` (`UserNotifications`-Framework)
 
 ### 3. Berechtigungsanfrage in den Einstellungen
 
 Die Anfrage erfolgt **nicht** beim App-Start, sondern kontextuell beim Einschalten des Hauptschalters:
 
-- `SettingsViewModel.NotificationsEnabled`-Setter: beim Wechsel auf `true` (außerhalb von `LoadAsync`, `_isLoading`-Guard) wird `_ = RequestNotificationAuthorizationAsync()` gestartet — bei `IsSupported` ruft das `ILocalNotificationService.RequestAuthorizationAsync`; `NotificationPermissionDenied = !granted`. Beim Ausschalten wird `NotificationPermissionDenied` zurückgesetzt.
-- Bei `!granted` feuert das Ereignis `NotificationAuthorizationDenied`; `SettingsPage.xaml.cs` (`OnNotificationAuthorizationDenied`, subscribed in `OnAppearing`, unsubscribed in `OnDisappearing`) zeigt `DisplayAlertAsync` mit `NotificationDeniedTitle`/`NotificationDeniedMessage` und den Schaltflächen `NotificationDeniedOpenSettings`/`ButtonCancel` → `AppInfo.Current.ShowSettingsUI()` öffnet die iOS-App-Einstellungen.
-- `SettingsViewModel.LoadAsync` ruft am Ende `RefreshNotificationPermissionAsync`: nur wenn `IsSupported` und `NotificationsEnabled` aktiv sind, wird `IsAuthorizedAsync` abgefragt und `NotificationPermissionDenied = !authorized` gesetzt — so bleibt die Hinweiszeile auch nach einem System-seitigen Widerruf aktuell.
-- `SettingsPage.xaml` zeigt die Hinweiszeile (`NotificationDeniedMessage` + Button `NotificationDeniedOpenSettings` → `OnOpenNotificationSettingsClicked` → `AppInfo.Current.ShowSettingsUI()`) per `MultiTrigger` nur bei `NotificationsEnabled && NotificationPermissionDenied`.
+- `SettingsViewModel.NotificationsEnabled`-Setter: beim Wechsel auf `true` (außerhalb von `LoadAsync`, `_isLoading`-Guard) wird `_ = RequestNotificationAuthorizationAsync()` gestartet — bei `IsSupported` ruft das `ILocalNotificationService.RequestAuthorizationAsync`. `RequestNotificationAuthorizationAsync` fragt bei `!granted` den echten Status via `GetAuthorizationStatusAsync` nach (`granted` → `Authorized`) und setzt die Flags über `ApplyAuthorizationStatus`: `Denied` → `NotificationPermissionDenied = true` + Ereignis `NotificationAuthorizationDenied`; `NotDetermined` → `NotificationPermissionNotDetermined = true`. Beim Ausschalten werden beide Flags zurückgesetzt.
+- Bei `Denied` feuert das Ereignis `NotificationAuthorizationDenied`; `SettingsPage.xaml.cs` (`OnNotificationAuthorizationDenied`, subscribed in `OnAppearing`, unsubscribed in `OnDisappearing`) zeigt `DisplayAlertAsync` mit `NotificationDeniedTitle`/`NotificationDeniedMessage` und den Schaltflächen `NotificationDeniedOpenSettings`/`ButtonCancel` → `AppInfo.Current.ShowSettingsUI()` öffnet die iOS-App-Einstellungen.
+- `SettingsViewModel.LoadAsync` ruft am Ende `RefreshNotificationPermissionAsync`: nur wenn `IsSupported` und `NotificationsEnabled` aktiv sind, wird `GetAuthorizationStatusAsync` abgefragt und über `ApplyAuthorizationStatus` in die beiden Flags übersetzt — so bleiben die Hinweiszeilen auch nach einem System-seitigen Widerruf aktuell.
+- `SettingsPage.xaml` zeigt drei Zustände in der Karte **Benachrichtigungen & Ruhezeiten**:
+  - `Denied`-Zeile (`NotificationDeniedMessage` + Button `NotificationDeniedOpenSettings` → `OnOpenNotificationSettingsClicked` → `AppInfo.Current.ShowSettingsUI()`) per `MultiTrigger` nur bei `NotificationsEnabled && NotificationPermissionDenied`.
+  - `NotDetermined`-Zeile (`NotificationNotDeterminedMessage` + Button `NotificationNotDeterminedAllow` → `RequestNotificationPermissionCommand` → `RequestNotificationAuthorizationAsync`) per `MultiTrigger` bei `NotificationsEnabled && NotificationPermissionNotDetermined` — nötig, weil iOS den Mitteilungen-Eintrag in den App-Einstellungen erst nach der ersten Anfrage zeigt; der Button löst den echten System-Dialog aus.
+  - Plattform-Hinweis (`NotificationsIosOnlyHint`) per `DataTrigger` bei `NotificationsSupported == false`; gleichzeitig sind die Schalterzeile (`IsEnabled="{Binding NotificationsSupported}"`) und der Detail-`Border` (`IsEnabled="{Binding NotificationControlsEnabled}"` = `NotificationsSupported && NotificationsEnabled`) deaktiviert und auf Opazität 0,4 abgedunkelt.
 
 Beteiligte Komponenten:
-- `SettingsViewModel.NotificationsEnabled` / `RequestNotificationAuthorizationAsync` / `RefreshNotificationPermissionAsync` / `NotificationPermissionDenied` / `NotificationAuthorizationDenied`
+- `SettingsViewModel.NotificationsEnabled` / `RequestNotificationAuthorizationAsync` / `RefreshNotificationPermissionAsync` / `ApplyAuthorizationStatus` / `NotificationPermissionDenied` / `NotificationPermissionNotDetermined` / `NotificationsSupported` / `NotificationControlsEnabled` / `RequestNotificationPermissionCommand` / `NotificationAuthorizationDenied`
 - `SettingsPage` (`OnAppearing`, `OnDisappearing`, `OnNotificationAuthorizationDenied`, `OnOpenNotificationSettingsClicked`)
-- `ILocalNotificationService.RequestAuthorizationAsync` / `IsAuthorizedAsync`
+- `ILocalNotificationService.RequestAuthorizationAsync` / `GetAuthorizationStatusAsync`
 - `AppInfo.Current.ShowSettingsUI` (MAUI Essentials)
 
 ### 4. Vordergrund-Darstellung und Tap-Handling (iOS)
@@ -61,7 +64,7 @@ Beteiligte Komponenten:
 `AppDelegate.FinishedLaunching` setzt `UNUserNotificationCenter.Current.Delegate = _notificationDelegate`; die `NotificationDelegate`-Instanz wird in einem Feld gehalten, weil die `Delegate`-Property schwach referenziert.
 
 - `WillPresentNotification` → `Banner | List | Sound`: Benachrichtigungen sind auch sichtbar, während die App geöffnet ist (funktional nötig, da `AutoRefreshService` nur bei laufender App synct).
-- `DidReceiveNotificationResponse`: liest `itemId`, `feedId` und `link` aus `Content.UserInfo`. Route: `itemId` vorhanden → `articledetail?itemId={itemId}` (wie `ArticleCardView`); sonst `feedId` vorhanden → `//unread` (`ShellContent.Route = "unread"` in `AppShell`). Navigation via `MainThread.InvokeOnMainThreadAsync` + `Shell.Current.GoToAsync` mit Null-Check; wenn die Shell beim Kaltstart noch nicht bereit ist und ein `link` existiert, Fallback `Launcher.Default.OpenAsync(link)` (Artikel im Browser). Alle Exceptions werden geschluckt — ein Antippen darf die App nicht abstürzen lassen; `completionHandler()` läuft im `finally`.
+- `DidReceiveNotificationResponse`: reagiert nur auf die Default-Aktion — bei `!response.IsDefaultAction` (Wegwischen/Dismiss, Custom-Actions) wird sofort `completionHandler()` ohne Navigation aufgerufen. Andernfalls liest er `itemId`, `feedId` und `link` aus `Content.UserInfo`. Route: `itemId` vorhanden → `articledetail?itemId={itemId}` (wie `ArticleCardView`); sonst `feedId` vorhanden → `//unread` (`ShellContent.Route = "unread"` in `AppShell`). Navigation via `MainThread.InvokeOnMainThreadAsync` + `Shell.Current.GoToAsync` mit Null-Check; wenn die Shell beim Kaltstart noch nicht bereit ist und ein `link` existiert, Fallback `Launcher.Default.OpenAsync(link)` (Artikel im Browser) — ebenfalls über `MainThread.InvokeOnMainThreadAsync` gemarshaled. Alle Exceptions werden geschluckt — ein Antippen darf die App nicht abstürzen lassen; `completionHandler()` läuft im `finally`.
 
 Beteiligte Komponenten:
 - `AppDelegate.FinishedLaunching` — Delegate-Zuweisung
@@ -71,8 +74,8 @@ Beteiligte Komponenten:
 
 ### 5. Pro-Feed-Schalter und Modus-Einstellung pflegen
 
-- `FeedsPage.xaml`: `Switch` (`IsToggled="{Binding FeedNotificationsEnabled}"`) mit `FeedNotificationsLabel`/`FeedNotificationsHint` in der Feed-Bearbeitungskarte. `FeedsViewModel.EditAsync` befüllt aus `FeedListItem.NotificationsEnabled`, `SaveAsync` schreibt `NotificationsEnabled = FeedNotificationsEnabled` im Add- und Update-Pfad, `ResetForm` setzt auf `true` zurück.
-- `SettingsPage.xaml`: `Switch` (`IsToggled="{Binding NotificationSummaryEnabled}"`) mit `SettingsNotificationSummaryLabel`/`SettingsNotificationSummaryHint` innerhalb des von `NotificationsEnabled` gesteuerten `Border` (erbt Deaktivierung + Opazität 0,4). `SettingsViewModel.NotificationSummaryEnabled` persistiert über `PersistOnChange` → `PersistAsync`; `LoadAsync` befüllt aus `settings.NotificationSummaryEnabled`.
+- `FeedsPage.xaml`: `Switch` (`IsToggled="{Binding FeedNotificationsEnabled}"`) mit `FeedNotificationsLabel`/`FeedNotificationsHint` in der Feed-Bearbeitungskarte; die Zeile ist an `FeedsViewModel.NotificationsSupported` (`IsEnabled` + Opazität-0,4-Trigger) gebunden, bei `!IsSupported` erscheint darunter die Zeile `NotificationsIosOnlyHint`. `FeedsViewModel.EditAsync` befüllt aus `FeedListItem.NotificationsEnabled`, `SaveAsync` schreibt `NotificationsEnabled = FeedNotificationsEnabled` im Add- und Update-Pfad, `ResetForm` setzt auf `true` zurück.
+- `SettingsPage.xaml`: `Switch` (`IsToggled="{Binding NotificationSummaryEnabled}"`) mit `SettingsNotificationSummaryLabel`/`SettingsNotificationSummaryHint` innerhalb des von `NotificationControlsEnabled` gesteuerten `Border` (erbt Deaktivierung + Opazität 0,4). `SettingsViewModel.NotificationSummaryEnabled` persistiert über `PersistOnChange` → `PersistAsync`; `LoadAsync` befüllt aus `settings.NotificationSummaryEnabled`.
 
 Beteiligte Komponenten:
 - `FeedsViewModel.FeedNotificationsEnabled` / `SaveAsync` / `EditAsync` / `ResetForm`
@@ -114,7 +117,7 @@ flowchart TD
 ## Fehlerbehandlung
 
 - `FeedSyncService.RunSyncAsync` kapselt `NotifyNewItemsAsync` in `try/catch` (nur `Debug.WriteLine`) — Benachrichtigungsfehler verfälschen weder `SyncResult` noch `FeedHealth` noch `SyncLog`.
-- `SettingsViewModel.RequestNotificationAuthorizationAsync` und `RefreshNotificationPermissionAsync` fangen Exceptions und protokollieren per `Debug.WriteLine`; `NotificationPermissionDenied` fällt im Fehlerfall auf `false` zurück.
+- `SettingsViewModel.RequestNotificationAuthorizationAsync` und `RefreshNotificationPermissionAsync` fangen Exceptions und protokollieren per `Debug.WriteLine`; `NotificationPermissionDenied` und `NotificationPermissionNotDetermined` fallen im Fehlerfall auf `false` zurück.
 - `NotificationDelegate.DidReceiveNotificationResponse` schluckt alle Exceptions (`completionHandler` im `finally`) — ein Antippen lässt die App nie abstürzen; ohne `Shell` greift der `Launcher`-Fallback auf den Artikel-Link.
-- `LocalNotificationService` auf Nicht-iOS-Targets: `IsSupported == false`, `RequestAuthorizationAsync`/`IsAuthorizedAsync` liefern `false`, `ShowAsync` ist No-Op — die Entscheidungslogik läuft, ohne dass etwas angezeigt wird.
+- `LocalNotificationService` auf Nicht-iOS-Targets: `IsSupported == false`, `RequestAuthorizationAsync` liefert `false`, `GetAuthorizationStatusAsync` liefert `Unsupported`, `ShowAsync` ist No-Op — die Entscheidungslogik läuft, ohne dass etwas angezeigt wird; die UI deaktiviert die Schalter über `NotificationsSupported` und zeigt den iOS-Hinweis.
 - Cancellation: `cancellationToken.ThrowIfCancellationRequested` bzw. `WaitAsync(cancellationToken)` an allen Plattform-Aufrufen; `OperationCanceledException` wird im Sync-Pfad nicht gefangen (durchgereicht).
