@@ -117,4 +117,31 @@ public class FeedRepositoryTests : IDisposable
 
         Assert.Null(result);
     }
+
+    /// <summary>
+    /// Verifies that deleting a feed also deletes its saved items via cascade delete.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_CascadeDeletesSavedItems()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed" };
+        await _repository.AddAsync(feed);
+        var itemRepository = new ItemRepository(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feed.Id,
+            Title = "Saved",
+            GuidOrHash = "saved",
+            IsRead = true,
+            IsSavedForLater = true,
+        };
+        await itemRepository.AddAsync(item);
+
+        await _repository.DeleteAsync(feed.Id);
+        var result = await itemRepository.GetByIdAsync(item.Id);
+
+        Assert.Null(result);
+    }
 }

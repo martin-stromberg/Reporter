@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Reporter.Core.Interfaces;
 using Reporter.Data;
 
 namespace Reporter;
@@ -34,6 +36,17 @@ public partial class App : Application
         using var scope = _services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
         await context.Database.MigrateAsync();
+
+        try
+        {
+            var cleanupService = scope.ServiceProvider.GetRequiredService<IRetentionCleanupService>();
+            await cleanupService.CleanupAsync();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Aufraeumen darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart retention cleanup failed: {ex}");
+        }
     }
 
     /// <summary>

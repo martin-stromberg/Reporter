@@ -8,12 +8,15 @@ Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lese
 
 ## Funktionsweise
 
-Nach dem Start erscheint die untere Navigationsleiste mit vier Bereichen:
+Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
 
 - **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden.
 - **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus.
 - **Später** — Zeigt Artikel, die du dir für später merkst.
+- **Kategorien** — Verwaltet Kategorien für Feeds.
 - **Einstellungen** — Ermöglicht die Konfiguration der App.
+
+Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt. Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 
 ## Beispiele
 
@@ -22,5 +25,4 @@ Nach dem Start erscheint die untere Navigationsleiste mit vier Bereichen:
 
 ## Einschränkungen
 
-- In der aktuellen Version werden noch keine echten RSS-Feeds geladen.
 - Die App benötigt noch keine Anmeldung.

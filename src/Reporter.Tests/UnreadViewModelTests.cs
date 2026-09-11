@@ -184,6 +184,41 @@ public class UnreadViewModelTests : IDisposable
         Assert.True(_feedSyncService.SyncAllCalled);
     }
 
+    /// <summary>
+    /// Verifies that ToggleSavedCommand toggles the saved flag on the list item in place.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ToggleSavedCommand_TogglesFlagInPlace()
+    {
+        var (feedId, _) = await SeedFeedAndCategoryAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "ToToggle",
+            GuidOrHash = "totoggle",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        };
+        await _itemRepository.AddAsync(item);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        var article = _viewModel.Articles.FirstOrDefault(a => a.Id == item.Id);
+        Assert.NotNull(article);
+        Assert.False(article.IsSavedForLater);
+
+        await _viewModel.ToggleSavedCommand.ExecuteAsync(article);
+
+        var toggled = _viewModel.Articles.FirstOrDefault(a => a.Id == item.Id);
+        Assert.NotNull(toggled);
+        Assert.True(toggled.IsSavedForLater);
+        var persisted = await _itemRepository.GetByIdAsync(item.Id);
+        Assert.NotNull(persisted);
+        Assert.True(persisted.IsSavedForLater);
+    }
+
     private sealed class FakeFeedSyncService : IFeedSyncService
     {
         public bool SyncAllCalled { get; private set; }

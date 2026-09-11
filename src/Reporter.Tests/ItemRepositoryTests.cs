@@ -29,20 +29,6 @@ public class ItemRepositoryTests : IDisposable
         _factory.Dispose();
     }
 
-    private async Task<Guid> SeedFeedAsync()
-    {
-        var feedId = Guid.NewGuid();
-        await using var context = _factory.CreateDbContext();
-        context.Feeds.Add(new Entities.Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/feed",
-            Title = "Example Feed",
-        });
-        await context.SaveChangesAsync();
-        return feedId;
-    }
-
     /// <summary>
     /// Verifies that an item can be added and retrieved by id.
     /// </summary>
@@ -50,7 +36,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task AddAsync_ThenGetByIdAsync_ReturnsItem()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         var item = new Item
         {
             Id = Guid.NewGuid(),
@@ -75,7 +61,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsItemsOrderedByPublishedAtDescending()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         await _repository.AddAsync(new Item
         {
             Id = Guid.NewGuid(),
@@ -111,7 +97,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateAsync_PersistsChanges()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         var item = new Item
         {
             Id = Guid.NewGuid(),
@@ -149,7 +135,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteAsync_RemovesItem()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         var item = new Item
         {
             Id = Guid.NewGuid(),
@@ -174,7 +160,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetUnreadByDateAsync_ReturnsUnreadSortedByPublishedAtDescending()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         await _repository.AddAsync(new Item
         {
             Id = Guid.NewGuid(),
@@ -220,7 +206,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetByFeedAsync_ReturnsOnlyMatchingFeed()
     {
-        var feedA = await SeedFeedAsync();
+        var feedA = await TestDataSeeder.SeedFeedAsync(_factory);
         var feedBId = Guid.NewGuid();
         await using (var context = _factory.CreateDbContext())
         {
@@ -272,7 +258,7 @@ public class ItemRepositoryTests : IDisposable
             await context.SaveChangesAsync();
         }
 
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         await using (var context = _factory.CreateDbContext())
         {
             var feed = await context.Feeds.FindAsync(feedId);
@@ -306,7 +292,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetSavedForLaterAsync_ReturnsOnlySaved()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         await _repository.AddAsync(new Item
         {
             Id = Guid.NewGuid(),
@@ -363,7 +349,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetUnreadByDateAsync_AllRead_ReturnsEmpty()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         await _repository.AddAsync(new Item
         {
             Id = Guid.NewGuid(),
@@ -386,7 +372,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetUnreadByDateAsync_Paged_ReturnsPage()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         for (var i = 0; i < 5; i++)
         {
             await _repository.AddAsync(new Item
@@ -414,7 +400,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetUnreadCountAsync_ReturnsCorrectCount()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         await _repository.AddAsync(new Item
         {
             Id = Guid.NewGuid(),
@@ -446,7 +432,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task MarkAsReadAsync_SetsIsRead()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         var item = new Item
         {
             Id = Guid.NewGuid(),
@@ -472,7 +458,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task ToggleSavedForLaterAsync_TogglesState()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
         var item = new Item
         {
             Id = Guid.NewGuid(),
@@ -489,5 +475,231 @@ public class ItemRepositoryTests : IDisposable
 
         Assert.NotNull(result);
         Assert.True(result.IsSavedForLater);
+    }
+
+    /// <summary>
+    /// Verifies that DeleteExpiredAsync removes expired read items and returns the deleted count.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_RemovesExpiredReadItems()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var expired = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Expired",
+            GuidOrHash = "expired",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow.AddDays(-40),
+        };
+        var withoutTimestamps = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "NoTimestamps",
+            GuidOrHash = "notimestamps",
+            IsRead = true,
+            IsSavedForLater = false,
+        };
+        await _repository.AddAsync(expired);
+        await _repository.AddAsync(withoutTimestamps);
+
+        var deleted = await _repository.DeleteExpiredAsync(cutoff);
+
+        Assert.Equal(1, deleted);
+        Assert.Null(await _repository.GetByIdAsync(expired.Id));
+        Assert.NotNull(await _repository.GetByIdAsync(withoutTimestamps.Id));
+    }
+
+    /// <summary>
+    /// Verifies that DeleteExpiredAsync never deletes items saved for later.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_KeepsSavedForLaterItems()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Saved",
+            GuidOrHash = "saved",
+            IsRead = true,
+            IsSavedForLater = true,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow.AddDays(-40),
+        };
+        await _repository.AddAsync(item);
+
+        var deleted = await _repository.DeleteExpiredAsync(cutoff);
+
+        Assert.Equal(0, deleted);
+        Assert.NotNull(await _repository.GetByIdAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that DeleteExpiredAsync keeps expired unread items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_KeepsUnreadItems()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Unread",
+            GuidOrHash = "unread",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+        };
+        await _repository.AddAsync(item);
+
+        var deleted = await _repository.DeleteExpiredAsync(cutoff);
+
+        Assert.Equal(0, deleted);
+        Assert.NotNull(await _repository.GetByIdAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that DeleteExpiredAsync keeps read items within the retention period.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_KeepsNonExpiredItems()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Recent",
+            GuidOrHash = "recent",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-10),
+            ReadAt = DateTime.UtcNow.AddDays(-5),
+        };
+        await _repository.AddAsync(item);
+
+        var deleted = await _repository.DeleteExpiredAsync(cutoff);
+
+        Assert.Equal(0, deleted);
+        Assert.NotNull(await _repository.GetByIdAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that DeleteExpiredAsync uses ReadAt over PublishedAt as the expiration timestamp.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_UsesReadAtOverPublishedAt()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "OldButRecentlyRead",
+            GuidOrHash = "oldrecent",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-100),
+            ReadAt = DateTime.UtcNow.AddDays(-5),
+        };
+        await _repository.AddAsync(item);
+
+        var deleted = await _repository.DeleteExpiredAsync(cutoff);
+
+        Assert.Equal(0, deleted);
+        Assert.NotNull(await _repository.GetByIdAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that GetSavedForLaterAsync returns saved items ordered by PublishedAt descending.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetSavedForLaterAsync_OrdersByPublishedAtDescending()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Older",
+            GuidOrHash = "older",
+            IsRead = false,
+            IsSavedForLater = true,
+            PublishedAt = new DateTime(2026, 1, 1),
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Newer",
+            GuidOrHash = "newer",
+            IsRead = false,
+            IsSavedForLater = true,
+            PublishedAt = new DateTime(2026, 1, 2),
+        });
+
+        var result = await _repository.GetSavedForLaterAsync();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Newer", result[0].Title);
+        Assert.Equal("Older", result[1].Title);
+    }
+
+    /// <summary>
+    /// Verifies that ToggleSavedForLaterAsync toggles the saved state back to false.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ToggleSavedForLaterAsync_TogglesBackToFalse()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "ToUntoggle",
+            GuidOrHash = "tountoggle",
+            IsRead = false,
+            IsSavedForLater = true,
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.ToggleSavedForLaterAsync(item.Id);
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.False(result.IsSavedForLater);
+    }
+
+    /// <summary>
+    /// Verifies that DeleteExpiredAsync propagates cancellation to the database operation.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_CancelledToken_ThrowsOperationCanceled()
+    {
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => _repository.DeleteExpiredAsync(DateTime.UtcNow, cts.Token));
     }
 }

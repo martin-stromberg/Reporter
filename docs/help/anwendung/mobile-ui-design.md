@@ -59,6 +59,8 @@ Design-Entwurf folgen.
 - Geprüft auf 390 × 844 pt (Windows-Handy-Fenster).
 - Verwendet dieselbe `ArticleCardView` wie das Ungelesen-Dashboard.
 - Lesezeichen-Icon füllt sich, wenn der Artikel gespeichert ist.
+- Iteration issue-25: Erneute Prüfung gegen `design-draft/stitch_local_rss_feed_reader/f_r_sp_ter_bewahren/screen.png` und `..._dark_mode/screen.png`; AGENTS.md-Regeln erfüllt (44 × 44 pt Touch-Targets, `AppThemeBinding`, `CollectionView` füllt `Grid`-Row `*`, kein verschachteltes Scrollen). Abweichungen zum Entwurf (Info-Banner, Suchfeld, Kategorie-Chips) sind in `test-results.md` dokumentiert.
+- Iteration issue-25 (2): Laufzeit-Verifikation am Windows-Handy-Fenster 390 × 844 pt durchgeführt — Bewahren auf `Ungelesen` (Bookmark-Icon füllt sich, Artikel erscheint unter `Später`), Entfernen auf `Später` (Artikel verschwindet, `EmptyView` bei leerer Liste), Bookmark-Toggle in der `ArticleDetailPage`-Bottom-Bar (Icon füllt sich/leert sich) sowie Light- und Dark-Screenshots. Screenshots: `docs/help/anwendung/screenshots/issue-25/manual-*.png`.
 
 ### Artikeldetailansicht (issue-24)
 - Geprüft gegen `design-draft/stitch_local_rss_feed_reader/artikel_lesemodus/screen.png` und `artikel_lesemodus_dark_mode/screen.png`.

@@ -301,6 +301,15 @@ public class ItemRepository : IItemRepository
         return entity is null ? null : MapToModel(entity);
     }
 
+    /// <inheritdoc />
+    public async Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        return await context.Items
+            .Where(i => i.IsRead && !i.IsSavedForLater && (i.ReadAt ?? i.PublishedAt) < cutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     private static string? ExtractImageUrl(string? contentHtml)
     {
         if (string.IsNullOrWhiteSpace(contentHtml))

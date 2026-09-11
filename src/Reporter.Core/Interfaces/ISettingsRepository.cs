@@ -10,8 +10,9 @@ public interface ISettingsRepository
     /// <summary>
     /// Gets the singleton settings record asynchronously.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the settings.</returns>
-    Task<Settings> GetAsync();
+    Task<Settings> GetAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Saves the specified settings asynchronously, always updating the singleton record.
