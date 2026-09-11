@@ -1,0 +1,330 @@
+Output from command in shell c8661c:
+Warning: requested timeout 10m exceeds maximum of 4m 40s; clamping to 4m 40s.
+  Wiederherzustellende Projekte werden ermittelt...
+  "D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Core\Reporter.Core.csproj" wiederhergestellt (in 356 ms.).
+  "D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Reporter.Data.csproj" wiederhergestellt (in 397 ms.).
+  "D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\Reporter.Tests.csproj" wiederhergestellt (in 406 ms.).
+  Reporter.Core -> D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Core\bin\Release\net10.0\Reporter.Core.dll
+  Reporter.Data -> D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\bin\Release\net10.0\Reporter.Data.dll
+  Reporter.Tests -> D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\bin\Release\net10.0\Reporter.Tests.dll
+Testlauf für "D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\bin\Release\net10.0\Reporter.Tests.dll" (.NETCoreApp,Version=v10.0)
+Insgesamt 1 Testdateien stimmten mit dem angegebenen Muster überein.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.4+50e68bbb8b (64-bit .NET 10.0.12)
+[xUnit.net 00:00:00.07]   Discovering: Reporter.Tests
+[xUnit.net 00:00:00.11]   Discovered:  Reporter.Tests
+[xUnit.net 00:00:00.13]   Starting:    Reporter.Tests
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_NullTitleAndContent_ReturnsFalse [3 ms]
+  Bestanden Reporter.Tests.SettingsValuesTests_AutoMarkRead.IsAutoMarkReadEnabled_EvaluatesMode(mode: "on_open", expected: True) [4 ms]
+  Bestanden Reporter.Tests.SettingsValuesTests_AutoMarkRead.IsAutoMarkReadEnabled_EvaluatesMode(mode: null, expected: True) [< 1 ms]
+  Bestanden Reporter.Tests.SettingsValuesTests_AutoMarkRead.IsAutoMarkReadEnabled_EvaluatesMode(mode: "on_scroll", expected: True) [< 1 ms]
+  Bestanden Reporter.Tests.SettingsValuesTests_AutoMarkRead.IsAutoMarkReadEnabled_EvaluatesMode(mode: "off", expected: False) [< 1 ms]
+  Bestanden Reporter.Tests.SettingsValuesTests_AutoMarkRead.IsAutoMarkReadEnabled_EvaluatesMode(mode: "unknown", expected: True) [< 1 ms]
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_EmptyKeywords_ReturnsFalse [< 1 ms]
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_BlankKeywords_Skipped [< 1 ms]
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_TitleCaseInsensitive [< 1 ms]
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_ContentHtml [< 1 ms]
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_NoMatch [< 1 ms]
+  Bestanden Reporter.Tests.KeywordMatcherTests.MatchesAny_Substring [< 1 ms]
+  Bestanden Reporter.Tests.ServiceCollectionTests.AddReporterRepositories_ResolvesAllRepositories [53 ms]
+  Bestanden Reporter.Tests.ReporterDbContextFactoryTests.CreateDbContext_ReturnsContextWithSqliteProvider [94 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_CancelledToken_ThrowsOperationCanceled [710 ms]
+  Bestanden Reporter.Tests.ReporterDbContextTests_Persistence.Items_WithInclude_ReturnsFeedAndCategory [710 ms]
+  Bestanden Reporter.Tests.SyncLogRepositoryTests.AddAsync_ThenGetByIdAsync_ReturnsSyncLog [702 ms]
+  Bestanden Reporter.Tests.KeywordRepositoryTests.GetAllAsync_ReturnsKeywordsOrderedByText [713 ms]
+  Bestanden Reporter.Tests.CategoriesViewModelTests.SaveCommand_WithEmptyName_SetsValidationErrorAndDoesNotAdd [713 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetUnreadByDateAsync_Paged_ReturnsPage [718 ms]
+  Bestanden Reporter.Tests.ReporterDbContextTests_Schema.EnsureCreatedAsync_CreatesQueryableTables [715 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Keywords.AddKeyword_Empty_ShowsError [722 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_E2E.E2E_KeywordEmpty_Rejected [723 ms]
+  Bestanden Reporter.Tests.FeedsViewModelTests.RefreshCommand_WhenSyncReturnsError_SetsErrorMessage [728 ms]
+  Bestanden Reporter.Tests.LaterViewModelTests.ToggleSavedCommand_RemovesItemFromSavedItems [729 ms]
+  Bestanden Reporter.Tests.FeedRepositoryTests.DeleteAsync_RemovesFeed [737 ms]
+  Bestanden Reporter.Tests.SyncLogRepositoryTests.GetByIdAsync_NonExisting_ReturnsNull [25 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Keywords.AddKeyword_TooLong_ShowsError [18 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetSavedForLaterAsync_ReturnsOnlySaved [21 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.DeleteAsync_WithAssignedFeeds_SetsCategoryIdToNull [741 ms]
+  Bestanden Reporter.Tests.CategoriesViewModelTests.DeleteCommand_RemovesCategoryAndReloadsList [27 ms]
+  Bestanden Reporter.Tests.FeedRepositoryTests.GetByIdAsync_NonExisting_ReturnsNull [6 ms]
+  Bestanden Reporter.Tests.LaterViewModelTests.LoadCommand_OrdersByPublishedAtDescending [14 ms]
+  Bestanden Reporter.Tests.SettingsRepositoryTests.SaveAsync_PersistsNewFields [745 ms]
+  Bestanden Reporter.Tests.ReporterDbContextTests_Persistence.SaveChangesAsync_PersistsFeedWithCategory [32 ms]
+  Bestanden Reporter.Tests.FeedsViewModelTests.RefreshCommand_InvokesSyncService_AndReloadsList [17 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.AutoRefreshChange_AppliesSettings [748 ms]
+  Bestanden Reporter.Tests.CategoriesViewModelTests.SaveCommand_WithDuplicateName_SetsValidationError [6 ms]
+  Bestanden Reporter.Tests.LaterViewModelTests.ToggleSavedCommand_NullItem_DoesNothing [17 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Keywords.RemoveKeyword_DeletesFromRepository [21 ms]
+  Bestanden Reporter.Tests.FeedRepositoryTests.AddAsync_ThenGetByIdAsync_ReturnsFeed [18 ms]
+  Bestanden Reporter.Tests.KeywordRepositoryTests.UpdateAsync_PersistsChanges [48 ms]
+  Bestanden Reporter.Tests.SyncLogRepositoryTests.DeleteAsync_RemovesSyncLog [24 ms]
+  Bestanden Reporter.Tests.CategoriesViewModelTests.SaveCommand_AddsNewCategory [6 ms]
+  Bestanden Reporter.Tests.SettingsRepositoryTests.GetAsync_ReturnsSeededSettings [22 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Load.Load_PopulatesAllOptions [768 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.UpdateAsync_DuplicateName_ThrowsDbUpdateException [28 ms]
+  Bestanden Reporter.Tests.KeywordRepositoryTests.GetByIdAsync_NonExisting_ReturnsNull [7 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Keywords.AddKeyword_DuplicateCaseInsensitive_ShowsError [8 ms]
+  Bestanden Reporter.Tests.FeedsViewModelTests.RefreshAllCommand_InvokesSyncService_AndReloadsList [23 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_E2E.E2E_ChangeSettings_PersistRoundtrip [47 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.QuietHoursEnabled_ToggledOffAndOn_RestoresSessionValues [23 ms]
+  Bestanden Reporter.Tests.LaterViewModelTests.LoadCommand_PopulatesOnlySavedItems [10 ms]
+  Bestanden Reporter.Tests.FeedRepositoryTests.UpdateAsync_PersistsChanges [14 ms]
+  Bestanden Reporter.Tests.CategoriesViewModelTests.LoadCommand_PopulatesCategoriesWithFeedCounts [11 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Load.Load_WithoutQuietHours_QuietHoursDisabled [9 ms]
+  Bestanden Reporter.Tests.SettingsRepositoryTests.SaveAsync_IgnoresDifferentIdAndUpdatesDefault [10 ms]
+  Bestanden Reporter.Tests.KeywordRepositoryTests.AddAsync_ThenGetByIdAsync_ReturnsKeyword [10 ms]
+  Bestanden Reporter.Tests.SyncLogRepositoryTests.GetAllAsync_ReturnsSyncLogsOrderedByStartedAtDescending [17 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Keywords.AddKeyword_Valid_AddsToRepository [11 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteExpiredAsync_UsesReadAtOverPublishedAt [41 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_DeletesExpiredButKeepsSaved [71 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_E2E.E2E_KeywordAddRemove_Persists [13 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.GetByIdAsync_NonExisting_ReturnsNull [14 ms]
+  Bestanden Reporter.Tests.CategoriesViewModelTests.SaveCommand_UpdatesExistingCategory [12 ms]
+  Bestanden Reporter.Tests.LaterViewModelTests.MarkReadCommand_SetsReadAndKeepsItemInList [14 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Load.Load_InvalidPersistedValues_UsesFallbacks [12 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.QuietHoursEnabled_TurnedOff_PersistsNull [19 ms]
+  Bestanden Reporter.Tests.KeywordRepositoryTests.DeleteAsync_RemovesKeyword [10 ms]
+  Bestanden Reporter.Tests.SyncLogRepositoryTests.UpdateAsync_PersistsChanges [9 ms]
+  Bestanden Reporter.Tests.FeedRepositoryTests.GetAllAsync_ReturnsFeedsOrderedByTitle [15 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.StartStop_RepeatedCycles_RestartsCleanly [789 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncFeedAsync_Duplicates_SkipsExistingItems [791 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_E2E.E2E_KeywordDuplicate_Rejected [9 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.UpdateAsync_PersistsChanges [9 ms]
+  Bestanden Reporter.Tests.UnreadViewModelTests.MarkAllReadCommand_ClearsArticles [795 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetUnreadByDateAsync_AllRead_ReturnsEmpty [15 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_OutOfRange_Clamped(input: 0, expected: 1) [7 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.GetAllAsync_ReturnsCategoriesOrderedByName [4 ms]
+  Bestanden Reporter.Tests.FeedRepositoryTests.DeleteAsync_CascadeDeletesSavedItems [6 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Load.ThemeOptions_ExposePersistedValues [13 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_KeywordMatch_KeepsUnreadAndSaved [22 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteRangeAsync_EmptyList_ReturnsZero [9 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.AddAsync_ThenGetByIdAsync_ReturnsCategory [7 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_OutOfRange_Clamped(input: 400, expected: 365) [9 ms]
+  Bestanden Reporter.Tests.UnreadViewModelTests.ToggleSavedCommand_TogglesFlagInPlace [11 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncFeedAsync_InvalidXml_SetsError [12 ms]
+  Bestanden Reporter.Tests.SettingsRepositoryTests.GetAsync_CreatesDefaultRecordWhenMissing [29 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.DeleteAsync_NonExisting_DoesNotThrow [3 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_RespectsConfiguredRetentionDays [6 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetSavedForLaterAsync_OrdersByPublishedAtDescending [4 ms]
+  Bestanden Reporter.Tests.SettingsRepositoryTests.SaveAsync_OverwritesSameRecord [4 ms]
+  Bestanden Reporter.Tests.UnreadViewModelTests.LoadCommand_PopulatesArticlesAndCategories [6 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.QuietHoursEnabled_TurnedOn_KeepsExistingValues [12 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.MarkAsReadAsync_SetsIsRead [9 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_ZeroOrNegativeRetentionDays_Skips(retentionDays: -5) [10 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.GetAllWithFeedCountAsync_ReturnsCountOfFeedsPerCategory [11 ms]
+  Bestanden Reporter.Tests.SettingsRepositoryTests.GetAsync_AlwaysReturnsSingleRecord [12 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_ZeroOrNegativeRetentionDays_Skips(retentionDays: 0) [4 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncFeedAsync_FewerItems_SetsWarning [17 ms]
+  Bestanden Reporter.Tests.CategoryRepositoryTests.DeleteAsync_RemovesCategory [3 ms]
+  Bestanden Reporter.Tests.UnreadViewModelTests.MarkReadCommand_RemovesArticle [12 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetExpiredKeywordCandidatesAsync_KeepsUnreadAndSaved [5 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteExpiredAsync_KeepsNonExpiredItems [4 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetExpiredKeywordCandidatesAsync_UsesPublishedAtOverReadAt [5 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncFeedAsync_ValidRss_CreatesItems_AndSetsHealthOk [10 ms]
+  Bestanden Reporter.Tests.UnreadViewModelTests.SelectCategoryCommand_FiltersArticles [11 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteExpiredAsync_KeepsSavedForLaterItems [3 ms]
+  Bestanden Reporter.Tests.UnreadViewModelTests.RefreshCommand_InvokesSyncService [4 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncFeedAsync_Unreachable_KeepsItemsAndLogsError [5 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_DeletesKeywordMatchedExpired [18 ms]
+  Bestanden Reporter.Tests.RetentionCleanupServiceTests.CleanupAsync_KeywordMatch_UsesPublishedAtOverReadAt [4 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetByCategoryAsync_ReturnsOnlyMatchingCategory [9 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncAllAsync_WithTwoFeeds_CreatesItemsForBoth [10 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetUnreadByDateAsync_ReturnsUnreadSortedByPublishedAtDescending [4 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.AddAsync_ThenGetByIdAsync_ReturnsItem [3 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetByCategoryAsync_NoFeedsInCategory_ReturnsEmpty [4 ms]
+  Bestanden Reporter.Tests.FeedSyncServiceTests.SyncFeedAsync_NoNewItemsForThirtyDays_SetsWarning [9 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetByFeedAsync_ReturnsOnlyMatchingFeed [3 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.ApplySettings_ChangesInterval [73 ms]
+[xUnit.net 00:00:01.03]     Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce [FAIL]
+[xUnit.net 00:00:01.03]       Microsoft.Data.Sqlite.SqliteException : SQLite Error 5: 'unable to delete/modify user-function due to active statements'.
+[xUnit.net 00:00:01.03]       Stack Trace:
+[xUnit.net 00:00:01.03]            at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+[xUnit.net 00:00:01.03]            at Microsoft.Data.Sqlite.SqliteConnection.CreateFunctionCore[TState,TResult](String name, Int32 arity, TState state, Func`3 function, Boolean isDeterministic)
+[xUnit.net 00:00:01.03]            at Microsoft.Data.Sqlite.SqliteConnection.CreateFunction[T1,TResult](String name, Func`2 function, Boolean isDeterministic)
+[xUnit.net 00:00:01.03]            at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection.InitializeDbConnection(DbConnection connection)
+[xUnit.net 00:00:01.03]            at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection..ctor(RelationalConnectionDependencies dependencies, IRawSqlCommandBuilder rawSqlCommandBuilder, IDiagnosticsLogger`1 logger)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.SqliteServiceCollectionExtensions.<>c.<AddEntityFrameworkSqlite>b__1_0(IServiceProvider p)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+[xUnit.net 00:00:01.03]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+[xUnit.net 00:00:01.03]            at Microsoft.EntityFrameworkCore.DbContext.get_DbContextDependencies()
+[xUnit.net 00:00:01.03]            at Microsoft.EntityFrameworkCore.DbContext.get_ContextServices()
+[xUnit.net 00:00:01.03]            at Microsoft.EntityFrameworkCore.DbContext.get_Model()
+[xUnit.net 00:00:01.04]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityType()
+[xUnit.net 00:00:01.04]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.CheckState()
+[xUnit.net 00:00:01.04]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityQueryable()
+[xUnit.net 00:00:01.04]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.System.Linq.IQueryable.get_Provider()
+[xUnit.net 00:00:01.04]            at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AsNoTracking[TEntity](IQueryable`1 source)
+[xUnit.net 00:00:01.04]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs(28,0): at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:01.04]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs(39,0): at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:01.04]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs(102,0): at Reporter.Tests.SettingsViewModelTests_Persist.<RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce>b__11_0()
+[xUnit.net 00:00:01.04]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\TestWaitHelper.cs(28,0): at Reporter.Tests.TestWaitHelper.WaitUntilAsync(Func`1 condition, Int32 timeoutMilliseconds)
+[xUnit.net 00:00:01.04]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs(102,0): at Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce()
+[xUnit.net 00:00:01.04]         --- End of stack trace from previous location ---
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteExpiredAsync_CancelledToken_ThrowsOperationCanceled [2 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteAsync_RemovesItem [6 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetByFeedAsync_NonExistingFeed_ReturnsEmpty [3 ms]
+  Fehler Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce [58 ms]
+  Fehlermeldung:
+   Microsoft.Data.Sqlite.SqliteException : SQLite Error 5: 'unable to delete/modify user-function due to active statements'.
+  Stapelverfolgung:
+     at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteConnection.CreateFunctionCore[TState,TResult](String name, Int32 arity, TState state, Func`3 function, Boolean isDeterministic)
+   at Microsoft.Data.Sqlite.SqliteConnection.CreateFunction[T1,TResult](String name, Func`2 function, Boolean isDeterministic)
+   at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection.InitializeDbConnection(DbConnection connection)
+   at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection..ctor(RelationalConnectionDependencies dependencies, IRawSqlCommandBuilder rawSqlCommandBuilder, IDiagnosticsLogger`1 logger)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.SqliteServiceCollectionExtensions.<>c.<AddEntityFrameworkSqlite>b__1_0(IServiceProvider p)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.EntityFrameworkCore.DbContext.get_DbContextDependencies()
+   at Microsoft.EntityFrameworkCore.DbContext.get_ContextServices()
+   at Microsoft.EntityFrameworkCore.DbContext.get_Model()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityType()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.CheckState()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityQueryable()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.System.Linq.IQueryable.get_Provider()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AsNoTracking[TEntity](IQueryable`1 source)
+   at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken) in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs:line 28
+   at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken) in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs:line 39
+   at Reporter.Tests.SettingsViewModelTests_Persist.<RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce>b__11_0() in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs:line 102
+   at Reporter.Tests.TestWaitHelper.WaitUntilAsync(Func`1 condition, Int32 timeoutMilliseconds) in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\TestWaitHelper.cs:line 28
+   at Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_ChangeWithoutDragCompleted_PersistsAfterDebounce() in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs:line 102
+--- End of stack trace from previous location ---
+  Bestanden Reporter.Tests.ItemRepositoryTests.UpdateAsync_PersistsChanges [6 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteRangeAsync_DeletesOnlyGivenIds [4 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteExpiredAsync_KeepsUnreadItems [3 ms]
+[xUnit.net 00:00:01.11]     Reporter.Tests.SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce [FAIL]
+[xUnit.net 00:00:01.11]       Microsoft.Data.Sqlite.SqliteException : SQLite Error 5: 'unable to delete/modify user-function due to active statements'.
+[xUnit.net 00:00:01.11]       Stack Trace:
+[xUnit.net 00:00:01.11]            at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+[xUnit.net 00:00:01.11]            at Microsoft.Data.Sqlite.SqliteConnection.CreateFunctionCore[TState,TResult](String name, Int32 arity, TState state, Func`3 function, Boolean isDeterministic)
+[xUnit.net 00:00:01.11]            at Microsoft.Data.Sqlite.SqliteConnection.CreateFunction[T1,T2,TResult](String name, Func`3 function, Boolean isDeterministic)
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection.InitializeDbConnection(DbConnection connection)
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection..ctor(RelationalConnectionDependencies dependencies, IRawSqlCommandBuilder rawSqlCommandBuilder, IDiagnosticsLogger`1 logger)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.SqliteServiceCollectionExtensions.<>c.<AddEntityFrameworkSqlite>b__1_0(IServiceProvider p)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+[xUnit.net 00:00:01.11]            at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.DbContext.get_DbContextDependencies()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.DbContext.get_ContextServices()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.DbContext.get_Model()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityType()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.CheckState()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityQueryable()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.System.Linq.IQueryable.get_Provider()
+[xUnit.net 00:00:01.11]            at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AsNoTracking[TEntity](IQueryable`1 source)
+[xUnit.net 00:00:01.11]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs(28,0): at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:01.11]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs(39,0): at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:01.11]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs(386,0): at Reporter.Tests.SettingsViewModelTests_Persist.<Persist_QueuedBehindRunningSave_AppliesThemeOnce>b__21_1()
+[xUnit.net 00:00:01.11]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\TestWaitHelper.cs(28,0): at Reporter.Tests.TestWaitHelper.WaitUntilAsync(Func`1 condition, Int32 timeoutMilliseconds)
+[xUnit.net 00:00:01.11]         D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs(386,0): at Reporter.Tests.SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce()
+[xUnit.net 00:00:01.11]         --- End of stack trace from previous location ---
+  Bestanden Reporter.Tests.ItemRepositoryTests.ToggleSavedForLaterAsync_TogglesState [3 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.DeleteExpiredAsync_RemovesExpiredReadItems [4 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetUnreadCountAsync_ReturnsCorrectCount [5 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.ToggleSavedForLaterAsync_TogglesBackToFalse [3 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetExpiredKeywordCandidatesAsync_FallsBackToReadAt [3 ms]
+  Bestanden Reporter.Tests.ItemRepositoryTests.GetAllAsync_ReturnsItemsOrderedByPublishedAtDescending [6 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_DragCompleted_PersistsImmediatelyAndCancelsDebounce [66 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.ThemeChange_AppliesTheme [4 ms]
+  Fehler Reporter.Tests.SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce [5 ms]
+  Fehlermeldung:
+   Microsoft.Data.Sqlite.SqliteException : SQLite Error 5: 'unable to delete/modify user-function due to active statements'.
+  Stapelverfolgung:
+     at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteConnection.CreateFunctionCore[TState,TResult](String name, Int32 arity, TState state, Func`3 function, Boolean isDeterministic)
+   at Microsoft.Data.Sqlite.SqliteConnection.CreateFunction[T1,T2,TResult](String name, Func`3 function, Boolean isDeterministic)
+   at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection.InitializeDbConnection(DbConnection connection)
+   at Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal.SqliteRelationalConnection..ctor(RelationalConnectionDependencies dependencies, IRawSqlCommandBuilder rawSqlCommandBuilder, IDiagnosticsLogger`1 logger)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.SqliteServiceCollectionExtensions.<>c.<AddEntityFrameworkSqlite>b__1_0(IServiceProvider p)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at ResolveService(ILEmitResolverBuilderRuntimeContext, ServiceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.EntityFrameworkCore.DbContext.get_DbContextDependencies()
+   at Microsoft.EntityFrameworkCore.DbContext.get_ContextServices()
+   at Microsoft.EntityFrameworkCore.DbContext.get_Model()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityType()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.CheckState()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.get_EntityQueryable()
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.System.Linq.IQueryable.get_Provider()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AsNoTracking[TEntity](IQueryable`1 source)
+   at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken) in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs:line 28
+   at Reporter.Data.Repositories.SettingsRepository.GetAsync(CancellationToken cancellationToken) in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Data\Repositories\SettingsRepository.cs:line 39
+   at Reporter.Tests.SettingsViewModelTests_Persist.<Persist_QueuedBehindRunningSave_AppliesThemeOnce>b__21_1() in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs:line 386
+   at Reporter.Tests.TestWaitHelper.WaitUntilAsync(Func`1 condition, Int32 timeoutMilliseconds) in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\TestWaitHelper.cs:line 28
+   at Reporter.Tests.SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce() in D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\SettingsViewModelTests_Persist.cs:line 386
+--- End of stack trace from previous location ---
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.ApplySettings_Concurrent_LeavesSingleActiveLoop [123 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.SyncThrows_LoopContinues [5 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.StartAsync_InvokesSyncAfterInterval [3 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.RetentionDays_RapidChanges_PersistOnlyLastValue [63 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.QuietHoursEnabled_TurnedOn_AppliesDefaults [4 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.QuietHoursEnabled_TurnedOff_ReloadKeepsSessionValues [4 ms]
+  Bestanden Reporter.Tests.SettingsViewModelTests_Persist.PropertyChange_PersistsImmediately [5 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.CoalescedTicks_DoNotStartParallelSync [67 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.ApplySettings_Disabled_Stops [61 ms]
+[xUnit.net 00:00:01.32]   Finished:    Reporter.Tests
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.InvalidInterval_Clamped(persistedMinutes: 0, expectedMinutes: 1) [5 ms]
+  Bestanden Reporter.Tests.AutoRefreshServiceTests.InvalidInterval_Clamped(persistedMinutes: 99999, expectedMinutes: 1440) [26 ms]
+Ergebnisdatei: D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\TestResults\test-results.trx
+
+Fehler beim Testlauf.
+Gesamtzahl Tests: 147
+     Bestanden: 145
+     Nicht bestanden: 2
+ Gesamtzeit: 4,3401 Sekunden
+
+Anlagen:
+  D:\Repositories\softwareschmiede\701ef16d-7c03-4224-99ba-d991054d7310\src\Reporter.Tests\TestResults\d0ed1642-a36a-4451-8571-2d5f18efa3ea\coverage.cobertura.xml
+
+
+Exit code: 1
+
+`| tail -40` was parsed out (40 of 324 total lines shown).
