@@ -26,7 +26,7 @@
 
 **Symptom:** Ein geöffneter Artikel bleibt ungelesen.
 
-**Ursache:** Der Schalter **Automatisch als gelesen markieren** in den Einstellungen ist aus, oder der Schalter **Auto-Gelesen** in der Artikeldetailansicht wurde für die aktuelle Ansicht abgeschaltet.
+**Ursache:** Der Schalter **Automatisch als gelesen markieren** in den Einstellungen ist aus, oder der Schalter **Auto-Gelesen** in der Artikeldetailansicht wurde für die aktuelle Ansicht abgeschaltet. Ist der lokale Schalter abgedunkelt und mit *Auto-Gelesen (in den Einstellungen deaktiviert)* beschriftet, ist die globale Option aus.
 
 **Lösung:**
 1. In den **Einstellungen** den Schalter **Automatisch als gelesen markieren** einschalten.

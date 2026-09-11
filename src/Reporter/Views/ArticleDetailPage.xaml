@@ -35,11 +35,19 @@
                        Style="{StaticResource MetaStyle}"
                        VerticalOptions="Center"/>
                 <Switch IsToggled="{Binding IsAutoMarkRead, Mode=TwoWay}"
+                        IsEnabled="{Binding IsAutoMarkReadAvailable}"
                         OnColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
                         ThumbColor="{AppThemeBinding Light={StaticResource LightOnSecondary}, Dark={StaticResource DarkOnSecondary}}"
                         MinimumHeightRequest="44"
                         MinimumWidthRequest="44"
-                        VerticalOptions="Center"/>
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="{Binding AutoMarkReadLabel}">
+                    <Switch.Triggers>
+                        <DataTrigger TargetType="Switch" Binding="{Binding IsAutoMarkReadAvailable}" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </DataTrigger>
+                    </Switch.Triggers>
+                </Switch>
             </HorizontalStackLayout>
         </Grid>
 

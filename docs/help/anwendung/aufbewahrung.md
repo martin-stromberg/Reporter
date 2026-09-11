@@ -79,7 +79,7 @@ flowchart TD
 ### Keyword-Matching
 
 - Match-Felder: `Item.Title` und `Item.ContentHtml`; `Item.Link` wird bewusst nicht gematcht (opake URLs, Zufallstreffer).
-- Semantik: Teilwort + `OrdinalIgnoreCase` — fest verdrahtet, nicht konfigurierbar (UI-Switch „Teilwort & Case-Insensitive" ist deaktiviert-aktiv).
+- Semantik: Teilwort + `OrdinalIgnoreCase` — fest verdrahtet, nicht konfigurierbar (in der UI als nicht-interaktives Badge „Immer aktiv" neben „Teilwort & Case-Insensitive" dargestellt).
 - Zeitpunkt: Matching zur Cleanup-Zeit gegen die gespeicherten Inhalte — kein Filter-Flag am `Item`, Keyword-Änderungen wirken beim nächsten App-Start sofort.
 
 ### Ausnahmen von der Invariante

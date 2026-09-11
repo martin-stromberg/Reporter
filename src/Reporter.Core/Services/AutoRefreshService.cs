@@ -18,7 +18,6 @@ public class AutoRefreshService : IAutoRefreshService
     private readonly SemaphoreSlim _stateLock = new(1, 1);
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
-    private int _syncRunning;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AutoRefreshService"/> class.
@@ -114,11 +113,6 @@ public class AutoRefreshService : IAutoRefreshService
         {
             while (await timer.WaitForNextTickAsync(cancellationToken))
             {
-                if (Interlocked.Exchange(ref _syncRunning, 1) == 1)
-                {
-                    continue;
-                }
-
                 try
                 {
                     await _feedSyncService.SyncAllAsync(cancellationToken);
@@ -130,10 +124,6 @@ public class AutoRefreshService : IAutoRefreshService
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"AutoRefreshService sync failed: {ex}");
-                }
-                finally
-                {
-                    Interlocked.Exchange(ref _syncRunning, 0);
                 }
             }
         }

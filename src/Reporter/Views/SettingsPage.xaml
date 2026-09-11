@@ -89,6 +89,7 @@
                                                 <Label Text="{Binding KeywordText}"
                                                        VerticalOptions="Center"/>
                                                 <Button Text="×"
+                                                        SemanticProperties.Description="{Binding KeywordText, StringFormat={x:Static strings:AppResources.SettingsKeywordRemoveFormat}}"
                                                         Command="{Binding BindingContext.RemoveKeywordCommand, Source={x:Reference PageRoot}}"
                                                         CommandParameter="{Binding .}"
                                                         BackgroundColor="Transparent"
@@ -120,10 +121,15 @@
                                     <Label Text="{x:Static strings:AppResources.SettingsKeywordMatchHint}"
                                            Style="{StaticResource MetaStyle}"/>
                                 </VerticalStackLayout>
-                                <Switch Grid.Column="1"
-                                        IsToggled="True"
-                                        IsEnabled="False"
-                                        VerticalOptions="Center"/>
+                                <Border Grid.Column="1"
+                                        Padding="10,4"
+                                        StrokeShape="RoundRectangle 12"
+                                        Stroke="Transparent"
+                                        Background="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+                                        VerticalOptions="Center">
+                                    <Label Text="{x:Static strings:AppResources.SettingsKeywordMatchStatus}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </Border>
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
@@ -240,9 +246,26 @@
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <VerticalStackLayout Spacing="8">
-                                    <Label Text="{x:Static strings:AppResources.SettingsQuietHoursLabel}"/>
-                                    <Grid ColumnDefinitions="*,*"
+                                    <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8">
+                                        <VerticalStackLayout VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <Label Text="{x:Static strings:AppResources.SettingsQuietHoursLabel}"/>
+                                            <Label Text="{x:Static strings:AppResources.SettingsQuietHoursHint}"
+                                                   Style="{StaticResource MetaStyle}"/>
+                                        </VerticalStackLayout>
+                                        <Switch Grid.Column="1"
+                                                IsToggled="{Binding QuietHoursEnabled}"
+                                                VerticalOptions="Center"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,*"
+                                          ColumnSpacing="8"
+                                          IsEnabled="{Binding QuietHoursEnabled}">
+                                        <Grid.Triggers>
+                                            <DataTrigger TargetType="Grid" Binding="{Binding QuietHoursEnabled}" Value="False">
+                                                <Setter Property="Opacity" Value="0.4"/>
+                                            </DataTrigger>
+                                        </Grid.Triggers>
                                         <Border Grid.Column="0"
                                                 Padding="8"
                                                 StrokeShape="RoundRectangle 8"

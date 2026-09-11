@@ -18,9 +18,9 @@ public partial class SettingsViewModel : BaseViewModel
     private const int MaxKeywordLength = 500;
     private const int DefaultRefreshIntervalMinutes = 30;
     private const int DefaultAutoMarkReadDelaySeconds = 5;
-    private const string AutoMarkReadModeEnabled = "on_open";
-    private const string AutoMarkReadModeDisabled = "off";
-    private const string ThemeSystem = "system";
+
+    private static readonly TimeSpan DefaultQuietHoursStart = new(22, 0, 0);
+    private static readonly TimeSpan DefaultQuietHoursEnd = new(7, 0, 0);
 
     private readonly ISettingsRepository _settingsRepository;
     private readonly IKeywordRepository _keywordRepository;
@@ -37,6 +37,7 @@ public partial class SettingsViewModel : BaseViewModel
     private bool _autoMarkReadEnabled = true;
     private AutoMarkReadDelayOption? _selectedAutoMarkReadDelay;
     private bool _notificationsEnabled = true;
+    private bool _quietHoursEnabled;
     private TimeSpan? _quietHoursStart;
     private TimeSpan? _quietHoursEnd;
     private ThemeOption? _selectedTheme;
@@ -81,9 +82,9 @@ public partial class SettingsViewModel : BaseViewModel
         };
         ThemeOptions = new List<ThemeOption>
         {
-            new() { Value = "system", Label = AppResources.SettingsThemeSystem },
-            new() { Value = "light", Label = AppResources.SettingsThemeLight },
-            new() { Value = "dark", Label = AppResources.SettingsThemeDark },
+            new() { Value = SettingsValues.ThemeSystem, Label = AppResources.SettingsThemeSystem },
+            new() { Value = SettingsValues.ThemeLight, Label = AppResources.SettingsThemeLight },
+            new() { Value = SettingsValues.ThemeDark, Label = AppResources.SettingsThemeDark },
         };
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
@@ -260,6 +261,34 @@ public partial class SettingsViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets or sets a value indicating whether quiet hours are active.
+    /// Turning this off persists <c>null</c> for the quiet-hours times while the displayed
+    /// <see cref="QuietHoursStart"/> and <see cref="QuietHoursEnd"/> values are kept for the
+    /// running session; turning it on restores those values or applies default times when
+    /// none were set.
+    /// </summary>
+    public bool QuietHoursEnabled
+    {
+        get => _quietHoursEnabled;
+        set
+        {
+            if (SetProperty(ref _quietHoursEnabled, value))
+            {
+                if (value)
+                {
+                    _quietHoursStart ??= DefaultQuietHoursStart;
+                    _quietHoursEnd ??= DefaultQuietHoursEnd;
+
+                    OnPropertyChanged(nameof(QuietHoursStart));
+                    OnPropertyChanged(nameof(QuietHoursEnd));
+                }
+
+                PersistOnChange();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the start of quiet hours.
     /// </summary>
     public TimeSpan? QuietHoursStart
@@ -339,14 +368,15 @@ public partial class SettingsViewModel : BaseViewModel
             AutoRefreshEnabled = settings.AutoRefreshEnabled;
             SelectedRefreshInterval = RefreshIntervalOptions.FirstOrDefault(o => o.Minutes == settings.RefreshIntervalMinutes)
                 ?? RefreshIntervalOptions.First(o => o.Minutes == DefaultRefreshIntervalMinutes);
-            AutoMarkReadEnabled = settings.AutoMarkReadMode != AutoMarkReadModeDisabled;
+            AutoMarkReadEnabled = SettingsValues.IsAutoMarkReadEnabled(settings.AutoMarkReadMode);
             SelectedAutoMarkReadDelay = AutoMarkReadDelayOptions.FirstOrDefault(o => o.Seconds == settings.AutoMarkReadDelaySeconds)
                 ?? AutoMarkReadDelayOptions.First(o => o.Seconds == DefaultAutoMarkReadDelaySeconds);
             NotificationsEnabled = settings.NotificationsEnabled;
-            QuietHoursStart = settings.QuietHoursStart;
-            QuietHoursEnd = settings.QuietHoursEnd;
+            QuietHoursStart = settings.QuietHoursStart ?? _quietHoursStart;
+            QuietHoursEnd = settings.QuietHoursEnd ?? _quietHoursEnd;
+            QuietHoursEnabled = settings.QuietHoursStart is not null || settings.QuietHoursEnd is not null;
             SelectedTheme = ThemeOptions.FirstOrDefault(o => o.Value == settings.Theme)
-                ?? ThemeOptions.First(o => o.Value == ThemeSystem);
+                ?? ThemeOptions.First(o => o.Value == SettingsValues.ThemeSystem);
 
             Keywords.Clear();
             var keywords = await _keywordRepository.GetAllAsync();
@@ -393,14 +423,14 @@ public partial class SettingsViewModel : BaseViewModel
             {
                 Id = previous?.Id ?? Settings.DefaultId,
                 RetentionDays = Math.Clamp((int)Math.Round(RetentionDays), MinRetentionDays, MaxRetentionDays),
-                AutoMarkReadMode = AutoMarkReadEnabled ? AutoMarkReadModeEnabled : AutoMarkReadModeDisabled,
+                AutoMarkReadMode = AutoMarkReadEnabled ? SettingsValues.AutoMarkReadOnOpen : SettingsValues.AutoMarkReadOff,
                 AutoMarkReadDelaySeconds = SelectedAutoMarkReadDelay?.Seconds ?? DefaultAutoMarkReadDelaySeconds,
                 NotificationsEnabled = NotificationsEnabled,
-                QuietHoursStart = QuietHoursStart,
-                QuietHoursEnd = QuietHoursEnd,
+                QuietHoursStart = QuietHoursEnabled ? QuietHoursStart : null,
+                QuietHoursEnd = QuietHoursEnabled ? QuietHoursEnd : null,
                 AutoRefreshEnabled = AutoRefreshEnabled,
                 RefreshIntervalMinutes = SelectedRefreshInterval?.Minutes ?? DefaultRefreshIntervalMinutes,
-                Theme = SelectedTheme?.Value ?? ThemeSystem,
+                Theme = SelectedTheme?.Value ?? SettingsValues.ThemeSystem,
             };
 
             await _settingsRepository.SaveAsync(updated);

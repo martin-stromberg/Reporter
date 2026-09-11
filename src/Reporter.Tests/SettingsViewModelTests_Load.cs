@@ -68,6 +68,7 @@ public class SettingsViewModelTests_Load : IDisposable
         Assert.False(_viewModel.AutoMarkReadEnabled);
         Assert.Equal(3, _viewModel.SelectedAutoMarkReadDelay?.Seconds);
         Assert.False(_viewModel.NotificationsEnabled);
+        Assert.True(_viewModel.QuietHoursEnabled);
         Assert.Equal(new TimeSpan(22, 0, 0), _viewModel.QuietHoursStart);
         Assert.Equal(new TimeSpan(7, 0, 0), _viewModel.QuietHoursEnd);
         Assert.Equal("dark", _viewModel.SelectedTheme?.Value);
@@ -101,5 +102,32 @@ public class SettingsViewModelTests_Load : IDisposable
         Assert.Equal(30, _viewModel.SelectedRefreshInterval?.Minutes);
         Assert.Equal(5, _viewModel.SelectedAutoMarkReadDelay?.Seconds);
         Assert.Equal("system", _viewModel.SelectedTheme?.Value);
+    }
+
+    /// <summary>
+    /// Verifies that persisted settings without quiet hours load with the quiet-hours
+    /// switch turned off and both time values unset.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_WithoutQuietHours_QuietHoursDisabled()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.QuietHoursEnabled);
+        Assert.Null(_viewModel.QuietHoursStart);
+        Assert.Null(_viewModel.QuietHoursEnd);
+    }
+
+    /// <summary>
+    /// Verifies that the theme options expose exactly the persisted values "system",
+    /// "light" and "dark" defined by <see cref="SettingsValues"/>.
+    /// </summary>
+    [Fact]
+    public void ThemeOptions_ExposePersistedValues()
+    {
+        Assert.Equal(
+            new[] { "system", "light", "dark" },
+            _viewModel.ThemeOptions.Select(o => o.Value).ToArray());
     }
 }

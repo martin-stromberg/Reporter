@@ -27,7 +27,7 @@
 
 ## Keyword-Matching ist fest verdrahtet
 
-**Beschreibung:** Die Match-Semantik ist Teilwort + case-insensitiv und **nicht** konfigurierbar. Der Switch „Teilwort & Case-Insensitive" in der UI ist `IsToggled="True" IsEnabled="False"` — reine Darstellung des festen Verhaltens.
+**Beschreibung:** Die Match-Semantik ist Teilwort + case-insensitiv und **nicht** konfigurierbar. In der UI ist das als nicht-interaktives Badge „Immer aktiv" (`SettingsKeywordMatchStatus`) neben der Zeile „Teilwort & Case-Insensitive" dargestellt.
 
 **Bedingungen:**
 - Match-Felder: `Item.Title` **und** `Item.ContentHtml`; `Item.Link` wird bewusst nicht gematcht (URLs sind opak, Zufallstreffer-Gefahr).
@@ -51,12 +51,12 @@
 **Beschreibung:** Der globale Ein/Aus-Schalter „Automatisch als gelesen markieren" schreibt kein Boolean, sondern den Modus-String: `"on_open"` bei Ein, `"off"` bei Aus.
 
 **Verhalten:**
-- `AutoMarkReadMode != "off"` → automatische Markierung aktiv. Damit bleiben der Seed-Default `"on_scroll"` und bestehende Fallbacks rückwärtskompatibel aktiviert.
-- `AutoMarkReadMode == "off"` → `ArticleDetailViewModel` startet den `MarkReadDelayedAsync`-Timer nicht.
+- `AutoMarkReadMode != "off"` → automatische Markierung aktiv (`SettingsValues.IsAutoMarkReadEnabled`). Damit bleiben der Seed-Default `"on_scroll"` und bestehende Fallbacks rückwärtskompatibel aktiviert.
+- `AutoMarkReadMode == "off"` → `ArticleDetailViewModel` startet den `MarkReadDelayedAsync`-Timer nicht und setzt `IsAutoMarkReadAvailable = false`: Der lokale Schalter in der Detailansicht ist dann deaktiviert und abgedunkelt (`Opacity` 0,4), das Label lautet `ArticleAutoMarkReadDisabled` („Auto-Gelesen (in den Einstellungen deaktiviert)").
 - Verzögerung `AutoMarkReadDelaySeconds >= 0` ist zulässig — die Option „Sofort" (0 s) markiert ohne spürbare Wartezeit.
 - Der lokale `IsAutoMarkRead`-Toggle in der Detailansicht bleibt eine sitzungsbezogene Abwahl; beide Bedingungen müssen erfüllt sein.
 
-**Umsetzung:** `SettingsViewModel` (Konstanten `AutoMarkReadModeEnabled`/`AutoMarkReadModeDisabled`), `ArticleDetailViewModel.LoadAsync`/`OnAutoMarkReadChanged`.
+**Umsetzung:** `SettingsValues` (Konstanten `AutoMarkReadOnOpen`/`AutoMarkReadOnScroll`/`AutoMarkReadOff`, Prüfmethode `IsAutoMarkReadEnabled`), `SettingsViewModel.AutoMarkReadEnabled`, `ArticleDetailViewModel.LoadAsync`/`OnAutoMarkReadChanged`/`IsAutoMarkReadAvailable`.
 
 ## Refresh-Intervall-Wertebereich
 
@@ -83,4 +83,10 @@
 
 **Beschreibung:** `QuietHoursStart`/`QuietHoursEnd` werden unvalidiert gespeichert; Bereiche über Mitternacht (z. B. 22:00–07:00) sind zulässig. Die Auswertung (Wrap-around, Unterdrückung von Benachrichtigungen, Keyword-Einfluss) ist **nicht** Teil dieses Features und folgt mit dem Benachrichtigungs-Arbeitspaket.
 
-**Umsetzung:** `SettingsViewModel` (zwei `TimeSpan?`-Eigenschaften, `TimePicker`-Bindung), `SettingsRepository.SaveAsync`.
+**Verhalten:**
+- `QuietHoursEnabled` existiert nur im `SettingsViewModel` — die Aktivierung ergibt sich beim Laden aus `QuietHoursStart is not null || QuietHoursEnd is not null`.
+- Ausschalten persistiert `null` für beide Felder; die zuletzt gewählten Werte bleiben in den ViewModel-Feldern erhalten und werden beim Wiedereinschalten derselben Sitzung restauriert.
+- Einschalten ohne gesetzte Werte befüllt die Defaults `DefaultQuietHoursStart` (22:00) / `DefaultQuietHoursEnd` (07:00).
+- Die `TimePicker` sind per `IsEnabled`-Binding an den Schalter gekoppelt und bei ausgeschalteter Ruhezeit auf `Opacity` 0,4 abgedunkelt.
+
+**Umsetzung:** `SettingsViewModel.QuietHoursEnabled`/`QuietHoursStart`/`QuietHoursEnd` (`TimePicker`-Bindung, `null`-Mapping in `PersistAsync`), `SettingsRepository.SaveAsync`.

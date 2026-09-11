@@ -1,4 +1,5 @@
 using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
 
 namespace Reporter.Services;
 
@@ -17,8 +18,8 @@ public class AppThemeService : IAppThemeService
 
         Application.Current.UserAppTheme = theme switch
         {
-            "light" => AppTheme.Light,
-            "dark" => AppTheme.Dark,
+            SettingsValues.ThemeLight => AppTheme.Light,
+            SettingsValues.ThemeDark => AppTheme.Dark,
             _ => AppTheme.Unspecified,
         };
     }

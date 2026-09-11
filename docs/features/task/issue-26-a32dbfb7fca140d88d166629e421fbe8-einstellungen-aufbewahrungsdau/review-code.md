@@ -6,72 +6,40 @@
 
 ## Befunde
 
-### AutoRefreshService.cs (AutoRefreshService)
+### `ArticleDetailViewModel.cs` (ArticleDetailViewModel)
 
-- **Toter Code / Testqualität** — Der `_syncRunning`-Guard (Zeilen 21, 117–120, 134–137) ist unerreichbar: `RunLoopAsync` führt `WaitForNextTickAsync` und `SyncAllAsync` streng sequenziell in einer einzigen Schleife aus; `_syncRunning` wird im `finally` derselben Iteration zurückgesetzt, bevor der nächste Tick ausgewertet wird, und `PeriodicTimer` koalesciert verpasste Ticks ohnehin. Zwei parallele Loops sind durch `_stateLock` + Await in `StopLoopAsync` ausgeschlossen. Der Guard kann daher niemals auslösen. Der Test `OverlappingTick_SkipsSync` (`AutoRefreshServiceTests.cs`, Zeilen 157–174) suggeriert, dieses Verhalten zu prüfen, würde aber auch ohne den Guard grün sein — er verifiziert nur die sequenzielle Abarbeitung des Timers.
+- **Hardcodierte Werte / inkonsistente Lokalisierung** — `AutoMarkReadLabel` mischt in derselben Zuweisung einen hartcodierten deutschen Format-String mit einem lokalisierten Ressourcen-Key: `AutoMarkReadLabel = IsAutoMarkReadAvailable ? $"Auto-Gelesen ({_autoMarkReadDelaySeconds} s)" : AppResources.ArticleAutoMarkReadDisabled;` (Zeilen 266–268; ebenso der Feldinitialisierer `"Auto-Gelesen (5 s)"` in Zeile 43). Da `ArticleAutoMarkReadDisabled` in dieser Runde für Deutsch **und** Englisch angelegt wurde, zeigt dasselbe UI-Element je nach Zustand unterschiedliche Sprachen: deaktiviert → „Auto-read (disabled in settings)" (englisch unter EN-Locale), aktiviert → „Auto-Gelesen (5 s)" (immer deutsch). Schweregrad: niedrig.
 
-  Empfehlung: Entweder den `_syncRunning`-Mechanismus entfernen und den Test entsprechend umbenennen/umdokumentieren (z. B. „kein zweiter Sync bei koalescierten Ticks"), oder den Guard bewusst als defensive Absicherung mit Kommentar behalten und den XML-Kommentar des Tests klarstellen, dass der Überlappungspfad strukturell nicht erreichbar ist.
+  Empfehlung: Ressourcen-Key für den aktivierten Zustand ergänzen (z. B. `ArticleAutoMarkReadDelayFormat` = „Auto-Gelesen ({0} s)" / „Auto-read ({0} s)" in beiden resx-Dateien + Designer) und `AutoMarkReadLabel` über `string.Format(CultureInfo.CurrentCulture, ...)` setzen; Feldinitialisierer ebenfalls auf den Key umstellen.
 
-### AutoRefreshServiceTests.cs (AutoRefreshServiceTests)
+## Geprüfte Schwerpunkte dieser Runde (ohne Befund)
 
-- **Testqualität** — `StopAsync_DisposesLoopCancellationTokenSource` (Zeilen 203–216) liest per Reflection das private Feld `_loopCts` und prüft `ObjectDisposedException` am Token. Der Test koppelt sich an den internen Feldnamen und die Implementierungsform statt an fachliches Verhalten; eine Umbenennung des Felds oder ein Wechsel der Cancellation-Strategie bricht den Test, obwohl das Verhalten korrekt bleibt.
-
-  Empfehlung: Die Dispose-Eigenschaft verhaltensnah prüfen (z. B. wiederholte Start/Stop-Zyklen ohne Fehler) oder den Reflection-Zugriff zumindest in eine Hilfsmethode kapseln, damit nur eine Stelle vom Feldnamen abhängt.
-
-### ArticleDetailViewModel.cs / SettingsViewModel.cs / AppThemeService.cs
-
-- **Hardcodierte Werte / Doppelter Code** — Die Settings-Werte `"on_open"` und `"off"` liegen als private Konstanten in `SettingsViewModel` (Zeilen 21–22) vor, werden aber in `ArticleDetailViewModel` als Literale dupliziert (Zeilen 243, 273, 392). Ebenso wird `"system"` in `SettingsViewModel` Zeile 84 als Literal verwendet, obwohl die Konstante `ThemeSystem` (Zeile 23) existiert, und `"light"`/`"dark"` sind als Literale in `AppThemeService` (Zeilen 20–21) wiederholt. Bei einer Umbenennung eines Mode-Werts laufen die Stellen auseinander.
-
-  Empfehlung: Zentrale Konstanten einführen (z. B. `public const` auf `Reporter.Core.Models.Settings` oder eine `SettingsValues`-Klasse in `Reporter.Core`) und alle Literale — inklusive `SettingsViewModel` Zeile 84 — darauf umstellen.
-
-### TestWaitHelper.cs (TestWaitHelper)
-
-- **Doppelter Code** — Die beiden `WaitUntilAsync`-Overloads (Zeilen 14–28 und 36–50) duplizieren die komplette Polling-Schleife (Deadline-Berechnung, `while`-Schleife, `Task.Delay(10)`, abschließendes `Assert.True`).
-
-  Empfehlung: Der synchrone Overload kann an den asynchronen delegieren (`WaitUntilAsync(() => Task.FromResult(condition()), timeoutMilliseconds)`), sodass die Schleife nur einmal existiert.
+- **`SettingsValues.IsAutoMarkReadEnabled`** (`src/Reporter.Core/Models/SettingsValues.cs`, Zeilen 43–46): Semantik deckt sich exakt mit dem bisherigen `!= "off"`-Gate — `null`, `"on_open"`, `"on_scroll"` und unbekannte Legacy-Werte → `true`, nur `"off"` → `false`. Alle Produktiv-Stellen (`SettingsViewModel.LoadAsync` Zeile 371, `ArticleDetailViewModel` Zeilen 254/262) nutzen die Konstanten/Methode; verbleibende Literale nur in Migrations/Snapshot (korrekt historisch), Tests und Doku.
+- **`QuietHoursEnabled`-Session-Retention** (`SettingsViewModel.cs`, Zeilen 270–289, 375–377, 429–430): Setter füllt beim Aktivieren via `??=` Defaults (22:00/07:00) ohne Session-Werte zu überschreiben; beim Deaktivieren bleiben `_quietHoursStart`/`_quietHoursEnd` erhalten, `PersistAsync` schreibt `null`. `LoadAsync`-`??`-Reihenfolge korrekt: Zeiten werden vor `QuietHoursEnabled` gesetzt, sodass `??=` partielle Persistenzstände (nur Start oder nur End) mit Session-/Default-Werten auffüllt; `_isLoading` unterdrückt Persistierung während des Ladens. `_persistLock`-Interaktion sauber: Persist-Snapshot wird innerhalb des Locks gegen den zuletzt gespeicherten Stand verglichen; Feld-Mutationen via `??=` erfolgen vor `PersistOnChange()`. Edge Cases (Toggle off→on stellt Session-Werte wieder her, Reload bei ausgeschalteter Ruhezeit behält Session-Werte) durch neue Tests abgedeckt.
+- **resx-Konsistenz**: `ArticleAutoMarkReadDisabled` und `SettingsKeywordRemoveFormat` in `AppResources.resx`, `AppResources.de.resx` und `AppResources.Designer.cs` vorhanden; vollständige Key-Parität DE/EN verifiziert (diff der `data name`-Listen leer); `{0}`-Platzhalter in beiden Sprachen vorhanden, `StringFormat`-Verwendung in `SettingsPage.xaml` (Zeile 92) korrekt.
+- **`ArticleDetailPage.xaml`** (Zeilen 37–50): `IsEnabled`-Bindung auf `IsAutoMarkReadAvailable`, Opacity-Trigger 0.4 konsistent mit dem Disabled-Pattern der Settings-Seite, `SemanticProperties.Description` an `AutoMarkReadLabel` gebunden.
+- **Testqualität**: `SettingsValuesTests_AutoMarkRead` (Theory, ein fachlicher Fall pro InlineData, AAA), neue QuietHours-Tests (`QuietHoursEnabled_TurnedOff_PersistsNull`, `QuietHoursEnabled_ToggledOffAndOn_RestoresSessionValues`, `QuietHoursEnabled_TurnedOff_ReloadKeepsSessionValues`, `QuietHoursEnabled_TurnedOn_AppliesDefaults`, `QuietHoursEnabled_TurnedOn_KeepsExistingValues`) prüfen jeweils genau einen Fall mit `WaitUntilAsync` gegen das echte Repository; E2E-Anpassung (`QuietHoursEnabled = true` vor dem Setzen der Zeiten) korrekt.
+- **Toter Code**: `_autoMarkReadMode` vollständig entfernt; `SettingsValues.AutoMarkReadOnScroll` weiterhin als Entity-Default referenziert (`src/Reporter.Data/Entities/Settings.cs`, Zeile 29). Hinweis außerhalb des Branch-Umfangs: `ToggleAutoMarkReadCommand` ist weiterhin ungenutzt, stammt aber aus einem älteren Feature (Commit 6be93a1, Vorfahre von `origin/staging`).
+- **Zusatz-Prüfregel (UI-Aktions-Events)**: Keine `RaiseUiActionRequested`-artigen Events in der Codebasis vorhanden — nicht anwendbar.
 
 ## Geprüfte Dateien
 
 Liste aller geprüften Dateien:
-- `src/Reporter.Core/Interfaces/IAppThemeService.cs`
-- `src/Reporter.Core/Interfaces/IAutoRefreshService.cs`
-- `src/Reporter.Core/Interfaces/IItemRepository.cs`
-- `src/Reporter.Core/Interfaces/IKeywordMatcher.cs`
 - `src/Reporter.Core/Models/Settings.cs`
+- `src/Reporter.Core/Models/SettingsValues.cs`
 - `src/Reporter.Core/Resources/Strings/AppResources.Designer.cs`
 - `src/Reporter.Core/Resources/Strings/AppResources.de.resx`
 - `src/Reporter.Core/Resources/Strings/AppResources.resx`
 - `src/Reporter.Core/Services/AutoRefreshService.cs`
-- `src/Reporter.Core/Services/KeywordMatcher.cs`
-- `src/Reporter.Core/Services/RetentionCleanupService.cs`
-- `src/Reporter.Core/ViewModels/AutoMarkReadDelayOption.cs`
-- `src/Reporter.Core/ViewModels/RefreshIntervalOption.cs`
 - `src/Reporter.Core/ViewModels/SettingsViewModel.cs`
-- `src/Reporter.Core/ViewModels/ThemeOption.cs`
 - `src/Reporter.Data/Entities/Settings.cs`
-- `src/Reporter.Data/Migrations/20260911080630_AddSettingsAutoRefreshAndTheme.cs`
-- `src/Reporter.Data/Migrations/20260911080630_AddSettingsAutoRefreshAndTheme.Designer.cs`
-- `src/Reporter.Data/Migrations/ReporterDbContextModelSnapshot.cs`
-- `src/Reporter.Data/ReporterDbContext.cs`
-- `src/Reporter.Data/Repositories/ItemRepository.cs`
-- `src/Reporter.Data/Repositories/SettingsRepository.cs`
-- `src/Reporter/App.xaml.cs`
-- `src/Reporter/MauiProgram.cs`
 - `src/Reporter/Services/AppThemeService.cs`
 - `src/Reporter/ViewModels/ArticleDetailViewModel.cs`
+- `src/Reporter/Views/ArticleDetailPage.xaml`
 - `src/Reporter/Views/SettingsPage.xaml`
-- `src/Reporter/Views/SettingsPage.xaml.cs`
 - `src/Reporter.Tests/AutoRefreshServiceTests.cs`
-- `src/Reporter.Tests/FakeAppThemeService.cs`
-- `src/Reporter.Tests/FakeAutoRefreshService.cs`
-- `src/Reporter.Tests/FakeFeedSyncService.cs`
-- `src/Reporter.Tests/ItemRepositoryTests.cs`
-- `src/Reporter.Tests/KeywordMatcherTests.cs`
-- `src/Reporter.Tests/Reporter.Tests.csproj`
-- `src/Reporter.Tests/RetentionCleanupServiceTests.cs`
-- `src/Reporter.Tests/SettingsRepositoryTests.cs`
+- `src/Reporter.Tests/SettingsValuesTests_AutoMarkRead.cs`
 - `src/Reporter.Tests/SettingsViewModelTests_E2E.cs`
-- `src/Reporter.Tests/SettingsViewModelTests_Keywords.cs`
 - `src/Reporter.Tests/SettingsViewModelTests_Load.cs`
 - `src/Reporter.Tests/SettingsViewModelTests_Persist.cs`
 - `src/Reporter.Tests/TestWaitHelper.cs`

@@ -119,6 +119,8 @@ Alle nutzerkonfigurierbaren Optionen liegen im Singleton-`Settings`-Datensatz (T
 | Ruhezeit VON/BIS | `QuietHoursStart` / `QuietHoursEnd` | `null` | Nicht-stören-Zeitraum, auch über Mitternacht |
 | Erscheinungsbild | `Theme` | `"system"` | `"system"` / `"light"` / `"dark"` |
 
+Der Ein/Aus-Schalter für die Ruhezeit ist reiner Ansichts-Zustand (`QuietHoursEnabled`, keine eigene Spalte): Ausgeschaltet werden `QuietHoursStart`/`QuietHoursEnd` als `null` persistiert, die zuletzt gewählten Zeiten bleiben für die Sitzung erhalten.
+
 Keyword-Filter liegen als eigene Datensätze in der Tabelle `keywords`. Details siehe [docs/help/einstellungen/](docs/help/einstellungen/index.md).
 
 ## Architektur

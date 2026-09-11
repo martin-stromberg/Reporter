@@ -7,6 +7,7 @@ using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 
 namespace Reporter.Core.ViewModels;
 
@@ -41,9 +42,9 @@ public partial class ArticleDetailViewModel : BaseViewModel
     private string _htmlSource = string.Empty;
     private string _autoMarkReadLabel = "Auto-Gelesen (5 s)";
     private bool _isAutoMarkRead = true;
+    private bool _isAutoMarkReadAvailable = true;
     private int _fontSizeIndex;
     private int _autoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds;
-    private string? _autoMarkReadMode;
     private CancellationTokenSource? _autoMarkCts;
     private readonly object _autoMarkLock = new object();
 
@@ -154,6 +155,16 @@ public partial class ArticleDetailViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets a value indicating whether the global auto-mark-as-read setting allows
+    /// the local toggle to take effect.
+    /// </summary>
+    public bool IsAutoMarkReadAvailable
+    {
+        get => _isAutoMarkReadAvailable;
+        private set => SetProperty(ref _isAutoMarkReadAvailable, value);
+    }
+
+    /// <summary>
     /// Gets or sets the current font size index.
     /// </summary>
     public int FontSizeIndex
@@ -240,7 +251,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
                 {
                     Id = Settings.DefaultId,
                     RetentionDays = 30,
-                    AutoMarkReadMode = "on_open",
+                    AutoMarkReadMode = SettingsValues.AutoMarkReadOnOpen,
                     AutoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds,
                     NotificationsEnabled = true,
                     AutoRefreshEnabled = true,
@@ -248,11 +259,13 @@ public partial class ArticleDetailViewModel : BaseViewModel
                 };
             }
 
-            _autoMarkReadMode = settings.AutoMarkReadMode;
+            IsAutoMarkReadAvailable = SettingsValues.IsAutoMarkReadEnabled(settings.AutoMarkReadMode);
             _autoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds >= 0
                 ? settings.AutoMarkReadDelaySeconds
                 : DefaultAutoMarkDelaySeconds;
-            AutoMarkReadLabel = $"Auto-Gelesen ({_autoMarkReadDelaySeconds} s)";
+            AutoMarkReadLabel = IsAutoMarkReadAvailable
+                ? $"Auto-Gelesen ({_autoMarkReadDelaySeconds} s)"
+                : AppResources.ArticleAutoMarkReadDisabled;
 
             var item = await _itemRepository.GetByIdAsync(itemId);
             if (item is null)
@@ -270,7 +283,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
             ReadingTime = CalculateReadingTime(item.ContentHtml);
             RebuildHtml();
 
-            if (IsAutoMarkRead && settings.AutoMarkReadMode != "off" && !Item.IsRead)
+            if (IsAutoMarkRead && IsAutoMarkReadAvailable && !Item.IsRead)
             {
                 _ = MarkReadDelayedAsync(TimeSpan.FromSeconds(_autoMarkReadDelaySeconds));
             }
@@ -389,7 +402,7 @@ blockquote {{
     {
         CancelAutoMarkRead();
 
-        if (IsAutoMarkRead && _autoMarkReadMode != "off" && Item is not null && !Item.IsRead)
+        if (IsAutoMarkRead && IsAutoMarkReadAvailable && Item is not null && !Item.IsRead)
         {
             _ = MarkReadDelayedAsync(TimeSpan.FromSeconds(_autoMarkReadDelaySeconds));
         }

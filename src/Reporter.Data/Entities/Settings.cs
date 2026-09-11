@@ -1,3 +1,5 @@
+using Reporter.Core.Models;
+
 namespace Reporter.Data.Entities;
 
 /// <summary>
@@ -24,7 +26,7 @@ public class Settings
     /// <summary>
     /// Gets or sets the auto-mark-as-read mode.
     /// </summary>
-    public string? AutoMarkReadMode { get; set; } = "on_scroll";
+    public string? AutoMarkReadMode { get; set; } = SettingsValues.AutoMarkReadOnScroll;
 
     /// <summary>
     /// Gets or sets the delay before an item is marked as read automatically.
@@ -59,5 +61,5 @@ public class Settings
     /// <summary>
     /// Gets or sets the appearance theme ("system", "light" or "dark").
     /// </summary>
-    public string? Theme { get; set; } = "system";
+    public string? Theme { get; set; } = SettingsValues.ThemeSystem;
 }

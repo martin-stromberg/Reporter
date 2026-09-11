@@ -59,5 +59,5 @@ public class Settings
     /// <summary>
     /// Gets the appearance theme ("system", "light" or "dark").
     /// </summary>
-    public string? Theme { get; init; } = "system";
+    public string? Theme { get; init; } = SettingsValues.ThemeSystem;
 }

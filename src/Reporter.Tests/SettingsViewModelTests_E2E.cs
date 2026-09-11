@@ -55,6 +55,7 @@ public class SettingsViewModelTests_E2E : IDisposable
         _viewModel.RetentionDays = 90;
         _viewModel.SaveRetentionCommand.Execute(null);
         _viewModel.NotificationsEnabled = false;
+        _viewModel.QuietHoursEnabled = true;
         _viewModel.QuietHoursStart = new TimeSpan(22, 0, 0);
         _viewModel.QuietHoursEnd = new TimeSpan(7, 0, 0);
         _viewModel.AutoRefreshEnabled = false;

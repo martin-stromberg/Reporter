@@ -1,7 +1,7 @@
 # Offene Aufgaben
 
-Erstellt am: 2026-09-11
-Abbruchgrund: Kein Fortschritt zwischen den letzten zwei Iterationen (6 offene Punkte in Iteration 1, 6 offene Punkte in Iteration 2)
+Erstellt am: 2026-09-11 (Fortsetzungslauf, 2. Abbruch)
+Abbruchgrund: Kein Fortschritt zwischen den letzten zwei Iterationen (3 offene Punkte in Fortsetzungs-Iteration 1, 3 offene Punkte in Fortsetzungs-Iteration 2)
 
 Die folgenden Aufgaben konnten im automatisierten Zyklus nicht abgeschlossen werden
 und müssen manuell oder in einem erneuten Lauf bearbeitet werden.
@@ -12,16 +12,15 @@ Keine — `review.md` trägt den Status `Vollständig umgesetzt`.
 
 ## Code-Review-Befunde
 
-- [ ] `AutoRefreshService.cs` (`AutoRefreshService`) — **Toter Code / Testqualität:** Der `_syncRunning`-Guard (Zeilen 21, 117–120, 134–137) ist strukturell unerreichbar; `RunLoopAsync` arbeitet `WaitForNextTickAsync` und `SyncAllAsync` streng sequenziell ab und `PeriodicTimer` koalesciert verpasste Ticks. Der Test `OverlappingTick_SkipsSync` (`AutoRefreshServiceTests.cs`, Zeilen 157–174) würde auch ohne Guard grün sein. Empfehlung: Guard entfernen und Test umbenennen/umdokumentieren, oder Guard als defensive Absicherung mit Kommentar behalten und XML-Kommentar des Tests klarstellen.
-- [ ] `AutoRefreshServiceTests.cs` (`AutoRefreshServiceTests`) — **Testqualität:** `StopAsync_DisposesLoopCancellationTokenSource` (Zeilen 203–216) liest per Reflection das private Feld `_loopCts` und prüft `ObjectDisposedException` — koppelt sich an Implementierungsdetails statt an fachliches Verhalten. Empfehlung: verhaltensnah prüfen (wiederholte Start/Stop-Zyklen) oder Reflection-Zugriff in Hilfsmethode kapseln.
-- [ ] `ArticleDetailViewModel.cs` / `SettingsViewModel.cs` / `AppThemeService.cs` — **Hardcodierte Werte / Doppelter Code:** Die Settings-Werte `"on_open"`/`"off"`/`"system"`/`"light"`/`"dark"` sind als Literale dupliziert, obwohl teils private Konstanten existieren (`SettingsViewModel` Zeilen 21–23; Zeile 84 nutzt `"system"` als Literal trotz `ThemeSystem`; `ArticleDetailViewModel` Zeilen 243, 273, 392; `AppThemeService` Zeilen 20–21). Empfehlung: zentrale Konstanten (z. B. `public const` auf `Reporter.Core.Models.Settings` oder `SettingsValues`-Klasse in `Reporter.Core`) und alle Literale darauf umstellen.
-- [ ] `TestWaitHelper.cs` (`TestWaitHelper`) — **Doppelter Code:** Die beiden `WaitUntilAsync`-Overloads (Zeilen 14–28 und 36–50) duplizieren die komplette Polling-Schleife. Empfehlung: synchroner Overload delegiert an asynchronen (`WaitUntilAsync(() => Task.FromResult(condition()), timeoutMilliseconds)`).
+- [ ] `ArticleDetailViewModel.cs` (`ArticleDetailViewModel`) — **Hardcodierte Werte / inkonsistente Lokalisierung (niedrig):** `AutoMarkReadLabel` (Zeilen 266–268, Feldinitialisierung Zeile 43) mischt den hartcodierten deutschen Format-String `$"Auto-Gelesen ({delay} s)"` mit dem lokalisierten `AppResources.ArticleAutoMarkReadDisabled`. Dasselbe UI-Element erscheint je nach Zustand in unterschiedlicher Sprache. Empfehlung: zusätzlichen resx-Key für den aktivierten Zustand anlegen (z. B. `ArticleAutoMarkReadDelayFormat` „Auto-Gelesen ({0} s)" / „Auto-read ({0} s)") in beiden resx-Dateien + Designer.
 
 ## Usability-Befunde
 
-- [ ] `SettingsPage.xaml` (Sektion „Benachrichtigungen & Ruhezeiten") — **Erreichbarkeit:** `QuietHoursStart`/`QuietHoursEnd` sind fachlich nullable („keine Ruhezeit" ist vorgesehener Zustand), aber die `TimePicker` (Zeilen 244–267) bieten keine Möglichkeit, eine einmal gesetzte Ruhezeit wieder zu entfernen. Empfehlung: Ein/Aus-Schalter „Ruhezeit aktivieren" vor die VON/BIS-Auswahl (analog zum Intervall-Picker-Muster) oder „Zurücksetzen"-Aktion, die beide Felder auf `null` setzt.
-- [ ] `SettingsPage.xaml` (Sektion „Keyword-Filter") — **Erreichbarkeit:** Der Schalter „Teilwort & Case-Insensitive" (Zeilen 123–126) ist `IsToggled="True"` + `IsEnabled="False"` und wirkt wie ein defektes Bedienelement ohne Rückmeldung, warum er gesperrt ist. Empfehlung: festes Verhalten als Status-Text/Badge darstellen (z. B. „Immer aktiv: erkennt auch Varianten innerhalb von Wörtern") statt als gesperrten Switch.
+- [ ] `AppResources.de.resx` / `SettingsPage.xaml` (Sektion „Aufbewahrungsdauer") — **Erreichbarkeit/Beschriftung (niedrig):** `SettingsRetentionInfo` (de.resx Z. 204–206, angezeigt in `SettingsPage.xaml` Z. 48) spricht von „mit Sternchen markierte" Artikel — die App verwendet jedoch ein Lesezeichen-Icon und den Tab „Später"; es gibt kein Sternchen. Empfehlung: „mit Lesezeichen versehene Artikel (Tab „Später")".
+- [ ] `AppResources.de.resx` / `SettingsPage.xaml` (Sektion „Keyword-Filter") — **Erreichbarkeit/Beschriftung (niedrig):** `SettingsKeywordMatchLabel` „Teilwort & Case-Insensitive" (de.resx Z. 216–218, `SettingsPage.xaml` Z. 120) ist englischer Fachjargon; der Hinweis erklärt nur den Teilwort-Aspekt, nicht das Ignorieren der Groß-/Kleinschreibung. Empfehlung: Klartext wie „Teilwort, Groß-/Kleinschreibung egal" (englischen Key entsprechend nachziehen).
 
 ## Fehlgeschlagene Tests
 
-Keine — `test-results.md` trägt den Status `Keine Fehler` (132/132 bestanden).
+Keine — `test-results.md` trägt den Status `Keine Fehler` (144/144 bestanden).
+
+Hinweis (kein offener Punkt, aber für Folgearbeiten relevant): `SettingsViewModelTests_Persist.Persist_QueuedBehindRunningSave_AppliesThemeOnce` zeigte einmalig eine Test-Infrastruktur-Race (`TestDbContextFactory` teilt eine In-Memory-`SqliteConnection` über Contexts; `SqliteException: unable to delete/modify user-function due to active statements`). Bestand in allen Wiederholungsläufen — potenziell in CI wiederkehrend.

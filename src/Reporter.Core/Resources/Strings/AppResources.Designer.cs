@@ -734,6 +734,15 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("SettingsKeywordMatchHint", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Always on ähnelt.
+        /// </summary>
+        public static string SettingsKeywordMatchStatus {
+            get {
+                return ResourceManager.GetString("SettingsKeywordMatchStatus", resourceCulture);
+            }
+        }
 
         /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Filtered articles are deleted after the retention period based on their publication date. ähnelt.
@@ -777,6 +786,15 @@ namespace Reporter.Core.Resources.Strings {
         public static string SettingsQuietHoursLabel {
             get {
                 return ResourceManager.GetString("SettingsQuietHoursLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No notifications during this period ähnelt.
+        /// </summary>
+        public static string SettingsQuietHoursHint {
+            get {
+                return ResourceManager.GetString("SettingsQuietHoursHint", resourceCulture);
             }
         }
 
@@ -921,6 +939,24 @@ namespace Reporter.Core.Resources.Strings {
         public static string SettingsThemeDark {
             get {
                 return ResourceManager.GetString("SettingsThemeDark", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Auto-read (disabled in settings) ähnelt.
+        /// </summary>
+        public static string ArticleAutoMarkReadDisabled {
+            get {
+                return ResourceManager.GetString("ArticleAutoMarkReadDisabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Remove keyword {0} ähnelt.
+        /// </summary>
+        public static string SettingsKeywordRemoveFormat {
+            get {
+                return ResourceManager.GetString("SettingsKeywordRemoveFormat", resourceCulture);
             }
         }
     }

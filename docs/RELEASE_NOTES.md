@@ -8,6 +8,9 @@
 
 ## What's New
 
+- Quiet hours can now be toggled on/off on the Settings page; when off, the from/to time pickers are disabled and no quiet hours are stored (defaults 10:00 PM–7:00 AM if never configured).
+- The local "auto mark as read" switch in the article detail view is disabled and dimmed when the global option is turned off.
+- Settings page polish: the fixed keyword-matching mode is shown as a non-interactive "Always active" badge; screen reader descriptions added for keyword chips and toggles.
 - New full-featured Settings page: retention period, keyword filter, synchronization & reading flow, notifications & quiet hours, and appearance — every change is saved instantly.
 - Keyword filter (blacklist): keywords managed as chips on the Settings page; matching is case-insensitive substring matching on article title and content.
 - Automatic background refresh: periodically syncs all feeds while the app is open, with selectable intervals of 15/30/60/240 minutes.
@@ -25,6 +28,9 @@
 
 ## Neuerungen
 
+- Ruhezeiten lassen sich auf der Einstellungen-Seite jetzt ein- und ausschalten; bei ausgeschalteter Ruhezeit sind die VON/BIS-Felder deaktiviert und es werden keine Ruhezeiten gespeichert (Vorgabe 22:00–07:00, falls nie konfiguriert).
+- Der lokale „Auto-Gelesen"-Schalter in der Artikeldetailansicht ist deaktiviert und abgedunkelt, wenn die globale Option ausgeschaltet ist.
+- Feinschliff der Einstellungen-Seite: der feste Keyword-Matching-Modus wird als nicht-interaktives Badge „Immer aktiv" angezeigt; Screenreader-Beschreibungen für Keyword-Chips und Schalter ergänzt.
 - Neue vollwertige Einstellungen-Seite: Aufbewahrungsdauer, Keyword-Filter, Synchronisation & Lesefluss, Benachrichtigungen & Ruhezeiten sowie Erscheinungsbild — jede Änderung wird sofort gespeichert.
 - Keyword-Filter (Blacklist): Keywords werden als Chips auf der Einstellungen-Seite verwaltet; der Abgleich erfolgt case-insensitiv als Teilwort auf Artikeltitel und -inhalt.
 - Automatische Hintergrund-Aktualisierung: synchronisiert periodisch alle Feeds bei geöffneter App, wählbare Intervalle 15/30/60/240 Minuten.

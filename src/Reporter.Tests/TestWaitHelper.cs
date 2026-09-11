@@ -11,20 +11,9 @@ public static class TestWaitHelper
     /// <param name="condition">The condition to await.</param>
     /// <param name="timeoutMilliseconds">The timeout in milliseconds.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public static async Task WaitUntilAsync(Func<bool> condition, int timeoutMilliseconds = 5000)
+    public static Task WaitUntilAsync(Func<bool> condition, int timeoutMilliseconds = 5000)
     {
-        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMilliseconds);
-        while (!condition())
-        {
-            if (DateTime.UtcNow >= deadline)
-            {
-                break;
-            }
-
-            await Task.Delay(10);
-        }
-
-        Assert.True(condition());
+        return WaitUntilAsync(() => Task.FromResult(condition()), timeoutMilliseconds);
     }
 
     /// <summary>

@@ -113,6 +113,178 @@ public class SettingsViewModelTests_Persist : IDisposable
     }
 
     /// <summary>
+    /// Verifies that turning the quiet-hours switch off persists <c>null</c> for both
+    /// quiet-hours fields so a once-set quiet period can be removed again, while the
+    /// previously displayed times stay in the view model for the running session
+    /// (usability finding: an accidental tap must not destroy the configured times).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task QuietHoursEnabled_TurnedOff_PersistsNull()
+    {
+        var settings = await _settingsRepository.GetAsync();
+        await _settingsRepository.SaveAsync(new Settings
+        {
+            Id = settings.Id,
+            RetentionDays = settings.RetentionDays,
+            AutoMarkReadMode = settings.AutoMarkReadMode,
+            AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
+            NotificationsEnabled = settings.NotificationsEnabled,
+            QuietHoursStart = new TimeSpan(23, 30, 0),
+            QuietHoursEnd = new TimeSpan(6, 15, 0),
+            AutoRefreshEnabled = settings.AutoRefreshEnabled,
+            RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            Theme = settings.Theme,
+        });
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.QuietHoursEnabled);
+
+        _viewModel.QuietHoursEnabled = false;
+        await TestWaitHelper.WaitUntilAsync(async () =>
+        {
+            var s = await _settingsRepository.GetAsync();
+            return s.QuietHoursStart is null && s.QuietHoursEnd is null;
+        });
+
+        Assert.Equal(new TimeSpan(23, 30, 0), _viewModel.QuietHoursStart);
+        Assert.Equal(new TimeSpan(6, 15, 0), _viewModel.QuietHoursEnd);
+        var persisted = await _settingsRepository.GetAsync();
+        Assert.Null(persisted.QuietHoursStart);
+        Assert.Null(persisted.QuietHoursEnd);
+    }
+
+    /// <summary>
+    /// Verifies that turning the quiet-hours switch off and on again within the same
+    /// session restores the previously displayed times instead of the fixed defaults
+    /// and persists them once re-enabled.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task QuietHoursEnabled_ToggledOffAndOn_RestoresSessionValues()
+    {
+        var settings = await _settingsRepository.GetAsync();
+        await _settingsRepository.SaveAsync(new Settings
+        {
+            Id = settings.Id,
+            RetentionDays = settings.RetentionDays,
+            AutoMarkReadMode = settings.AutoMarkReadMode,
+            AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
+            NotificationsEnabled = settings.NotificationsEnabled,
+            QuietHoursStart = new TimeSpan(23, 30, 0),
+            QuietHoursEnd = new TimeSpan(6, 15, 0),
+            AutoRefreshEnabled = settings.AutoRefreshEnabled,
+            RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            Theme = settings.Theme,
+        });
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.QuietHoursEnabled = false;
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).QuietHoursStart is null);
+
+        _viewModel.QuietHoursEnabled = true;
+        await TestWaitHelper.WaitUntilAsync(async () =>
+        {
+            var s = await _settingsRepository.GetAsync();
+            return s.QuietHoursStart == new TimeSpan(23, 30, 0) && s.QuietHoursEnd == new TimeSpan(6, 15, 0);
+        });
+
+        Assert.Equal(new TimeSpan(23, 30, 0), _viewModel.QuietHoursStart);
+        Assert.Equal(new TimeSpan(6, 15, 0), _viewModel.QuietHoursEnd);
+    }
+
+    /// <summary>
+    /// Verifies that reloading the settings while quiet hours are turned off keeps the
+    /// session-retained times in the view model instead of falling back to unset values.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task QuietHoursEnabled_TurnedOff_ReloadKeepsSessionValues()
+    {
+        var settings = await _settingsRepository.GetAsync();
+        await _settingsRepository.SaveAsync(new Settings
+        {
+            Id = settings.Id,
+            RetentionDays = settings.RetentionDays,
+            AutoMarkReadMode = settings.AutoMarkReadMode,
+            AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
+            NotificationsEnabled = settings.NotificationsEnabled,
+            QuietHoursStart = new TimeSpan(23, 30, 0),
+            QuietHoursEnd = new TimeSpan(6, 15, 0),
+            AutoRefreshEnabled = settings.AutoRefreshEnabled,
+            RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            Theme = settings.Theme,
+        });
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.QuietHoursEnabled = false;
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).QuietHoursStart is null);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.QuietHoursEnabled);
+        Assert.Equal(new TimeSpan(23, 30, 0), _viewModel.QuietHoursStart);
+        Assert.Equal(new TimeSpan(6, 15, 0), _viewModel.QuietHoursEnd);
+    }
+
+    /// <summary>
+    /// Verifies that turning the quiet-hours switch on applies the default quiet period
+    /// (22:00–07:00) and persists it immediately.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task QuietHoursEnabled_TurnedOn_AppliesDefaults()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.False(_viewModel.QuietHoursEnabled);
+
+        _viewModel.QuietHoursEnabled = true;
+        await TestWaitHelper.WaitUntilAsync(async () =>
+        {
+            var s = await _settingsRepository.GetAsync();
+            return s.QuietHoursStart is not null && s.QuietHoursEnd is not null;
+        });
+
+        Assert.Equal(new TimeSpan(22, 0, 0), _viewModel.QuietHoursStart);
+        Assert.Equal(new TimeSpan(7, 0, 0), _viewModel.QuietHoursEnd);
+        var persisted = await _settingsRepository.GetAsync();
+        Assert.Equal(new TimeSpan(22, 0, 0), persisted.QuietHoursStart);
+        Assert.Equal(new TimeSpan(7, 0, 0), persisted.QuietHoursEnd);
+    }
+
+    /// <summary>
+    /// Verifies that turning the quiet-hours switch on keeps already configured times
+    /// instead of overwriting them with the defaults.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task QuietHoursEnabled_TurnedOn_KeepsExistingValues()
+    {
+        var settings = await _settingsRepository.GetAsync();
+        await _settingsRepository.SaveAsync(new Settings
+        {
+            Id = settings.Id,
+            RetentionDays = settings.RetentionDays,
+            AutoMarkReadMode = settings.AutoMarkReadMode,
+            AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
+            NotificationsEnabled = settings.NotificationsEnabled,
+            QuietHoursStart = new TimeSpan(23, 30, 0),
+            QuietHoursEnd = new TimeSpan(6, 15, 0),
+            AutoRefreshEnabled = settings.AutoRefreshEnabled,
+            RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            Theme = settings.Theme,
+        });
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.QuietHoursEnabled = false;
+        _viewModel.QuietHoursStart = new TimeSpan(21, 0, 0);
+        _viewModel.QuietHoursEnd = new TimeSpan(5, 0, 0);
+        _viewModel.QuietHoursEnabled = true;
+
+        Assert.Equal(new TimeSpan(21, 0, 0), _viewModel.QuietHoursStart);
+        Assert.Equal(new TimeSpan(5, 0, 0), _viewModel.QuietHoursEnd);
+    }
+
+    /// <summary>
     /// Verifies that a follow-up persist queued while a previous save is still running
     /// compares against the just-saved settings instead of a stale snapshot, so the
     /// theme is not applied twice (review finding: snapshot was built outside the lock).

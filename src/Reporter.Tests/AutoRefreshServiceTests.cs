@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.Extensions.Time.Testing;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
@@ -151,11 +150,13 @@ public class AutoRefreshServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that a timer tick while a sync is still running does not start a parallel sync.
+    /// Verifies that timer ticks elapsed while a sync is still running never start a parallel
+    /// sync: the loop awaits each <c>SyncAllAsync</c> call sequentially and
+    /// <see cref="PeriodicTimer"/> coalesces missed ticks, so no second sync can begin.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task OverlappingTick_SkipsSync()
+    public async Task CoalescedTicks_DoNotStartParallelSync()
     {
         var blocker = new TaskCompletionSource<bool>();
         _feedSyncService.SyncAllBlocker = blocker;
@@ -195,24 +196,27 @@ public class AutoRefreshServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that stopping the refresh timer disposes the loop's CancellationTokenSource
-    /// instead of leaking it (review finding: CTS was never disposed).
+    /// Verifies that repeated start/stop cycles leave the service in a clean working state:
+    /// each stop fully tears down the loop and each start creates a fresh, ticking timer.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task StopAsync_DisposesLoopCancellationTokenSource()
+    public async Task StartStop_RepeatedCycles_RestartsCleanly()
     {
         await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15);
+
+        for (var i = 0; i < 3; i++)
+        {
+            await _service.StartAsync();
+            await _service.StopAsync();
+        }
+
         await _service.StartAsync();
-
-        var cts = (CancellationTokenSource?)typeof(AutoRefreshService)
-            .GetField("_loopCts", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(_service);
-        Assert.NotNull(cts);
-
+        _timeProvider.Advance(TimeSpan.FromMinutes(15));
+        await TestWaitHelper.WaitUntilAsync(() => _feedSyncService.SyncAllCallCount == 1);
         await _service.StopAsync();
 
-        Assert.Throws<ObjectDisposedException>(() => _ = cts!.Token);
+        Assert.Equal(1, _feedSyncService.SyncAllCallCount);
     }
 
     /// <summary>

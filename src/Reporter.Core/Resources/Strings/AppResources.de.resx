@@ -219,6 +219,9 @@
   <data name="SettingsKeywordMatchHint" xml:space="preserve">
     <value>Erkennt auch Varianten innerhalb von Wörtern</value>
   </data>
+  <data name="SettingsKeywordMatchStatus" xml:space="preserve">
+    <value>Immer aktiv</value>
+  </data>
   <data name="SettingsKeywordInfo" xml:space="preserve">
     <value>Gefilterte Artikel werden nach Ablauf der Aufbewahrungsfrist anhand ihres Veröffentlichungsdatums gelöscht.</value>
   </data>
@@ -273,6 +276,9 @@
   <data name="SettingsQuietHoursLabel" xml:space="preserve">
     <value>Ruhezeit (Nicht stören)</value>
   </data>
+  <data name="SettingsQuietHoursHint" xml:space="preserve">
+    <value>Keine Benachrichtigungen in diesem Zeitraum</value>
+  </data>
   <data name="SettingsQuietHoursFrom" xml:space="preserve">
     <value>VON</value>
   </data>
@@ -299,5 +305,11 @@
   </data>
   <data name="ErrorKeywordTooLong" xml:space="preserve">
     <value>Das Schlagwort darf höchstens 500 Zeichen lang sein.</value>
+  </data>
+  <data name="ArticleAutoMarkReadDisabled" xml:space="preserve">
+    <value>Auto-Gelesen (in den Einstellungen deaktiviert)</value>
+  </data>
+  <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
+    <value>Schlagwort {0} entfernen</value>
   </data>
 </root>

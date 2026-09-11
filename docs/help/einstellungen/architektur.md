@@ -12,8 +12,9 @@
 | `ISettingsRepository` / `SettingsRepository` | Repository | Singleton-`Settings` lesen (`GetAsync`, legt Datensatz bei Bedarf an) und schreiben (`SaveAsync`) |
 | `IKeywordRepository` / `KeywordRepository` | Repository | Keyword-Liste lesen, anlegen, löschen (`keywords`-Tabelle, `keyword_text` max. 500) |
 | `IKeywordMatcher` / `KeywordMatcher` (`Reporter.Core`) | Service | Zentrales Matching: `Contains` mit `OrdinalIgnoreCase` auf `Title` und `ContentHtml`; Wiederverwendung durch Cleanup und späteres Benachrichtigungs-Paket |
-| `IAutoRefreshService` / `AutoRefreshService` (`Reporter.Core`) | Service | `PeriodicTimer`-Loop über `TimeProvider`, ruft `IFeedSyncService.SyncAllAsync`, Overlap-Guard via `Interlocked` |
+| `IAutoRefreshService` / `AutoRefreshService` (`Reporter.Core`) | Service | `PeriodicTimer`-Loop über `TimeProvider`, ruft `IFeedSyncService.SyncAllAsync` sequenziell awaitend auf (keine überlappenden Abrufe) |
 | `IAppThemeService` (`Reporter.Core`) / `AppThemeService` (`src/Reporter/Services/`) | Interface + Implementierung | Setzt `Application.Current.UserAppTheme`; Abstraktion nötig, da `Reporter.Core` (`net10.0`) keine MAUI-Referenz hat |
+| `SettingsValues` (`Reporter.Core/Models`) | statische Klasse | Zentrale Konstanten für persistierte Setting-Werte (`AutoMarkReadOnOpen`/`AutoMarkReadOnScroll`/`AutoMarkReadOff`, `ThemeSystem`/`ThemeLight`/`ThemeDark`) und die Prüfmethode `IsAutoMarkReadEnabled` |
 | `IRetentionCleanupService` / `RetentionCleanupService` (`Reporter.Core`) | Service | Start-Cleanup; löscht abgelaufene gelesene Artikel und keyword-gefilterte Kandidaten |
 | `ArticleDetailViewModel` (`src/Reporter/ViewModels/`) | ViewModel | Wertet `AutoMarkReadMode`/`AutoMarkReadDelaySeconds` beim Öffnen eines Artikels aus |
 | `ReporterDbContext` (`Reporter.Data`) | EF Core | Tabellen `settings` (Singleton) und `keywords`; Migration `AddSettingsAutoRefreshAndTheme` für die neuen Spalten |
@@ -53,7 +54,7 @@ graph TD
 ## Skalierung und Zuverlässigkeit
 
 - **Fehlerisolierung:** Die drei Startblöcke in `App.OnStart` (Cleanup, Theme, Auto-Refresh) sind einzeln abgefangen — kein Fehler darf den App-Start blockieren.
-- **Overlap-Guard:** `AutoRefreshService` überspringt Ticks, solange ein Sync läuft (`Interlocked`-Flag) — kein gestapelter Sync.
+- **Sequenzieller Sync-Loop:** `AutoRefreshService` awaitet jeden `SyncAllAsync`-Aufruf pro Timer-Tick; während eines laufenden Syncs verstrichene Perioden fasst der `PeriodicTimer` zusammen — keine parallelen oder gestapelten Abrufe.
 - **Serialisierung:** `PersistAsync` läuft unter `_persistLock`; parallele Control-Änderungen erzeugen keine überlappenden `SaveAsync`-Aufrufe.
 - **In-Memory-Matching:** Das Keyword-Matching läuft bewusst im Speicher (`OrdinalIgnoreCase` ist in SQLite/`LIKE` nur für ASCII zuverlässig); die Kandidatenmenge ist durch die Frist- und Gelesen-Bedingung klein und lokal.
 - **Timer-Lebensdauer:** Der Auto-Refresh-Loop lebt nur solange die App läuft — es gibt keinen OS-seitigen Background-Fetch.
