@@ -23,12 +23,12 @@ Branch: `task/issue-26-a32dbfb7fca140d88d166629e421fbe8-einstellungen-aufbewahru
 | [x] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/einstellungen/` + `docs/help/anwendung/` |
 | [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
 | [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
-| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) | `continue-done.md` — nicht erreicht: 3 Restbefunde bleiben |
+| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) | `continue-done.md` — nicht erreicht: 5 Restbefunde bleiben |
 | [ ] | – | Feature-Verzeichnis löschen | – (nicht ausgeführt: `continue.md` vorhanden) |
-| [x] | – | Commit durchführen | Commits `4ac9e69`, `94da958` |
+| [x] | – | Commit durchführen | Commits `4ac9e69`, `94da958`, `2c454aa` |
 
 ## Hinweis zum Abbruch
 
-Die Implementierungs-/Review-Schleife wurde nach der Fortsetzungs-Iteration abgebrochen,
-weil die offene-Punkte-Zahl zwischen den letzten zwei Iterationen nicht sank (3 → 3).
-Verbleibende Punkte (alle Schweregrad niedrig): `continue.md`.
+Die Implementierungs-/Review-Schleifen wurden zweimal regelkonform wegen ausbleibendem
+Fortschritt abgebrochen (6 → 6, dann 3 → 3, zuletzt 1 → 5 — jede frische Review-Runde
+findet neue Kleinigkeiten). Verbleibende Punkte (alle Schweregrad niedrig): `continue.md`.
