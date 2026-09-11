@@ -33,6 +33,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Remove local pre-release tags from main branch
+        shell: bash
+        run: |
+          for tag in $(git tag -l 'v*-rc.*'); do
+            git tag -d "$tag"
+          done
+
       - name: Resolve release version
         id: version
         env:

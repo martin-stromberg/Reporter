@@ -71,6 +71,8 @@
                         Padding="12,8"
                         StrokeShape="RoundRectangle 22"
                         Background="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+                        MinimumHeightRequest="44"
+                        MinimumWidthRequest="44"
                         VerticalOptions="Center">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding MarkAllReadCommand}"/>

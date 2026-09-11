@@ -17,7 +17,10 @@ const releasePlugins = [
 const dryRunPlugins = [["@semantic-release/commit-analyzer", { preset: "conventionalcommits" }]];
 
 module.exports = {
-  branches: ["main"],
+  branches: [
+    "main",
+    { name: "staging", prerelease: "rc" }
+  ],
   tagFormat: "v${version}",
   plugins: process.env.RESOLVE_DRY_RUN === "true" ? dryRunPlugins : releasePlugins
 };
