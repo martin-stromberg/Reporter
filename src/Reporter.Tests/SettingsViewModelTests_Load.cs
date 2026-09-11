@@ -52,6 +52,7 @@ public class SettingsViewModelTests_Load : IDisposable
             AutoMarkReadMode = "off",
             AutoMarkReadDelaySeconds = 3,
             NotificationsEnabled = false,
+            NotificationSummaryEnabled = true,
             QuietHoursStart = new TimeSpan(22, 0, 0),
             QuietHoursEnd = new TimeSpan(7, 0, 0),
             AutoRefreshEnabled = true,
@@ -68,6 +69,7 @@ public class SettingsViewModelTests_Load : IDisposable
         Assert.False(_viewModel.AutoMarkReadEnabled);
         Assert.Equal(3, _viewModel.SelectedAutoMarkReadDelay?.Seconds);
         Assert.False(_viewModel.NotificationsEnabled);
+        Assert.True(_viewModel.NotificationSummaryEnabled);
         Assert.True(_viewModel.QuietHoursEnabled);
         Assert.Equal(new TimeSpan(22, 0, 0), _viewModel.QuietHoursStart);
         Assert.Equal(new TimeSpan(7, 0, 0), _viewModel.QuietHoursEnd);
@@ -92,6 +94,7 @@ public class SettingsViewModelTests_Load : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = 7,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = 45,
             Theme = "sepia",
@@ -102,6 +105,74 @@ public class SettingsViewModelTests_Load : IDisposable
         Assert.Equal(30, _viewModel.SelectedRefreshInterval?.Minutes);
         Assert.Equal(5, _viewModel.SelectedAutoMarkReadDelay?.Seconds);
         Assert.Equal("system", _viewModel.SelectedTheme?.Value);
+    }
+
+    /// <summary>
+    /// Verifies that the persisted notification summary flag is loaded into the view model.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_PopulatesNotificationSummaryEnabled()
+    {
+        await TestSettingsHelper.SaveAsync(_settingsRepository, notificationSummaryEnabled: true);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(_viewModel.NotificationSummaryEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that loading with notifications enabled but denied system authorization
+    /// surfaces the denied state via <see cref="SettingsViewModel.NotificationPermissionDenied"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_PermissionDenied_SetsNotificationPermissionDenied()
+    {
+        var localNotifications = new FakeLocalNotificationService { IsAuthorizedResult = false };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, localNotificationService: localNotifications);
+        await TestSettingsHelper.SaveAsync(_settingsRepository, notificationsEnabled: true);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.NotificationsEnabled);
+        Assert.True(viewModel.NotificationPermissionDenied);
+    }
+
+    /// <summary>
+    /// Verifies that loading with notifications enabled and granted system authorization
+    /// leaves <see cref="SettingsViewModel.NotificationPermissionDenied"/> cleared.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_PermissionGranted_ClearsNotificationPermissionDenied()
+    {
+        var localNotifications = new FakeLocalNotificationService { IsAuthorizedResult = true };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, localNotificationService: localNotifications);
+        await TestSettingsHelper.SaveAsync(_settingsRepository, notificationsEnabled: true);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.NotificationsEnabled);
+        Assert.False(viewModel.NotificationPermissionDenied);
+    }
+
+    /// <summary>
+    /// Verifies that the authorization status is not surfaced when notifications are
+    /// switched off in the app.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_NotificationsDisabled_HidesNotificationPermissionDenied()
+    {
+        var localNotifications = new FakeLocalNotificationService { IsAuthorizedResult = false };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, localNotificationService: localNotifications);
+        await TestSettingsHelper.SaveAsync(_settingsRepository, notificationsEnabled: false);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.NotificationsEnabled);
+        Assert.False(viewModel.NotificationPermissionDenied);
     }
 
     /// <summary>

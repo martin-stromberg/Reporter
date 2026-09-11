@@ -44,6 +44,17 @@
 2. Das gewünschte **Abruf-Intervall** wählen.
 3. Alternativ auf der Seite **Feeds** manuell über **Alle aktualisieren** abrufen.
 
+## Es kommen keine Benachrichtigungen
+
+**Symptom:** Neue Artikel erscheinen, aber es gibt keine Benachrichtigung.
+
+**Ursache:** Der Schalter **Benachrichtigungen** ist aus, die iOS-Berechtigung wurde verweigert (Hinweiszeile mit **Einstellungen öffnen** sichtbar), eine **Ruhezeit** läuft gerade, der Feed ist einzeln stummgeschaltet oder ein Schlagwort-Filter greift.
+
+**Lösung:**
+1. In den **Einstellungen** unter **Benachrichtigungen & Ruhezeiten** den Schalter **Benachrichtigungen** prüfen; bei sichtbarer Hinweiszeile **Einstellungen öffnen** tippen und die Berechtigung in iOS freischalten.
+2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed → **Bearbeiten**) prüfen.
+3. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
+
 ## Erscheinungsbild wechselt nicht
 
 **Symptom:** Die App bleibt hell oder dunkel, obwohl ein anderes **Farbschema** gewählt wurde.

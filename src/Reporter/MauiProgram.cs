@@ -53,6 +53,8 @@ public static class MauiProgram
             .AddSingleton<IKeywordMatcher, KeywordMatcher>()
             .AddSingleton<IAutoRefreshService, AutoRefreshService>()
             .AddSingleton<IAppThemeService, AppThemeService>()
+            .AddSingleton<INotificationService, NotificationService>()
+            .AddSingleton<ILocalNotificationService, LocalNotificationService>()
             .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
             .AddSingleton<LaterViewModel>()

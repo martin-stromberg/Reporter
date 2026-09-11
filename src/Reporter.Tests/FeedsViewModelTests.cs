@@ -40,7 +40,7 @@ public class FeedsViewModelTests : IDisposable
         return new FeedsViewModel(_feedRepository, _categoryRepository, _syncService);
     }
 
-    private async Task<Guid> SeedFeedAsync(string title = "Test Feed", string url = "https://example.com/rss")
+    private async Task<Guid> SeedFeedAsync(string title = "Test Feed", string url = "https://example.com/rss", bool notificationsEnabled = true)
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
@@ -48,6 +48,7 @@ public class FeedsViewModelTests : IDisposable
             Id = feedId,
             Url = url,
             Title = title,
+            NotificationsEnabled = notificationsEnabled,
         });
         return feedId;
     }
@@ -105,6 +106,100 @@ public class FeedsViewModelTests : IDisposable
 
         Assert.True(viewModel.HasError);
         Assert.Equal("Network error", viewModel.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Verifies that editing a feed loads its notifications flag into the form.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task EditCommand_PopulatesFeedNotificationsEnabled()
+    {
+        var feedId = await SeedFeedAsync(notificationsEnabled: false);
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+
+        await viewModel.EditCommand.ExecuteAsync(feed);
+
+        Assert.False(viewModel.FeedNotificationsEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that a new feed persists the notifications flag from the form.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveCommand_NewFeed_PersistsNotificationsEnabledFalse()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NewUrl = "https://example.com/new-feed";
+        viewModel.NewTitle = "New Feed";
+        viewModel.FeedNotificationsEnabled = false;
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        var saved = await _feedRepository.GetByUrlAsync("https://example.com/new-feed");
+        Assert.NotNull(saved);
+        Assert.False(saved.NotificationsEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that updating an existing feed persists the notifications flag from the form.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveCommand_ExistingFeed_PersistsNotificationsEnabled()
+    {
+        var feedId = await SeedFeedAsync(notificationsEnabled: true);
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        await viewModel.EditCommand.ExecuteAsync(viewModel.Feeds.First(f => f.Id == feedId));
+
+        viewModel.FeedNotificationsEnabled = false;
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        var saved = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(saved);
+        Assert.False(saved.NotificationsEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that a successful save resets the notifications flag to its default.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveCommand_ResetsFeedNotificationsEnabled()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NewUrl = "https://example.com/new-feed";
+        viewModel.NewTitle = "New Feed";
+        viewModel.FeedNotificationsEnabled = false;
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.FeedNotificationsEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that deleting the feed currently edited resets the notifications flag to its default.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteCommand_ResetsFeedNotificationsEnabled()
+    {
+        var feedId = await SeedFeedAsync(notificationsEnabled: false);
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+        await viewModel.EditCommand.ExecuteAsync(feed);
+        Assert.False(viewModel.FeedNotificationsEnabled);
+
+        await viewModel.DeleteCommand.ExecuteAsync(feed);
+
+        Assert.True(viewModel.FeedNotificationsEnabled);
     }
 
     private sealed class FakeFeedSyncService : IFeedSyncService

@@ -27,6 +27,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly IKeywordRepository _keywordRepository;
     private readonly IAutoRefreshService _autoRefreshService;
     private readonly IAppThemeService _appThemeService;
+    private readonly ILocalNotificationService? _localNotificationService;
     private readonly TimeProvider _timeProvider;
 
     private string _title = AppResources.PageTitleSettings;
@@ -39,6 +40,8 @@ public partial class SettingsViewModel : BaseViewModel
     private bool _autoMarkReadEnabled = true;
     private AutoMarkReadDelayOption? _selectedAutoMarkReadDelay;
     private bool _notificationsEnabled = true;
+    private bool _notificationPermissionDenied;
+    private bool _notificationSummaryEnabled;
     private bool _quietHoursEnabled;
     private TimeSpan? _quietHoursStart;
     private TimeSpan? _quietHoursEnd;
@@ -57,17 +60,20 @@ public partial class SettingsViewModel : BaseViewModel
     /// <param name="autoRefreshService">The auto refresh service.</param>
     /// <param name="appThemeService">The app theme service.</param>
     /// <param name="timeProvider">The time provider used for the retention-days persist debounce.</param>
+    /// <param name="localNotificationService">The platform notification service used to request authorization when notifications are turned on.</param>
     public SettingsViewModel(
         ISettingsRepository settingsRepository,
         IKeywordRepository keywordRepository,
         IAutoRefreshService autoRefreshService,
         IAppThemeService appThemeService,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        ILocalNotificationService? localNotificationService = null)
     {
         _settingsRepository = settingsRepository;
         _keywordRepository = keywordRepository;
         _autoRefreshService = autoRefreshService;
         _appThemeService = appThemeService;
+        _localNotificationService = localNotificationService;
         _timeProvider = timeProvider ?? TimeProvider.System;
 
         _retentionDaysText = FormatRetentionDays(_retentionDays);
@@ -262,7 +268,16 @@ public partial class SettingsViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether push notifications are enabled.
+    /// Occurs when the user turns notifications on while the system authorization
+    /// for local notifications is denied. Subscribers (the page) can inform the
+    /// user and offer a way to the system settings.
+    /// </summary>
+    public event Func<Task>? NotificationAuthorizationDenied;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether notifications are enabled.
+    /// Turning this on requests the platform notification authorization in the
+    /// context of the deliberate activation.
     /// </summary>
     public bool NotificationsEnabled
     {
@@ -270,6 +285,42 @@ public partial class SettingsViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _notificationsEnabled, value))
+            {
+                if (!value)
+                {
+                    NotificationPermissionDenied = false;
+                }
+
+                PersistOnChange();
+                if (value && !_isLoading)
+                {
+                    _ = RequestNotificationAuthorizationAsync();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether notifications are switched on in the app but
+    /// the system authorization for local notifications is currently denied.
+    /// The settings page surfaces this state as a hint with a link to the system settings.
+    /// </summary>
+    public bool NotificationPermissionDenied
+    {
+        get => _notificationPermissionDenied;
+        private set => SetProperty(ref _notificationPermissionDenied, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether new items trigger a single summary
+    /// notification per feed instead of one notification per article.
+    /// </summary>
+    public bool NotificationSummaryEnabled
+    {
+        get => _notificationSummaryEnabled;
+        set
+        {
+            if (SetProperty(ref _notificationSummaryEnabled, value))
             {
                 PersistOnChange();
             }
@@ -388,6 +439,7 @@ public partial class SettingsViewModel : BaseViewModel
             SelectedAutoMarkReadDelay = AutoMarkReadDelayOptions.FirstOrDefault(o => o.Seconds == settings.AutoMarkReadDelaySeconds)
                 ?? AutoMarkReadDelayOptions.First(o => o.Seconds == DefaultAutoMarkReadDelaySeconds);
             NotificationsEnabled = settings.NotificationsEnabled;
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
             QuietHoursStart = settings.QuietHoursStart ?? _quietHoursStart;
             QuietHoursEnd = settings.QuietHoursEnd ?? _quietHoursEnd;
             QuietHoursEnabled = settings.QuietHoursStart is not null || settings.QuietHoursEnd is not null;
@@ -411,6 +463,8 @@ public partial class SettingsViewModel : BaseViewModel
         {
             _isLoading = false;
         }
+
+        await RefreshNotificationPermissionAsync();
     }
 
     private void PersistOnChange()
@@ -421,6 +475,47 @@ public partial class SettingsViewModel : BaseViewModel
         }
 
         _ = PersistAsync();
+    }
+
+    private async Task RefreshNotificationPermissionAsync()
+    {
+        if (_localNotificationService is null || !_localNotificationService.IsSupported || !NotificationsEnabled)
+        {
+            NotificationPermissionDenied = false;
+            return;
+        }
+
+        try
+        {
+            NotificationPermissionDenied = !await _localNotificationService.IsAuthorizedAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to query notification authorization: {ex}");
+            NotificationPermissionDenied = false;
+        }
+    }
+
+    private async Task RequestNotificationAuthorizationAsync()
+    {
+        if (_localNotificationService is null || !_localNotificationService.IsSupported)
+        {
+            return;
+        }
+
+        try
+        {
+            var granted = await _localNotificationService.RequestAuthorizationAsync();
+            NotificationPermissionDenied = !granted;
+            if (!granted && NotificationAuthorizationDenied is not null)
+            {
+                await NotificationAuthorizationDenied.Invoke();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to request notification authorization: {ex}");
+        }
     }
 
     private void SaveRetention()
@@ -504,6 +599,7 @@ public partial class SettingsViewModel : BaseViewModel
                 AutoMarkReadMode = AutoMarkReadEnabled ? SettingsValues.AutoMarkReadOnOpen : SettingsValues.AutoMarkReadOff,
                 AutoMarkReadDelaySeconds = SelectedAutoMarkReadDelay?.Seconds ?? DefaultAutoMarkReadDelaySeconds,
                 NotificationsEnabled = NotificationsEnabled,
+                NotificationSummaryEnabled = NotificationSummaryEnabled,
                 QuietHoursStart = QuietHoursEnabled ? QuietHoursStart : null,
                 QuietHoursEnd = QuietHoursEnabled ? QuietHoursEnd : null,
                 AutoRefreshEnabled = AutoRefreshEnabled,

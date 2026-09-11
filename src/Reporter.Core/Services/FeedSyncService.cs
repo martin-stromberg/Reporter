@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.ServiceModel.Syndication;
 using System.Text;
@@ -16,6 +17,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly IItemRepository _itemRepository;
     private readonly ISyncLogRepository _syncLogRepository;
     private readonly HttpClient _httpClient;
+    private readonly INotificationService _notificationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -24,16 +26,19 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="itemRepository">The item repository.</param>
     /// <param name="syncLogRepository">The sync log repository.</param>
     /// <param name="httpClient">The HTTP client used to retrieve feeds.</param>
+    /// <param name="notificationService">The notification service invoked for newly stored items.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
         ISyncLogRepository syncLogRepository,
-        HttpClient httpClient)
+        HttpClient httpClient,
+        INotificationService notificationService)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
         _syncLogRepository = syncLogRepository;
         _httpClient = httpClient;
+        _notificationService = notificationService;
     }
 
     /// <inheritdoc />
@@ -60,7 +65,7 @@ public class FeedSyncService : IFeedSyncService
         {
             return await RunSyncAsync(feed, log, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             var message = $"Synchronization failed: {ex.Message}";
             await UpdateFeedHealthAsync(feed, FeedHealth.Error).ConfigureAwait(false);
@@ -120,6 +125,7 @@ public class FeedSyncService : IFeedSyncService
 
         var feedItems = syndicationFeed.Items.ToList();
         var newItems = 0;
+        var newItemEntities = new List<Item>();
 
         foreach (var feedItem in feedItems)
         {
@@ -152,6 +158,7 @@ public class FeedSyncService : IFeedSyncService
 
             await _itemRepository.AddAsync(item).ConfigureAwait(false);
             newItems++;
+            newItemEntities.Add(item);
         }
 
         var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
@@ -161,6 +168,20 @@ public class FeedSyncService : IFeedSyncService
 
         await UpdateFeedHealthAsync(feed, status).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
+
+        if (newItemEntities.Count > 0)
+        {
+            try
+            {
+                await _notificationService.NotifyNewItemsAsync(feed, newItemEntities, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Ein Fehler im Benachrichtigungspfad darf das Sync-Ergebnis nicht verfaelschen.
+                Debug.WriteLine($"FeedSyncService notification failed: {ex}");
+            }
+        }
+
         return new SyncResult(status, newItems, message);
     }
 
@@ -197,6 +218,7 @@ public class FeedSyncService : IFeedSyncService
             LastCheckedAt = DateTime.UtcNow,
             HealthStatus = status,
             HealthLastChange = healthLastChange,
+            NotificationsEnabled = feed.NotificationsEnabled,
         }).ConfigureAwait(false);
     }
 

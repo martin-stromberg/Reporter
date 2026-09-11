@@ -46,7 +46,9 @@ graph TD
 - `UnreadPage` / `UnreadViewModel` — Ansicht und ViewModel für ungelesene Artikel.
 - `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds (inkl. Refresh-Buttons).
 - `LaterPage` / `LaterViewModel` — Ansicht und ViewModel für später gemerkte Artikel.
-- `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten.
+- `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten; ruft nach jedem Sync mit neuen Artikeln fehlerisoliert `INotificationService.NotifyNewItemsAsync` auf.
+- `INotificationService` / `NotificationService` (`Reporter.Core`) — Entscheidungslogik für lokale Benachrichtigungen (Feed-/globaler Schalter, Ruhezeit via `TimeProvider`, Keyword-Filter, Einzel- vs. Sammel-Modus); Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
+- `ILocalNotificationService` / `LocalNotificationService` (`src/Reporter/Services/`) — Plattformabstraktion für lokale Benachrichtigungen; iOS-Ausprägung über `UserNotifications` (`#if IOS`), No-Op auf anderen Targets. Tap-Handling und Vordergrund-Darstellung über `NotificationDelegate`/`AppDelegate` unter `Platforms/iOS`.
 - `IRetentionCleanupService` / `RetentionCleanupService` — Service für das automatische Aufräumen gelesener Artikel nach `Settings.RetentionDays` inkl. Keyword-Löschregel; wird in `App.OnStart` aufgerufen, ungelesene und gemerkte Artikel bleiben erhalten. Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).
 - `IKeywordMatcher` / `KeywordMatcher` — Zentrales Keyword-Matching (`OrdinalIgnoreCase`-Teilwort auf Titel und HTML-Inhalt) für den Cleanup und später das Benachrichtigungs-Paket.
 - `IAutoRefreshService` / `AutoRefreshService` — `PeriodicTimer`-basierter Hintergrund-Sync (`IFeedSyncService.SyncAllAsync`) mit `TimeProvider` und Overlap-Guard; startet in `App.OnStart`, wird bei Einstellungsänderungen neu konfiguriert.

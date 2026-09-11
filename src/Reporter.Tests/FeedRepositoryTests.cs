@@ -40,6 +40,7 @@ public class FeedRepositoryTests : IDisposable
             Id = Guid.NewGuid(),
             Url = "https://example.com/feed",
             Title = "Example Feed",
+            NotificationsEnabled = true,
         };
         await _repository.AddAsync(feed);
 
@@ -57,8 +58,8 @@ public class FeedRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsFeedsOrderedByTitle()
     {
-        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://b.com", Title = "B" });
-        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://a.com", Title = "A" });
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://b.com", Title = "B", NotificationsEnabled = true });
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://a.com", Title = "A", NotificationsEnabled = true });
 
         var result = await _repository.GetAllAsync();
 
@@ -74,7 +75,7 @@ public class FeedRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateAsync_PersistsChanges()
     {
-        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://old.com", Title = "Old" };
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://old.com", Title = "Old", NotificationsEnabled = true };
         await _repository.AddAsync(feed);
 
         await _repository.UpdateAsync(new Feed
@@ -82,11 +83,13 @@ public class FeedRepositoryTests : IDisposable
             Id = feed.Id,
             Url = "https://new.com",
             Title = "New",
+            NotificationsEnabled = false,
         });
         var result = await _repository.GetByIdAsync(feed.Id);
 
         Assert.NotNull(result);
         Assert.Equal("https://new.com", result.Url);
+        Assert.False(result.NotificationsEnabled);
         Assert.Equal("New", result.Title);
     }
 
@@ -97,7 +100,7 @@ public class FeedRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteAsync_RemovesFeed()
     {
-        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://delete.com", Title = "ToDelete" };
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://delete.com", Title = "ToDelete", NotificationsEnabled = true };
         await _repository.AddAsync(feed);
 
         await _repository.DeleteAsync(feed.Id);
@@ -119,13 +122,29 @@ public class FeedRepositoryTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that GetAllWithDetailsAsync projects the notifications flag onto the feed list item.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetAllWithDetailsAsync_ProjectsNotificationsEnabled()
+    {
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://a.com", Title = "A", NotificationsEnabled = false });
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://b.com", Title = "B", NotificationsEnabled = true });
+
+        var result = await _repository.GetAllWithDetailsAsync();
+
+        Assert.False(result.Single(f => f.Title == "A").NotificationsEnabled);
+        Assert.True(result.Single(f => f.Title == "B").NotificationsEnabled);
+    }
+
+    /// <summary>
     /// Verifies that deleting a feed also deletes its saved items via cascade delete.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task DeleteAsync_CascadeDeletesSavedItems()
     {
-        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed" };
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed", NotificationsEnabled = true };
         await _repository.AddAsync(feed);
         var itemRepository = new ItemRepository(_factory);
         var item = new Item

@@ -81,7 +81,7 @@
 
 ## Ruhezeiten ohne Start-vor-Ende-Validierung
 
-**Beschreibung:** `QuietHoursStart`/`QuietHoursEnd` werden unvalidiert gespeichert; Bereiche über Mitternacht (z. B. 22:00–07:00) sind zulässig. Die Auswertung (Wrap-around, Unterdrückung von Benachrichtigungen, Keyword-Einfluss) ist **nicht** Teil dieses Features und folgt mit dem Benachrichtigungs-Arbeitspaket.
+**Beschreibung:** `QuietHoursStart`/`QuietHoursEnd` werden unvalidiert gespeichert; Bereiche über Mitternacht (z. B. 22:00–07:00) sind zulässig. Die Auswertung (Wrap-around, Unterdrückung von Benachrichtigungen, Grenzfälle) erfolgt im Benachrichtigungs-Service — siehe [Benachrichtigungen — Business Rules](../benachrichtigungen/business-rules.md), Abschnitt „Ruhezeit-Auswertung".
 
 **Verhalten:**
 - `QuietHoursEnabled` existiert nur im `SettingsViewModel` — die Aktivierung ergibt sich beim Laden aus `QuietHoursStart is not null || QuietHoursEnd is not null`.

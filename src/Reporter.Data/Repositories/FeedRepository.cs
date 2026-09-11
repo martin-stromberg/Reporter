@@ -66,6 +66,7 @@ public class FeedRepository : IFeedRepository
         entity.LastCheckedAt = feed.LastCheckedAt;
         entity.HealthStatus = feed.HealthStatus;
         entity.HealthLastChange = feed.HealthLastChange;
+        entity.NotificationsEnabled = feed.NotificationsEnabled;
         await context.SaveChangesAsync();
     }
 
@@ -102,6 +103,7 @@ public class FeedRepository : IFeedRepository
                 LastCheckedAt = f.LastCheckedAt,
                 HealthStatus = f.HealthStatus,
                 HealthLastChange = f.HealthLastChange,
+                NotificationsEnabled = f.NotificationsEnabled,
                 UnreadCount = items.Count(i => i.FeedId == f.Id && !i.IsRead),
             })
             .ToListAsync();
@@ -130,6 +132,7 @@ public class FeedRepository : IFeedRepository
             LastCheckedAt = entity.LastCheckedAt,
             HealthStatus = entity.HealthStatus,
             HealthLastChange = entity.HealthLastChange,
+            NotificationsEnabled = entity.NotificationsEnabled,
         };
     }
 
@@ -144,6 +147,7 @@ public class FeedRepository : IFeedRepository
             LastCheckedAt = model.LastCheckedAt,
             HealthStatus = model.HealthStatus,
             HealthLastChange = model.HealthLastChange,
+            NotificationsEnabled = model.NotificationsEnabled,
         };
     }
 }

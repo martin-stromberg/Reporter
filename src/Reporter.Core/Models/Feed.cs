@@ -39,4 +39,9 @@ public class Feed
     /// Gets the timestamp of the last health status change.
     /// </summary>
     public DateTime? HealthLastChange { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether notifications are enabled for this feed.
+    /// </summary>
+    public required bool NotificationsEnabled { get; init; }
 }

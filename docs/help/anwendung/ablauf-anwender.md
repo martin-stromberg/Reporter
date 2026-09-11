@@ -29,6 +29,7 @@ Tippe auf einen der fünf Tabs:
 - Tippe auf **Alle aktualisieren**, um alle Feeds abzurufen.
 - Oder tippe in einer Feed-Zeile auf **Aktualisieren**, um nur diesen Feed abzurufen.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
+- Auf iOS kann dabei eine Benachrichtigung erscheinen — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
 
 ### 4. Artikel für später merken
 

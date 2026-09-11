@@ -8,6 +8,14 @@
 
 ## What's New
 
+- Local iOS notifications for new articles after every feed sync (manual or automatic background refresh) — shown with banner and sound, even while the app is open.
+- Per-feed notifications switch on the Feeds page: individual feeds can be muted (enabled by default).
+- Quiet hours respected: notifications raised during the configured quiet hours are discarded, not delivered later.
+- Keyword-filtered articles do not trigger notifications (same keyword list as automatic cleanup).
+- Optional summary mode in Settings: a single summary notification per feed and sync instead of one notification per article.
+- Tapping a notification opens the article directly; a summary notification opens the "Unread" view.
+- The iOS notification permission is requested when notifications are enabled in Settings; if denied, a hint with an "Open Settings" button is shown on the Settings page.
+- Notifications appear at most once per article (deduplication via stable identifiers).
 - Retention slider: value changes (e.g. via keyboard) are now saved after a short delay (~0.5 s), not only when the slider is released.
 - Localization fixes: the auto-read label in the article detail now follows the UI language (previously hardcoded German); clearer info texts for retention and keyword matching on the Settings page.
 - Quiet hours can now be toggled on/off on the Settings page; when off, the from/to time pickers are disabled and no quiet hours are stored (defaults 10:00 PM–7:00 AM if never configured).
@@ -30,6 +38,14 @@
 
 ## Neuerungen
 
+- Lokale iOS-Benachrichtigungen bei neuen Artikeln nach jedem Feed-Abgleich (manuell oder automatische Hintergrund-Aktualisierung) — mit Banner und Ton, auch bei geöffneter App.
+- Pro-Feed-Schalter für Benachrichtigungen auf der Feeds-Seite: einzelne Feeds lassen sich stummschalten (standardmäßig aktiviert).
+- Ruhezeiten werden berücksichtigt: Benachrichtigungen während der konfigurierten Ruhezeit werden verworfen, nicht nachgeholt.
+- Keyword-gefilterte Artikel lösen keine Benachrichtigung aus (gleiche Schlagwort-Liste wie beim automatischen Löschen).
+- Optionaler Sammel-Modus in den Einstellungen: eine Sammel-Benachrichtigung pro Feed und Abgleich statt einer Benachrichtigung pro Artikel.
+- Antippen einer Benachrichtigung öffnet direkt den Artikel; bei einer Sammel-Benachrichtigung öffnet sich die Ansicht „Ungelesen".
+- Die iOS-Benachrichtigungs-Berechtigung wird beim Aktivieren in den Einstellungen angefragt; bei Verweigerung zeigt die Einstellungsseite einen Hinweis mit Schaltfläche „Einstellungen öffnen".
+- Benachrichtigungen erscheinen höchstens einmal pro Artikel (Deduplizierung über stabile Kennungen).
 - Aufbewahrungsdauer-Regler: Wertänderungen (z. B. per Tastatur) werden jetzt nach kurzer Verzögerung (~0,5 s) gespeichert, nicht nur beim Loslassen des Reglers.
 - Lokalisierungs-Fixes: das „Auto-Gelesen“-Label in der Artikeldetailansicht folgt jetzt der UI-Sprache (vorher fest auf Deutsch); klarere Hinweistexte für Aufbewahrungsdauer und Keyword-Abgleich auf der Einstellungen-Seite.
 - Ruhezeiten lassen sich auf der Einstellungen-Seite jetzt ein- und ausschalten; bei ausgeschalteter Ruhezeit sind die VON/BIS-Felder deaktiviert und es werden keine Ruhezeiten gespeichert (Vorgabe 22:00–07:00, falls nie konfiguriert).

@@ -71,6 +71,15 @@ Design-Entwurf folgen.
 - Laufzeit-Verifikation am Windows-Handy-Fenster 390 × 844 pt: alle fünf Sektionen sichtbar (Light + Dark), Theme-Wechsel über „Farbschema" wirkt sofort und wird persistiert, Verzögerung „Sofort" markiert Artikel direkt beim Öffnen. Screenshots: `test-results/issue-26-manual-*.png`; Details in `test-results.md`.
 - Scope-Abweichungen zum Entwurf (nicht umgesetzt): „Lokalen Cache leeren", Sektion „Datenbank & Datensicherung", Ruhezeiten-Status-Badge, „Änderungen gespeichert"-Toast.
 
+### Feeds & Einstellungen – Benachrichtigungen (issue-27)
+- Geprüft auf 390 × 844 pt (Windows-Handy-Fenster, `GetWindowRect`-verifiziert), Interaktion via UI Automation.
+- `FeedsPage`: neues Optionspaar „Benachrichtigungen" (Label + Hint) mit `Switch` rechts, `MinimumWidth/HeightRequest="44"`, `SemanticProperties.Description`; oberhalb von „Speichern", kein zusätzlicher Text-Button.
+- Edit-Flow (ActionSheet „Feed-Aktionen" → „Bearbeiten") lädt den Flag in den Switch; Speichern persistiert und Reload zeigt den Wert.
+- `SettingsPage`: Zeile „Sammel-Benachrichtigung" + Hint in der Karte „Benachrichtigungen & Ruhezeiten", per `IsEnabled`-Binding/`DataTrigger` mit den übrigen Optionen ausgegraut; Persistenz über App-Neustart verifiziert.
+- Keine horizontalen Tabellen, keine Scroll-Verschachtelung; alle neuen Texte aus `AppResources` (EN/DE), Dark Mode per `AppThemeBinding`.
+- Screenshots: `test-results/issue-27/manual-*.png`; Details in `test-results.md`.
+- **Offen:** iOS-Simulator-Verifikation (`net10.0-ios`, `scripts/iOS-Deployment.ps1`) ist nur auf macOS möglich und steht als Folgeaufgabe aus.
+
 ### Artikeldetailansicht (issue-24)
 - Geprüft gegen `design-draft/stitch_local_rss_feed_reader/artikel_lesemodus/screen.png` und `artikel_lesemodus_dark_mode/screen.png`.
 - Implementiert als `Grid` mit `RowDefinitions="Auto,Auto,*,Auto,Auto"`; der `WebView` füllt die verbleibende Höhe und übernimmt das Scrolling nativ.

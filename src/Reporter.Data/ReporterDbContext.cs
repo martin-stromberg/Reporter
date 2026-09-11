@@ -84,6 +84,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.LastCheckedAt).HasColumnName("last_checked_at");
         entity.Property(e => e.HealthStatus).HasColumnName("health_status").HasMaxLength(50);
         entity.Property(e => e.HealthLastChange).HasColumnName("health_last_change");
+        entity.Property(e => e.NotificationsEnabled).HasColumnName("notifications_enabled").IsRequired().HasDefaultValue(true);
 
         entity.HasIndex(e => e.Url).IsUnique();
         entity.HasOne(e => e.Category).WithMany().HasForeignKey(e => e.CategoryId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
@@ -131,6 +132,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.AutoRefreshEnabled).HasColumnName("auto_refresh_enabled").IsRequired().HasDefaultValue(true);
         entity.Property(e => e.RefreshIntervalMinutes).HasColumnName("refresh_interval_minutes").IsRequired().HasDefaultValue(30);
         entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
+        entity.Property(e => e.NotificationSummaryEnabled).HasColumnName("notification_summary_enabled").IsRequired().HasDefaultValue(false);
 
         entity.HasData(new Settings());
     }

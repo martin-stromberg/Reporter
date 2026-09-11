@@ -763,7 +763,7 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Push notifications ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications ähnelt.
         /// </summary>
         public static string SettingsNotificationsLabel {
             get {
@@ -772,7 +772,7 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Breaking news &amp; favorite feeds ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Get notified about new articles ähnelt.
         /// </summary>
         public static string SettingsNotificationsHint {
             get {
@@ -966,6 +966,78 @@ namespace Reporter.Core.Resources.Strings {
         public static string SettingsKeywordRemoveFormat {
             get {
                 return ResourceManager.GetString("SettingsKeywordRemoveFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications ähnelt.
+        /// </summary>
+        public static string FeedNotificationsLabel {
+            get {
+                return ResourceManager.GetString("FeedNotificationsLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notify about new articles from this feed (requires notifications enabled in the settings) ähnelt.
+        /// </summary>
+        public static string FeedNotificationsHint {
+            get {
+                return ResourceManager.GetString("FeedNotificationsHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Summary notification ähnelt.
+        /// </summary>
+        public static string SettingsNotificationSummaryLabel {
+            get {
+                return ResourceManager.GetString("SettingsNotificationSummaryLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die One notification per feed instead of per article ähnelt.
+        /// </summary>
+        public static string SettingsNotificationSummaryHint {
+            get {
+                return ResourceManager.GetString("SettingsNotificationSummaryHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} new articles: {1} ähnelt.
+        /// </summary>
+        public static string NotificationSummaryFormat {
+            get {
+                return ResourceManager.GetString("NotificationSummaryFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications deactivated ähnelt.
+        /// </summary>
+        public static string NotificationDeniedTitle {
+            get {
+                return ResourceManager.GetString("NotificationDeniedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Notifications are deactivated for this app in the system settings. Enable them there to get notified about new articles. ähnelt.
+        /// </summary>
+        public static string NotificationDeniedMessage {
+            get {
+                return ResourceManager.GetString("NotificationDeniedMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Open settings ähnelt.
+        /// </summary>
+        public static string NotificationDeniedOpenSettings {
+            get {
+                return ResourceManager.GetString("NotificationDeniedOpenSettings", resourceCulture);
             }
         }
     }

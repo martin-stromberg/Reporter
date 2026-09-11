@@ -18,6 +18,8 @@ Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
 
 Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt — ebenso gelesene Artikel, die ein Filter-Schlagwort enthalten. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 
+Auf iOS benachrichtigt dich die App nach einem Abgleich über neue Artikel — pro Artikel oder gesammelt pro Feed, mit optionaler Ruhezeit und Schlagwort-Filter. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
+
 ## Beispiele
 
 - Du öffnest die App und siehst auf dem Tab **Ungelesen** die aktuellsten Artikel deiner Feeds.

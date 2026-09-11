@@ -55,6 +55,7 @@ public class SettingsViewModelTests_E2E : IDisposable
         _viewModel.RetentionDays = 90;
         _viewModel.SaveRetentionCommand.Execute(null);
         _viewModel.NotificationsEnabled = false;
+        _viewModel.NotificationSummaryEnabled = true;
         _viewModel.QuietHoursEnabled = true;
         _viewModel.QuietHoursStart = new TimeSpan(22, 0, 0);
         _viewModel.QuietHoursEnd = new TimeSpan(7, 0, 0);
@@ -67,6 +68,7 @@ public class SettingsViewModelTests_E2E : IDisposable
             var s = await _settingsRepository.GetAsync();
             return s.RetentionDays == 90
                 && !s.NotificationsEnabled
+                && s.NotificationSummaryEnabled
                 && s.QuietHoursStart == new TimeSpan(22, 0, 0)
                 && s.QuietHoursEnd == new TimeSpan(7, 0, 0)
                 && !s.AutoRefreshEnabled
@@ -79,6 +81,7 @@ public class SettingsViewModelTests_E2E : IDisposable
 
         Assert.Equal(90, reloaded.RetentionDays);
         Assert.False(reloaded.NotificationsEnabled);
+        Assert.True(reloaded.NotificationSummaryEnabled);
         Assert.Equal(new TimeSpan(22, 0, 0), reloaded.QuietHoursStart);
         Assert.Equal(new TimeSpan(7, 0, 0), reloaded.QuietHoursEnd);
         Assert.False(reloaded.AutoRefreshEnabled);
@@ -86,6 +89,25 @@ public class SettingsViewModelTests_E2E : IDisposable
         Assert.False(reloaded.AutoMarkReadEnabled);
         Assert.Contains("light", _appThemeService.AppliedThemes);
         Assert.Contains(_autoRefreshService.AppliedSettings, s => !s.AutoRefreshEnabled);
+    }
+
+    /// <summary>
+    /// Verifies the end-to-end flow: toggle the notification summary switch, persist it
+    /// and reload the value on the next load.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task E2E_NotificationSummary_PersistRoundtrip()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.NotificationSummaryEnabled = true;
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).NotificationSummaryEnabled);
+
+        var reloaded = CreateViewModel();
+        await reloaded.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(reloaded.NotificationSummaryEnabled);
     }
 
     /// <summary>

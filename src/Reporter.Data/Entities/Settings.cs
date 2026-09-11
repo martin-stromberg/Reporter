@@ -62,4 +62,10 @@ public class Settings
     /// Gets or sets the appearance theme ("system", "light" or "dark").
     /// </summary>
     public string? Theme { get; set; } = SettingsValues.ThemeSystem;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether new items trigger a single summary
+    /// notification per feed instead of one notification per item.
+    /// </summary>
+    public bool NotificationSummaryEnabled { get; set; }
 }

@@ -44,6 +44,7 @@ public class AutoRefreshServiceTests : IDisposable
             RetentionDays = 30,
             AutoMarkReadDelaySeconds = 5,
             NotificationsEnabled = true,
+            NotificationSummaryEnabled = false,
             AutoRefreshEnabled = autoRefreshEnabled,
             RefreshIntervalMinutes = refreshIntervalMinutes,
         };
@@ -59,6 +60,7 @@ public class AutoRefreshServiceTests : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             QuietHoursStart = settings.QuietHoursStart,
             QuietHoursEnd = settings.QuietHoursEnd,
             AutoRefreshEnabled = autoRefreshEnabled,

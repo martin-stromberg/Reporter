@@ -18,6 +18,7 @@ public partial class FeedsViewModel : BaseViewModel
 
     private string _newUrl = string.Empty;
     private string _newTitle = string.Empty;
+    private bool _feedNotificationsEnabled = true;
     private string _errorMessage = string.Empty;
     private bool _isSyncing;
     private FeedListItem? _selectedFeed;
@@ -90,6 +91,15 @@ public partial class FeedsViewModel : BaseViewModel
     {
         get => _newTitle;
         set => SetProperty(ref _newTitle, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether notifications are enabled for the new or edited feed.
+    /// </summary>
+    public bool FeedNotificationsEnabled
+    {
+        get => _feedNotificationsEnabled;
+        set => SetProperty(ref _feedNotificationsEnabled, value);
     }
 
     /// <summary>
@@ -228,6 +238,7 @@ public partial class FeedsViewModel : BaseViewModel
                 LastCheckedAt = null,
                 HealthStatus = "OK",
                 HealthLastChange = null,
+                NotificationsEnabled = FeedNotificationsEnabled,
             });
         }
         else
@@ -241,13 +252,11 @@ public partial class FeedsViewModel : BaseViewModel
                 LastCheckedAt = SelectedFeed.LastCheckedAt,
                 HealthStatus = SelectedFeed.HealthStatus,
                 HealthLastChange = SelectedFeed.HealthLastChange,
+                NotificationsEnabled = FeedNotificationsEnabled,
             });
         }
 
-        NewUrl = string.Empty;
-        NewTitle = string.Empty;
-        SelectedFeed = null;
-        SelectedCategory = Categories.FirstOrDefault();
+        ResetForm();
         await LoadAsync();
     }
 
@@ -258,6 +267,7 @@ public partial class FeedsViewModel : BaseViewModel
             SelectedFeed = feed;
             NewUrl = feed.Url;
             NewTitle = feed.Title;
+            FeedNotificationsEnabled = feed.NotificationsEnabled;
             SelectedCategory = Categories.FirstOrDefault(c => c.Id == (feed.CategoryId ?? Guid.Empty));
             ErrorMessage = string.Empty;
         }
@@ -276,13 +286,19 @@ public partial class FeedsViewModel : BaseViewModel
 
         if (SelectedFeed?.Id == feed.Id)
         {
-            SelectedFeed = null;
-            NewUrl = string.Empty;
-            NewTitle = string.Empty;
-            SelectedCategory = Categories.FirstOrDefault();
+            ResetForm();
         }
 
         await LoadAsync();
+    }
+
+    private void ResetForm()
+    {
+        SelectedFeed = null;
+        NewUrl = string.Empty;
+        NewTitle = string.Empty;
+        FeedNotificationsEnabled = true;
+        SelectedCategory = Categories.FirstOrDefault();
     }
 
     private async Task RefreshAsync(FeedListItem? feed)

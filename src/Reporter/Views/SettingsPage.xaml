@@ -255,6 +255,35 @@
                             <Border Padding="10"
                                     StrokeShape="RoundRectangle 8"
                                     Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <MultiTrigger TargetType="Border">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                            <BindingCondition Binding="{Binding NotificationPermissionDenied}" Value="True"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </MultiTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.NotificationDeniedMessage}"
+                                           Style="{StaticResource BodySmallStyle}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                                           VerticalOptions="Center"/>
+                                    <Button Grid.Column="1"
+                                            Text="{x:Static strings:AppResources.NotificationDeniedOpenSettings}"
+                                            Clicked="OnOpenNotificationSettingsClicked"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.NotificationDeniedOpenSettings}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
                                     IsEnabled="{Binding NotificationsEnabled}"
                                     Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
                                 <Border.Triggers>
@@ -263,6 +292,21 @@
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <VerticalStackLayout VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <Label Text="{x:Static strings:AppResources.SettingsNotificationSummaryLabel}"/>
+                                            <Label Text="{x:Static strings:AppResources.SettingsNotificationSummaryHint}"
+                                                   Style="{StaticResource MetaStyle}"/>
+                                        </VerticalStackLayout>
+                                        <Switch Grid.Column="1"
+                                                IsToggled="{Binding NotificationSummaryEnabled}"
+                                                SemanticProperties.Description="{x:Static strings:AppResources.SettingsNotificationSummaryLabel}"
+                                                MinimumWidthRequest="44"
+                                                MinimumHeightRequest="44"
+                                                VerticalOptions="Center"/>
+                                    </Grid>
                                     <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8">
                                         <VerticalStackLayout VerticalOptions="Center"
