@@ -126,6 +126,11 @@
                    TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
                    IsVisible="{Binding HasError}"
                    Style="{StaticResource BodySmallStyle}"/>
+
+            <Label Text="{Binding SyncErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasSyncError}"
+                   Style="{StaticResource BodySmallStyle}"/>
         </VerticalStackLayout>
 
         <RefreshView Grid.Row="1"

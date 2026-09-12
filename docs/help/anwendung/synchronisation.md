@@ -47,5 +47,6 @@ Details zum Offline-Verhalten siehe [Offline lesen](offline.md).
 
 ## Verhalten bei Fehlern
 
+- Schlägt eine manuelle Aktualisierung fehl, erscheint oberhalb der Liste eine lokalisierte Fehlermeldung (auf **Ungelesen** und **Feeds**); sie verschwindet beim nächsten Ladevorgang oder bei einem Wechsel der Netzwerkverbindung.
 - Bestehende Artikel werden bei einem Fehler **nicht** gelöscht.
 - Für jeden Abruf wird ein `SyncLog`-Eintrag mit Status, Zeitstempel und ggf. Fehlermeldung gespeichert.

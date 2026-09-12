@@ -32,6 +32,7 @@ public partial class UnreadViewModel : BaseViewModel
     private string _selectedCategoryText = string.Empty;
     private string _unreadCountText = string.Empty;
     private int _currentPage;
+    private string _syncErrorMessage = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnreadViewModel"/> class.
@@ -203,6 +204,28 @@ public partial class UnreadViewModel : BaseViewModel
     public bool HasError => _errorMessage.Length > 0;
 
     /// <summary>
+    /// Gets or sets the current synchronization error message, shown above the article list.
+    /// Kept separate from <see cref="ErrorMessage"/> so connectivity changes only clear
+    /// sync feedback and do not remove load errors.
+    /// </summary>
+    public string SyncErrorMessage
+    {
+        get => _syncErrorMessage;
+        set
+        {
+            if (SetProperty(ref _syncErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasSyncError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a synchronization error message is present.
+    /// </summary>
+    public bool HasSyncError => _syncErrorMessage.Length > 0;
+
+    /// <summary>
     /// Gets or sets the human-readable last sync time.
     /// </summary>
     public string LastSyncText
@@ -228,6 +251,7 @@ public partial class UnreadViewModel : BaseViewModel
     private async Task LoadAsync()
     {
         ErrorMessage = string.Empty;
+        SyncErrorMessage = string.Empty;
         _currentPage = 0;
         Articles = [];
         HasMore = false;
@@ -326,10 +350,16 @@ public partial class UnreadViewModel : BaseViewModel
     {
         if (!IsOnline)
         {
+            // The RefreshView.IsRefreshing TwoWay binding may already have pushed
+            // IsSyncing to true before the command ran — reset it so the refresh
+            // indicator does not hang. No error is raised; the persistent offline
+            // hint already communicates the state.
+            IsSyncing = false;
             return;
         }
 
         IsSyncing = true;
+        SyncErrorMessage = string.Empty;
 
         var syncError = string.Empty;
         try
@@ -337,7 +367,10 @@ public partial class UnreadViewModel : BaseViewModel
             var result = await _feedSyncService.SyncAllAsync();
             if (result.Status == FeedHealth.Error)
             {
-                syncError = result.Message ?? AppResources.SyncStatusError;
+                // The technical detail stays in the SyncLog (persisted via
+                // FeedSyncService.UpdateLogAsync); the UI shows the localized
+                // generic message instead of raw English/exception text.
+                syncError = AppResources.SyncStatusError;
             }
         }
         catch (Exception ex)
@@ -352,7 +385,11 @@ public partial class UnreadViewModel : BaseViewModel
 
         LastSyncText = string.Format(CultureInfo.CurrentCulture, "{0:g}", DateTime.Now);
         await LoadAsync();
-        ErrorMessage = syncError;
+
+        if (syncError.Length > 0)
+        {
+            SyncErrorMessage = syncError;
+        }
     }
 
     private async Task MarkAllReadAsync()
@@ -452,6 +489,6 @@ public partial class UnreadViewModel : BaseViewModel
     /// <inheritdoc />
     protected override void OnConnectivityChanged(bool isOnline)
     {
-        ErrorMessage = string.Empty;
+        SyncErrorMessage = string.Empty;
     }
 }

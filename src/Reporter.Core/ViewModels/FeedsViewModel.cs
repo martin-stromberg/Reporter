@@ -24,6 +24,7 @@ public partial class FeedsViewModel : BaseViewModel
     private string _errorMessage = string.Empty;
     private string _syncErrorMessage = string.Empty;
     private bool _isSyncing;
+    private bool _isSyncInProgress;
     private FeedListItem? _selectedFeed;
     private Category? _selectedCategory;
     private ObservableCollection<FeedListItem> _feeds = [];
@@ -342,70 +343,66 @@ public partial class FeedsViewModel : BaseViewModel
 
     private async Task RefreshAsync(FeedListItem? feed)
     {
-        if (feed is null || IsSyncing)
+        if (feed is null)
         {
             return;
         }
 
-        if (!IsOnline)
-        {
-            return;
-        }
-
-        IsSyncing = true;
-        SyncErrorMessage = string.Empty;
-
-        try
-        {
-            var result = await _feedSyncService.SyncFeedAsync(feed.Id);
-            if (result.Status == FeedHealth.Error)
-            {
-                SyncErrorMessage = result.Message ?? AppResources.SyncStatusError;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"RefreshAsync failed: {ex}");
-            SyncErrorMessage = AppResources.SyncStatusError;
-        }
-        finally
-        {
-            IsSyncing = false;
-        }
-
-        await LoadAsync();
+        var feedId = feed.Id;
+        await SyncAsync(() => _feedSyncService.SyncFeedAsync(feedId));
     }
 
     private async Task RefreshAllAsync()
     {
-        if (IsSyncing)
+        await SyncAsync(() => _feedSyncService.SyncAllAsync());
+    }
+
+    /// <summary>
+    /// Runs the specified feed synchronization exactly once at a time and reloads the list.
+    /// The reentrancy guard uses a private runtime flag because <see cref="IsSyncing"/> is
+    /// preset to <see langword="true"/> by the <c>RefreshView.IsRefreshing</c> TwoWay binding
+    /// before the refresh command executes; guarding on the bound property would turn every
+    /// pull-to-refresh gesture into a no-op. The same preset value is reset in the offline
+    /// early-return path so the refresh indicator does not hang.
+    /// </summary>
+    /// <param name="syncAction">The synchronization operation to run.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    private async Task SyncAsync(Func<Task<SyncResult>> syncAction)
+    {
+        if (_isSyncInProgress)
         {
             return;
         }
 
         if (!IsOnline)
         {
+            IsSyncing = false;
             return;
         }
 
+        _isSyncInProgress = true;
         IsSyncing = true;
         SyncErrorMessage = string.Empty;
 
         try
         {
-            var result = await _feedSyncService.SyncAllAsync();
+            var result = await syncAction();
             if (result.Status == FeedHealth.Error)
             {
-                SyncErrorMessage = result.Message ?? AppResources.SyncStatusError;
+                // The technical detail stays in the SyncLog (persisted via
+                // FeedSyncService.UpdateLogAsync); the UI shows the localized
+                // generic message instead of raw English/exception text.
+                SyncErrorMessage = AppResources.SyncStatusError;
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"RefreshAllAsync failed: {ex}");
+            Debug.WriteLine($"SyncAsync failed: {ex}");
             SyncErrorMessage = AppResources.SyncStatusError;
         }
         finally
         {
+            _isSyncInProgress = false;
             IsSyncing = false;
         }
 

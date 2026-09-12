@@ -94,11 +94,12 @@ public class FeedsViewModelTests : IDisposable
 
     /// <summary>
     /// Verifies that an error result from the sync service is surfaced via the
-    /// sync error channel, not the form validation channel.
+    /// sync error channel as a localized generic message — the raw technical
+    /// result text stays in the SyncLog and is not shown in the UI.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task RefreshCommand_WhenSyncReturnsError_SetsSyncErrorMessage()
+    public async Task RefreshCommand_WhenSyncReturnsError_SetsLocalizedSyncErrorMessage()
     {
         var feedId = await SeedFeedAsync();
         _syncService.NextResult = new SyncResult(FeedHealth.Error, 0, "Network error");
@@ -109,7 +110,7 @@ public class FeedsViewModelTests : IDisposable
         await viewModel.RefreshCommand.ExecuteAsync(feed);
 
         Assert.True(viewModel.HasSyncError);
-        Assert.Equal("Network error", viewModel.SyncErrorMessage);
+        Assert.Equal(AppResources.SyncStatusError, viewModel.SyncErrorMessage);
         Assert.False(viewModel.HasError);
         Assert.Equal(string.Empty, viewModel.ErrorMessage);
     }
@@ -132,6 +133,91 @@ public class FeedsViewModelTests : IDisposable
         Assert.False(viewModel.IsOnline);
         Assert.False(_syncService.SyncAllCalled);
         Assert.Equal(string.Empty, viewModel.SyncErrorMessage);
+        Assert.False(viewModel.HasSyncError);
+        Assert.False(viewModel.HasError);
+    }
+
+    /// <summary>
+    /// Verifies that a pull-to-refresh gesture still syncs when the RefreshView TwoWay
+    /// binding has already set IsSyncing before the command executes — the reentrancy
+    /// guard must not rely on the bound property.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshAllCommand_WhenIsSyncingPresetByBinding_StillSyncs()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.IsSyncing = true;
+
+        await viewModel.RefreshAllCommand.ExecuteAsync(null);
+
+        Assert.True(_syncService.SyncAllCalled);
+        Assert.False(viewModel.IsSyncing);
+    }
+
+    /// <summary>
+    /// Verifies that the single-feed sync also runs when IsSyncing was preset by the
+    /// RefreshView TwoWay binding.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenIsSyncingPresetByBinding_StillSyncs()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+        viewModel.IsSyncing = true;
+
+        await viewModel.RefreshCommand.ExecuteAsync(feed);
+
+        Assert.Equal(feedId, _syncService.LastFeedId);
+        Assert.False(viewModel.IsSyncing);
+    }
+
+    /// <summary>
+    /// Verifies that the offline early return of RefreshAllCommand resets an IsSyncing
+    /// value preset by the binding, so the refresh indicator stops.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshAllCommand_WhenOffline_ResetsPresetIsSyncing()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+        viewModel.IsSyncing = true;
+
+        await viewModel.RefreshAllCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsSyncing);
+        Assert.False(_syncService.SyncAllCalled);
+        Assert.False(viewModel.HasSyncError);
+        Assert.False(viewModel.HasError);
+    }
+
+    /// <summary>
+    /// Verifies that the offline early return of RefreshCommand resets an IsSyncing
+    /// value preset by the binding, so the refresh indicator stops.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenOffline_ResetsPresetIsSyncing()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+        viewModel.IsSyncing = true;
+
+        await viewModel.RefreshCommand.ExecuteAsync(feed);
+
+        Assert.False(viewModel.IsSyncing);
+        Assert.Null(_syncService.LastFeedId);
         Assert.False(viewModel.HasSyncError);
         Assert.False(viewModel.HasError);
     }
