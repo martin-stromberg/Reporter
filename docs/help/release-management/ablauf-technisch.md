@@ -46,7 +46,7 @@ Alle drei `needs: version`, `if: needs.version.outputs.changed == 'true'`, paral
 1. `actions/download-artifact` mit `pattern: release-*`, `merge-multiple: true` → alle Pakete liegen flach im Arbeitsverzeichnis.
 2. `node scripts/release-assets.mjs` (Env `IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}`) schreibt `RELEASE_ASSETS` (`name:platform:runtimeIdentifier`, `;`-getrennt), `RELEASE_ASSET_PATHS` (`;`-getrennt) und `RELEASE_ASSET_FILES` (leerzeichengetrennt) nach `$GITHUB_ENV`.
 3. `node scripts/create-update-manifest.mjs` (Env `RELEASE_VERSION: rc_version`, `RELEASE_TAG: rc_tag`) erzeugt `update.json`.
-4. `gh release create "$rc_tag" $RELEASE_ASSET_FILES update.json --target "$GITHUB_SHA" --title "$rc_tag" --prerelease --generate-notes`.
+4. `gh release create "$rc_tag" $RELEASE_ASSET_FILES update.json --target "$GITHUB_SHA" --title "$rc_tag" --prerelease --notes-file docs/RELEASE_NOTES.md` — der Release-Text kommt aus der gepflegten Datei `docs/RELEASE_NOTES.md`, nicht aus generierten Commit-Notes.
 
 ### 6. Promotion (`.github/workflows/staging-to-main-promotion.yml`, Workflow `Staging to Main Promotion`)
 
@@ -90,8 +90,8 @@ Outputs: `released`, `reason`, `version`, `tag`, `release_kind`, `release_action
 
 `needs: [resolve, package-windows, package-android, package-ios]`, `if: released == 'true' && !failure() && !cancelled()`. `npm ci`, Entfernen lokaler `v*-rc.*`-Tags, Download aller `release-*`-Artefakte, `scripts/release-assets.mjs`, `scripts/create-update-manifest.mjs` (Env `RELEASE_VERSION`, `RELEASE_TAG`). Danach genau einer von drei Pfaden:
 
-- `create` + `release_kind == 'automatic'`: `npm run release` → semantic-release erzeugt Tag, GitHub-Release und lädt die Assets gemäß `release.config.js` hoch (`RELEASE_ASSET_PATHS` → Basename-Mapping plus `RELEASE_MANIFEST_PATH: update.json` → `update.json`; `successComment`/`failComment: false`).
-- `create` + `release_kind == 'manual'`: `gh release create "$tag" $RELEASE_ASSET_FILES update.json --title "$tag" --generate-notes`.
+- `create` + `release_kind == 'automatic'`: `npm run release` → semantic-release erzeugt Tag, GitHub-Release und lädt die Assets gemäß `release.config.js` hoch (`RELEASE_ASSET_PATHS` → Basename-Mapping plus `RELEASE_MANIFEST_PATH: update.json` → `update.json`; `successComment`/`failComment: false`). Anschließend ersetzt `gh release edit "$tag" --notes-file docs/RELEASE_NOTES.md` den von semantic-release generierten Body durch den Inhalt der gepflegten Datei — schlägt der Edit fehl, bleiben die generierten Notes als Fallback stehen.
+- `create` + `release_kind == 'manual'`: `gh release create "$tag" $RELEASE_ASSET_FILES update.json --title "$tag" --notes-file docs/RELEASE_NOTES.md`.
 - `upload-existing`: `gh release upload "$tag" $RELEASE_ASSET_FILES update.json --clobber`.
 
 ### 5. Backmerge (`.github/workflows/sync-staging-with-main.yml`, Workflow `Backmerge Main to Staging`)
