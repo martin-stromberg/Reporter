@@ -45,21 +45,27 @@ runs:
     - name: Collect Android package
       shell: pwsh
       run: |
-        $signed = @(Get-ChildItem -Path "src/Reporter/bin/Release" -Recurse -Filter "*-Signed.apk")
-        if ($signed.Count -gt 1) {
-          throw "Multiple signed .apk artifacts found under src/Reporter/bin/Release: $($signed.Name -join ', '). Expected exactly one."
-        }
-        if ($signed.Count -eq 1) {
-          $apk = $signed[0]
-        } else {
-          $unsigned = @(Get-ChildItem -Path "src/Reporter/bin/Release" -Recurse -Filter "*.apk" | Where-Object { $_.Name -notlike "*-Signed.apk" })
-          if ($unsigned.Count -gt 1) {
-            throw "Multiple unsigned .apk artifacts found under src/Reporter/bin/Release: $($unsigned.Name -join ', '). Expected exactly one."
+        function Resolve-SingleApk {
+          param([array]$Candidates, [string]$Kind)
+          $names = @($Candidates | ForEach-Object { $_.Name } | Select-Object -Unique)
+          if ($names.Count -gt 1) {
+            throw "Multiple distinct $Kind .apk artifacts found under src/Reporter/bin/Release: $($names -join ', '). Expected exactly one."
           }
-          if ($unsigned.Count -eq 0) {
+          if ($names.Count -eq 0) { return $null }
+          # dotnet publish writes the same artifact to both the TFM directory and publish/.
+          $inPublish = @($Candidates | Where-Object { ($_.DirectoryName -replace '\\', '/') -match '/publish$' })
+          if ($inPublish.Count -ge 1) { return $inPublish[0] }
+          return ($Candidates | Sort-Object FullName)[0]
+        }
+        $all = @(Get-ChildItem -Path "src/Reporter/bin/Release" -Recurse -Filter "*.apk" | Sort-Object FullName)
+        $signed = @($all | Where-Object { $_.Name -like "*-Signed.apk" })
+        $apk = Resolve-SingleApk -Candidates $signed -Kind "signed"
+        if (-not $apk) {
+          $unsigned = @($all | Where-Object { $_.Name -notlike "*-Signed.apk" })
+          $apk = Resolve-SingleApk -Candidates $unsigned -Kind "unsigned"
+          if (-not $apk) {
             throw "No .apk artifact found under src/Reporter/bin/Release after publish."
           }
-          Write-Warning "No signed *-Signed.apk found; falling back to unsigned APK '$($unsigned[0].Name)'."
-          $apk = $unsigned[0]
+          Write-Warning "No signed *-Signed.apk found; falling back to unsigned APK '$($apk.Name)'."
         }
         Copy-Item -Path $apk.FullName -Destination "release-android.apk" -Force
