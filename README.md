@@ -1,9 +1,12 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Reporter
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![Pre-Release](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/staging-ci.yml?branch=staging&label=Pre-Release)](https://github.com/martin-stromberg/Reporter/actions/workflows/staging-ci.yml)
 [![Release-Workflow](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/release.yml?label=Release-Workflow)](https://github.com/martin-stromberg/Reporter/actions/workflows/release.yml)
 [![Release](https://img.shields.io/github/v/release/martin-stromberg/Reporter?include_prereleases)](https://github.com/martin-stromberg/Reporter/releases)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm--Noncommercial--1.0.0-blue)](LICENSE)
 
 Lokaler RSS-/Feed-Reader als .NET MAUI-App für Windows und iOS.
 
@@ -187,3 +190,26 @@ Siehe [changes.log](changes.log).
 - [Offline lesen](docs/help/anwendung/offline.md) — Offline-Indikatoren, deaktivierte Links/Bilder, pausierter Hintergrund-Sync
 - [Sprache (Deutsch / Englisch)](docs/help/anwendung/sprache.md) — UI-Sprache nach Systemsprache, Englisch als Fallback
 - [Release-Management](docs/help/release-management/index.md) — Release-Pipeline: RC-Pre-Releases auf `staging`, Promotion nach `main`, stabile Releases mit Plattform-Artefakten, Backmerge
+
+## Lizenz
+
+Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den vollständigen Lizenztext siehe [LICENSE](LICENSE).
+
+- **Private und nicht-kommerzielle Nutzung ist erlaubt:** persönliche Nutzung, Hobby-Projekte, Forschung und Lehre sowie die Nutzung durch gemeinnützige Organisationen, Bildungseinrichtungen und staatliche Stellen.
+- **Kommerzielle Nutzung ist untersagt:** Jede Nutzung mit kommerziellem Zweck ist von dieser Lizenz nicht gedeckt und erfordert eine separate, individuell vereinbarte Genehmigung.
+- **Kommerzielle Lizenzierung:** Anfragen an Martin Stromberg (<mstromberg84+github@gmail.com>) — Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+- **Beiträge (Contributions):** Werden unter derselben Lizenz angenommen — Details siehe [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Lizenz-FAQ
+
+**Was bedeutet private bzw. nicht-kommerzielle Nutzung?**
+Persönliche Nutzung für private Zwecke — etwa eigene Recherche, Experimente und Tests, persönliches Studium, private Unterhaltung, Hobby-Projekte und Amateur-Vorhaben ohne kommerzielle Zielsetzung. Ebenfalls erlaubt ist die Nutzung durch gemeinnützige Organisationen, Bildungseinrichtungen, öffentliche Forschungseinrichtungen, Organisationen für öffentliche Sicherheit und Gesundheit, Umweltschutzorganisationen und staatliche Stellen — unabhängig von der Finanzierungsquelle.
+
+**Was gilt als kommerzielle Nutzung?**
+Jede Nutzung mit kommerziellem Zweck oder in kommerziellem Kontext — z. B. der Einsatz der App in einem Unternehmen, die Einbindung des Codes in ein kommerzielles Produkt oder einen kostenpflichtigen Dienst sowie die Nutzung gegen Vergütung. Solche Nutzung ist durch die PolyForm Noncommercial License nicht abgedeckt.
+
+**Wie funktioniert kommerzielle Lizenzierung?**
+Reporter wird dual lizenziert: nicht-kommerziell unter der PolyForm Noncommercial License 1.0.0, kommerziell ausschließlich über eine individuell mit dem Lizenzgeber vereinbarte kommerzielle Lizenz. Eine kommerzielle Lizenz gilt **nicht** automatisch — der Upgrade-Pfad führt über eine Anfrage an Martin Stromberg (<mstromberg84+github@gmail.com>), Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+
+**Was ist erlaubt, was ist verboten?**
+Erlaubt: Nutzung, Vervielfältigung, Weitergabe und Änderung der Software für nicht-kommerzielle Zwecke — unter der Bedingung, dass jede Kopie die Lizenzbedingungen (bzw. deren URL) und etwaige `Required Notice:`-Zeilen enthält. Verboten: jede kommerzielle Nutzung ohne separate Genehmigung sowie die Unterlizenzierung oder Übertragung der Lizenzrechte auf Dritte.

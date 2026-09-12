@@ -1,3 +1,5 @@
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 name: Package iOS
 
 inputs:
@@ -56,14 +58,21 @@ runs:
         ipas=()
         while IFS= read -r -d '' file; do
           ipas+=("$file")
-        done < <(find src/Reporter/bin/Release -name '*.ipa' -print0)
+        done < <(find src/Reporter/bin/Release -name '*.ipa' -print0 | sort -z)
         if [ "${#ipas[@]}" -eq 0 ]; then
           echo "::error::No .ipa artifact found under src/Reporter/bin/Release after publish."
           exit 1
         fi
-        if [ "${#ipas[@]}" -gt 1 ]; then
-          echo "::error::Multiple .ipa artifacts found under src/Reporter/bin/Release; expected exactly one:"
-          printf '%s\n' "${ipas[@]}"
+        # dotnet publish may write the same artifact to both the RID directory and publish/ — deduplicate by basename.
+        distinct=$(printf '%s\n' "${ipas[@]##*/}" | sort -u | wc -l)
+        if [ "$distinct" -gt 1 ]; then
+          echo "::error::Multiple distinct .ipa artifacts found under src/Reporter/bin/Release; expected exactly one:"
+          printf '%s\n' "${ipas[@]##*/}" | sort -u
           exit 1
         fi
-        cp "${ipas[0]}" release-ios.ipa
+        ipa=""
+        for f in "${ipas[@]}"; do
+          case "$f" in */publish/*) ipa="$f"; break;; esac
+        done
+        if [ -z "$ipa" ]; then ipa="${ipas[0]}"; fi
+        cp "$ipa" release-ios.ipa

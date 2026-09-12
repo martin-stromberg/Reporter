@@ -1,3 +1,5 @@
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 name: Pre-Release
 
 on:
@@ -75,6 +77,9 @@ jobs:
 
       - name: Format check
         run: dotnet format Reporter.sln --verify-no-changes --no-restore --severity error
+
+      - name: License header check
+        run: node scripts/add-license-headers.mjs --check
 
       - name: Security scan
         uses: ./.github/actions/security-scan
