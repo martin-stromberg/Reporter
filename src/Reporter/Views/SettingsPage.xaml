@@ -238,7 +238,13 @@
                             Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
-                                  ColumnSpacing="8">
+                                  ColumnSpacing="8"
+                                  IsEnabled="{Binding NotificationsSupported}">
+                                <Grid.Triggers>
+                                    <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                </Grid.Triggers>
                                 <VerticalStackLayout VerticalOptions="Center"
                                                      Spacing="2">
                                     <Label Text="{x:Static strings:AppResources.SettingsNotificationsLabel}"/>
@@ -255,14 +261,104 @@
                             <Border Padding="10"
                                     StrokeShape="RoundRectangle 8"
                                     Stroke="Transparent"
-                                    IsEnabled="{Binding NotificationsEnabled}"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <MultiTrigger TargetType="Border">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                            <BindingCondition Binding="{Binding NotificationPermissionNotDetermined}" Value="True"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </MultiTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.NotificationNotDeterminedMessage}"
+                                           Style="{StaticResource BodySmallStyle}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                           VerticalOptions="Center"/>
+                                    <Button Grid.Column="1"
+                                            Text="{x:Static strings:AppResources.NotificationNotDeterminedAllow}"
+                                            Command="{Binding RequestNotificationPermissionCommand}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.NotificationNotDeterminedAllow}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <MultiTrigger TargetType="Border">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                            <BindingCondition Binding="{Binding NotificationPermissionDenied}" Value="True"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </MultiTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.NotificationDeniedMessage}"
+                                           Style="{StaticResource BodySmallStyle}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                                           VerticalOptions="Center"/>
+                                    <Button Grid.Column="1"
+                                            Text="{x:Static strings:AppResources.NotificationDeniedOpenSettings}"
+                                            Clicked="OnOpenNotificationSettingsClicked"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.NotificationDeniedOpenSettings}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsEnabled="{Binding NotificationControlsEnabled}"
                                     Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding NotificationsEnabled}" Value="False">
                                         <Setter Property="Opacity" Value="0.4"/>
                                     </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
                                 </Border.Triggers>
                                 <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <VerticalStackLayout VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <Label Text="{x:Static strings:AppResources.SettingsNotificationSummaryLabel}"/>
+                                            <Label Text="{x:Static strings:AppResources.SettingsNotificationSummaryHint}"
+                                                   Style="{StaticResource MetaStyle}"/>
+                                        </VerticalStackLayout>
+                                        <Switch Grid.Column="1"
+                                                IsToggled="{Binding NotificationSummaryEnabled}"
+                                                SemanticProperties.Description="{x:Static strings:AppResources.SettingsNotificationSummaryLabel}"
+                                                MinimumWidthRequest="44"
+                                                MinimumHeightRequest="44"
+                                                VerticalOptions="Center"/>
+                                    </Grid>
                                     <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8">
                                         <VerticalStackLayout VerticalOptions="Center"

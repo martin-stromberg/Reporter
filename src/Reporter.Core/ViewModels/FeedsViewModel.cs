@@ -15,9 +15,11 @@ public partial class FeedsViewModel : BaseViewModel
     private readonly IFeedRepository _feedRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IFeedSyncService _feedSyncService;
+    private readonly ILocalNotificationService? _localNotificationService;
 
     private string _newUrl = string.Empty;
     private string _newTitle = string.Empty;
+    private bool _feedNotificationsEnabled = true;
     private string _errorMessage = string.Empty;
     private bool _isSyncing;
     private FeedListItem? _selectedFeed;
@@ -31,11 +33,17 @@ public partial class FeedsViewModel : BaseViewModel
     /// <param name="feedRepository">The feed repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
-    public FeedsViewModel(IFeedRepository feedRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService)
+    /// <param name="localNotificationService">The platform notification service, used to detect whether notifications are supported at all.</param>
+    public FeedsViewModel(
+        IFeedRepository feedRepository,
+        ICategoryRepository categoryRepository,
+        IFeedSyncService feedSyncService,
+        ILocalNotificationService? localNotificationService = null)
     {
         _feedRepository = feedRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        _localNotificationService = localNotificationService;
         LoadCommand = new AsyncRelayCommand(LoadCommandAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         EditCommand = new AsyncRelayCommand<FeedListItem?>(EditAsync);
@@ -90,6 +98,21 @@ public partial class FeedsViewModel : BaseViewModel
     {
         get => _newTitle;
         set => SetProperty(ref _newTitle, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the current platform supports local notifications.
+    /// When <c>false</c>, the per-feed notification switch is disabled with a platform hint.
+    /// </summary>
+    public bool NotificationsSupported => _localNotificationService?.IsSupported == true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether notifications are enabled for the new or edited feed.
+    /// </summary>
+    public bool FeedNotificationsEnabled
+    {
+        get => _feedNotificationsEnabled;
+        set => SetProperty(ref _feedNotificationsEnabled, value);
     }
 
     /// <summary>
@@ -228,6 +251,7 @@ public partial class FeedsViewModel : BaseViewModel
                 LastCheckedAt = null,
                 HealthStatus = "OK",
                 HealthLastChange = null,
+                NotificationsEnabled = FeedNotificationsEnabled,
             });
         }
         else
@@ -241,13 +265,11 @@ public partial class FeedsViewModel : BaseViewModel
                 LastCheckedAt = SelectedFeed.LastCheckedAt,
                 HealthStatus = SelectedFeed.HealthStatus,
                 HealthLastChange = SelectedFeed.HealthLastChange,
+                NotificationsEnabled = FeedNotificationsEnabled,
             });
         }
 
-        NewUrl = string.Empty;
-        NewTitle = string.Empty;
-        SelectedFeed = null;
-        SelectedCategory = Categories.FirstOrDefault();
+        ResetForm();
         await LoadAsync();
     }
 
@@ -258,6 +280,7 @@ public partial class FeedsViewModel : BaseViewModel
             SelectedFeed = feed;
             NewUrl = feed.Url;
             NewTitle = feed.Title;
+            FeedNotificationsEnabled = feed.NotificationsEnabled;
             SelectedCategory = Categories.FirstOrDefault(c => c.Id == (feed.CategoryId ?? Guid.Empty));
             ErrorMessage = string.Empty;
         }
@@ -276,13 +299,19 @@ public partial class FeedsViewModel : BaseViewModel
 
         if (SelectedFeed?.Id == feed.Id)
         {
-            SelectedFeed = null;
-            NewUrl = string.Empty;
-            NewTitle = string.Empty;
-            SelectedCategory = Categories.FirstOrDefault();
+            ResetForm();
         }
 
         await LoadAsync();
+    }
+
+    private void ResetForm()
+    {
+        SelectedFeed = null;
+        NewUrl = string.Empty;
+        NewTitle = string.Empty;
+        FeedNotificationsEnabled = true;
+        SelectedCategory = Categories.FirstOrDefault();
     }
 
     private async Task RefreshAsync(FeedListItem? feed)

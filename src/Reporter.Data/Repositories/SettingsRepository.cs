@@ -59,6 +59,7 @@ public class SettingsRepository : ISettingsRepository
         entity.AutoRefreshEnabled = settings.AutoRefreshEnabled;
         entity.RefreshIntervalMinutes = settings.RefreshIntervalMinutes;
         entity.Theme = settings.Theme;
+        entity.NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
 
         await context.SaveChangesAsync();
     }
@@ -77,6 +78,7 @@ public class SettingsRepository : ISettingsRepository
             AutoRefreshEnabled = entity.AutoRefreshEnabled,
             RefreshIntervalMinutes = entity.RefreshIntervalMinutes,
             Theme = entity.Theme,
+            NotificationSummaryEnabled = entity.NotificationSummaryEnabled,
         };
     }
 }

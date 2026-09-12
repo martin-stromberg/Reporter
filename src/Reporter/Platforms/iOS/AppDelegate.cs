@@ -1,4 +1,6 @@
 using Foundation;
+using UIKit;
+using UserNotifications;
 
 namespace Reporter;
 
@@ -8,9 +10,20 @@ namespace Reporter;
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate
 {
+    // Die native Delegate-Property von UNUserNotificationCenter ist weak — die Instanz
+    // muss verwaltet gehalten werden, sonst kann der GC sie freigeben.
+    private readonly NotificationDelegate _notificationDelegate = new();
+
     /// <summary>
     /// Creates the <see cref="MauiApp"/> for this platform.
     /// </summary>
     /// <returns>The configured <see cref="MauiApp"/>.</returns>
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+
+    /// <inheritdoc />
+    public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
+    {
+        UNUserNotificationCenter.Current.Delegate = _notificationDelegate;
+        return base.FinishedLaunching(application, launchOptions);
+    }
 }

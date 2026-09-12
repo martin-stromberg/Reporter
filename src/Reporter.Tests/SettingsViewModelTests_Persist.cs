@@ -158,6 +158,151 @@ public class SettingsViewModelTests_Persist : IDisposable
     }
 
     /// <summary>
+    /// Verifies that toggling the notification summary switch persists the new value immediately.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationSummaryEnabled_Change_Persists()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.False(_viewModel.NotificationSummaryEnabled);
+
+        _viewModel.NotificationSummaryEnabled = true;
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).NotificationSummaryEnabled);
+
+        var settings = await _settingsRepository.GetAsync();
+        Assert.True(settings.NotificationSummaryEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that turning the notifications switch on requests the platform
+    /// authorization in the context of the deliberate activation.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationsEnabled_TurnedOn_RequestsAuthorization()
+    {
+        var localNotifications = new FakeLocalNotificationService();
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NotificationsEnabled = false;
+
+        viewModel.NotificationsEnabled = true;
+
+        await TestWaitHelper.WaitUntilAsync(() => localNotifications.RequestAuthorizationCallCount == 1);
+    }
+
+    /// <summary>
+    /// Verifies that a denied platform authorization raises
+    /// <see cref="SettingsViewModel.NotificationAuthorizationDenied"/> so the page can
+    /// point the user to the system settings.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationsEnabled_TurnedOn_Denied_RaisesNotificationAuthorizationDenied()
+    {
+        var localNotifications = new FakeLocalNotificationService { AuthorizationResult = false, AuthorizationStatus = NotificationAuthorizationStatus.Denied };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        var deniedRaised = false;
+        viewModel.NotificationAuthorizationDenied += () =>
+        {
+            deniedRaised = true;
+            return Task.CompletedTask;
+        };
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NotificationsEnabled = false;
+
+        viewModel.NotificationsEnabled = true;
+
+        await TestWaitHelper.WaitUntilAsync(() => deniedRaised);
+        Assert.True(viewModel.NotificationsEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that no authorization is requested on platforms without local
+    /// notification support.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationsEnabled_TurnedOn_UnsupportedPlatform_SkipsRequest()
+    {
+        var localNotifications = new FakeLocalNotificationService { IsSupported = false };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        var deniedRaised = false;
+        viewModel.NotificationAuthorizationDenied += () =>
+        {
+            deniedRaised = true;
+            return Task.CompletedTask;
+        };
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NotificationsEnabled = false;
+
+        viewModel.NotificationsEnabled = true;
+        await Task.Delay(50);
+
+        Assert.Equal(0, localNotifications.RequestAuthorizationCallCount);
+        Assert.False(deniedRaised);
+    }
+
+    /// <summary>
+    /// Verifies that switching notifications off clears a previously detected denied
+    /// system authorization state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationsEnabled_TurnedOff_ClearsNotificationPermissionDenied()
+    {
+        var localNotifications = new FakeLocalNotificationService { AuthorizationStatus = NotificationAuthorizationStatus.Denied };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(viewModel.NotificationPermissionDenied);
+
+        viewModel.NotificationsEnabled = false;
+
+        Assert.False(viewModel.NotificationPermissionDenied);
+    }
+
+    /// <summary>
+    /// Verifies that switching notifications off also clears a previously detected
+    /// not-determined authorization state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotificationsEnabled_TurnedOff_ClearsNotificationPermissionNotDetermined()
+    {
+        var localNotifications = new FakeLocalNotificationService { AuthorizationStatus = NotificationAuthorizationStatus.NotDetermined };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(viewModel.NotificationPermissionNotDetermined);
+
+        viewModel.NotificationsEnabled = false;
+
+        Assert.False(viewModel.NotificationPermissionNotDetermined);
+    }
+
+    /// <summary>
+    /// Verifies that the "allow notifications" command requests the platform
+    /// authorization and clears the not-determined hint once granted (usability
+    /// finding: a <c>NotDetermined</c> status needs a direct allow action because the
+    /// iOS system settings entry does not exist before the first request).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RequestNotificationPermission_NotDetermined_RequestsAndClearsHint()
+    {
+        var localNotifications = new FakeLocalNotificationService { AuthorizationStatus = NotificationAuthorizationStatus.NotDetermined };
+        var viewModel = new SettingsViewModel(_settingsRepository, _keywordRepository, _autoRefreshService, _appThemeService, _timeProvider, localNotifications);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(viewModel.NotificationPermissionNotDetermined);
+
+        await viewModel.RequestNotificationPermissionCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, localNotifications.RequestAuthorizationCallCount);
+        Assert.False(viewModel.NotificationPermissionNotDetermined);
+        Assert.False(viewModel.NotificationPermissionDenied);
+    }
+
+    /// <summary>
     /// Verifies that changing the theme applies it through the theme service.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -211,6 +356,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             QuietHoursStart = new TimeSpan(23, 30, 0),
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
@@ -251,6 +397,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             QuietHoursStart = new TimeSpan(23, 30, 0),
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
@@ -289,6 +436,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             QuietHoursStart = new TimeSpan(23, 30, 0),
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
@@ -348,6 +496,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             QuietHoursStart = new TimeSpan(23, 30, 0),
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,

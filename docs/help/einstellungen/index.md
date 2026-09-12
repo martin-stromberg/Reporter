@@ -11,3 +11,7 @@ Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App
 - [Business Rules](business-rules.md)
 - [Fehlerbehebung](troubleshooting.md)
 - [Fehlerbehebung für Anwender](fehlerbehebung-anwender.md)
+
+## Verwandte Bereiche
+
+- [Benachrichtigungen](../benachrichtigungen/index.md) — Lokale iOS-Benachrichtigungen über neue Artikel: Entscheidungslogik, Ruhezeit-Auswertung, Berechtigungsfluss und Tap-Navigation.

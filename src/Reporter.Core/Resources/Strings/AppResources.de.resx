@@ -268,10 +268,10 @@
     <value>5 Sekunden</value>
   </data>
   <data name="SettingsNotificationsLabel" xml:space="preserve">
-    <value>Push-Benachrichtigungen</value>
+    <value>Benachrichtigungen</value>
   </data>
   <data name="SettingsNotificationsHint" xml:space="preserve">
-    <value>Eilmeldungen &amp; favorisierte Feeds</value>
+    <value>Bei neuen Artikeln benachrichtigen</value>
   </data>
   <data name="SettingsQuietHoursLabel" xml:space="preserve">
     <value>Ruhezeit (Nicht stören)</value>
@@ -314,5 +314,38 @@
   </data>
   <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
     <value>Schlagwort {0} entfernen</value>
+  </data>
+  <data name="FeedNotificationsLabel" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="FeedNotificationsHint" xml:space="preserve">
+    <value>Bei neuen Artikeln dieses Feeds benachrichtigen (erfordert aktivierte Benachrichtigungen in den Einstellungen)</value>
+  </data>
+  <data name="SettingsNotificationSummaryLabel" xml:space="preserve">
+    <value>Sammel-Benachrichtigung</value>
+  </data>
+  <data name="SettingsNotificationSummaryHint" xml:space="preserve">
+    <value>Eine Benachrichtigung pro Feed statt pro Artikel</value>
+  </data>
+  <data name="NotificationSummaryFormat" xml:space="preserve">
+    <value>{0} neue Artikel: {1}</value>
+  </data>
+  <data name="NotificationDeniedTitle" xml:space="preserve">
+    <value>Benachrichtigungen deaktiviert</value>
+  </data>
+  <data name="NotificationDeniedMessage" xml:space="preserve">
+    <value>Benachrichtigungen sind für diese App in den Systemeinstellungen deaktiviert. Aktiviere sie dort, um über neue Artikel informiert zu werden.</value>
+  </data>
+  <data name="NotificationDeniedOpenSettings" xml:space="preserve">
+    <value>Einstellungen öffnen</value>
+  </data>
+  <data name="NotificationNotDeterminedMessage" xml:space="preserve">
+    <value>Benachrichtigungen sind noch nicht erlaubt. Erlaube sie, um über neue Artikel informiert zu werden.</value>
+  </data>
+  <data name="NotificationNotDeterminedAllow" xml:space="preserve">
+    <value>Benachrichtigungen erlauben</value>
+  </data>
+  <data name="NotificationsIosOnlyHint" xml:space="preserve">
+    <value>Benachrichtigungen sind derzeit nur auf iOS verfügbar.</value>
   </data>
 </root>

@@ -268,10 +268,10 @@
     <value>5 seconds</value>
   </data>
   <data name="SettingsNotificationsLabel" xml:space="preserve">
-    <value>Push notifications</value>
+    <value>Notifications</value>
   </data>
   <data name="SettingsNotificationsHint" xml:space="preserve">
-    <value>Breaking news &amp; favorite feeds</value>
+    <value>Get notified about new articles</value>
   </data>
   <data name="SettingsQuietHoursLabel" xml:space="preserve">
     <value>Quiet hours (do not disturb)</value>
@@ -314,5 +314,38 @@
   </data>
   <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
     <value>Remove keyword {0}</value>
+  </data>
+  <data name="FeedNotificationsLabel" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="FeedNotificationsHint" xml:space="preserve">
+    <value>Notify about new articles from this feed (requires notifications enabled in the settings)</value>
+  </data>
+  <data name="SettingsNotificationSummaryLabel" xml:space="preserve">
+    <value>Summary notification</value>
+  </data>
+  <data name="SettingsNotificationSummaryHint" xml:space="preserve">
+    <value>One notification per feed instead of per article</value>
+  </data>
+  <data name="NotificationSummaryFormat" xml:space="preserve">
+    <value>{0} new articles: {1}</value>
+  </data>
+  <data name="NotificationDeniedTitle" xml:space="preserve">
+    <value>Notifications deactivated</value>
+  </data>
+  <data name="NotificationDeniedMessage" xml:space="preserve">
+    <value>Notifications are deactivated for this app in the system settings. Enable them there to get notified about new articles.</value>
+  </data>
+  <data name="NotificationDeniedOpenSettings" xml:space="preserve">
+    <value>Open settings</value>
+  </data>
+  <data name="NotificationNotDeterminedMessage" xml:space="preserve">
+    <value>Notifications are not allowed yet. Allow them to get notified about new articles.</value>
+  </data>
+  <data name="NotificationNotDeterminedAllow" xml:space="preserve">
+    <value>Allow notifications</value>
+  </data>
+  <data name="NotificationsIosOnlyHint" xml:space="preserve">
+    <value>Notifications are currently only available on iOS.</value>
   </data>
 </root>

@@ -15,6 +15,7 @@
 2. Tippe in der Zeile des gewünschten Feeds auf **Aktualisieren**.
 3. Die App ruft den Feed ab, parst die RSS-/Atom-Daten und speichert neue Artikel in der Datenbank.
 4. Der Gesundheitsstatus des Feeds wird aktualisiert (`OK`, `Warning` oder `Error`).
+5. Auf iOS löst die App für berechtigte neue Artikel eine lokale Benachrichtigung aus — abhängig von den Schaltern in den **Einstellungen** und am Feed, der Ruhezeit und den Schlagwort-Filtern. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 
 ### Alle Feeds aktualisieren
 

@@ -254,6 +254,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
                     AutoMarkReadMode = SettingsValues.AutoMarkReadOnOpen,
                     AutoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds,
                     NotificationsEnabled = true,
+                    NotificationSummaryEnabled = false,
                     AutoRefreshEnabled = true,
                     RefreshIntervalMinutes = 30,
                 };

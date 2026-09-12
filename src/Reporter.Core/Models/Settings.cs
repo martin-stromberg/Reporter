@@ -60,4 +60,10 @@ public class Settings
     /// Gets the appearance theme ("system", "light" or "dark").
     /// </summary>
     public string? Theme { get; init; } = SettingsValues.ThemeSystem;
+
+    /// <summary>
+    /// Gets a value indicating whether new items trigger a single summary notification
+    /// per feed (<c>true</c>) or one notification per item (<c>false</c>, the default).
+    /// </summary>
+    public required bool NotificationSummaryEnabled { get; init; }
 }

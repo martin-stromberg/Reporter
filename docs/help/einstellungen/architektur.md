@@ -14,6 +14,7 @@
 | `IKeywordMatcher` / `KeywordMatcher` (`Reporter.Core`) | Service | Zentrales Matching: `Contains` mit `OrdinalIgnoreCase` auf `Title` und `ContentHtml`; Wiederverwendung durch Cleanup und späteres Benachrichtigungs-Paket |
 | `IAutoRefreshService` / `AutoRefreshService` (`Reporter.Core`) | Service | `PeriodicTimer`-Loop über `TimeProvider`, ruft `IFeedSyncService.SyncAllAsync` sequenziell awaitend auf (keine überlappenden Abrufe) |
 | `IAppThemeService` (`Reporter.Core`) / `AppThemeService` (`src/Reporter/Services/`) | Interface + Implementierung | Setzt `Application.Current.UserAppTheme`; Abstraktion nötig, da `Reporter.Core` (`net10.0`) keine MAUI-Referenz hat |
+| `ILocalNotificationService` (`Reporter.Core`) / `LocalNotificationService` (`src/Reporter/Services/`) | Interface + Implementierung | iOS-Benachrichtigungsberechtigung anfragen (`RequestAuthorizationAsync`) und Status abfragen (`GetAuthorizationStatusAsync` → `NotificationAuthorizationStatus`); `IsSupported` ist nur unter iOS `true` — Details siehe [Benachrichtigungen — Architektur](../benachrichtigungen/architektur.md) |
 | `SettingsValues` (`Reporter.Core/Models`) | statische Klasse | Zentrale Konstanten für persistierte Setting-Werte (`AutoMarkReadOnOpen`/`AutoMarkReadOnScroll`/`AutoMarkReadOff`, `ThemeSystem`/`ThemeLight`/`ThemeDark`) und die Prüfmethode `IsAutoMarkReadEnabled` |
 | `IRetentionCleanupService` / `RetentionCleanupService` (`Reporter.Core`) | Service | Start-Cleanup; löscht abgelaufene gelesene Artikel und keyword-gefilterte Kandidaten |
 | `ArticleDetailViewModel` (`src/Reporter/ViewModels/`) | ViewModel | Wertet `AutoMarkReadMode`/`AutoMarkReadDelaySeconds` beim Öffnen eines Artikels aus |
@@ -24,7 +25,7 @@
 - Alle Services werden in `MauiProgram.CreateMauiApp` als Singletons registriert: `IKeywordMatcher → KeywordMatcher`, `IAutoRefreshService → AutoRefreshService`, `IAppThemeService → AppThemeService`.
 - `AutoRefreshService` hängt von `ISettingsRepository`, `IFeedSyncService` und `TimeProvider` ab (Standard `TimeProvider.System`; Tests injizieren `FakeTimeProvider` aus `Microsoft.Extensions.TimeProvider.Testing`).
 - `RetentionCleanupService` hängt von `ISettingsRepository`, `IItemRepository`, `IKeywordRepository` und `IKeywordMatcher` ab.
-- `SettingsViewModel` hängt von `ISettingsRepository`, `IKeywordRepository`, `IAutoRefreshService` und `IAppThemeService` ab.
+- `SettingsViewModel` hängt von `ISettingsRepository`, `IKeywordRepository`, `IAutoRefreshService`, `IAppThemeService` und optional `ILocalNotificationService` ab (nullable Konstruktor-Parameter — die Berechtigungslogik ist nur bei `IsSupported` aktiv).
 - `Reporter.Data` nutzt `IDbContextFactory<ReporterDbContext>` pro Operation; `IItemRepository` wurde um `GetExpiredKeywordCandidatesAsync` und `DeleteRangeAsync` erweitert.
 
 ## Datenfluss
@@ -36,6 +37,7 @@ graph TD
     SVM --> KR[IKeywordRepository]
     SVM --> ARS[IAutoRefreshService]
     SVM --> ATS[IAppThemeService]
+    SVM --> LNS[ILocalNotificationService]
     ATS --> APP[Application.UserAppTheme]
     ARS --> FSS[IFeedSyncService.SyncAllAsync]
     APP2[App.OnStart] --> RCS[IRetentionCleanupService]

@@ -74,6 +74,7 @@ public class SettingsRepositoryTests : IDisposable
             RetentionDays = 7,
             AutoMarkReadDelaySeconds = 10,
             NotificationsEnabled = false,
+            NotificationSummaryEnabled = true,
             AutoRefreshEnabled = false,
             RefreshIntervalMinutes = 15,
             Theme = "dark",
@@ -84,6 +85,7 @@ public class SettingsRepositoryTests : IDisposable
         Assert.Equal(7, result.RetentionDays);
         Assert.Equal(10, result.AutoMarkReadDelaySeconds);
         Assert.False(result.NotificationsEnabled);
+        Assert.True(result.NotificationSummaryEnabled);
     }
 
     /// <summary>
@@ -99,6 +101,7 @@ public class SettingsRepositoryTests : IDisposable
             RetentionDays = 14,
             AutoMarkReadDelaySeconds = 20,
             NotificationsEnabled = true,
+            NotificationSummaryEnabled = false,
             AutoRefreshEnabled = true,
             RefreshIntervalMinutes = 60,
             Theme = "light",
@@ -141,6 +144,7 @@ public class SettingsRepositoryTests : IDisposable
             RetentionDays = 30,
             AutoMarkReadDelaySeconds = 5,
             NotificationsEnabled = true,
+            NotificationSummaryEnabled = true,
             AutoRefreshEnabled = false,
             RefreshIntervalMinutes = 240,
             Theme = "dark",
@@ -151,5 +155,22 @@ public class SettingsRepositoryTests : IDisposable
         Assert.False(result.AutoRefreshEnabled);
         Assert.Equal(240, result.RefreshIntervalMinutes);
         Assert.Equal("dark", result.Theme);
+        Assert.True(result.NotificationSummaryEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that SaveAsync persists the notification summary flag in both directions.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveAsync_PersistsNotificationSummaryEnabled()
+    {
+        await TestSettingsHelper.SaveAsync(_repository, notificationSummaryEnabled: true);
+
+        Assert.True((await _repository.GetAsync()).NotificationSummaryEnabled);
+
+        await TestSettingsHelper.SaveAsync(_repository, notificationSummaryEnabled: false);
+
+        Assert.False((await _repository.GetAsync()).NotificationSummaryEnabled);
     }
 }

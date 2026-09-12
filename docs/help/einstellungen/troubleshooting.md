@@ -45,6 +45,17 @@
 2. `settings.auto_mark_read_delay_seconds` prüfen — negative Werte fallen auf den Fallback (5 s) zurück.
 3. Beim Öffnen schlägt fehlgeschlagener Settings-Zugriff fehl auf ein Fallback-Objekt (`"on_open"`, 5 s) — im Debug-Log `Failed to load settings` suchen.
 
+## Benachrichtigungen kommen nicht an / Hinweiszeile „Einstellungen öffnen"
+
+**Symptom:** Trotz eingeschaltetem Schalter **Benachrichtigungen** erscheinen keine Benachrichtigungen, oder die rote Hinweiszeile mit **Einstellungen öffnen** ist sichtbar.
+
+**Ursache:** Neben dem globalen Schalter (`settings.notifications_enabled`) greifen der Pro-Feed-Schalter (`feeds.notifications_enabled`), die Ruhezeit (`quiet_hours_start`/`quiet_hours_end`, inkl. Wrap-around) und die Keyword-Filter; auf iOS kann zusätzlich die System-Berechtigung verweigert sein (`UNAuthorizationStatus.Denied` — Versand bricht in `LocalNotificationService.EnsureAuthorizedAsync` still ab) oder noch nicht angefragt worden sein (`NotDetermined` → neutrale Zeile „Benachrichtigungen erlauben"). `NotificationPermissionDenied`/`NotificationPermissionNotDetermined` werden nur beim Laden der Seite (`GetAuthorizationStatusAsync`) und beim Umschalten aktualisiert.
+
+**Lösung:**
+1. Detaillierte Prüfkette siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/troubleshooting.md).
+2. Debug-Ausgaben: `FeedSyncService notification failed`, `Failed to request notification authorization`, `Failed to query notification authorization`.
+3. Auf Nicht-iOS-Targets ist `ILocalNotificationService.IsSupported == false` — die Berechtigungs-Hinweiszeilen können dort nicht erscheinen; stattdessen sind die Schalter deaktiviert (`NotificationsSupported == false`, Hinweis „derzeit nur auf iOS verfügbar") und `ShowAsync` ist ein No-Op.
+
 ## Theme-Wechsel wirkt nicht
 
 **Symptom:** Der „Farbschema"-Picker ändert das Erscheinungsbild nicht.

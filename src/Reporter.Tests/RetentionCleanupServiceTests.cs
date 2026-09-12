@@ -45,6 +45,7 @@ public class RetentionCleanupServiceTests : IDisposable
             AutoMarkReadMode = settings.AutoMarkReadMode,
             AutoMarkReadDelaySeconds = settings.AutoMarkReadDelaySeconds,
             NotificationsEnabled = settings.NotificationsEnabled,
+            NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             QuietHoursStart = settings.QuietHoursStart,
             QuietHoursEnd = settings.QuietHoursEnd,
             AutoRefreshEnabled = settings.AutoRefreshEnabled,

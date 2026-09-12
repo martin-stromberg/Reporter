@@ -62,6 +62,12 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("last_checked_at");
 
+                    b.Property<bool>("NotificationsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notifications_enabled");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -182,6 +188,12 @@ namespace Reporter.Data.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("auto_refresh_enabled");
 
+                    b.Property<bool>("NotificationSummaryEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false)
+                        .HasColumnName("notification_summary_enabled");
+
                     b.Property<bool>("NotificationsEnabled")
                         .HasColumnType("INTEGER")
                         .HasColumnName("notifications_enabled");
@@ -220,6 +232,7 @@ namespace Reporter.Data.Migrations
                             AutoMarkReadDelaySeconds = 5,
                             AutoMarkReadMode = "on_scroll",
                             AutoRefreshEnabled = true,
+                            NotificationSummaryEnabled = false,
                             NotificationsEnabled = true,
                             RefreshIntervalMinutes = 30,
                             RetentionDays = 30,

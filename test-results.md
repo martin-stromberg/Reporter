@@ -1,5 +1,129 @@
 # Test- und Verifikationsergebnisse
 
+## Issue #27: Lokale iOS-Benachrichtigungen
+
+Branch: `task/issue-27-701ef16d7c03422499bad991054d7310-lokale-ios-benachrichtigungen`
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Build (Release, Solution) | `dotnet build Reporter.sln -c Release -p:IncludeIosTarget=false` | Erfolgreich, 0 Warnungen, 0 Fehler |
+| Tests | `dotnet test src/Reporter.Tests -c Release --no-build` | 176 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 147) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security, Static-Analysis-Release-Build ohne Befund) |
+
+Neue Tests (29): `NotificationServiceTests` (11 Fälle: globaler/Feed-Schalter, Ruhezeiten inkl.
+Mitternachts-Wraparound, `Start == End`, einseitig `null`, Keyword-Filter auf Titel und
+`ContentHtml`, Einzel-Identifier, Sammel-Modus, stabile Summary-ID, gefilterte Items in der
+Summary), `FeedSyncServiceTests` (5 neue: Notify bei neuen Items über die echte
+Entscheidungskette, Sammel-Modus, keine neuen Items, Feed deaktiviert, Notify-Ausnahme
+verändert Sync-Ergebnis nicht), `FeedsViewModelTests` (4 neue: Edit lädt Flag, neuer Feed
+persistiert `false`, Update persistiert Flag, Reset nach Speichern),
+`FeedRepositoryTests` (`UpdateAsync` assertiert `NotificationsEnabled`,
+`GetAllWithDetailsAsync_ProjectsNotificationsEnabled`), `SettingsRepositoryTests`
+(`SaveAsync_PersistsNotificationSummaryEnabled` Roundtrip beider Werte),
+`SettingsViewModelTests_Load` (`Load_PopulatesNotificationSummaryEnabled`),
+`SettingsViewModelTests_Persist` (`NotificationSummaryEnabled_Change_Persists`),
+`SettingsViewModelTests_E2E` (`E2E_NotificationSummary_PersistRoundtrip` und Roundtrip-Erweiterung).
+Neue Hilfsklassen: `FakeLocalNotificationService`, `FakeNotificationService`.
+
+### Mobile-UI-Design-Review „Feeds" und „Einstellungen"
+
+Statische XAML-Prüfung der Änderungen an `FeedsPage.xaml` (Feed-Formular) und
+`SettingsPage.xaml` (Karte „Benachrichtigungen & Ruhezeiten") gegen die AGENTS.md-Regeln:
+
+- [x] Feed-Formular: `Grid ColumnDefinitions="*,Auto"` mit Label + Hinweis links und
+  `Switch` rechts (`MinimumWidthRequest/MinimumHeightRequest="44"`,
+  `SemanticProperties.Description` für Accessibility)
+- [x] Einstellungen: „Sammel-Benachrichtigung" liegt in der bestehenden Optionsgruppe und
+  wird mit den übrigen Zeilen per `IsEnabled="{Binding NotificationsEnabled}"` +
+  `DataTrigger` (`Opacity` 0,4) ausgegraut, wenn Push aus ist
+- [x] Keine horizontalen Tabellen, keine mehreren Text-Buttons in einer Zeile;
+  Seitenstruktur unverändert (`Grid Auto,*`, Formular-`ScrollView`, `CollectionView`
+  ohne Verschachtelung)
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle neuen Texte aus
+  `AppResources.*` (EN + DE)
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Die App wurde auf dem Windows-Target im 390 × 844-pt-Fenster gestartet (unpackaged
+`win-x64`-Release-Build, Fenstergröße via `App.CreateWindow`, per `GetWindowRect`
+verifiziert: 390 × 844). Interaktion über UI Automation + `mouse_event`;
+Schalter-Zustände per `TogglePattern` gelesen. Screenshots unter
+`test-results/issue-27/manual-*.png`:
+
+- [x] `FeedsPage`: Feed-Formular zeigt Switch „Benachrichtigungen" mit Hinweistext
+  „Bei neuen Artikeln dieses Feeds benachrichtigen" oberhalb von „Speichern"
+  (`manual-02`); Tab-Leiste „Ungelesen/Feeds/Später" + „Mehr" unverändert (`manual-01`)
+- [x] `FeedsPage` Edit-Flow: Feed antippen → ActionSheet „Feed-Aktionen" → „Bearbeiten"
+  lädt den Flag in den Switch (Heise: On = Migrations-Default `true`)
+- [x] Per-Feed-Persistenz: Switch Off → „Speichern" → erneutes „Bearbeiten" zeigt Off;
+  danach wieder On gespeichert (Ausgangszustand wiederhergestellt)
+- [x] `SettingsPage`: Karte „Benachrichtigungen & Ruhezeiten" zeigt neue Zeile
+  „Sammel-Benachrichtigung" mit Hinweis „Eine Benachrichtigung pro Feed statt pro Artikel"
+  zwischen „Push-Benachrichtigungen" und „Ruhezeit (Nicht stören)"
+  (`manual-04`, `manual-07`)
+- [x] Globaler Summary-Schalter: Toggle On → App-Neustart → Zustand bleibt On
+  (Persistenz über `SettingsRepository` → SQLite → Reload, `manual-05`); danach wieder
+  auf Off zurückgesetzt
+
+### iOS-Simulator-Verifikation
+
+Nicht möglich auf diesem Windows-Arbeitsplatz — der iOS-Build (`net10.0-ios`) und
+`scripts/iOS-Deployment.ps1` benötigen macOS. Nachzuholen auf einem Mac mit iOS-Simulator:
+App starten, Benachrichtigungs-Berechtigung bestätigen, Sync auslösen und Banner/
+Mitteilungszentrale sowie Ruhezeiten-Verhalten prüfen.
+
+### Iteration 3 (Review-Nachbearbeitung)
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Build (Debug, Solution inkl. `net10.0-ios`) | `dotnet build Reporter.sln` | Erfolgreich, 1 Warnung (pre-existing CS8765 in `AppDelegate.FinishedLaunching`), 0 Fehler |
+| Tests | `dotnet test src/Reporter.Tests --no-build` | 185 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security, Static-Analysis-Release-Build ohne Befund) |
+
+Behobene Review-Befunde (Code):
+
+- `LocalNotificationService.BuildUserInfo`: `NSDictionary` wird jetzt korrekt über
+  `NSDictionary.FromObjectsAndKeys(values, keys)` befüllt (bisher falscher
+  `NSDictionary(object, object, params object[])`-Konstruktor → NSArray als Key,
+  `UserInfo`-Verlust/Exception beim Serialisieren). Der `identifier`-Schlüssel wurde
+  entfernt — der Identifier ist bereits `UNNotificationRequest`-Identifier.
+- `FeedsViewModel`: doppelter Formular-Reset in `SaveAsync`/`DeleteAsync` in
+  `ResetForm()` extrahiert.
+- `SettingsViewModelTests_Load.Load_PopulatesNotificationSummaryEnabled` und
+  `SettingsRepositoryTests.SaveAsync_PersistsNotificationSummaryEnabled` nutzen jetzt
+  `TestSettingsHelper.SaveAsync`.
+
+Behobene Review-Befunde (Usability):
+
+- `NotificationDelegate.DidReceiveNotificationResponse`: Antippen navigiert jetzt
+  in-app — Einzel-Benachrichtigung → `articledetail?itemId=…` (Route wie
+  `ArticleCardView`), Sammel-Benachrichtigung (`feedId`) → `//unread`
+  (`ShellContent.Route = "unread"` in `AppShell` ergänzt). Navigation via
+  `MainThread.InvokeOnMainThreadAsync` mit `Shell.Current`-Null-Check; falls die Shell
+  beim Kaltstart noch nicht bereit ist, Fallback auf `Launcher` mit `link`.
+- Verweigerte Systemberechtigung wird beim Laden der Einstellungen erneut geprüft:
+  `ILocalNotificationService.IsAuthorizedAsync` (neu) →
+  `SettingsViewModel.NotificationPermissionDenied` → Hinweiszeile mit
+  „Einstellungen öffnen"-Button in der Karte „Benachrichtigungen & Ruhezeiten"
+  (MultiTrigger `NotificationsEnabled && NotificationPermissionDenied`, Texte aus
+  `AppResources` `NotificationDeniedMessage`/`NotificationDeniedOpenSettings`, 44-pt-
+  Touch-Target, `AppThemeBinding`).
+
+Neue Tests (4): `SettingsViewModelTests_Load` (`Load_PermissionDenied_SetsNotificationPermissionDenied`,
+`Load_PermissionGranted_ClearsNotificationPermissionDenied`,
+`Load_NotificationsDisabled_HidesNotificationPermissionDenied`),
+`SettingsViewModelTests_Persist` (`NotificationsEnabled_TurnedOff_ClearsNotificationPermissionDenied`).
+`FakeLocalNotificationService` um `IsAuthorizedAsync`/`IsAuthorizedResult` erweitert.
+
+Hinweis UI-Verifikation: Die neue Hinweiszeile ist unter Windows nicht sichtbar
+auslösbar (`ILocalNotificationService.IsSupported == false` → `NotificationPermissionDenied`
+bleibt `false`); die ViewModel-Logik ist durch die neuen Tests abgedeckt, das XAML
+statisch gegen die AGENTS.md-Regeln geprüft (Touch-Target, `AppThemeBinding`,
+resx-Texte). Die Sichtbarkeit der Zeile sowie die In-App-Navigation aus
+Benachrichtigungen sind auf macOS/iOS-Simulator nachzuverifizieren.
+
 ## Issue #26: Einstellungen, Aufbewahrungsdauer, Keyword-Filter und Löschlogik
 
 Branch: `task/issue-26-a32dbfb7fca140d88d166629e421fbe8-einstellungen-aufbewahrungsdau`
