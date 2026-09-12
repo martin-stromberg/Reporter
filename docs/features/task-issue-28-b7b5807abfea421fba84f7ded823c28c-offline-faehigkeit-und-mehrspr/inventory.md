@@ -1,0 +1,24 @@
+# Bestandsaufnahme: Offline-Fähigkeit und Mehrsprachigkeit (Issue #28)
+
+Analysiert wurden der Feed-Synchronisationspfad, die Artikel-Detailansicht (WebView), die Refresh-Einstiegspunkte sowie die bestehende ResX-Lokalisierung — bezogen auf die übersetzte Anforderung in `requirement.md` (Offline-Erkennung, Offline-Status am Sync-Button, WebView-Link-Deaktivierung, Lokalisierung EN/DE).
+
+## Zusammenfassung
+
+- **Keine Netzwerkstatus-Abstraktion vorhanden:** `Connectivity`, `NetworkAccess`, `IConnectivity`, `INetworkStatusService` kommen in `src/` nicht vor. Das Gateway-Muster ist aber etabliert (`IAppThemeService`→`AppThemeService`, `ILocalNotificationService`→`LocalNotificationService`: Interface in `Reporter.Core`, Implementierung im MAUI-Projekt, `AddSingleton`-Registrierung in `MauiProgram`).
+- **Offline-Crash-Freiheit weitgehend gegeben:** `FeedSyncService.SyncFeedAsync` fängt alle Exceptions außer `OperationCanceledException` und bildet sie auf `SyncResult(FeedHealth.Error, …)` + `SyncLog`-Eintrag ab; `AutoRefreshService` loggt Sync-Fehler und läuft weiter. **Aber:** keine Offline-Vorabprüfung — jeder Sync (manuell, Pull-to-Refresh, `PeriodicTimer`) erzeugt offline Fehler-Rauschen im `SyncLog`.
+- **Kein Offline-Status in der UI:** `UnreadPage`-Sync-Button (`Border`+`Path`+`TapGestureRecognizer` → `RefreshCommand`, Zeilen 21–41) und `FeedsPage`-`RefreshView` (→ `RefreshAllCommand`, Zeilen 75–77) zeigen keinen Offline-Zustand. `UnreadViewModel.RefreshCommand` hat keine `CanExecute`-Bedingung; `FeedsViewModel.RefreshCommand`/`RefreshAllCommand` nutzen nur `!IsSyncing`.
+- **WebView ohne `Navigating`-Handler:** `ArticleWebView` in `ArticleDetailPage.xaml` (Zeilen 108–115) hat keinen Handler — Link-Klicks navigieren intern. `ArticleDetailViewModel.RebuildHtml`/`SanitizeHtml` (Zeilen 329–400) ist der vorhandene Erweiterungspunkt, neutralisiert aktuell aber keine `<a>`-Links.
+- **Lokalisierung teilweise vorhanden:** `AppResources.resx` (neutral/EN, 112 Schlüssel) + `AppResources.de.resx` (DE, 112 Schlüssel, identischer Bestand) mit generiertem `AppResources.Designer.cs` inkl. statischer `Culture`-Eigenschaft. Der Großteil der Seiten ist bereits an `{x:Static strings:AppResources.*}`/`AppResources.*` gebunden (u. a. `AppShell`-Tab-Titel, `UnreadPage`, `FeedsPage`, `SettingsPage`).
+- **Verbleibende hartcodierte Texte:** `ArticleDetailPage.xaml` (`'Artikel'` Z. 9, `Gelesen` Z. 26, `Vollständiger Artikel verfügbar` Z. 128, `Im Browser öffnen` Z. 139/280, `Zurück` Z. 160, `Schriftgröße wechseln` Z. 212, `Teilen` Z. 257) und `ArticleDetailViewModel.cs` (`BookmarkButtonLabel` Z. 191, `MarkAsReadButtonLabel` Z. 196, `"{n} Min. Lesezeit"` Z. 320). Zusätzlich: `SyncLog`-Meldungen in `FeedSyncService` englisch hartcodiert (persistiert). Keine `Offline*`/`Accessibility*`/`SettingsLanguage*`-Schlüssel vorhanden.
+- **Kein manueller Sprachwechsel:** `Settings` (Core + Data-Entität) hat kein `Language`-Feld; `SettingsValues` keine `Language*`-Konstanten; `SettingsPage` keine Sprach-Sektion. `App.OnStart` wendet nur das Theme an, keine Kultur. Muster für die Umsetzung vorhanden (`ThemeOption`, `ThemeOptions`/`SelectedTheme` in `SettingsViewModel`).
+- **Lokale Lesepfade bereits offline-fähig:** Alle Repositories lesen ausschließlich aus SQLite via `IDbContextFactory<ReporterDbContext>`; `Item.ContentHtml` speichert den Artikelinhalt lokal (CSP erlaubt allerdings externe `img-src *`, die offline nicht laden).
+
+**Test-Ausgangszustand:** Vollständiger CI-äquivalenter Lauf (Restore → Release-Build → `dotnet test` mit coverlet/TRX) auf Commit `2704b5a` — **189 Tests, alle bestanden, 0 fehlgeschlagen, 0 übersprungen, Exit-Code 0**. Keine bestehenden Testfehler nachgewiesen. Testlücken: das MAUI-Projekt (inkl. `ArticleDetailViewModel`, Pages, Plattform-Services) ist von `Reporter.Tests` nicht erreichbar; keine Offline-/Lokalisierungs-Tests vorhanden. Nachweis und Details: [inventory/tests.md](inventory/tests.md).
+
+## Details
+
+- [Datenmodell](inventory/models.md) — `Settings` (Core/Entität, kein `Language`-Feld), `SettingsValues`, `Item`, `Feed`, `SyncLog`, `ItemListItem`, `FeedListItem`, `CategoryFilterItem`, `ThemeOption`
+- [Logik](inventory/logic.md) — `UnreadViewModel`, `FeedsViewModel`, `ArticleDetailViewModel`, `SettingsViewModel`, `FeedSyncService`, `AutoRefreshService`, `NotificationService`, `App`, `AppShell`, `MauiProgram`, Pages, Plattform-Services, ResX-Bestand
+- [Enums](inventory/enums.md) — `NotificationAuthorizationStatus`, `FeedHealth`- und `SettingsValues`-Konstanten (kein Netzwerkstatus-Enum)
+- [Interfaces](inventory/interfaces.md) — `IFeedSyncService`, `IAutoRefreshService`, `ISettingsRepository`, `IAppThemeService`, `ILocalNotificationService`, `INotificationService`, Repositories (kein `INetworkStatusService`)
+- [Tests](inventory/tests.md) — Test-Ausgangszustand mit gesicherten Logs/Reports unter `inventory/test-results/`, relevante Testklassen und Hilfsmethoden
