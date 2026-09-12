@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
@@ -38,11 +39,13 @@ public partial class UnreadViewModel : BaseViewModel
     /// <param name="itemRepository">The item repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
-    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService)
+    /// <param name="networkStatusService">The network connectivity status service.</param>
+    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService)
     {
         _itemRepository = itemRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        TrackConnectivity(networkStatusService);
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         LoadMoreCommand = new AsyncRelayCommand(LoadMoreAsync, () => !IsLoading && HasMore);
@@ -310,7 +313,8 @@ public partial class UnreadViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            Debug.WriteLine($"LoadPageAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorLoadFailed;
         }
         finally
         {
@@ -320,20 +324,26 @@ public partial class UnreadViewModel : BaseViewModel
 
     private async Task RefreshAsync()
     {
-        IsSyncing = true;
-        ErrorMessage = string.Empty;
+        if (!IsOnline)
+        {
+            return;
+        }
 
+        IsSyncing = true;
+
+        var syncError = string.Empty;
         try
         {
             var result = await _feedSyncService.SyncAllAsync();
             if (result.Status == FeedHealth.Error)
             {
-                ErrorMessage = result.Message ?? AppResources.SyncStatusError;
+                syncError = result.Message ?? AppResources.SyncStatusError;
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            Debug.WriteLine($"RefreshAsync failed: {ex}");
+            syncError = AppResources.SyncStatusError;
         }
         finally
         {
@@ -342,6 +352,7 @@ public partial class UnreadViewModel : BaseViewModel
 
         LastSyncText = string.Format(CultureInfo.CurrentCulture, "{0:g}", DateTime.Now);
         await LoadAsync();
+        ErrorMessage = syncError;
     }
 
     private async Task MarkAllReadAsync()
@@ -436,5 +447,11 @@ public partial class UnreadViewModel : BaseViewModel
         UnreadCountText = string.IsNullOrEmpty(LastSyncText)
             ? $"{UnreadCount} {AppResources.LabelUnreadArticles}"
             : $"{UnreadCount} {AppResources.LabelUnreadArticles} • {LastSyncText}";
+    }
+
+    /// <inheritdoc />
+    protected override void OnConnectivityChanged(bool isOnline)
+    {
+        ErrorMessage = string.Empty;
     }
 }

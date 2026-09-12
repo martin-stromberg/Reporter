@@ -4,7 +4,7 @@
 
 ## Zweck
 
-Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch.
+Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch entsprechend der Systemsprache (siehe [Sprache](sprache.md)). Bereits synchronisierte Artikel bleiben ohne Internetverbindung vollständig lesbar (siehe [Offline lesen](offline.md)).
 
 ## Funktionsweise
 

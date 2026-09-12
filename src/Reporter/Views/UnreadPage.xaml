@@ -24,6 +24,11 @@
                         StrokeShape="RoundRectangle 22"
                         Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
                         VerticalOptions="Center">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </DataTrigger>
+                    </Border.Triggers>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding RefreshCommand}"/>
                     </Border.GestureRecognizers>
@@ -37,7 +42,13 @@
                           HeightRequest="24"
                           HorizontalOptions="Center"
                           VerticalOptions="Center"
-                          Fill="Transparent"/>
+                          Fill="Transparent">
+                        <Path.Triggers>
+                            <DataTrigger TargetType="Path" Binding="{Binding IsOnline}" Value="False">
+                                <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </DataTrigger>
+                        </Path.Triggers>
+                    </Path>
                 </Border>
 
                 <Border Grid.Column="1"
@@ -65,6 +76,16 @@
                            Style="{StaticResource BodySmallStyle}"/>
                     <Label Text="{x:Static strings:AppResources.LabelPullToRefresh}"
                            Style="{StaticResource MetaStyle}"/>
+                    <Label Text="{x:Static strings:AppResources.OfflineHint}"
+                           Style="{StaticResource MetaStyle}"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                           IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="False">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
                 </VerticalStackLayout>
 
                 <Border Grid.Column="3"
@@ -100,6 +121,11 @@
 
             <Label Text="{Binding SelectedCategoryText}"
                    Style="{StaticResource MetaStyle}"/>
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasError}"
+                   Style="{StaticResource BodySmallStyle}"/>
         </VerticalStackLayout>
 
         <RefreshView Grid.Row="1"
@@ -113,7 +139,8 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:ItemListItem">
                         <views:ArticleCardView ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
-                                               MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"/>
+                                               MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
+                                               IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

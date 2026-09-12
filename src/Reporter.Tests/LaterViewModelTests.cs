@@ -11,6 +11,7 @@ public class LaterViewModelTests : IDisposable
 {
     private readonly TestDbContextFactory _factory;
     private readonly ItemRepository _itemRepository;
+    private readonly FakeNetworkStatusService _networkStatusService;
     private readonly LaterViewModel _viewModel;
 
     /// <summary>
@@ -20,7 +21,8 @@ public class LaterViewModelTests : IDisposable
     {
         _factory = new TestDbContextFactory();
         _itemRepository = new ItemRepository(_factory);
-        _viewModel = new LaterViewModel(_itemRepository);
+        _networkStatusService = new FakeNetworkStatusService();
+        _viewModel = new LaterViewModel(_itemRepository, _networkStatusService);
     }
 
     /// <summary>
@@ -100,6 +102,25 @@ public class LaterViewModelTests : IDisposable
         Assert.Equal(2, _viewModel.SavedItems.Count);
         Assert.Equal("Newer", _viewModel.SavedItems[0].Title);
         Assert.Equal("Older", _viewModel.SavedItems[1].Title);
+    }
+
+    /// <summary>
+    /// Verifies that the IsOnline property follows connectivity change events.
+    /// </summary>
+    [Fact]
+    public void ConnectivityChanged_UpdatesIsOnline()
+    {
+        Assert.True(_viewModel.IsOnline);
+
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        Assert.False(_viewModel.IsOnline);
+
+        _networkStatusService.IsOnline = true;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        Assert.True(_viewModel.IsOnline);
     }
 
     /// <summary>

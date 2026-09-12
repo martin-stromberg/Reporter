@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -11,7 +12,7 @@ namespace Reporter.Core.ViewModels;
 /// <summary>
 /// View model for the settings page.
 /// </summary>
-public partial class SettingsViewModel : BaseViewModel
+public partial class SettingsViewModel : ObservableObject
 {
     private const int MinRetentionDays = 1;
     private const int MaxRetentionDays = 365;

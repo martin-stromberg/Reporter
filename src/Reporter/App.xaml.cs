@@ -63,6 +63,17 @@ public partial class App : Application
 
         try
         {
+            // Den Netzwerkstatus-Service frueh aufloesen, damit das Monitoring startet.
+            _ = scope.ServiceProvider.GetRequiredService<INetworkStatusService>();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Starten der Netzwerk-Ueberwachung darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart network status init failed: {ex}");
+        }
+
+        try
+        {
             var autoRefreshService = scope.ServiceProvider.GetRequiredService<IAutoRefreshService>();
             await autoRefreshService.StartAsync();
         }

@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Microsoft.Maui.Controls;
+using Reporter.Core.Resources.Strings;
+using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
@@ -40,10 +42,17 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     }
 
     /// <inheritdoc />
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _viewModel.AttachConnectivity();
+    }
+
+    /// <inheritdoc />
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        _viewModel.CancelAutoMarkRead();
+        _viewModel.DetachConnectivity();
     }
 
     private async Task LoadAsync(Guid itemId)
@@ -56,5 +65,16 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         {
             Debug.WriteLine($"ArticleDetailPage.LoadAsync failed: {ex}");
         }
+    }
+
+    private void OnWebViewNavigating(object? sender, WebNavigatingEventArgs e)
+    {
+        if (_viewModel.IsOnline || !WebViewNavigationGuard.IsExternalUrl(e.Url))
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        _ = DisplayAlertAsync(AppResources.OfflineHint, AppResources.ArticleOfflineLinksDisabled, AppResources.ButtonOk);
     }
 }

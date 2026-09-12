@@ -15,6 +15,7 @@ Artikel, die du dir merken möchtest, markierst du mit einem Lesezeichen. Alle g
 - Die Liste zeigt ausschließlich gemerkte Artikel, absteigend nach Veröffentlichungsdatum sortiert.
 - Jede Karte zeigt Feed-Titel, Datum, Titel, Bild und einen kurzen Teasertext — wie auf der Seite **Ungelesen**.
 - Ist kein Artikel gemerkt, erscheint der Hinweis „Hier erscheinen Artikel, die du dir für später merkst."
+- Ohne Internetverbindung erscheint oberhalb der Liste das Hinweis-Banner **„Keine Internetverbindung."**, und die Vorschaubilder auf den Karten werden ausgeblendet (siehe [Offline lesen](offline.md)).
 
 ## Merkung entfernen
 

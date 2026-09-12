@@ -27,6 +27,16 @@
 
 Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie **Alle aktualisieren**, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Die automatische Aktualisierung läuft nur, solange die App geöffnet ist; dauert ein Abruf länger als das eingestellte Intervall, startet der nächste erst nach seinem Abschluss — Abrufe laufen nie parallel. Details siehe [Einstellungen](../einstellungen/index.md).
 
+## Verhalten ohne Internetverbindung
+
+Hat das Gerät keine Internetverbindung, wird kein Abruf gestartet:
+
+- Auf der Seite **Feeds** erscheint oberhalb der Liste ein Hinweis-Banner **„Keine Internetverbindung."**; auf **Ungelesen** wird der Aktualisieren-Button abgedunkelt und ein Hinweis in der Statuszeile eingeblendet.
+- **Aktualisieren**, **Alle aktualisieren** und das Herunterziehen der Liste werden übersprungen — es entsteht weder ein Fehlereintrag noch ändert sich der Gesundheitsstatus eines Feeds.
+- Die automatische Hintergrund-Aktualisierung pausiert und setzt nach Netzrückkehr mit dem nächsten Intervall fort.
+
+Details zum Offline-Verhalten siehe [Offline lesen](offline.md).
+
 ## Gesundheitsstatus
 
 | Status | Bedeutung |

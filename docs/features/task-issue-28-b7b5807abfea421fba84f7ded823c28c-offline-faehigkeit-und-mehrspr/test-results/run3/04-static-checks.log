@@ -1,0 +1,37 @@
+Stelle Pakete fuer win-x64 wieder her...
+  Wiederherzustellende Projekte werden ermittelt...
+  Alle Projekte sind für die Wiederherstellung auf dem neuesten Stand.
+Paket-Restore abgeschlossen.
+Pruefe Code-Formatierung...
+Format-Check bestanden.
+Pruefe auf verwundbare NuGet-Pakete...
+  Wiederherzustellende Projekte werden ermittelt...
+  "D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter.Core\Reporter.Core.csproj" wiederhergestellt (in 191 ms.).
+  "D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter.Tests\Reporter.Tests.csproj" wiederhergestellt (in 192 ms.).
+  "D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter.Data\Reporter.Data.csproj" wiederhergestellt (in 206 ms.).
+  "D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter\Reporter.csproj" wiederhergestellt (in 216 ms.).
+
+Die folgenden Quellen wurden verwendet:
+   https://api.nuget.org/v3/index.json
+   C:\Program Files (x86)\Microsoft SDKs\NuGetPackages\
+
+Für das angegebene Projekt "Reporter" liegen gemäß den aktuellen Quellen keine anfälligen Pakete vor.
+Für das angegebene Projekt "Reporter.Core" liegen gemäß den aktuellen Quellen keine anfälligen Pakete vor.
+Für das angegebene Projekt "Reporter.Data" liegen gemäß den aktuellen Quellen keine anfälligen Pakete vor.
+Für das angegebene Projekt "Reporter.Tests" liegen gemäß den aktuellen Quellen keine anfälligen Pakete vor.
+Keine verwundbaren Pakete gefunden.
+Fuehre statische Analyse (Release-Build mit Warnungen als Fehler) durch...
+  Reporter.Core -> D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter.Core\bin\Release\net10.0\Reporter.Core.dll
+  Reporter.Data -> D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter.Data\bin\Release\net10.0\Reporter.Data.dll
+  Reporter.Tests -> D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter.Tests\bin\Release\net10.0\Reporter.Tests.dll
+  XAML source generation is enabled (MauiXamlInflator=SourceGen). This generates C# code from XAML at compile time for better performance. To disable, remove the MauiXamlInflator line from your .csproj file (reverts to configuration-based defaults: Runtime in Debug, XamlC in Release).
+  Reporter -> D:\Repositories\softwareschmiede\b7b5807a-bfea-421f-ba84-f7ded823c28c\src\Reporter\bin\Release\net10.0-windows10.0.19041.0\win-x64\Reporter.dll
+
+Der Buildvorgang wurde erfolgreich ausgeführt.
+    0 Warnung(en)
+    0 Fehler
+
+Verstrichene Zeit 00:00:01.46
+Statische Analyse bestanden.
+
+Alle gewaehlten Static-Checks wurden erfolgreich ausgefuehrt.

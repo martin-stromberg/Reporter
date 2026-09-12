@@ -8,6 +8,7 @@ using Microsoft.Maui.Controls;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
+using Reporter.Core.Services;
 
 namespace Reporter.Core.ViewModels;
 
@@ -20,15 +21,6 @@ public partial class ArticleDetailViewModel : BaseViewModel
     private const int DefaultAutoMarkDelaySeconds = 5;
 
     private static readonly Regex HtmlTagRegex = new Regex("<[^>]+>", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-    private static readonly Regex ScriptTagRegex = new Regex("<script[^>]*>.*?</script>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex IframeTagRegex = new Regex("<iframe[^>]*>.*?</iframe>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex StyleTagRegex = new Regex("<style[^>]*>.*?</style>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex ObjectTagRegex = new Regex("<object[^>]*>.*?</object>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex EmbedTagRegex = new Regex("<embed[^>]*>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex FormTagRegex = new Regex("<form[^>]*>.*?</form>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex DangerousTagsRegex = new Regex("<(link|meta|base|applet|audio|video)[^>]*>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex OnEventRegex = new Regex("on\\w+\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex JavaScriptRegex = new Regex("javascript:", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private readonly IItemRepository _itemRepository;
     private readonly IFeedRepository _feedRepository;
@@ -47,6 +39,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
     private int _autoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds;
     private CancellationTokenSource? _autoMarkCts;
     private readonly object _autoMarkLock = new object();
+    private string _errorMessage = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ArticleDetailViewModel"/> class.
@@ -54,11 +47,13 @@ public partial class ArticleDetailViewModel : BaseViewModel
     /// <param name="itemRepository">The item repository.</param>
     /// <param name="feedRepository">The feed repository.</param>
     /// <param name="settingsRepository">The settings repository.</param>
-    public ArticleDetailViewModel(IItemRepository itemRepository, IFeedRepository feedRepository, ISettingsRepository settingsRepository)
+    /// <param name="networkStatusService">The network connectivity status service.</param>
+    public ArticleDetailViewModel(IItemRepository itemRepository, IFeedRepository feedRepository, ISettingsRepository settingsRepository, INetworkStatusService networkStatusService)
     {
         _itemRepository = itemRepository;
         _feedRepository = feedRepository;
         _settingsRepository = settingsRepository;
+        InitConnectivity(networkStatusService);
 
         GoBackCommand = new AsyncRelayCommand(GoBackAsync);
         ToggleSavedForLaterCommand = new AsyncRelayCommand(ToggleSavedForLaterAsync);
@@ -186,14 +181,34 @@ public partial class ArticleDetailViewModel : BaseViewModel
     public string FontSizeLabel => _fontSizeIndex == 0 ? "A" : "A+";
 
     /// <summary>
+    /// Gets the current error message.
+    /// </summary>
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        private set
+        {
+            if (SetProperty(ref _errorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an error message is present.
+    /// </summary>
+    public bool HasError => _errorMessage.Length > 0;
+
+    /// <summary>
     /// Gets the accessibility label for the bookmark action.
     /// </summary>
-    public string BookmarkButtonLabel => Item?.IsSavedForLater == true ? "Lesezeichen entfernen" : "Lesezeichen setzen";
+    public string BookmarkButtonLabel => Item?.IsSavedForLater == true ? AppResources.ArticleBookmarkRemove : AppResources.ArticleBookmarkSet;
 
     /// <summary>
     /// Gets the accessibility label for the mark-as-read action.
     /// </summary>
-    public string MarkAsReadButtonLabel => Item?.IsRead == true ? "Bereits gelesen" : "Als gelesen markieren";
+    public string MarkAsReadButtonLabel => Item?.IsRead == true ? AppResources.ArticleAlreadyRead : AppResources.ArticleMarkAsRead;
 
     /// <summary>
     /// Gets the command that navigates back.
@@ -307,6 +322,34 @@ public partial class ArticleDetailViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Subscribes to connectivity changes while the detail page is visible.
+    /// Re-reads the current status and rebuilds the HTML when it changed since
+    /// the last detach. Safe to call repeatedly.
+    /// </summary>
+    public void AttachConnectivity()
+    {
+        TrackConnectivity();
+        RefreshConnectivityStatus();
+    }
+
+    /// <summary>
+    /// Unsubscribes from connectivity changes and cancels any pending
+    /// automatic mark-as-read timer. Safe to call repeatedly.
+    /// </summary>
+    public void DetachConnectivity()
+    {
+        UntrackConnectivity();
+        CancelAutoMarkRead();
+    }
+
+    /// <inheritdoc />
+    protected override void OnConnectivityChanged(bool isOnline)
+    {
+        ErrorMessage = string.Empty;
+        RebuildHtml();
+    }
+
     private static string CalculateReadingTime(string? contentHtml)
     {
         if (string.IsNullOrWhiteSpace(contentHtml))
@@ -317,37 +360,12 @@ public partial class ArticleDetailViewModel : BaseViewModel
         var text = HtmlTagRegex.Replace(contentHtml, string.Empty);
         var wordCount = text.Split(new[] { ' ', '\t', '\n', '\r', '\u00A0' }, StringSplitOptions.RemoveEmptyEntries).Length;
         var minutes = Math.Max(1, (int)Math.Round(wordCount / WordsPerMinute));
-        return $"{minutes} Min. Lesezeit";
-    }
-
-    /// <summary>
-    /// Performs a best-effort regex-based HTML sanitization.
-    /// This is not a bullet-proof replacement for a dedicated HTML sanitizer library.
-    /// </summary>
-    /// <param name="html">The raw HTML to sanitize.</param>
-    /// <returns>The sanitized HTML or <c>null</c> if the input is <c>null</c>.</returns>
-    private string? SanitizeHtml(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-        {
-            return html;
-        }
-
-        html = ScriptTagRegex.Replace(html, string.Empty);
-        html = IframeTagRegex.Replace(html, string.Empty);
-        html = StyleTagRegex.Replace(html, string.Empty);
-        html = ObjectTagRegex.Replace(html, string.Empty);
-        html = EmbedTagRegex.Replace(html, string.Empty);
-        html = FormTagRegex.Replace(html, string.Empty);
-        html = DangerousTagsRegex.Replace(html, string.Empty);
-        html = OnEventRegex.Replace(html, string.Empty);
-        html = JavaScriptRegex.Replace(html, string.Empty);
-        return html;
+        return string.Format(CultureInfo.CurrentCulture, AppResources.ArticleReadingTimeFormat, minutes);
     }
 
     private void RebuildHtml()
     {
-        var content = SanitizeHtml(Item?.ContentHtml);
+        var content = ArticleHtmlSanitizer.Sanitize(Item?.ContentHtml, forOffline: !IsOnline);
         if (string.IsNullOrWhiteSpace(content))
         {
             HtmlSource = string.Empty;
@@ -488,7 +506,23 @@ blockquote {{
             return;
         }
 
-        await Browser.OpenAsync(Item.Link, BrowserLaunchMode.SystemPreferred);
+        if (!IsOnline)
+        {
+            ErrorMessage = AppResources.OfflineHint;
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            await Browser.OpenAsync(Item.Link, BrowserLaunchMode.SystemPreferred);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"OpenInBrowserAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorOpenInBrowserFailed;
+        }
     }
 
     private async Task ShareAsync()

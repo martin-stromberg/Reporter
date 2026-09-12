@@ -23,6 +23,8 @@ Tippe auf einen der fünf Tabs:
 - **Kategorien** — Kategorien für Feeds verwalten.
 - **Einstellungen** — App-Einstellungen.
 
+> **Hinweis:** Die App ist auch ohne Internetverbindung nutzbar — bereits geladene Artikel bleiben lesbar, und ein Hinweis **„Keine Internetverbindung."** erscheint auf den betroffenen Seiten. Details siehe [Offline lesen](offline.md).
+
 ### 3. Feeds synchronisieren
 
 - Öffne **Feeds**.
@@ -39,4 +41,4 @@ Tippe auf einen der fünf Tabs:
 
 ## Ergebnis
 
-Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an.
+Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an, die Sprache an die Systemsprache des Geräts (Deutsch oder Englisch — siehe [Sprache](sprache.md)).

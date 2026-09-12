@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -21,6 +22,7 @@ public partial class FeedsViewModel : BaseViewModel
     private string _newTitle = string.Empty;
     private bool _feedNotificationsEnabled = true;
     private string _errorMessage = string.Empty;
+    private string _syncErrorMessage = string.Empty;
     private bool _isSyncing;
     private FeedListItem? _selectedFeed;
     private Category? _selectedCategory;
@@ -33,16 +35,19 @@ public partial class FeedsViewModel : BaseViewModel
     /// <param name="feedRepository">The feed repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
+    /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="localNotificationService">The platform notification service, used to detect whether notifications are supported at all.</param>
     public FeedsViewModel(
         IFeedRepository feedRepository,
         ICategoryRepository categoryRepository,
         IFeedSyncService feedSyncService,
+        INetworkStatusService networkStatusService,
         ILocalNotificationService? localNotificationService = null)
     {
         _feedRepository = feedRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        TrackConnectivity(networkStatusService);
         _localNotificationService = localNotificationService;
         LoadCommand = new AsyncRelayCommand(LoadCommandAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
@@ -136,6 +141,26 @@ public partial class FeedsViewModel : BaseViewModel
     public bool HasError => _errorMessage.Length > 0;
 
     /// <summary>
+    /// Gets or sets the current synchronization error message, shown above the feed list.
+    /// </summary>
+    public string SyncErrorMessage
+    {
+        get => _syncErrorMessage;
+        set
+        {
+            if (SetProperty(ref _syncErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasSyncError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a synchronization error message is present.
+    /// </summary>
+    public bool HasSyncError => _syncErrorMessage.Length > 0;
+
+    /// <summary>
     /// Gets or sets a value indicating whether a synchronization is in progress.
     /// </summary>
     public bool IsSyncing
@@ -190,6 +215,7 @@ public partial class FeedsViewModel : BaseViewModel
     private async Task LoadCommandAsync()
     {
         ErrorMessage = string.Empty;
+        SyncErrorMessage = string.Empty;
         await LoadAsync();
     }
 
@@ -321,20 +347,26 @@ public partial class FeedsViewModel : BaseViewModel
             return;
         }
 
+        if (!IsOnline)
+        {
+            return;
+        }
+
         IsSyncing = true;
-        ErrorMessage = string.Empty;
+        SyncErrorMessage = string.Empty;
 
         try
         {
             var result = await _feedSyncService.SyncFeedAsync(feed.Id);
             if (result.Status == FeedHealth.Error)
             {
-                ErrorMessage = result.Message ?? AppResources.SyncStatusError;
+                SyncErrorMessage = result.Message ?? AppResources.SyncStatusError;
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            Debug.WriteLine($"RefreshAsync failed: {ex}");
+            SyncErrorMessage = AppResources.SyncStatusError;
         }
         finally
         {
@@ -351,20 +383,26 @@ public partial class FeedsViewModel : BaseViewModel
             return;
         }
 
+        if (!IsOnline)
+        {
+            return;
+        }
+
         IsSyncing = true;
-        ErrorMessage = string.Empty;
+        SyncErrorMessage = string.Empty;
 
         try
         {
             var result = await _feedSyncService.SyncAllAsync();
             if (result.Status == FeedHealth.Error)
             {
-                ErrorMessage = result.Message ?? AppResources.SyncStatusError;
+                SyncErrorMessage = result.Message ?? AppResources.SyncStatusError;
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            Debug.WriteLine($"RefreshAllAsync failed: {ex}");
+            SyncErrorMessage = AppResources.SyncStatusError;
         }
         finally
         {
@@ -372,5 +410,11 @@ public partial class FeedsViewModel : BaseViewModel
         }
 
         await LoadAsync();
+    }
+
+    /// <inheritdoc />
+    protected override void OnConnectivityChanged(bool isOnline)
+    {
+        SyncErrorMessage = string.Empty;
     }
 }

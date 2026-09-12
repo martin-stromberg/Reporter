@@ -40,6 +40,16 @@ public partial class ArticleCardView : ContentView
         typeof(ArticleCardView));
 
     /// <summary>
+    /// Identifies the <see cref="IsOnline"/> bindable property.
+    /// </summary>
+    /// <returns>The bindable property.</returns>
+    public static readonly BindableProperty IsOnlineProperty = BindableProperty.Create(
+        nameof(IsOnline),
+        typeof(bool),
+        typeof(ArticleCardView),
+        (object)true);
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ArticleCardView"/> class.
     /// </summary>
     public ArticleCardView()
@@ -72,6 +82,16 @@ public partial class ArticleCardView : ContentView
     {
         get => (ICommand?)GetValue(MarkReadCommandProperty);
         set => SetValue(MarkReadCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the device currently has internet access.
+    /// When <c>false</c>, the article thumbnail is hidden.
+    /// </summary>
+    public bool IsOnline
+    {
+        get => (bool)GetValue(IsOnlineProperty);
+        set => SetValue(IsOnlineProperty, value);
     }
 
     private static async Task OpenArticleAsync(ItemListItem? item)

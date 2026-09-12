@@ -1,5 +1,80 @@
 # Test- und Verifikationsergebnisse
 
+## Issue #28: Offline-Fähigkeit und Mehrsprachigkeit (EN/DE)
+
+Branch: `task/issue-28-b7b5807abfea421fba84f7ded823c28c-offline-faehigkeit-und-mehrspr`
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 208 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 189) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+| Lokalisierungs-Check | `python .githooks/translation-check.py --all` | OK: 0 fehlende Schlüssel, 2 ResX-Pakete konsistent |
+
+Neue Tests (19): `UnreadViewModelTests` (3: Offline-Hint + Sync-Skip,
+`ConnectivityChanged` → `IsOnline`, Sync läuft wieder nach Online),
+`FeedsViewModelTests` (3: RefreshAll/Refresh offline, `ConnectivityChanged`),
+`LaterViewModelTests` (1: `ConnectivityChanged`), `AutoRefreshServiceTests` (2:
+Offline-Tick ohne Sync, Wiederaufnahme nach Online), `FeedSyncServiceTests` (2:
+`SyncAllAsync`/`SyncFeedAsync` offline ohne SyncLog/Health-/HTTP-Zugriff),
+`ArticleHtmlSanitizerTests` (8 Fälle: Script/Event-Handler-Entfernung online +
+offline, Online erhält `<a>`/`<img>`, Offline neutralisiert `<a>` und entfernt
+`<img>`, null/whitespace-Randfälle).
+Neue Hilfsklasse: `FakeNetworkStatusService`.
+
+### Mobile-UI-Design-Review „Offline-Indikatoren"
+
+Statische XAML-Prüfung der Änderungen an `UnreadPage.xaml`, `FeedsPage.xaml`,
+`ArticleDetailPage.xaml`, `ArticleCardView.xaml` und `LaterPage.xaml` gegen die
+AGENTS.md-Regeln:
+
+- [x] Offline-Banner (`Border` + `RoundRectangle 8`, `AppThemeBinding`
+  `SurfaceSubtle`/`TextSecondary`) auf `FeedsPage` und im Artikeldetail werden per
+  `DataTrigger` (`IsOnline == false`) ein-/ausgeblendet — kein horizontales Layout,
+  keine neuen Text-Button-Reihen
+- [x] `UnreadPage`: Sync-Button wird offline per `DataTrigger` auf `Opacity` 0,4
+  gedimmt; `OfflineHint`-Label und `ErrorMessage`-Label ergänzt; `CollectionView`
+  unverändert in `Grid`-Row `*`, keine `ScrollView`/`CollectionView`-Verschachtelung
+- [x] `ArticleCardView`: neues `IsOnline`-`BindableProperty` (Default `true`),
+  Thumbnail-`Border` wird offline per `DataTrigger` ausgeblendet; die restliche
+  Kartenstruktur bleibt unverändert
+- [x] `ArticleDetailPage`: neue Grid-Row für Offline-/Fehlerhinweis oberhalb des
+  `WebView`; `Navigating`-Handler bricht Navigation offline ab; alle neuen Texte
+  aus `AppResources.*` (EN + DE); `SemanticProperties.Description` für die
+  Bottom-Bar-Aktionen lokalisiert
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; Touch-Ziele unverändert
+  ≥ 44 × 44 pt
+
+### Manuelle UI-Verifikation (ausstehend — nicht in dieser Umgebung durchführbar)
+
+Eine interaktive Verifikation im 390 × 844-pt-Fenster war in dieser Sitzung nicht
+möglich (kein interaktiver App-Start/keine Netzwerk-Umschaltung). Die folgenden
+Szenarien aus `plan.md` sind manuell nachzuholen — insbesondere das Umschalten
+Online → Offline → Online zur Laufzeit (z. B. WLAN/Flugmodus bzw. Windows-
+Netzwerkadapter deaktivieren):
+
+- [ ] Offline-Start: App zeigt lokal gespeicherte Artikel, Feeds, Kategorien und
+  Metadaten ohne Fehler
+- [ ] `UnreadPage`: Sync-Button sichtbar gedimmt; Refresh-Button und
+  Pull-to-Refresh zeigen den lokalisierten `OfflineHint`, kein SyncLog-Rauschen
+- [ ] `FeedsPage`: persistentes Offline-Banner unterhalb der Eingabe-Karte;
+  „Alle aktualisieren" und Einzel-Refresh zeigen `OfflineHint`
+- [ ] `ArticleDetailPage` offline: Links im WebView nicht klickbar/neutralisiert
+  bzw. lokalisierter Alert (`OfflineHint` + `ArticleOfflineLinksDisabled` +
+  `ButtonOk`); externe `<img>`-Bilder entfernt, Text bleibt lesbar
+- [ ] Laufzeit-Wechsel Online → Offline → Online: `IsOnline`-Triggers aktualisieren
+  Banner, Thumbnails und Artikel-HTML ohne Neustart
+- [ ] „Im Browser öffnen" offline: lokalisierter Hinweis statt Browser-Start
+- [ ] `LaterPage`/`UnreadPage`: Artikel-Thumbnails offline ausgeblendet
+- [ ] Sprachen: System auf Deutsch → deutsche Texte; System auf Englisch →
+  englische Texte; Drittsprache (z. B. Französisch) → englischer Fallback
+  (neutrales `AppResources.resx`)
+
+Die ViewModel-/Service-Logik hinter allen Szenarien ist durch die neuen
+Unit-Tests abgedeckt; die XAML-Trigger wurden statisch geprüft und der
+Release-Build (XAML-SourceGen, Warnungen als Fehler) ist ohne Befund.
+
 ## Issue #27: Lokale iOS-Benachrichtigungen
 
 Branch: `task/issue-27-701ef16d7c03422499bad991054d7310-lokale-ios-benachrichtigungen`

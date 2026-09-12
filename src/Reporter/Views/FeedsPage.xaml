@@ -70,6 +70,24 @@
                             Command="{Binding SaveCommand}"/>
                 </VerticalStackLayout>
             </Border>
+            <Border Padding="10"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="Transparent"
+                    IsVisible="False"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                        <Setter Property="IsVisible" Value="True"/>
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{x:Static strings:AppResources.OfflineHint}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+            </Border>
+            <Label Text="{Binding SyncErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasSyncError}"
+                   Style="{StaticResource BodySmallStyle}"/>
         </VerticalStackLayout>
 
         <RefreshView Grid.Row="1"

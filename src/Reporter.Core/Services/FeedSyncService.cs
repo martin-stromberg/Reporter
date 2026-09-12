@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 
 namespace Reporter.Core.Services;
 
@@ -18,6 +19,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly ISyncLogRepository _syncLogRepository;
     private readonly HttpClient _httpClient;
     private readonly INotificationService _notificationService;
+    private readonly INetworkStatusService _networkStatusService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -27,23 +29,31 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="syncLogRepository">The sync log repository.</param>
     /// <param name="httpClient">The HTTP client used to retrieve feeds.</param>
     /// <param name="notificationService">The notification service invoked for newly stored items.</param>
+    /// <param name="networkStatusService">The network connectivity status service.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
         ISyncLogRepository syncLogRepository,
         HttpClient httpClient,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        INetworkStatusService networkStatusService)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
         _syncLogRepository = syncLogRepository;
         _httpClient = httpClient;
         _notificationService = notificationService;
+        _networkStatusService = networkStatusService;
     }
 
     /// <inheritdoc />
     public async Task<SyncResult> SyncFeedAsync(Guid feedId, CancellationToken cancellationToken = default)
     {
+        if (!_networkStatusService.IsOnline)
+        {
+            return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
+        }
+
         var log = new SyncLog
         {
             Id = Guid.NewGuid(),
@@ -77,6 +87,11 @@ public class FeedSyncService : IFeedSyncService
     /// <inheritdoc />
     public async Task<SyncResult> SyncAllAsync(CancellationToken cancellationToken = default)
     {
+        if (!_networkStatusService.IsOnline)
+        {
+            return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
+        }
+
         var feeds = await _feedRepository.GetAllAsync().ConfigureAwait(false);
         if (feeds.Count == 0)
         {
