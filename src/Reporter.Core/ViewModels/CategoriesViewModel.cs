@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 
 namespace Reporter.Core.ViewModels;
 
@@ -93,7 +94,7 @@ public partial class CategoriesViewModel : ObservableObject
     /// <summary>
     /// Gets a value indicating whether an error message is present.
     /// </summary>
-    public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+    public bool HasError => _errorMessage.Length > 0;
 
     /// <summary>
     /// Gets or sets the list of categories with their assigned feed counts.
@@ -117,7 +118,7 @@ public partial class CategoriesViewModel : ObservableObject
 
         if (string.IsNullOrEmpty(name))
         {
-            ErrorMessage = "The category name cannot be empty.";
+            ErrorMessage = AppResources.ErrorCategoryNameEmpty;
             return;
         }
 
@@ -125,7 +126,7 @@ public partial class CategoriesViewModel : ObservableObject
             c.Id != (SelectedCategory?.Id ?? Guid.Empty) &&
             string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)))
         {
-            ErrorMessage = "A category with this name already exists.";
+            ErrorMessage = AppResources.ErrorCategoryDuplicate;
             return;
         }
 

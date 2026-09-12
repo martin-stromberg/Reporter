@@ -2,9 +2,13 @@
 
 	<PropertyGroup>
 		<IncludeIosTarget Condition="'$(IncludeIosTarget)' == ''">true</IncludeIosTarget>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' == 'true'">net10.0-windows10.0.19041.0;net10.0-ios</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' != 'true'">net10.0-windows10.0.19041.0</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">net10.0-ios</TargetFrameworks>
+		<IncludeAndroidTarget Condition="'$(IncludeAndroidTarget)' == ''">false</IncludeAndroidTarget>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' == 'true' and '$(IncludeAndroidTarget)' == 'true'">net10.0-windows10.0.19041.0;net10.0-ios;net10.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' == 'true' and '$(IncludeAndroidTarget)' != 'true'">net10.0-windows10.0.19041.0;net10.0-ios</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' != 'true' and '$(IncludeAndroidTarget)' == 'true'">net10.0-windows10.0.19041.0;net10.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows')) and '$(IncludeIosTarget)' != 'true' and '$(IncludeAndroidTarget)' != 'true'">net10.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks Condition="'$(OS)' != 'Windows_NT' and '$(IncludeAndroidTarget)' == 'true'">net10.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx')) and '$(IncludeAndroidTarget)' != 'true'">net10.0-ios</TargetFrameworks>
 
 		<!-- Note for MacCatalyst:
 		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.

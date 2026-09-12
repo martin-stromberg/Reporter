@@ -301,6 +301,40 @@ public class ItemRepository : IItemRepository
         return entity is null ? null : MapToModel(entity);
     }
 
+    /// <inheritdoc />
+    public async Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        return await context.Items
+            .Where(i => i.IsRead && !i.IsSavedForLater && (i.ReadAt ?? i.PublishedAt) < cutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Item>> GetExpiredKeywordCandidatesAsync(DateTime cutoff, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        var entities = await context.Items
+            .AsNoTracking()
+            .Where(i => i.IsRead && !i.IsSavedForLater && (i.PublishedAt ?? i.ReadAt) < cutoff)
+            .ToListAsync(cancellationToken);
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return 0;
+        }
+
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        return await context.Items
+            .Where(i => ids.Contains(i.Id))
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     private static string? ExtractImageUrl(string? contentHtml)
     {
         if (string.IsNullOrWhiteSpace(contentHtml))

@@ -1,3 +1,4 @@
+using Reporter.Core.Resources.Strings;
 using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
@@ -24,7 +25,37 @@ public partial class SettingsPage : ContentPage
 
         if (BindingContext is SettingsViewModel viewModel)
         {
+            viewModel.NotificationAuthorizationDenied += OnNotificationAuthorizationDenied;
             viewModel.LoadCommand.Execute(null);
         }
+    }
+
+    /// <inheritdoc />
+    protected override void OnDisappearing()
+    {
+        if (BindingContext is SettingsViewModel viewModel)
+        {
+            viewModel.NotificationAuthorizationDenied -= OnNotificationAuthorizationDenied;
+        }
+
+        base.OnDisappearing();
+    }
+
+    private async Task OnNotificationAuthorizationDenied()
+    {
+        var openSettings = await DisplayAlertAsync(
+            AppResources.NotificationDeniedTitle,
+            AppResources.NotificationDeniedMessage,
+            AppResources.NotificationDeniedOpenSettings,
+            AppResources.ButtonCancel);
+        if (openSettings)
+        {
+            AppInfo.Current.ShowSettingsUI();
+        }
+    }
+
+    private void OnOpenNotificationSettingsClicked(object? sender, EventArgs e)
+    {
+        AppInfo.Current.ShowSettingsUI();
     }
 }

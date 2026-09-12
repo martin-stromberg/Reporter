@@ -6,6 +6,7 @@ using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 using Reporter.Data;
 using Reporter.Data.Repositories;
+using Reporter.Services;
 using Reporter.Views;
 
 namespace Reporter;
@@ -48,6 +49,13 @@ public static class MauiProgram
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()
             .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
             .AddSingleton<IFeedSyncService, FeedSyncService>()
+            .AddSingleton<IRetentionCleanupService, RetentionCleanupService>()
+            .AddSingleton<IKeywordMatcher, KeywordMatcher>()
+            .AddSingleton<IAutoRefreshService, AutoRefreshService>()
+            .AddSingleton<IAppThemeService, AppThemeService>()
+            .AddSingleton<INotificationService, NotificationService>()
+            .AddSingleton<ILocalNotificationService, LocalNotificationService>()
+            .AddSingleton<INetworkStatusService, NetworkStatusService>()
             .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
             .AddSingleton<LaterViewModel>()

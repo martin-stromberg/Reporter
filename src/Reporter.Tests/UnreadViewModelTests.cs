@@ -1,5 +1,6 @@
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 using Reporter.Data.Repositories;
@@ -16,6 +17,7 @@ public class UnreadViewModelTests : IDisposable
     private readonly ItemRepository _itemRepository;
     private readonly CategoryRepository _categoryRepository;
     private readonly FakeFeedSyncService _feedSyncService;
+    private readonly FakeNetworkStatusService _networkStatusService;
     private readonly UnreadViewModel _viewModel;
 
     /// <summary>
@@ -27,7 +29,8 @@ public class UnreadViewModelTests : IDisposable
         _itemRepository = new ItemRepository(_factory);
         _categoryRepository = new CategoryRepository(_factory);
         _feedSyncService = new FakeFeedSyncService();
-        _viewModel = new UnreadViewModel(_itemRepository, _categoryRepository, _feedSyncService);
+        _networkStatusService = new FakeNetworkStatusService();
+        _viewModel = new UnreadViewModel(_itemRepository, _categoryRepository, _feedSyncService, _networkStatusService);
     }
 
     /// <summary>
@@ -184,19 +187,318 @@ public class UnreadViewModelTests : IDisposable
         Assert.True(_feedSyncService.SyncAllCalled);
     }
 
+    /// <summary>
+    /// Verifies that RefreshCommand skips the sync while offline without raising a
+    /// separate error message — the persistent offline hint already communicates the state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenOffline_SkipsSyncWithoutError()
+    {
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.IsOnline);
+        Assert.False(_feedSyncService.SyncAllCalled);
+        Assert.Equal(string.Empty, _viewModel.ErrorMessage);
+        Assert.False(_viewModel.HasError);
+    }
+
+    /// <summary>
+    /// Verifies that a thrown sync exception surfaces a localized generic message
+    /// on the sync error channel instead of the raw exception text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenSyncThrows_SetsLocalizedSyncError()
+    {
+        _feedSyncService.NextException = new InvalidOperationException("raw provider message");
+
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(_viewModel.HasSyncError);
+        Assert.Equal(AppResources.SyncStatusError, _viewModel.SyncErrorMessage);
+        Assert.False(_viewModel.HasError);
+        Assert.Equal(string.Empty, _viewModel.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Verifies that the offline early return resets an IsSyncing value that was
+    /// preset by the RefreshView TwoWay binding, so the refresh indicator stops.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenOffline_ResetsPresetIsSyncing()
+    {
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+        _viewModel.IsSyncing = true;
+
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.IsSyncing);
+        Assert.False(_feedSyncService.SyncAllCalled);
+        Assert.False(_viewModel.HasSyncError);
+        Assert.False(_viewModel.HasError);
+    }
+
+    /// <summary>
+    /// Verifies that the sync still runs when the RefreshView TwoWay binding has
+    /// already set IsSyncing before the command executes.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenIsSyncingPresetByBinding_StillSyncs()
+    {
+        _viewModel.IsSyncing = true;
+
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(_feedSyncService.SyncAllCalled);
+        Assert.False(_viewModel.IsSyncing);
+    }
+
+    /// <summary>
+    /// Verifies that a load error raised while reloading after a successful sync is
+    /// not overwritten by the empty sync error.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenLoadFailsAfterSync_KeepsLoadErrorMessage()
+    {
+        var viewModel = new UnreadViewModel(
+            new FailingItemRepository(_itemRepository),
+            _categoryRepository,
+            _feedSyncService,
+            _networkStatusService);
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(_feedSyncService.SyncAllCalled);
+        Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
+        Assert.True(viewModel.HasError);
+        Assert.False(viewModel.HasSyncError);
+    }
+
+    /// <summary>
+    /// Verifies that a connectivity status change clears a previously shown sync error.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ConnectivityChanged_ClearsSyncErrorMessage()
+    {
+        _feedSyncService.NextResult = new SyncResult(FeedHealth.Error, 0, "Network error");
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.HasSyncError);
+
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        Assert.Equal(string.Empty, _viewModel.SyncErrorMessage);
+        Assert.False(_viewModel.HasSyncError);
+    }
+
+    /// <summary>
+    /// Verifies that a connectivity status change only clears the sync error channel
+    /// and keeps a previously shown load error.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ConnectivityChanged_KeepsLoadErrorMessage()
+    {
+        var viewModel = new UnreadViewModel(
+            new FailingItemRepository(_itemRepository),
+            _categoryRepository,
+            _feedSyncService,
+            _networkStatusService);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
+
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
+        Assert.True(viewModel.HasError);
+    }
+
+    /// <summary>
+    /// Verifies that the IsOnline property follows connectivity change events.
+    /// </summary>
+    [Fact]
+    public void ConnectivityChanged_UpdatesIsOnline()
+    {
+        Assert.True(_viewModel.IsOnline);
+
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        Assert.False(_viewModel.IsOnline);
+
+        _networkStatusService.IsOnline = true;
+        _networkStatusService.RaiseConnectivityChanged();
+
+        Assert.True(_viewModel.IsOnline);
+    }
+
+    /// <summary>
+    /// Verifies that the regular sync path runs again once the network is back.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenBackOnline_InvokesSyncService()
+    {
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+        Assert.False(_feedSyncService.SyncAllCalled);
+
+        _networkStatusService.IsOnline = true;
+        _networkStatusService.RaiseConnectivityChanged();
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(_feedSyncService.SyncAllCalled);
+    }
+
+    /// <summary>
+    /// Verifies that ToggleSavedCommand toggles the saved flag on the list item in place.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ToggleSavedCommand_TogglesFlagInPlace()
+    {
+        var (feedId, _) = await SeedFeedAndCategoryAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "ToToggle",
+            GuidOrHash = "totoggle",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        };
+        await _itemRepository.AddAsync(item);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        var article = _viewModel.Articles.FirstOrDefault(a => a.Id == item.Id);
+        Assert.NotNull(article);
+        Assert.False(article.IsSavedForLater);
+
+        await _viewModel.ToggleSavedCommand.ExecuteAsync(article);
+
+        var toggled = _viewModel.Articles.FirstOrDefault(a => a.Id == item.Id);
+        Assert.NotNull(toggled);
+        Assert.True(toggled.IsSavedForLater);
+        var persisted = await _itemRepository.GetByIdAsync(item.Id);
+        Assert.NotNull(persisted);
+        Assert.True(persisted.IsSavedForLater);
+    }
+
     private sealed class FakeFeedSyncService : IFeedSyncService
     {
         public bool SyncAllCalled { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the result returned by the fake service.
+        /// </summary>
+        /// <value>The sync result returned to the caller.</value>
+        public SyncResult NextResult { get; set; } = new SyncResult(FeedHealth.Ok, 0);
+
+        /// <summary>
+        /// Gets or sets the exception thrown by the fake service, if any.
+        /// </summary>
+        public Exception? NextException { get; set; }
+
         public Task<SyncResult> SyncFeedAsync(Guid feedId, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new SyncResult(FeedHealth.Ok, 0));
+            return NextException is not null
+                ? Task.FromException<SyncResult>(NextException)
+                : Task.FromResult(NextResult);
         }
 
         public Task<SyncResult> SyncAllAsync(CancellationToken cancellationToken = default)
         {
             SyncAllCalled = true;
-            return Task.FromResult(new SyncResult(FeedHealth.Ok, 0));
+            return NextException is not null
+                ? Task.FromException<SyncResult>(NextException)
+                : Task.FromResult(NextResult);
         }
+    }
+
+    /// <summary>
+    /// An <see cref="IItemRepository"/> decorator that delegates every call to an inner
+    /// repository but fails the paged unread query to simulate a load failure.
+    /// </summary>
+    private sealed class FailingItemRepository : IItemRepository
+    {
+        private readonly IItemRepository _inner;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FailingItemRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public FailingItemRepository(IItemRepository inner)
+        {
+            _inner = inner;
+        }
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+        {
+            return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
+        }
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<Item>> GetAllAsync() => _inner.GetAllAsync();
+
+        /// <inheritdoc />
+        public Task<Item?> GetByIdAsync(Guid id) => _inner.GetByIdAsync(id);
+
+        /// <inheritdoc />
+        public Task AddAsync(Item item) => _inner.AddAsync(item);
+
+        /// <inheritdoc />
+        public Task UpdateAsync(Item item) => _inner.UpdateAsync(item);
+
+        /// <inheritdoc />
+        public Task DeleteAsync(Guid id) => _inner.DeleteAsync(id);
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<Item>> GetUnreadByDateAsync() => _inner.GetUnreadByDateAsync();
+
+        /// <inheritdoc />
+        public Task<int> GetUnreadCountAsync(Guid? categoryId = null) => _inner.GetUnreadCountAsync(categoryId);
+
+        /// <inheritdoc />
+        public Task MarkAllAsReadAsync(Guid? categoryId = null) => _inner.MarkAllAsReadAsync(categoryId);
+
+        /// <inheritdoc />
+        public Task ToggleSavedForLaterAsync(Guid id) => _inner.ToggleSavedForLaterAsync(id);
+
+        /// <inheritdoc />
+        public Task MarkAsReadAsync(Guid id) => _inner.MarkAsReadAsync(id);
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId) => _inner.GetByFeedAsync(feedId);
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId) => _inner.GetByCategoryAsync(categoryId);
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync() => _inner.GetSavedForLaterAsync();
+
+        /// <inheritdoc />
+        public Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash) => _inner.GetByGuidOrHashAsync(feedId, guidOrHash);
+
+        /// <inheritdoc />
+        public Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.DeleteExpiredAsync(cutoff, cancellationToken);
+
+        /// <inheritdoc />
+        public Task<IReadOnlyList<Item>> GetExpiredKeywordCandidatesAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.GetExpiredKeywordCandidatesAsync(cutoff, cancellationToken);
+
+        /// <inheritdoc />
+        public Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default) => _inner.DeleteRangeAsync(ids, cancellationToken);
     }
 }

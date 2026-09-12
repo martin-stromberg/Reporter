@@ -180,4 +180,229 @@
   <data name="LabelUnreadArticles" xml:space="preserve">
     <value>unread articles</value>
   </data>
+  <data name="SettingsSectionRetention" xml:space="preserve">
+    <value>Retention &amp; storage</value>
+  </data>
+  <data name="SettingsSectionKeywords" xml:space="preserve">
+    <value>Keyword filter</value>
+  </data>
+  <data name="SettingsSectionSync" xml:space="preserve">
+    <value>Synchronization &amp; reading flow</value>
+  </data>
+  <data name="SettingsSectionNotifications" xml:space="preserve">
+    <value>Notifications &amp; quiet hours</value>
+  </data>
+  <data name="SettingsSectionAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="SettingsRetentionLabel" xml:space="preserve">
+    <value>Keep read articles</value>
+  </data>
+  <data name="SettingsRetentionDaysFormat" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="SettingsRetentionInfo" xml:space="preserve">
+    <value>Unread articles and articles bookmarked via the "Later" tab are kept permanently.</value>
+  </data>
+  <data name="SettingsRetentionDayMarks" xml:space="preserve">
+    <value>1 day – 365 days</value>
+  </data>
+  <data name="SettingsKeywordPlaceholder" xml:space="preserve">
+    <value>Enter keyword…</value>
+  </data>
+  <data name="SettingsKeywordAdd" xml:space="preserve">
+    <value>+ Add</value>
+  </data>
+  <data name="SettingsKeywordMatchLabel" xml:space="preserve">
+    <value>Partial match, case doesn't matter</value>
+  </data>
+  <data name="SettingsKeywordMatchHint" xml:space="preserve">
+    <value>Also matches variants within words</value>
+  </data>
+  <data name="SettingsKeywordMatchStatus" xml:space="preserve">
+    <value>Always on</value>
+  </data>
+  <data name="SettingsKeywordInfo" xml:space="preserve">
+    <value>Filtered articles are deleted after the retention period based on their publication date.</value>
+  </data>
+  <data name="SettingsAutoRefreshLabel" xml:space="preserve">
+    <value>Automatic background refresh</value>
+  </data>
+  <data name="SettingsAutoRefreshHint" xml:space="preserve">
+    <value>Periodically load feeds in the background</value>
+  </data>
+  <data name="SettingsRefreshIntervalLabel" xml:space="preserve">
+    <value>Fetch interval</value>
+  </data>
+  <data name="SettingsInterval15Min" xml:space="preserve">
+    <value>Every 15 minutes</value>
+  </data>
+  <data name="SettingsInterval30Min" xml:space="preserve">
+    <value>Every 30 minutes</value>
+  </data>
+  <data name="SettingsIntervalHourly" xml:space="preserve">
+    <value>Hourly</value>
+  </data>
+  <data name="SettingsInterval4Hours" xml:space="preserve">
+    <value>Every 4 hours</value>
+  </data>
+  <data name="SettingsAutoMarkReadLabel" xml:space="preserve">
+    <value>Mark as read automatically</value>
+  </data>
+  <data name="SettingsAutoMarkReadHint" xml:space="preserve">
+    <value>When opening an article</value>
+  </data>
+  <data name="SettingsAutoMarkReadDelayLabel" xml:space="preserve">
+    <value>Delay until marking</value>
+  </data>
+  <data name="SettingsDelayImmediate" xml:space="preserve">
+    <value>Immediately</value>
+  </data>
+  <data name="SettingsDelay1s" xml:space="preserve">
+    <value>1 second</value>
+  </data>
+  <data name="SettingsDelay3s" xml:space="preserve">
+    <value>3 seconds</value>
+  </data>
+  <data name="SettingsDelay5s" xml:space="preserve">
+    <value>5 seconds</value>
+  </data>
+  <data name="SettingsNotificationsLabel" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="SettingsNotificationsHint" xml:space="preserve">
+    <value>Get notified about new articles</value>
+  </data>
+  <data name="SettingsQuietHoursLabel" xml:space="preserve">
+    <value>Quiet hours (do not disturb)</value>
+  </data>
+  <data name="SettingsQuietHoursHint" xml:space="preserve">
+    <value>No notifications during this period</value>
+  </data>
+  <data name="SettingsQuietHoursFrom" xml:space="preserve">
+    <value>FROM</value>
+  </data>
+  <data name="SettingsQuietHoursTo" xml:space="preserve">
+    <value>TO</value>
+  </data>
+  <data name="SettingsThemeLabel" xml:space="preserve">
+    <value>Color scheme</value>
+  </data>
+  <data name="SettingsThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="SettingsThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="SettingsThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ErrorKeywordEmpty" xml:space="preserve">
+    <value>Please enter a keyword.</value>
+  </data>
+  <data name="ErrorKeywordDuplicate" xml:space="preserve">
+    <value>This keyword already exists.</value>
+  </data>
+  <data name="ErrorKeywordTooLong" xml:space="preserve">
+    <value>The keyword may be at most 500 characters long.</value>
+  </data>
+  <data name="ArticleAutoMarkReadDisabled" xml:space="preserve">
+    <value>Auto-read (disabled in settings)</value>
+  </data>
+  <data name="ArticleAutoMarkReadDelayFormat" xml:space="preserve">
+    <value>Auto-read ({0} s)</value>
+  </data>
+  <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
+    <value>Remove keyword {0}</value>
+  </data>
+  <data name="FeedNotificationsLabel" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="FeedNotificationsHint" xml:space="preserve">
+    <value>Notify about new articles from this feed (requires notifications enabled in the settings)</value>
+  </data>
+  <data name="SettingsNotificationSummaryLabel" xml:space="preserve">
+    <value>Summary notification</value>
+  </data>
+  <data name="SettingsNotificationSummaryHint" xml:space="preserve">
+    <value>One notification per feed instead of per article</value>
+  </data>
+  <data name="NotificationSummaryFormat" xml:space="preserve">
+    <value>{0} new articles: {1}</value>
+  </data>
+  <data name="NotificationDeniedTitle" xml:space="preserve">
+    <value>Notifications deactivated</value>
+  </data>
+  <data name="NotificationDeniedMessage" xml:space="preserve">
+    <value>Notifications are deactivated for this app in the system settings. Enable them there to get notified about new articles.</value>
+  </data>
+  <data name="NotificationDeniedOpenSettings" xml:space="preserve">
+    <value>Open settings</value>
+  </data>
+  <data name="NotificationNotDeterminedMessage" xml:space="preserve">
+    <value>Notifications are not allowed yet. Allow them to get notified about new articles.</value>
+  </data>
+  <data name="NotificationNotDeterminedAllow" xml:space="preserve">
+    <value>Allow notifications</value>
+  </data>
+  <data name="NotificationsIosOnlyHint" xml:space="preserve">
+    <value>Notifications are currently only available on iOS.</value>
+  </data>
+  <data name="ArticleTitleFallback" xml:space="preserve">
+    <value>Article</value>
+  </data>
+  <data name="ArticleReadLabel" xml:space="preserve">
+    <value>Read</value>
+  </data>
+  <data name="ArticleFullContentAvailable" xml:space="preserve">
+    <value>Full article available</value>
+  </data>
+  <data name="ArticleOpenInBrowser" xml:space="preserve">
+    <value>Open in browser</value>
+  </data>
+  <data name="AccessibilityBack" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="AccessibilityFontSize" xml:space="preserve">
+    <value>Toggle font size</value>
+  </data>
+  <data name="AccessibilityShare" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="ArticleBookmarkSet" xml:space="preserve">
+    <value>Add bookmark</value>
+  </data>
+  <data name="ArticleBookmarkRemove" xml:space="preserve">
+    <value>Remove bookmark</value>
+  </data>
+  <data name="ArticleMarkAsRead" xml:space="preserve">
+    <value>Mark as read</value>
+  </data>
+  <data name="ArticleAlreadyRead" xml:space="preserve">
+    <value>Already read</value>
+  </data>
+  <data name="ArticleReadingTimeFormat" xml:space="preserve">
+    <value>{0} min read</value>
+  </data>
+  <data name="ArticleOfflineLinksDisabled" xml:space="preserve">
+    <value>Links are disabled while you are offline.</value>
+  </data>
+  <data name="OfflineHint" xml:space="preserve">
+    <value>No internet connection.</value>
+  </data>
+  <data name="ButtonOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ErrorCategoryNameEmpty" xml:space="preserve">
+    <value>The category name cannot be empty.</value>
+  </data>
+  <data name="ErrorCategoryDuplicate" xml:space="preserve">
+    <value>A category with this name already exists.</value>
+  </data>
+  <data name="ErrorOpenInBrowserFailed" xml:space="preserve">
+    <value>The link could not be opened in the browser.</value>
+  </data>
+  <data name="ErrorLoadFailed" xml:space="preserve">
+    <value>The articles could not be loaded.</value>
+  </data>
 </root>

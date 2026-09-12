@@ -4,16 +4,21 @@
 
 ## Zweck
 
-Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch.
+Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch entsprechend der Systemsprache (siehe [Sprache](sprache.md)). Bereits synchronisierte Artikel bleiben ohne Internetverbindung vollständig lesbar (siehe [Offline lesen](offline.md)).
 
 ## Funktionsweise
 
-Nach dem Start erscheint die untere Navigationsleiste mit vier Bereichen:
+Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
 
 - **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden.
 - **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus.
 - **Später** — Zeigt Artikel, die du dir für später merkst.
-- **Einstellungen** — Ermöglicht die Konfiguration der App.
+- **Kategorien** — Verwaltet Kategorien für Feeds.
+- **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten und das Farbschema. Details siehe [Einstellungen](../einstellungen/index.md).
+
+Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt — ebenso gelesene Artikel, die ein Filter-Schlagwort enthalten. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
+
+Auf iOS benachrichtigt dich die App nach einem Abgleich über neue Artikel — pro Artikel oder gesammelt pro Feed, mit optionaler Ruhezeit und Schlagwort-Filter. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 
 ## Beispiele
 
@@ -22,5 +27,4 @@ Nach dem Start erscheint die untere Navigationsleiste mit vier Bereichen:
 
 ## Einschränkungen
 
-- In der aktuellen Version werden noch keine echten RSS-Feeds geladen.
 - Die App benötigt noch keine Anmeldung.

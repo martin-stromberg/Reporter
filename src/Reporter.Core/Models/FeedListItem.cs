@@ -49,4 +49,9 @@ public class FeedListItem
     /// Gets the number of unread items for this feed.
     /// </summary>
     public required int UnreadCount { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether notifications are enabled for this feed.
+    /// </summary>
+    public required bool NotificationsEnabled { get; init; }
 }

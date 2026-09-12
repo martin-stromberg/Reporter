@@ -10,14 +10,22 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  release:
-    runs-on: windows-latest
-    env:
-      IncludeIosTarget: false
-    concurrency:
-      group: release
-      cancel-in-progress: false
+  resolve:
+    name: resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      released: ${{ steps.version.outputs.released }}
+      reason: ${{ steps.version.outputs.reason }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      release_kind: ${{ steps.version.outputs.release_kind }}
+      release_action: ${{ steps.version.outputs.release_action }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -34,7 +42,6 @@ jobs:
         run: npm ci
 
       - name: Remove local pre-release tags from main branch
-        shell: bash
         run: |
           for tag in $(git tag -l 'v*-rc.*'); do
             git tag -d "$tag"
@@ -44,56 +51,198 @@ jobs:
         id: version
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}
         run: node scripts/resolve-release-version.mjs
 
-      - name: Check out release tag for asset repair
-        if: steps.version.outputs.release_action == 'upload-existing'
-        run: |
-          git fetch origin "refs/tags/${{ steps.version.outputs.tag }}"
-          git checkout --detach "${{ steps.version.outputs.tag }}"
-          if [ "$(git rev-parse HEAD)" != "$(git rev-parse "${{ steps.version.outputs.tag }}")" ]; then
-            echo "::error::Release tag checkout did not resolve to the tagged commit."
-            exit 1
-          fi
+  release-gate:
+    name: release gate
+    needs: resolve
+    if: needs.resolve.outputs.released == 'true' && needs.resolve.outputs.release_action == 'create'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      IncludeIosTarget: false
+      IncludeAndroidTarget: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
 
       - name: Release gate - regular tests
-        if: steps.version.outputs.released == 'true' && steps.version.outputs.release_action == 'create'
         run: dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release
 
-      - name: Build and package
-        if: steps.version.outputs.released == 'true'
+  package-windows:
+    name: package-windows
+    needs: [resolve, release-gate]
+    if: needs.resolve.outputs.released == 'true' && !failure() && !cancelled()
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Check out release tag for asset repair
+        if: needs.resolve.outputs.release_action == 'upload-existing'
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.resolve.outputs.tag }}
+
+      - name: Build and package (win-x64)
         uses: ./.github/actions/build-and-package
         with:
-          release-version: ${{ steps.version.outputs.version }}
-          release-tag: ${{ steps.version.outputs.tag }}
+          release-version: ${{ needs.resolve.outputs.version }}
+          release-tag: ${{ needs.resolve.outputs.tag }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-win-x64
+          path: release-win-x64.zip
+          retention-days: 14
+
+  package-android:
+    name: package-android
+    needs: [resolve, release-gate]
+    if: needs.resolve.outputs.released == 'true' && !failure() && !cancelled()
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Check out release tag for asset repair
+        if: needs.resolve.outputs.release_action == 'upload-existing'
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.resolve.outputs.tag }}
+
+      - name: Build and package (android)
+        uses: ./.github/actions/package-android
+        with:
+          release-version: ${{ needs.resolve.outputs.version }}
+          release-tag: ${{ needs.resolve.outputs.tag }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-android
+          path: release-android.apk
+          retention-days: 14
+
+  # iOS packaging stays disabled until the signing secrets are provided externally.
+  # Activate by setting the repository variable IOS_SIGNING_ENABLED=true - no code change needed.
+  package-ios:
+    name: package-ios
+    needs: [resolve, release-gate]
+    if: needs.resolve.outputs.released == 'true' && vars.IOS_SIGNING_ENABLED == 'true' && !failure() && !cancelled()
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Check out release tag for asset repair
+        if: needs.resolve.outputs.release_action == 'upload-existing'
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.resolve.outputs.tag }}
+
+      - name: Build and package (ios)
+        uses: ./.github/actions/package-ios
+        with:
+          release-version: ${{ needs.resolve.outputs.version }}
+          release-tag: ${{ needs.resolve.outputs.tag }}
+          codesign-key: ${{ secrets.IOS_CODESIGN_KEY }}
+          provisioning-profile: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-ios
+          path: release-ios.ipa
+          retention-days: 14
+
+  publish:
+    name: publish
+    needs: [resolve, package-windows, package-android, package-ios]
+    if: needs.resolve.outputs.released == 'true' && !failure() && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Remove local pre-release tags from main branch
+        run: |
+          for tag in $(git tag -l 'v*-rc.*'); do
+            git tag -d "$tag"
+          done
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Prepare release asset lists
+        env:
+          IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}
+        run: node scripts/release-assets.mjs
+
+      - name: Create update manifest
+        env:
+          RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+        run: node scripts/create-update-manifest.mjs
 
       - name: Create automatic GitHub release
-        if: steps.version.outputs.released == 'true' && steps.version.outputs.release_action == 'create' && steps.version.outputs.release_kind == 'automatic'
+        if: needs.resolve.outputs.release_action == 'create' && needs.resolve.outputs.release_kind == 'automatic'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          RELEASE_ASSET_PATHS: release-win-x64.zip
           RELEASE_MANIFEST_PATH: update.json
-          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
         run: npm run release
 
       - name: Create manual-tag GitHub release
-        if: steps.version.outputs.released == 'true' && steps.version.outputs.release_action == 'create' && steps.version.outputs.release_kind == 'manual'
-        shell: bash
+        if: needs.resolve.outputs.release_action == 'create' && needs.resolve.outputs.release_kind == 'manual'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="${{ steps.version.outputs.tag }}"
-          gh release create "$tag" release-win-x64.zip update.json \
+          tag="${{ needs.resolve.outputs.tag }}"
+          gh release create "$tag" $RELEASE_ASSET_FILES update.json \
             --title "$tag" \
             --generate-notes
 
-      - name: Upload asset to existing GitHub release
-        if: steps.version.outputs.released == 'true' && steps.version.outputs.release_action == 'upload-existing'
-        shell: bash
+      - name: Upload assets to existing GitHub release
+        if: needs.resolve.outputs.release_action == 'upload-existing'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="${{ steps.version.outputs.tag }}"
-          gh release upload "$tag" release-win-x64.zip update.json --clobber
+          tag="${{ needs.resolve.outputs.tag }}"
+          gh release upload "$tag" $RELEASE_ASSET_FILES update.json --clobber

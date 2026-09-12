@@ -22,18 +22,18 @@ public class SettingsRepository : ISettingsRepository
     }
 
     /// <inheritdoc />
-    public async Task<Settings> GetAsync()
+    public async Task<Settings> GetAsync(CancellationToken cancellationToken = default)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
         var entity = await context.Settings
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == SettingsEntity.DefaultId);
+            .FirstOrDefaultAsync(s => s.Id == SettingsEntity.DefaultId, cancellationToken);
 
         if (entity is null)
         {
             entity = new SettingsEntity();
             context.Settings.Add(entity);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
         }
 
         return MapToModel(entity);
@@ -56,6 +56,10 @@ public class SettingsRepository : ISettingsRepository
         entity.NotificationsEnabled = settings.NotificationsEnabled;
         entity.QuietHoursStart = settings.QuietHoursStart;
         entity.QuietHoursEnd = settings.QuietHoursEnd;
+        entity.AutoRefreshEnabled = settings.AutoRefreshEnabled;
+        entity.RefreshIntervalMinutes = settings.RefreshIntervalMinutes;
+        entity.Theme = settings.Theme;
+        entity.NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
 
         await context.SaveChangesAsync();
     }
@@ -71,6 +75,10 @@ public class SettingsRepository : ISettingsRepository
             NotificationsEnabled = entity.NotificationsEnabled,
             QuietHoursStart = entity.QuietHoursStart,
             QuietHoursEnd = entity.QuietHoursEnd,
+            AutoRefreshEnabled = entity.AutoRefreshEnabled,
+            RefreshIntervalMinutes = entity.RefreshIntervalMinutes,
+            Theme = entity.Theme,
+            NotificationSummaryEnabled = entity.NotificationSummaryEnabled,
         };
     }
 }

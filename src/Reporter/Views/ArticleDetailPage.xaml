@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter"
              x:Class="Reporter.Views.ArticleDetailPage"
              x:DataType="vm:ArticleDetailViewModel"
              Shell.NavBarIsVisible="False"
              SafeAreaEdges="All"
-             Title="{Binding Item.Title, TargetNullValue='Artikel'}">
-    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
+             Title="{Binding Item.Title, TargetNullValue={x:Static strings:AppResources.ArticleTitleFallback}}">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto"
           Padding="0"
           RowSpacing="0">
         <!-- Status pill -->
@@ -23,7 +24,7 @@
                          CornerRadius="4"
                          Color="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}"
                          VerticalOptions="Center"/>
-                <Label Text="Gelesen"
+                <Label Text="{x:Static strings:AppResources.ArticleReadLabel}"
                        Style="{StaticResource MetaStyle}"
                        TextColor="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}"
                        VerticalOptions="Center"/>
@@ -35,11 +36,19 @@
                        Style="{StaticResource MetaStyle}"
                        VerticalOptions="Center"/>
                 <Switch IsToggled="{Binding IsAutoMarkRead, Mode=TwoWay}"
+                        IsEnabled="{Binding IsAutoMarkReadAvailable}"
                         OnColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
                         ThumbColor="{AppThemeBinding Light={StaticResource LightOnSecondary}, Dark={StaticResource DarkOnSecondary}}"
                         MinimumHeightRequest="44"
                         MinimumWidthRequest="44"
-                        VerticalOptions="Center"/>
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="{Binding AutoMarkReadLabel}">
+                    <Switch.Triggers>
+                        <DataTrigger TargetType="Switch" Binding="{Binding IsAutoMarkReadAvailable}" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </DataTrigger>
+                    </Switch.Triggers>
+                </Switch>
             </HorizontalStackLayout>
         </Grid>
 
@@ -96,9 +105,34 @@
                    MaxLines="0"/>
         </VerticalStackLayout>
 
+        <!-- Offline hint + error message -->
+        <VerticalStackLayout Grid.Row="2"
+                             Padding="16,4"
+                             Spacing="8">
+            <Border Padding="10"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="Transparent"
+                    IsVisible="False"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                        <Setter Property="IsVisible" Value="True"/>
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{x:Static strings:AppResources.ArticleOfflineLinksDisabled}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+            </Border>
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasError}"
+                   Style="{StaticResource BodySmallStyle}"/>
+        </VerticalStackLayout>
+
         <!-- WebView -->
-        <WebView Grid.Row="2"
+        <WebView Grid.Row="3"
                  x:Name="ArticleWebView"
+                 Navigating="OnWebViewNavigating"
                  VerticalOptions="Fill"
                  HorizontalOptions="Fill">
             <WebView.Source>
@@ -107,7 +141,7 @@
         </WebView>
 
         <!-- Source footer -->
-        <Border Grid.Row="3"
+        <Border Grid.Row="4"
                 Padding="16,12"
                 Margin="16,8"
                 StrokeShape="RoundRectangle 12"
@@ -117,7 +151,7 @@
                   ColumnSpacing="12">
                 <VerticalStackLayout Grid.Column="0"
                                      VerticalOptions="Center">
-                    <Label Text="Vollständiger Artikel verfügbar"
+                    <Label Text="{x:Static strings:AppResources.ArticleFullContentAvailable}"
                            Style="{StaticResource BodySmallStyle}"
                            LineBreakMode="WordWrap"
                            MaxLines="2"/>
@@ -128,7 +162,7 @@
                            IsVisible="{Binding Item.Link, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
                 </VerticalStackLayout>
                 <Button Grid.Column="1"
-                        Text="Im Browser öffnen"
+                        Text="{x:Static strings:AppResources.ArticleOpenInBrowser}"
                         Command="{Binding OpenInBrowserCommand}"
                         MinimumHeightRequest="44"
                         MinimumWidthRequest="44"
@@ -138,7 +172,7 @@
         </Border>
 
         <!-- Bottom action bar -->
-        <Grid Grid.Row="4"
+        <Grid Grid.Row="5"
               Padding="8,8,8,24"
               ColumnDefinitions="*,*,*,*,*,*"
               Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
@@ -149,7 +183,7 @@
                     Background="Transparent"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    SemanticProperties.Description="Zurück">
+                    SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityBack}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding GoBackCommand}"/>
                 </Border.GestureRecognizers>
@@ -201,7 +235,7 @@
                     Background="Transparent"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    SemanticProperties.Description="Schriftgröße wechseln">
+                    SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityFontSize}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding ToggleFontSizeCommand}"/>
                 </Border.GestureRecognizers>
@@ -246,7 +280,7 @@
                     Background="Transparent"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    SemanticProperties.Description="Teilen">
+                    SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityShare}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding ShareCommand}"/>
                 </Border.GestureRecognizers>
@@ -269,7 +303,7 @@
                     Background="Transparent"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    SemanticProperties.Description="Im Browser öffnen">
+                    SemanticProperties.Description="{x:Static strings:AppResources.ArticleOpenInBrowser}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding OpenInBrowserCommand}"/>
                 </Border.GestureRecognizers>

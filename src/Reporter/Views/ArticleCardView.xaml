@@ -71,6 +71,11 @@
                     StrokeShape="RoundRectangle 12"
                     Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
                     VerticalOptions="Start">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline, Source={x:Reference Card}}" Value="False">
+                        <Setter Property="IsVisible" Value="False"/>
+                    </DataTrigger>
+                </Border.Triggers>
                 <Image Source="{Binding ImageUrl}"
                        Aspect="AspectFill"
                        WidthRequest="80"

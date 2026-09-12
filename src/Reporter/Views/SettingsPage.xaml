@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             x:Name="PageRoot"
              x:Class="Reporter.Views.SettingsPage"
              Title="{x:Static strings:AppResources.PageTitleSettings}"
              Shell.NavBarIsVisible="False">
@@ -12,17 +14,436 @@
                Style="{StaticResource HeadlineStyle}"/>
 
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="12">
-                <Border Padding="16"
-                        StrokeShape="RoundRectangle 12"
-                        Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static strings:AppResources.PageTitleSettings}"
-                               Style="{StaticResource HeadlineSmallStyle}"/>
-                        <Label Text="{x:Static strings:AppResources.PlaceholderSettings}"
-                               Style="{StaticResource BodySmallStyle}"/>
-                    </VerticalStackLayout>
-                </Border>
+            <VerticalStackLayout Spacing="16">
+
+                <!-- Aufbewahrungsdauer -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionRetention}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="{x:Static strings:AppResources.SettingsRetentionLabel}"
+                                       VerticalOptions="Center"/>
+                                <Label Grid.Column="1"
+                                       Text="{Binding RetentionDaysText}"
+                                       FontFamily="InterSemiBold"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
+                                       VerticalOptions="Center"/>
+                            </Grid>
+                            <Slider Minimum="1"
+                                    Maximum="365"
+                                    MinimumHeightRequest="44"
+                                    SemanticProperties.Description="{x:Static strings:AppResources.SettingsRetentionLabel}"
+                                    Value="{Binding RetentionDays}"
+                                    DragCompletedCommand="{Binding SaveRetentionCommand}"/>
+                            <Label Text="{x:Static strings:AppResources.SettingsRetentionDayMarks}"
+                                   Style="{StaticResource MetaStyle}"
+                                   HorizontalTextAlignment="Center"/>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Label Text="{x:Static strings:AppResources.SettingsRetentionInfo}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Keyword-Filter -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionKeywords}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <Entry Text="{Binding NewKeywordText}"
+                                       Placeholder="{x:Static strings:AppResources.SettingsKeywordPlaceholder}"
+                                       SemanticProperties.Description="{x:Static strings:AppResources.SettingsKeywordPlaceholder}"
+                                       ReturnCommand="{Binding AddKeywordCommand}"/>
+                                <Button Grid.Column="1"
+                                        Text="{x:Static strings:AppResources.SettingsKeywordAdd}"
+                                        Command="{Binding AddKeywordCommand}"/>
+                            </Grid>
+                            <Label Text="{Binding ErrorMessage}"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                                   IsVisible="{Binding HasError}"
+                                   Style="{StaticResource BodySmallStyle}"/>
+                            <FlexLayout Wrap="Wrap"
+                                        BindableLayout.ItemsSource="{Binding Keywords}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Keyword">
+                                        <Border Margin="0,0,6,6"
+                                                Padding="10,0,0,0"
+                                                StrokeShape="RoundRectangle 22"
+                                                MinimumHeightRequest="44"
+                                                Stroke="Transparent"
+                                                Background="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}">
+                                            <HorizontalStackLayout Spacing="0"
+                                                                   VerticalOptions="Center">
+                                                <Label Text="{Binding KeywordText}"
+                                                       VerticalOptions="Center"/>
+                                                <Button Text="×"
+                                                        SemanticProperties.Description="{Binding KeywordText, StringFormat={x:Static strings:AppResources.SettingsKeywordRemoveFormat}}"
+                                                        Command="{Binding BindingContext.RemoveKeywordCommand, Source={x:Reference PageRoot}}"
+                                                        CommandParameter="{Binding .}"
+                                                        BackgroundColor="Transparent"
+                                                        TextColor="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"
+                                                        FontSize="18"
+                                                        Padding="0"
+                                                        MinimumWidthRequest="44"
+                                                        MinimumHeightRequest="44"
+                                                        WidthRequest="44"
+                                                        HeightRequest="44"/>
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Label Text="{x:Static strings:AppResources.SettingsKeywordInfo}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsKeywordMatchLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsKeywordMatchHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1"
+                                        Padding="10,4"
+                                        StrokeShape="RoundRectangle 12"
+                                        Stroke="Transparent"
+                                        Background="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+                                        VerticalOptions="Center">
+                                    <Label Text="{x:Static strings:AppResources.SettingsKeywordMatchStatus}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </Border>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Synchronisation & Lesefluss -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionSync}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsAutoRefreshLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsAutoRefreshHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding AutoRefreshEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsAutoRefreshLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsEnabled="{Binding AutoRefreshEnabled}"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding AutoRefreshEnabled}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.SettingsRefreshIntervalLabel}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                           VerticalOptions="Center"/>
+                                    <Picker Grid.Column="1"
+                                            ItemsSource="{Binding RefreshIntervalOptions}"
+                                            SelectedItem="{Binding SelectedRefreshInterval}"
+                                            ItemDisplayBinding="{Binding Label}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsRefreshIntervalLabel}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            HorizontalTextAlignment="End"/>
+                                </Grid>
+                            </Border>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding AutoMarkReadEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsAutoMarkReadLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsEnabled="{Binding AutoMarkReadEnabled}"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding AutoMarkReadEnabled}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadDelayLabel}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                           VerticalOptions="Center"/>
+                                    <Picker Grid.Column="1"
+                                            ItemsSource="{Binding AutoMarkReadDelayOptions}"
+                                            SelectedItem="{Binding SelectedAutoMarkReadDelay}"
+                                            ItemDisplayBinding="{Binding Label}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsAutoMarkReadDelayLabel}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            HorizontalTextAlignment="End"/>
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Benachrichtigungen & Ruhezeiten -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionNotifications}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8"
+                                  IsEnabled="{Binding NotificationsSupported}">
+                                <Grid.Triggers>
+                                    <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsNotificationsLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsNotificationsHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding NotificationsEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsNotificationsLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <MultiTrigger TargetType="Border">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                            <BindingCondition Binding="{Binding NotificationPermissionNotDetermined}" Value="True"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </MultiTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.NotificationNotDeterminedMessage}"
+                                           Style="{StaticResource BodySmallStyle}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                           VerticalOptions="Center"/>
+                                    <Button Grid.Column="1"
+                                            Text="{x:Static strings:AppResources.NotificationNotDeterminedAllow}"
+                                            Command="{Binding RequestNotificationPermissionCommand}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.NotificationNotDeterminedAllow}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <MultiTrigger TargetType="Border">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                            <BindingCondition Binding="{Binding NotificationPermissionDenied}" Value="True"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </MultiTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <Label Text="{x:Static strings:AppResources.NotificationDeniedMessage}"
+                                           Style="{StaticResource BodySmallStyle}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                                           VerticalOptions="Center"/>
+                                    <Button Grid.Column="1"
+                                            Text="{x:Static strings:AppResources.NotificationDeniedOpenSettings}"
+                                            Clicked="OnOpenNotificationSettingsClicked"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.NotificationDeniedOpenSettings}"
+                                            MinimumWidthRequest="44"
+                                            MinimumHeightRequest="44"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsEnabled="{Binding NotificationControlsEnabled}"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NotificationsEnabled}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <VerticalStackLayout VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <Label Text="{x:Static strings:AppResources.SettingsNotificationSummaryLabel}"/>
+                                            <Label Text="{x:Static strings:AppResources.SettingsNotificationSummaryHint}"
+                                                   Style="{StaticResource MetaStyle}"/>
+                                        </VerticalStackLayout>
+                                        <Switch Grid.Column="1"
+                                                IsToggled="{Binding NotificationSummaryEnabled}"
+                                                SemanticProperties.Description="{x:Static strings:AppResources.SettingsNotificationSummaryLabel}"
+                                                MinimumWidthRequest="44"
+                                                MinimumHeightRequest="44"
+                                                VerticalOptions="Center"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <VerticalStackLayout VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <Label Text="{x:Static strings:AppResources.SettingsQuietHoursLabel}"/>
+                                            <Label Text="{x:Static strings:AppResources.SettingsQuietHoursHint}"
+                                                   Style="{StaticResource MetaStyle}"/>
+                                        </VerticalStackLayout>
+                                        <Switch Grid.Column="1"
+                                                IsToggled="{Binding QuietHoursEnabled}"
+                                                SemanticProperties.Description="{x:Static strings:AppResources.SettingsQuietHoursLabel}"
+                                                MinimumWidthRequest="44"
+                                                MinimumHeightRequest="44"
+                                                VerticalOptions="Center"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,*"
+                                          ColumnSpacing="8"
+                                          IsEnabled="{Binding QuietHoursEnabled}">
+                                        <Grid.Triggers>
+                                            <MultiTrigger TargetType="Grid">
+                                                <MultiTrigger.Conditions>
+                                                    <BindingCondition Binding="{Binding NotificationsEnabled}" Value="True"/>
+                                                    <BindingCondition Binding="{Binding QuietHoursEnabled}" Value="False"/>
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="Opacity" Value="0.4"/>
+                                            </MultiTrigger>
+                                        </Grid.Triggers>
+                                        <Border Grid.Column="0"
+                                                Padding="8"
+                                                StrokeShape="RoundRectangle 8"
+                                                Stroke="Transparent"
+                                                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
+                                            <VerticalStackLayout Spacing="0">
+                                                <Label Text="{x:Static strings:AppResources.SettingsQuietHoursFrom}"
+                                                       Style="{StaticResource MetaStyle}"/>
+                                                <TimePicker Time="{Binding QuietHoursStart}"
+                                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsQuietHoursFrom}"
+                                                            MinimumWidthRequest="44"
+                                                            MinimumHeightRequest="44"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                        <Border Grid.Column="1"
+                                                Padding="8"
+                                                StrokeShape="RoundRectangle 8"
+                                                Stroke="Transparent"
+                                                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
+                                            <VerticalStackLayout Spacing="0">
+                                                <Label Text="{x:Static strings:AppResources.SettingsQuietHoursTo}"
+                                                       Style="{StaticResource MetaStyle}"/>
+                                                <TimePicker Time="{Binding QuietHoursEnd}"
+                                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsQuietHoursTo}"
+                                                            MinimumWidthRequest="44"
+                                                            MinimumHeightRequest="44"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Erscheinungsbild -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionAppearance}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8">
+                            <Label Text="{x:Static strings:AppResources.SettingsThemeLabel}"
+                                   VerticalOptions="Center"/>
+                            <Picker Grid.Column="1"
+                                    ItemsSource="{Binding ThemeOptions}"
+                                    SelectedItem="{Binding SelectedTheme}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    SemanticProperties.Description="{x:Static strings:AppResources.SettingsThemeLabel}"
+                                    MinimumWidthRequest="44"
+                                    MinimumHeightRequest="44"
+                                    HorizontalTextAlignment="End"/>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

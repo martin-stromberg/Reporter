@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Reporter.Core.Interfaces;
 using Reporter.Data;
 
 namespace Reporter;
@@ -34,6 +36,52 @@ public partial class App : Application
         using var scope = _services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
         await context.Database.MigrateAsync();
+
+        try
+        {
+            var cleanupService = scope.ServiceProvider.GetRequiredService<IRetentionCleanupService>();
+            await cleanupService.CleanupAsync();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Aufraeumen darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart retention cleanup failed: {ex}");
+        }
+
+        try
+        {
+            var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
+            var settings = await settingsRepository.GetAsync();
+            var themeService = scope.ServiceProvider.GetRequiredService<IAppThemeService>();
+            themeService.ApplyTheme(settings.Theme);
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Anwenden des Themes darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart theme apply failed: {ex}");
+        }
+
+        try
+        {
+            // Den Netzwerkstatus-Service frueh aufloesen, damit das Monitoring startet.
+            _ = scope.ServiceProvider.GetRequiredService<INetworkStatusService>();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Starten der Netzwerk-Ueberwachung darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart network status init failed: {ex}");
+        }
+
+        try
+        {
+            var autoRefreshService = scope.ServiceProvider.GetRequiredService<IAutoRefreshService>();
+            await autoRefreshService.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Starten der Hintergrund-Aktualisierung darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart auto refresh start failed: {ex}");
+        }
     }
 
     /// <summary>

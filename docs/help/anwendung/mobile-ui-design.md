@@ -59,6 +59,33 @@ Design-Entwurf folgen.
 - Geprüft auf 390 × 844 pt (Windows-Handy-Fenster).
 - Verwendet dieselbe `ArticleCardView` wie das Ungelesen-Dashboard.
 - Lesezeichen-Icon füllt sich, wenn der Artikel gespeichert ist.
+- Iteration issue-25: Erneute Prüfung gegen `design-draft/stitch_local_rss_feed_reader/f_r_sp_ter_bewahren/screen.png` und `..._dark_mode/screen.png`; AGENTS.md-Regeln erfüllt (44 × 44 pt Touch-Targets, `AppThemeBinding`, `CollectionView` füllt `Grid`-Row `*`, kein verschachteltes Scrollen). Abweichungen zum Entwurf (Info-Banner, Suchfeld, Kategorie-Chips) sind in `test-results.md` dokumentiert.
+- Iteration issue-25 (2): Laufzeit-Verifikation am Windows-Handy-Fenster 390 × 844 pt durchgeführt — Bewahren auf `Ungelesen` (Bookmark-Icon füllt sich, Artikel erscheint unter `Später`), Entfernen auf `Später` (Artikel verschwindet, `EmptyView` bei leerer Liste), Bookmark-Toggle in der `ArticleDetailPage`-Bottom-Bar (Icon füllt sich/leert sich) sowie Light- und Dark-Screenshots. Screenshots: `docs/help/anwendung/screenshots/issue-25/manual-*.png`.
+
+### Einstellungen (issue-26)
+- Geprüft gegen `design-draft/stitch_local_rss_feed_reader/einstellungen_filter/screen.png` und `einstellungen_filter_dark_mode/screen.png`.
+- Fünf Sektions-Karten als `Border` + `RoundRectangle 12` mit `AppThemeBinding SurfaceContainer` im `ScrollView` unter `Grid RowDefinitions="Auto,*"` — Formularseite, kein `CollectionView`, keine Scroll-Verschachtelung.
+- Slider 1–365 (`MinimumHeightRequest="44"`) mit `DragCompletedCommand`; Chips via `FlexLayout Wrap="Wrap"` + `BindableLayout`, ×-Button 44 × 44 pt.
+- Optionszeilen (Abruf-Intervall, Verzögerung, Ruhezeiten) per `IsEnabled`-Binding + `DataTrigger` (`Opacity` 0,4) ausgegraut; `TimePicker` ×2, drei `Picker`.
+- Alle Texte aus `AppResources`, Dark Mode ausschließlich über `AppThemeBinding`, `Shell.NavBarIsVisible="False"`.
+- Laufzeit-Verifikation am Windows-Handy-Fenster 390 × 844 pt: alle fünf Sektionen sichtbar (Light + Dark), Theme-Wechsel über „Farbschema" wirkt sofort und wird persistiert, Verzögerung „Sofort" markiert Artikel direkt beim Öffnen. Screenshots: `test-results/issue-26-manual-*.png`; Details in `test-results.md`.
+- Scope-Abweichungen zum Entwurf (nicht umgesetzt): „Lokalen Cache leeren", Sektion „Datenbank & Datensicherung", Ruhezeiten-Status-Badge, „Änderungen gespeichert"-Toast.
+
+### Feeds & Einstellungen – Benachrichtigungen (issue-27)
+- Geprüft auf 390 × 844 pt (Windows-Handy-Fenster, `GetWindowRect`-verifiziert), Interaktion via UI Automation.
+- `FeedsPage`: neues Optionspaar „Benachrichtigungen" (Label + Hint) mit `Switch` rechts, `MinimumWidth/HeightRequest="44"`, `SemanticProperties.Description`; oberhalb von „Speichern", kein zusätzlicher Text-Button.
+- Edit-Flow (ActionSheet „Feed-Aktionen" → „Bearbeiten") lädt den Flag in den Switch; Speichern persistiert und Reload zeigt den Wert.
+- `SettingsPage`: Zeile „Sammel-Benachrichtigung" + Hint in der Karte „Benachrichtigungen & Ruhezeiten", per `IsEnabled`-Binding/`DataTrigger` mit den übrigen Optionen ausgegraut; Persistenz über App-Neustart verifiziert.
+- Keine horizontalen Tabellen, keine Scroll-Verschachtelung; alle neuen Texte aus `AppResources` (EN/DE), Dark Mode per `AppThemeBinding`.
+- Screenshots: `test-results/issue-27/manual-*.png`; Details in `test-results.md`.
+- Nacharbeiten (continue.md): Berechtigungsstatus unterscheidet jetzt `NotDetermined` (neutrale Zeile + Button **Benachrichtigungen erlauben**, 44-pt-Target, `SemanticProperties.Description`) und `Denied` (Zeile + **Einstellungen öffnen**); auf Nicht-iOS sind die Benachrichtigungs-Schalter (`SettingsPage`-Karte und `FeedsPage`-Formular) per `IsEnabled="{Binding NotificationsSupported}"` deaktiviert, auf Opazität 0,4 abgedunkelt und mit der Zeile „derzeit nur auf iOS verfügbar" versehen — unter Windows damit im laufenden Fenster sichtbar. Statisch geprüft (Muster identisch zu den verifizierten Zeilen); Laufzeit-Screenshots der neuen Zeilen stehen mit der iOS-Verifikation aus.
+- **Offen:** iOS-Simulator-Verifikation (`net10.0-ios`, `scripts/iOS-Deployment.ps1`) ist nur auf macOS möglich und steht als Folgeaufgabe aus.
+
+### Offline-Indikatoren & Mehrsprachigkeit (issue-28)
+- Statische XAML-Prüfung der Änderungen an `UnreadPage.xaml`, `FeedsPage.xaml`, `LaterPage.xaml`, `ArticleDetailPage.xaml` und `ArticleCardView.xaml` gegen die AGENTS.md-Regeln: Offline-Banner als `Border` + `RoundRectangle 8` mit `AppThemeBinding` (`SurfaceSubtle`/`TextSecondary`), `DataTrigger` auf `IsOnline == false`; Sync-Button auf `UnreadPage` offline auf Opazität 0,4 gedimmt; keine horizontalen Tabellen, keine neuen Text-Button-Reihen, keine Scroll-Verschachtelung; Touch-Ziele unverändert ≥ 44 × 44 pt; alle neuen Texte aus `AppResources` (EN/DE).
+- `ArticleCardView`: neues `IsOnline`-`BindableProperty` (Default `true`), Thumbnail-`Border` wird offline per `DataTrigger` ausgeblendet.
+- `ArticleDetailPage`: neue Grid-Row für Offline-/Fehlerhinweis oberhalb des `WebView`; `Navigating`-Handler bricht externe Navigation offline ab.
+- **Offen — manuelle Laufzeit-Verifikation steht aus:** Die Szenarien erfordern echtes Umschalten Online → Offline → Online auf einem Gerät bzw. im 390 × 844-pt-Fenster und werden manuell nachgeholt. Die vollständige Checkliste der zu verifizierenden Szenarien (Offline-Start, gedimmter Sync-Button, Offline-Banner, Link-Neutralisierung und `<img>`-Entfernung im WebView, „Im Browser öffnen"-Guard, Laufzeit-Statuswechsel, Sprachverhalten DE/EN/Fallback, iOS-Simulator-Lauf) ist in `test-results.md` im Abschnitt **„Issue #28 → Manuelle UI-Verifikation (ausstehend)"** dokumentiert; die ViewModel-/Service-Logik dahinter ist durch 19 neue Unit-Tests abgedeckt und der Release-Build ohne Befund.
 
 ### Artikeldetailansicht (issue-24)
 - Geprüft gegen `design-draft/stitch_local_rss_feed_reader/artikel_lesemodus/screen.png` und `artikel_lesemodus_dark_mode/screen.png`.

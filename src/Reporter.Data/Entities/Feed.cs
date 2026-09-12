@@ -41,6 +41,11 @@ public class Feed
     public DateTime? HealthLastChange { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether notifications are enabled for this feed.
+    /// </summary>
+    public bool NotificationsEnabled { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the optional category of the feed.
     /// </summary>
     public Category? Category { get; set; }

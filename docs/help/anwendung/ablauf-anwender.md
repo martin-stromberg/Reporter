@@ -23,13 +23,22 @@ Tippe auf einen der fünf Tabs:
 - **Kategorien** — Kategorien für Feeds verwalten.
 - **Einstellungen** — App-Einstellungen.
 
+> **Hinweis:** Die App ist auch ohne Internetverbindung nutzbar — bereits geladene Artikel bleiben lesbar, und ein Hinweis **„Keine Internetverbindung."** erscheint auf den betroffenen Seiten. Details siehe [Offline lesen](offline.md).
+
 ### 3. Feeds synchronisieren
 
 - Öffne **Feeds**.
 - Tippe auf **Alle aktualisieren**, um alle Feeds abzurufen.
 - Oder tippe in einer Feed-Zeile auf **Aktualisieren**, um nur diesen Feed abzurufen.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
+- Auf iOS kann dabei eine Benachrichtigung erscheinen — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
+
+### 4. Artikel für später merken
+
+- Tippe auf einer Artikelkarte auf das Lesezeichen-Symbol, um den Artikel zu merken.
+- Alle gemerkten Artikel findest du gesammelt unter **Später**. Ein erneutes Tippen auf das Lesezeichen-Symbol entfernt die Merkung.
+- Details siehe [Später — Artikel für später merken](spaeter.md).
 
 ## Ergebnis
 
-Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an.
+Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an, die Sprache an die Systemsprache des Geräts (Deutsch oder Englisch — siehe [Sprache](sprache.md)).

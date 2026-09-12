@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
+using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 using Reporter.Core.Services;
 using Reporter.Data.Repositories;
 
@@ -15,6 +17,8 @@ public class FeedSyncServiceTests : IDisposable
     private readonly FeedRepository _feedRepository;
     private readonly ItemRepository _itemRepository;
     private readonly SyncLogRepository _syncLogRepository;
+    private readonly SettingsRepository _settingsRepository;
+    private readonly KeywordRepository _keywordRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncServiceTests"/> class.
@@ -25,6 +29,8 @@ public class FeedSyncServiceTests : IDisposable
         _feedRepository = new FeedRepository(_factory);
         _itemRepository = new ItemRepository(_factory);
         _syncLogRepository = new SyncLogRepository(_factory);
+        _settingsRepository = new SettingsRepository(_factory);
+        _keywordRepository = new KeywordRepository(_factory);
     }
 
     /// <summary>
@@ -35,7 +41,7 @@ public class FeedSyncServiceTests : IDisposable
         _factory.Dispose();
     }
 
-    private async Task<Guid> SeedFeedAsync(string url = "https://example.com/rss")
+    private async Task<Guid> SeedFeedAsync(string url = "https://example.com/rss", bool notificationsEnabled = true)
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
@@ -43,11 +49,12 @@ public class FeedSyncServiceTests : IDisposable
             Id = feedId,
             Url = url,
             Title = "Test Feed",
+            NotificationsEnabled = notificationsEnabled,
         });
         return feedId;
     }
 
-    private FeedSyncService CreateService(string content, HttpStatusCode statusCode = HttpStatusCode.OK)
+    private FeedSyncService CreateService(string content, HttpStatusCode statusCode = HttpStatusCode.OK, INotificationService? notificationService = null, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler((request) =>
         {
@@ -62,14 +69,19 @@ public class FeedSyncServiceTests : IDisposable
             };
         });
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService());
     }
 
-    private FeedSyncService CreateFailingService(Exception exception)
+    private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler(_ => throw exception);
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService());
+    }
+
+    private NotificationService CreateNotificationService(FakeLocalNotificationService localNotificationService)
+    {
+        return new NotificationService(_settingsRepository, _keywordRepository, new KeywordMatcher(), localNotificationService);
     }
 
     private static string RssXml(IEnumerable<(string Title, string Link, string Guid, DateTime? PubDate, string? Description)> items)
@@ -288,6 +300,188 @@ public class FeedSyncServiceTests : IDisposable
 
         Assert.Equal(FeedHealth.Ok, result.Status);
         Assert.Equal(2, result.NewItems);
+    }
+
+    /// <summary>
+    /// Verifies that SyncAllAsync returns an offline error without writing a sync log
+    /// or changing feed health while there is no internet connection.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncAllAsync_WhenOffline_ReturnsErrorWithoutSyncLog()
+    {
+        var feedId = await SeedFeedAsync();
+        var feedBefore = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedBefore);
+        var service = CreateService(RssXml([
+            ("Item", "https://example.com/item", "guid-item", DateTime.UtcNow, "Desc"),
+        ]), networkStatusService: new FakeNetworkStatusService { IsOnline = false });
+
+        var result = await service.SyncAllAsync();
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal(AppResources.OfflineHint, result.Message);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        Assert.Empty(logs);
+
+        var feedAfter = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedAfter);
+        Assert.Equal(feedBefore.HealthStatus, feedAfter.HealthStatus);
+    }
+
+    /// <summary>
+    /// Verifies that SyncFeedAsync returns an offline error without writing a sync log,
+    /// changing feed health or performing an HTTP request while offline.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenOffline_ReturnsErrorWithoutHealthChange()
+    {
+        var feedId = await SeedFeedAsync();
+        var feedBefore = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedBefore);
+        var service = CreateFailingService(
+            new InvalidOperationException("HTTP must not be called while offline"),
+            new FakeNetworkStatusService { IsOnline = false });
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal(AppResources.OfflineHint, result.Message);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        Assert.Empty(logs);
+
+        var feedAfter = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedAfter);
+        Assert.Equal(feedBefore.HealthStatus, feedAfter.HealthStatus);
+    }
+
+    /// <summary>
+    /// Verifies that newly synced items trigger a notification per item through the
+    /// real <see cref="NotificationService"/> decision chain.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_NewItems_NotifiesWithFeedAndItems()
+    {
+        var feedId = await SeedFeedAsync();
+        var localNotifications = new FakeLocalNotificationService();
+        var service = CreateService(RssXml(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+            ("Item Two", "https://example.com/2", "guid-2", DateTime.UtcNow, "Description two"),
+        ]), notificationService: CreateNotificationService(localNotifications));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(2, result.NewItems);
+        Assert.Equal(2, localNotifications.ShownNotifications.Count);
+        Assert.All(localNotifications.ShownNotifications, n => Assert.Equal("Test Feed", n.Title));
+        Assert.Contains(localNotifications.ShownNotifications, n => n.Body == "Item One");
+        Assert.Contains(localNotifications.ShownNotifications, n => n.Body == "Item Two");
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.All(localNotifications.ShownNotifications, n => Assert.Contains(items, i => i.Id.ToString() == n.Identifier));
+    }
+
+    /// <summary>
+    /// Verifies that the summary mode sends exactly one notification for multiple new items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_SummaryMode_SendsSingleSummaryNotification()
+    {
+        var feedId = await SeedFeedAsync();
+        await TestSettingsHelper.SaveAsync(_settingsRepository, notificationSummaryEnabled: true);
+        var localNotifications = new FakeLocalNotificationService();
+        var service = CreateService(RssXml(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+            ("Item Two", "https://example.com/2", "guid-2", DateTime.UtcNow, "Description two"),
+        ]), notificationService: CreateNotificationService(localNotifications));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(2, result.NewItems);
+        var notification = Assert.Single(localNotifications.ShownNotifications);
+        Assert.Equal("Test Feed", notification.Title);
+        Assert.Contains("2", notification.Body);
+        Assert.StartsWith($"{feedId}-", notification.Identifier);
+    }
+
+    /// <summary>
+    /// Verifies that a second sync without new items does not notify again.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_NoNewItems_DoesNotNotify()
+    {
+        var feedId = await SeedFeedAsync();
+        var localNotifications = new FakeLocalNotificationService();
+        var notificationService = CreateNotificationService(localNotifications);
+        var xml = RssXml([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml, notificationService: notificationService);
+        await service.SyncFeedAsync(feedId);
+        Assert.Single(localNotifications.ShownNotifications);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Single(localNotifications.ShownNotifications);
+    }
+
+    /// <summary>
+    /// Verifies that a feed with notifications disabled does not trigger notifications.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FeedDisabled_NoNotifications()
+    {
+        var feedId = await SeedFeedAsync(notificationsEnabled: false);
+        var localNotifications = new FakeLocalNotificationService();
+        var service = CreateService(RssXml([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]), notificationService: CreateNotificationService(localNotifications));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+        Assert.Empty(localNotifications.ShownNotifications);
+    }
+
+    /// <summary>
+    /// Verifies that a failure in the notification path does not affect the sync result.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_NotificationThrows_SyncStillSucceeds()
+    {
+        var feedId = await SeedFeedAsync();
+        var notificationService = new FakeNotificationService { Exception = new InvalidOperationException("notification failed") };
+        var service = CreateService(RssXml([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]), notificationService: notificationService);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+        Assert.Single(notificationService.Calls);
+
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedHealth.Ok, feed?.HealthStatus);
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
     }
 
     private sealed class FakeHttpMessageHandler : HttpMessageHandler

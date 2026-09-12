@@ -20,7 +20,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("articledetail", typeof(ArticleDetailPage));
 
         var unreadTab = new Tab { Title = AppResources.TabUnread };
-        unreadTab.Items.Add(new ShellContent { Title = AppResources.TabUnread, Content = services.GetRequiredService<UnreadPage>() });
+        unreadTab.Items.Add(new ShellContent { Route = "unread", Title = AppResources.TabUnread, Content = services.GetRequiredService<UnreadPage>() });
 
         var feedsTab = new Tab { Title = AppResources.TabFeeds };
         feedsTab.Items.Add(new ShellContent { Title = AppResources.TabFeeds, Content = services.GetRequiredService<FeedsPage>() });

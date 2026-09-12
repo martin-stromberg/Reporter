@@ -27,6 +27,41 @@
                             SelectedItem="{Binding SelectedCategory}"
                             Title="{x:Static strings:AppResources.LabelFeedCategory}"
                             ItemDisplayBinding="{Binding Name}"/>
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="8"
+                          IsEnabled="{Binding NotificationsSupported}">
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <VerticalStackLayout VerticalOptions="Center"
+                                             Spacing="2">
+                            <Label Text="{x:Static strings:AppResources.FeedNotificationsLabel}"/>
+                            <Label Text="{x:Static strings:AppResources.FeedNotificationsHint}"
+                                   Style="{StaticResource MetaStyle}"/>
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding FeedNotificationsEnabled}"
+                                SemanticProperties.Description="{x:Static strings:AppResources.FeedNotificationsLabel}"
+                                MinimumWidthRequest="44"
+                                MinimumHeightRequest="44"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                    <Border Padding="10"
+                            StrokeShape="RoundRectangle 8"
+                            Stroke="Transparent"
+                            IsVisible="False"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
+                               Style="{StaticResource BodySmallStyle}"
+                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                    </Border>
                     <Label Text="{Binding ErrorMessage}"
                            TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
                            IsVisible="{Binding HasError}"
@@ -35,6 +70,24 @@
                             Command="{Binding SaveCommand}"/>
                 </VerticalStackLayout>
             </Border>
+            <Border Padding="10"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="Transparent"
+                    IsVisible="False"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                        <Setter Property="IsVisible" Value="True"/>
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{x:Static strings:AppResources.OfflineHint}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+            </Border>
+            <Label Text="{Binding SyncErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasSyncError}"
+                   Style="{StaticResource BodySmallStyle}"/>
         </VerticalStackLayout>
 
         <RefreshView Grid.Row="1"

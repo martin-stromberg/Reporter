@@ -19,34 +19,34 @@ public class ReporterDbContext : DbContext
     }
 
     /// <summary>
-    /// Gets the set of <see cref="Feed"/> entities.
+    /// Gets or sets the set of <see cref="Feed"/> entities.
     /// </summary>
-    public DbSet<Feed> Feeds => Set<Feed>();
+    public DbSet<Feed> Feeds { get; set; } = null!;
 
     /// <summary>
-    /// Gets the set of <see cref="Category"/> entities.
+    /// Gets or sets the set of <see cref="Category"/> entities.
     /// </summary>
-    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Category> Categories { get; set; } = null!;
 
     /// <summary>
-    /// Gets the set of <see cref="Item"/> entities.
+    /// Gets or sets the set of <see cref="Item"/> entities.
     /// </summary>
-    public DbSet<Item> Items => Set<Item>();
+    public DbSet<Item> Items { get; set; } = null!;
 
     /// <summary>
-    /// Gets the set of <see cref="Keyword"/> entities.
+    /// Gets or sets the set of <see cref="Keyword"/> entities.
     /// </summary>
-    public DbSet<Keyword> Keywords => Set<Keyword>();
+    public DbSet<Keyword> Keywords { get; set; } = null!;
 
     /// <summary>
-    /// Gets the set of <see cref="Settings"/> entities.
+    /// Gets or sets the set of <see cref="Settings"/> entities.
     /// </summary>
-    public DbSet<Settings> Settings => Set<Settings>();
+    public DbSet<Settings> Settings { get; set; } = null!;
 
     /// <summary>
-    /// Gets the set of <see cref="SyncLog"/> entities.
+    /// Gets or sets the set of <see cref="SyncLog"/> entities.
     /// </summary>
-    public DbSet<SyncLog> SyncLogs => Set<SyncLog>();
+    public DbSet<SyncLog> SyncLogs { get; set; } = null!;
 
     /// <summary>
     /// Configures the model and relationships for the SQLite database.
@@ -84,6 +84,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.LastCheckedAt).HasColumnName("last_checked_at");
         entity.Property(e => e.HealthStatus).HasColumnName("health_status").HasMaxLength(50);
         entity.Property(e => e.HealthLastChange).HasColumnName("health_last_change");
+        entity.Property(e => e.NotificationsEnabled).HasColumnName("notifications_enabled").IsRequired().HasDefaultValue(true);
 
         entity.HasIndex(e => e.Url).IsUnique();
         entity.HasOne(e => e.Category).WithMany().HasForeignKey(e => e.CategoryId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
@@ -128,6 +129,10 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.NotificationsEnabled).HasColumnName("notifications_enabled").IsRequired();
         entity.Property(e => e.QuietHoursStart).HasColumnName("quiet_hours_start");
         entity.Property(e => e.QuietHoursEnd).HasColumnName("quiet_hours_end");
+        entity.Property(e => e.AutoRefreshEnabled).HasColumnName("auto_refresh_enabled").IsRequired().HasDefaultValue(true);
+        entity.Property(e => e.RefreshIntervalMinutes).HasColumnName("refresh_interval_minutes").IsRequired().HasDefaultValue(30);
+        entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
+        entity.Property(e => e.NotificationSummaryEnabled).HasColumnName("notification_summary_enabled").IsRequired().HasDefaultValue(false);
 
         entity.HasData(new Settings());
     }

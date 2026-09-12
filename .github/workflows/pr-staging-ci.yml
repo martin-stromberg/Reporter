@@ -18,12 +18,49 @@ permissions:
   checks: write
 
 jobs:
+  detect-backmerge:
+    runs-on: ubuntu-latest
+    outputs:
+      is_backmerge: ${{ steps.check.outputs.is_backmerge }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check whether this PR is a pure back-merge from main
+        id: check
+        run: |
+          git fetch origin main:refs/remotes/origin/main --no-tags
+
+          main_sha="$(git rev-parse origin/main)"
+          is_main_merge_parent=false
+          for parent in $(git show -s --format=%P HEAD); do
+            if [[ "$parent" == "$main_sha" ]]; then
+              is_main_merge_parent=true
+              break
+            fi
+          done
+
+          if [[ "$is_main_merge_parent" == "true" ]]; then
+            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Back-merge from main detected - CI checks will be skipped."
+          elif git diff --quiet origin/main HEAD; then
+            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pure back-merge from main detected (tree identical) - CI checks will be skipped."
+          else
+            echo "is_backmerge=false" >> "$GITHUB_OUTPUT"
+          fi
+
   static-checks:
     name: static checks
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: windows-latest
     timeout-minutes: 20
     env:
       IncludeIosTarget: false
+      IncludeAndroidTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -53,10 +90,13 @@ jobs:
 
   build-and-test:
     name: build & test
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     env:
       IncludeIosTarget: false
+      IncludeAndroidTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -121,3 +161,11 @@ jobs:
           name: test-results-pr
           path: src/Reporter.Tests/TestResults/*.trx
           retention-days: 14
+
+  back-merge-skip:
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Back-merge detected
+        run: echo "This PR is a pure back-merge from main - all checks skipped."

@@ -36,6 +36,8 @@ public interface IItemRepository
 
     /// <summary>
     /// Deletes the item with the specified identifier asynchronously.
+    /// This method is intended for explicit single-item deletions and does not
+    /// enforce the saved-for-later invariant; it is not used by automatic cleanup.
     /// </summary>
     /// <param name="id">The item identifier.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -111,4 +113,36 @@ public interface IItemRepository
     /// <param name="guidOrHash">The original GUID or hash.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the item, or <c>null</c> if not found.</returns>
     Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash);
+
+    /// <summary>
+    /// Deletes all expired items asynchronously.
+    /// Only items with <c>IsRead == true</c> are eligible; items with
+    /// <c>IsSavedForLater == true</c> are never deleted. The effective timestamp
+    /// compared against the cutoff is <c>ReadAt</c>, falling back to
+    /// <c>PublishedAt</c>; items with both values <c>null</c> are kept.
+    /// </summary>
+    /// <param name="cutoff">The cutoff timestamp; items whose effective timestamp is older are deleted.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of deleted items.</returns>
+    Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the keyword-filter deletion candidates asynchronously.
+    /// Only items with <c>IsRead == true</c> are eligible; items with
+    /// <c>IsSavedForLater == true</c> are never returned. The effective timestamp
+    /// compared against the cutoff is <c>PublishedAt</c>, falling back to
+    /// <c>ReadAt</c>; items with both values <c>null</c> are not returned.
+    /// </summary>
+    /// <param name="cutoff">The cutoff timestamp; items whose effective timestamp is older are returned.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the candidate items.</returns>
+    Task<IReadOnlyList<Item>> GetExpiredKeywordCandidatesAsync(DateTime cutoff, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes all items with the specified identifiers asynchronously.
+    /// </summary>
+    /// <param name="ids">The identifiers of the items to delete.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of deleted items.</returns>
+    Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default);
 }
