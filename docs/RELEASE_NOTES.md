@@ -2,12 +2,21 @@
 
 ## Important Notes Before Update
 
+- Branch protection for `main` and `staging` must still be configured manually by a repository admin (required checks `static checks`, `build & test`, `verify-source`); the protection APIs return HTTP 403 for private repositories on the free plan — see `docs/help/release-management/installation.md`.
+- Automatic backmerge PRs `main` → `staging` must be merged with "Create a merge commit" — squash or rebase would detach release tags from the `staging` history and break RC numbering.
+- The iOS release asset `release-ios.ipa` is only built once the repository variable `IOS_SIGNING_ENABLED=true` is set together with the secrets `IOS_CODESIGN_KEY` and `IOS_PROVISIONING_PROFILE`.
 - Old read articles are automatically deleted at app start once they exceed the retention period (default: 30 days) — only articles saved for later are permanently protected; unread articles are never deleted.
 - Read, non-saved articles matching a configured keyword filter are also removed by this automatic cleanup once the retention period has expired (keyword list is empty by default).
 - Automatic background feed refresh is enabled by default (every 30 minutes while the app is open) — can be changed or disabled in Settings.
 
 ## What's New
 
+- Fully automated release pipeline (`staging` → `main`): every push to `staging` produces an RC pre-release `vX.Y.Z-rc.N` with `release-win-x64.zip` (Windows), `release-android.apk` (Android) and the update manifest `update.json`.
+- After a successful pre-release run, a draft promotion PR `staging` → `main` is opened automatically (label `automated-promotion`).
+- Push to `main` or tag `v*.*.*` creates the stable release `vX.Y.Z` via semantic-release; if a release already exists with incomplete assets, the missing files are repaired (`upload-existing`) instead of creating a new release.
+- After every push to `main`, a backmerge PR `main` → `staging` is opened automatically when needed (label `automated-backmerge`).
+- Optional Android target: `net10.0-android` can be enabled via the MSBuild switch `-p:IncludeAndroidTarget=true` (requires the Android workload); `IncludeIosTarget` remains enabled by default.
+- New administrator documentation for release management under `docs/help/release-management/` (pipeline overview, installation & configuration, iOS signing, troubleshooting).
 - Offline reading: already synced articles, feeds, categories and the "saved for later" list remain fully readable without an internet connection; all offline hints disappear automatically once connectivity returns.
 - Offline indicators: the sync button is dimmed and a "No internet connection." hint appears on Unread, plus banners on the Feeds and Later pages and in the article detail view — pull-to-refresh and manual syncs are skipped while offline.
 - Article reading offline: links inside article text are disabled (a localized hint dialog is shown on tap) and external images plus list thumbnails are hidden to avoid empty image frames.
@@ -19,7 +28,8 @@
 - Keyword-filtered articles do not trigger notifications (same keyword list as automatic cleanup).
 - Optional summary mode in Settings: a single summary notification per feed and sync instead of one notification per article.
 - Tapping a notification opens the article directly; a summary notification opens the "Unread" view.
-- The iOS notification permission is requested when notifications are enabled in Settings; if denied, a hint with an "Open Settings" button is shown on the Settings page.
+- The iOS notification permission is requested when notifications are enabled in Settings; if denied, a hint with an "Open Settings" button is shown on the Settings page. If permission was never requested, a neutral "Allow notifications" row leads directly to the system dialog. On platforms without notifications (currently only iOS supports them), the toggles are disabled with a hint.
+- Dismissing a notification (swipe away) no longer triggers navigation — only tapping opens the article or the "Unread" view.
 - Notifications appear at most once per article (deduplication via stable identifiers).
 - Retention slider: value changes (e.g. via keyboard) are now saved after a short delay (~0.5 s), not only when the slider is released.
 - Localization fixes: the auto-read label in the article detail now follows the UI language (previously hardcoded German); clearer info texts for retention and keyword matching on the Settings page.
@@ -37,12 +47,21 @@
 
 ## Wichtige Hinweise vor dem Update
 
+- Branch-Protection für `main` und `staging` muss weiterhin manuell durch einen Repository-Admin eingerichtet werden (erforderliche Checks `static checks`, `build & test`, `verify-source`); die Protection-APIs antworten bei privaten Repositories im Free-Plan mit HTTP 403 — siehe `docs/help/release-management/installation.md`.
+- Automatische Backmerge-PRs `main` → `staging` müssen per „Create a merge commit" gemergt werden — Squash oder Rebase würde die Release-Tags aus der `staging`-Historie lösen und die RC-Zählung zerstören.
+- Das iOS-Release-Asset `release-ios.ipa` wird erst erzeugt, wenn die Repository-Variable `IOS_SIGNING_ENABLED=true` zusammen mit den Secrets `IOS_CODESIGN_KEY` und `IOS_PROVISIONING_PROFILE` gesetzt ist.
 - Alte gelesene Artikel werden beim App-Start automatisch gelöscht, sobald sie die Aufbewahrungsdauer überschreiten (Standard: 30 Tage) — nur „für später bewahrte" Artikel sind dauerhaft geschützt; ungelesene Artikel werden nie gelöscht.
 - Gelesene, nicht gemerkte Artikel, die einem konfigurierten Keyword-Filter entsprechen, werden ebenfalls nach Ablauf der Aufbewahrungsdauer automatisch gelöscht (Keyword-Liste ist standardmäßig leer).
 - Die automatische Hintergrund-Aktualisierung der Feeds ist standardmäßig aktiviert (alle 30 Minuten bei geöffneter App) — kann in den Einstellungen geändert oder deaktiviert werden.
 
 ## Neuerungen
 
+- Vollautomatische Release-Pipeline (`staging` → `main`): jeder Push auf `staging` erzeugt ein RC-Pre-Release `vX.Y.Z-rc.N` mit `release-win-x64.zip` (Windows), `release-android.apk` (Android) und dem Update-Manifest `update.json`.
+- Nach erfolgreichem Pre-Release-Lauf wird automatisch ein Draft-Promotion-PR `staging` → `main` geöffnet (Label `automated-promotion`).
+- Push auf `main` oder Tag `v*.*.*` erzeugt das stabile Release `vX.Y.Z` via semantic-release; existiert ein Release bereits mit unvollständigen Assets, werden die fehlenden Dateien nachgeladen (`upload-existing`), statt ein neues Release anzulegen.
+- Nach jedem Push auf `main` wird bei Bedarf automatisch ein Backmerge-PR `main` → `staging` geöffnet (Label `automated-backmerge`).
+- Optionales Android-Target: `net10.0-android` lässt sich über den MSBuild-Schalter `-p:IncludeAndroidTarget=true` aktivieren (erfordert den Android-Workload); `IncludeIosTarget` bleibt standardmäßig aktiviert.
+- Neue Administratoren-Dokumentation zum Release-Management unter `docs/help/release-management/` (Pipeline-Übersicht, Installation & Konfiguration, iOS-Signierung, Troubleshooting).
 - Offline lesen: bereits synchronisierte Artikel, Feeds, Kategorien und die „Später"-Liste bleiben ohne Internetverbindung vollständig lesbar; alle Offline-Hinweise verschwinden bei Netzrückkehr von selbst.
 - Offline-Anzeigen: der Aktualisieren-Button wird abgedunkelt und der Hinweis „Keine Internetverbindung." erscheint unter Ungelesen, zusätzlich Banner auf den Seiten Feeds und Später sowie in der Artikeldetailansicht — Ziehen zum Aktualisieren und manuelle Abgleiche werden offline übersprungen.
 - Artikel offline lesen: Links im Artikeltext sind deaktiviert (bei Antippen erscheint ein lokalisierter Hinweisdialog), externe Bilder und Listen-Thumbnails werden offline ausgeblendet, damit keine leeren Bildrahmen entstehen.

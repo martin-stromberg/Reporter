@@ -1,9 +1,16 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+
+import { buildReleaseAssets } from "./release-assets.mjs";
 
 const VERSION_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
 const AUTOMATIC_RELEASE_BRANCHES = ["main"];
-const EXPECTED_ASSETS = ["release-win-x64.zip", "update.json"];
+const EXPECTED_ASSETS = [
+  ...buildReleaseAssets({ iosSigningEnabled: process.env.IOS_SIGNING_ENABLED === "true" })
+    .map((asset) => asset.assetName),
+  "update.json"
+];
 
 function setOutput(name, value) {
   const outputPath = process.env.GITHUB_OUTPUT;
@@ -41,7 +48,7 @@ export function releaseHasExpectedAsset(release) {
   );
 }
 
-function incompleteReleases(releases) {
+export function incompleteReleases(releases) {
   return releases.filter((release) => {
     if (release.prerelease) {
       return false;
@@ -93,6 +100,19 @@ function listGitHubReleases() {
   return all;
 }
 
+export function semanticReleaseDryRunVersion(result) {
+  if (result.error) {
+    throw new Error(`semantic-release dry-run could not be started: ${result.error.message}`);
+  }
+  const output = (result.stdout || "") + (result.stderr || "");
+  if (result.status !== 0) {
+    const context = (result.stderr || "").trim() || output.trim() || "no output";
+    throw new Error(`semantic-release dry-run failed (exit code ${result.status}): ${context}`);
+  }
+  const match = output.match(/the next release version is ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?)/i);
+  return match ? match[1] : null;
+}
+
 function runSemanticReleaseDryRun() {
   const result = spawnSync(
     "npx",
@@ -103,9 +123,7 @@ function runSemanticReleaseDryRun() {
       stdio: ["ignore", "pipe", "pipe"]
     }
   );
-  const output = (result.stdout || "") + (result.stderr || "");
-  const match = output.match(/the next release version is ([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?)/i);
-  return match ? match[1] : null;
+  return semanticReleaseDryRunVersion(result);
 }
 
 function resolveManualRelease(version, tag) {
@@ -119,6 +137,11 @@ function resolveManualRelease(version, tag) {
   return { released: "true", reason: `Create new manual release ${tag}.`, version, tag, release_kind: "manual", release_action: "create" };
 }
 
+export function repairIncompleteRelease(release) {
+  const version = parseManualTag(release.tag_name);
+  return { released: "true", reason: `Repair oldest incomplete release ${release.tag_name}.`, version, tag: release.tag_name, release_kind: "automatic", release_action: "upload-existing" };
+}
+
 function resolveAutomaticRelease() {
   const version = runSemanticReleaseDryRun();
   if (!version) {
@@ -128,7 +151,7 @@ function resolveAutomaticRelease() {
       return { released: "false", reason: "No releasable commits and no incomplete releases.", version: "", tag: "", release_kind: "automatic", release_action: "none" };
     }
     const oldest = incomplete[incomplete.length - 1];
-    return { released: "true", reason: `Repair oldest incomplete release ${oldest.tag_name}.`, version: oldest.tag_name.slice(1), tag: oldest.tag_name, release_kind: "automatic", release_action: "upload-existing" };
+    return repairIncompleteRelease(oldest);
   }
 
   const tag = `v${version}`;
@@ -161,4 +184,7 @@ export function resolveReleaseVersion() {
   console.log(JSON.stringify(result, null, 2));
 }
 
-resolveReleaseVersion();
+const isMainModule = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMainModule) {
+  resolveReleaseVersion();
+}

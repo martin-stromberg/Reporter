@@ -1,0 +1,20 @@
+name: Check out release tag
+
+inputs:
+  tag:
+    description: Release tag (e.g. v1.2.3) to fetch from origin and check out detached.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Fetch and check out release tag
+      shell: bash
+      run: |
+        set -euo pipefail
+        git fetch origin "+refs/tags/${{ inputs.tag }}:refs/tags/${{ inputs.tag }}"
+        git checkout --detach "${{ inputs.tag }}"
+        if [ "$(git rev-parse HEAD)" != "$(git rev-parse "refs/tags/${{ inputs.tag }}^{commit}")" ]; then
+          echo "::error::Release tag checkout did not resolve to the tagged commit."
+          exit 1
+        fi
