@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 """Enum test coverage check for C# source code.
 
 For each public/internal enum in a solution, checks whether all of its

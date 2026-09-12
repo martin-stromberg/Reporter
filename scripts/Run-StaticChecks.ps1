@@ -1,3 +1,5 @@
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 <#
     Run-StaticChecks.ps1
 
@@ -12,11 +14,12 @@
         .\scripts\Run-StaticChecks.ps1 -Check Format
         .\scripts\Run-StaticChecks.ps1 -Check Security
         .\scripts\Run-StaticChecks.ps1 -Check Build
+        .\scripts\Run-StaticChecks.ps1 -Check LicenseHeaders
         .\scripts\Run-StaticChecks.ps1 -Check Restore
 #>
 
 param(
-    [ValidateSet("All", "Format", "Security", "Build", "Restore")]
+    [ValidateSet("All", "Format", "Security", "Build", "LicenseHeaders", "Restore")]
     [string]$Check = "All",
 
     [switch]$SkipRestore
@@ -71,6 +74,20 @@ function Invoke-SecurityScan {
     Write-Host "Keine verwundbaren Pakete gefunden." -ForegroundColor Green
 }
 
+function Invoke-LicenseHeaderCheck {
+    Write-Host "Pruefe Lizenzheader..." -ForegroundColor Cyan
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "Fehler: node wurde nicht gefunden. Das Lizenzheader-Skript benoetigt Node.js." -ForegroundColor Red
+        exit 1
+    }
+    & node scripts/add-license-headers.mjs --check
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fehler: Dateien ohne Lizenzheader gefunden. Fuehre 'node scripts/add-license-headers.mjs' aus." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Lizenzheader-Check bestanden." -ForegroundColor Green
+}
+
 function Invoke-StaticAnalysisBuild {
     Write-Host "Fuehre statische Analyse (Release-Build mit Warnungen als Fehler) durch..." -ForegroundColor Cyan
     & dotnet build $solution --configuration $configuration --no-restore -p:TreatWarningsAsErrors=true
@@ -88,6 +105,7 @@ if (-not $SkipRestore) {
 switch ($Check) {
     "All" {
         Invoke-FormatCheck
+        Invoke-LicenseHeaderCheck
         Invoke-SecurityScan
         Invoke-StaticAnalysisBuild
     }
@@ -96,6 +114,9 @@ switch ($Check) {
     }
     "Security" {
         Invoke-SecurityScan
+    }
+    "LicenseHeaders" {
+        Invoke-LicenseHeaderCheck
     }
     "Build" {
         Invoke-StaticAnalysisBuild

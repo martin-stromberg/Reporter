@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Einstellungen
 
 Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung und Lesefluss, Benachrichtigungen mit Ruhezeiten sowie das Erscheinungsbild. Änderungen werden sofort gespeichert und wirken unmittelbar — ein separater Speichern-Button ist nicht nötig.

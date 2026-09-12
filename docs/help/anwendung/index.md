@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Anwendung
 
 Reporter ist ein lokaler RSS-/Feed-Reader als .NET MAUI-App. Feeds können über die Feeds-Seite manuell abgerufen und in die lokale Datenbank synchronisiert werden; neue ungelesene Artikel erscheinen danach in der Datenbank.

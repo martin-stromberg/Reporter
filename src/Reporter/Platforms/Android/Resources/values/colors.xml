@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 <resources>
     <color name="colorPrimary">#512BD4</color>
     <color name="colorPrimaryDark">#2B0B98</color>

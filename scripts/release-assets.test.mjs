@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync } from "node:fs";

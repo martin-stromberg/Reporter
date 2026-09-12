@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 set -eu
 
 # --- Repo-Root ermitteln ---
@@ -28,6 +30,14 @@ python "$repo_root/.githooks/razor-l10n-check.py"
 # --- Razor Usage Check (fixer Pfad, nur Warnung) ---
 echo "Running Razor usage check..."
 python "$repo_root/.githooks/razor-usage-check.py"
+
+# --- License Header Check (staged files) ---
+echo "Running license header check..."
+if command -v node >/dev/null 2>&1; then
+  node "$repo_root/scripts/add-license-headers.mjs" --staged
+else
+  echo "node not found - skipping license header check (enforced in CI)." >&2
+fi
 
 # --- NotImplementedException/Stub Check (fixer Pfad, nur Warnung) ---
 echo "Running stub implementation check..."
