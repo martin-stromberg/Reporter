@@ -1,9 +1,9 @@
 name: Pre-Release
 
-# on:
-#   push:
-#     branches:
-#       - staging
+on:
+  push:
+    branches:
+      - staging
 
 concurrency:
   group: staging-ci
@@ -15,12 +15,49 @@ permissions:
   pull-requests: write
 
 jobs:
+  detect-backmerge:
+    runs-on: ubuntu-latest
+    outputs:
+      is_backmerge: ${{ steps.check.outputs.is_backmerge }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check whether this push is a pure back-merge from main
+        id: check
+        run: |
+          git fetch origin main:refs/remotes/origin/main --no-tags
+
+          main_sha="$(git rev-parse origin/main)"
+          is_main_merge_parent=false
+          for parent in $(git show -s --format=%P HEAD); do
+            if [[ "$parent" == "$main_sha" ]]; then
+              is_main_merge_parent=true
+              break
+            fi
+          done
+
+          if [[ "$is_main_merge_parent" == "true" ]]; then
+            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Back-merge from main detected - CI checks will be skipped."
+          elif git diff --quiet origin/main HEAD; then
+            echo "is_backmerge=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pure back-merge from main detected (tree identical) - CI checks will be skipped."
+          else
+            echo "is_backmerge=false" >> "$GITHUB_OUTPUT"
+          fi
+
   static-checks:
     name: static checks
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: windows-latest
     timeout-minutes: 20
     env:
       IncludeIosTarget: false
+      IncludeAndroidTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -50,10 +87,13 @@ jobs:
 
   build-and-test:
     name: build & test
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     env:
       IncludeIosTarget: false
+      IncludeAndroidTarget: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -121,8 +161,8 @@ jobs:
 
   version:
     name: version
-    needs: [static-checks, build-and-test]
-    if: success()
+    needs: [detect-backmerge, static-checks, build-and-test]
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -151,7 +191,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RESOLVE_DRY_RUN: 'true'
         run: |
-          set -o pipefail
+          set -euo pipefail
           output="$(npx semantic-release --dry-run --no-ci --branches staging 2>&1 | tee /dev/stderr)"
 
           version=""
@@ -174,9 +214,9 @@ jobs:
           echo "rc_tag=v${version}-rc.${rc_number}" >> "$GITHUB_OUTPUT"
           echo "rc_version=${version}-rc.${rc_number}" >> "$GITHUB_OUTPUT"
 
-  prerelease:
-    name: prerelease
-    needs: [version]
+  package-windows:
+    name: package-windows
+    needs: version
     if: needs.version.outputs.changed == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
@@ -184,19 +224,103 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Build and package release candidate
+      - name: Build and package release candidate (win-x64)
         uses: ./.github/actions/build-and-package
         with:
           release-version: ${{ needs.version.outputs.rc_version }}
           release-tag: ${{ needs.version.outputs.rc_tag }}
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-win-x64
+          path: release-win-x64.zip
+          retention-days: 14
+
+  package-android:
+    name: package-android
+    needs: version
+    if: needs.version.outputs.changed == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build and package release candidate (android)
+        uses: ./.github/actions/package-android
+        with:
+          release-version: ${{ needs.version.outputs.rc_version }}
+          release-tag: ${{ needs.version.outputs.rc_tag }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-android
+          path: release-android.apk
+          retention-days: 14
+
+  # iOS packaging stays disabled until the signing secrets are provided externally.
+  # Activate by setting the repository variable IOS_SIGNING_ENABLED=true - no code change needed.
+  package-ios:
+    name: package-ios
+    needs: version
+    if: needs.version.outputs.changed == 'true' && vars.IOS_SIGNING_ENABLED == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build and package release candidate (ios)
+        uses: ./.github/actions/package-ios
+        with:
+          release-version: ${{ needs.version.outputs.rc_version }}
+          release-tag: ${{ needs.version.outputs.rc_tag }}
+          codesign-key: ${{ secrets.IOS_CODESIGN_KEY }}
+          provisioning-profile: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-ios
+          path: release-ios.ipa
+          retention-days: 14
+
+  prerelease:
+    name: prerelease
+    needs: [version, package-windows, package-android, package-ios]
+    if: needs.version.outputs.changed == 'true' && !failure() && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Prepare release asset list
+        env:
+          IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}
+        run: node scripts/release-assets.mjs
+
+      - name: Create update manifest
+        env:
+          RELEASE_VERSION: ${{ needs.version.outputs.rc_version }}
+          RELEASE_TAG: ${{ needs.version.outputs.rc_tag }}
+        run: node scripts/create-update-manifest.mjs
+
       - name: Create GitHub pre-release
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           tag="${{ needs.version.outputs.rc_tag }}"
-          gh release create "$tag" release-win-x64.zip update.json \
+          gh release create "$tag" $RELEASE_ASSET_FILES update.json \
             --target "$GITHUB_SHA" \
             --title "$tag" \
             --prerelease \

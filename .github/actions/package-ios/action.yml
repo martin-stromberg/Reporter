@@ -1,0 +1,69 @@
+name: Package iOS
+
+inputs:
+  release-version:
+    description: Version without a leading v, passed as -p:Version.
+    required: true
+  release-tag:
+    description: Release tag (e.g. v1.2.3 or v1.2.3-rc.1). Kept for a stable call signature across the packaging actions.
+    required: true
+  codesign-key:
+    description: iOS signing identity passed as -p:CodesignKey (e.g. Apple Distribution), provided by the caller from repository secrets.
+    required: false
+    default: ''
+  provisioning-profile:
+    description: iOS provisioning profile passed as -p:CodesignProvision, provided by the caller from repository secrets.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Install .NET MAUI workload
+      run: dotnet workload restore Reporter.sln
+      shell: bash
+      env:
+        IncludeAndroidTarget: false
+
+    - name: Restore
+      run: dotnet restore src/Reporter/Reporter.csproj
+      shell: bash
+      env:
+        IncludeAndroidTarget: false
+
+    - name: Publish (ios)
+      run: >
+        dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }}
+        --configuration Release --framework net10.0-ios
+        -p:RuntimeIdentifier=ios-arm64
+        -p:ArchiveOnBuild=true
+        -p:CodesignKey="${{ inputs.codesign-key }}"
+        -p:CodesignProvision="${{ inputs.provisioning-profile }}"
+        --no-restore
+      shell: bash
+      env:
+        IncludeAndroidTarget: false
+
+    - name: Collect iOS package
+      shell: bash
+      run: |
+        set -euo pipefail
+        ipas=()
+        while IFS= read -r -d '' file; do
+          ipas+=("$file")
+        done < <(find src/Reporter/bin/Release -name '*.ipa' -print0)
+        if [ "${#ipas[@]}" -eq 0 ]; then
+          echo "::error::No .ipa artifact found under src/Reporter/bin/Release after publish."
+          exit 1
+        fi
+        if [ "${#ipas[@]}" -gt 1 ]; then
+          echo "::error::Multiple .ipa artifacts found under src/Reporter/bin/Release; expected exactly one:"
+          printf '%s\n' "${ipas[@]}"
+          exit 1
+        fi
+        cp "${ipas[0]}" release-ios.ipa

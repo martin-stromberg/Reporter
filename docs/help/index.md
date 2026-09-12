@@ -10,3 +10,7 @@
 ## Konfiguration
 
 - [Einstellungen](einstellungen/index.md) — Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung und Lesefluss, Benachrichtigungen mit Ruhezeiten sowie das Erscheinungsbild.
+
+## Systemverwaltung
+
+- [Release-Management](release-management/index.md) — Die automatisierte Release-Pipeline erzeugt RC-Pre-Releases auf `staging`, Promotion-PRs nach `main`, stabile Releases mit Plattform-Artefakten und Backmerge-PRs zurück nach `staging`.

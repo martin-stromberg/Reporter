@@ -2,10 +2,10 @@ name: Build and package
 
 inputs:
   release-version:
-    description: Version without a leading v, written into update.json and passed as -p:Version.
+    description: Version without a leading v, passed as -p:Version.
     required: true
   release-tag:
-    description: Release tag (e.g. v1.2.3 or v1.2.3-rc.1), used to build each asset's download URL.
+    description: Release tag (e.g. v1.2.3 or v1.2.3-rc.1). Kept for a stable call signature; the update manifest is built by scripts/create-update-manifest.mjs in the aggregating job.
     required: true
 
 runs:
@@ -41,28 +41,3 @@ runs:
       shell: pwsh
       run: |
         Compress-Archive -Path "artifacts/publish-win-x64/*" -DestinationPath "release-win-x64.zip" -Force
-
-    - name: Create update manifest
-      shell: pwsh
-      env:
-        VERSION: ${{ inputs.release-version }}
-        TAG: ${{ inputs.release-tag }}
-      run: |
-        $win = Get-Item "release-win-x64.zip"
-        $winHash = (Get-FileHash -Path $win.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-        $manifest = @{
-          version = $env:VERSION
-          releaseNotes = "Reporter release $env:TAG"
-          publishedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-          assets = @(
-            @{
-              platform = "windows"
-              runtimeIdentifier = "win-x64"
-              assetName = "release-win-x64.zip"
-              assetUrl = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/$env:TAG/release-win-x64.zip"
-              sha256 = $winHash
-              sizeBytes = $win.Length
-            }
-          )
-        }
-        $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path "update.json" -Encoding UTF8
