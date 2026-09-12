@@ -1,0 +1,23 @@
+# Bestandsaufnahme: Release-Management, Pre-Releases und Staging-Promotion
+
+Analysiert wurde die CI/CD-Infrastruktur des Repositories (`Reporter`, .NET MAUI) bezogen auf die übersetzte Anforderung aus `requirement.md` (Issue #29, Vorlage `ci-instructions.md` Abschnitte 5, 6.1, 8, 9 und 11): Workflows unter `.github/workflows/`, Composite Actions unter `.github/actions/`, Release-Tooling (`release.config.js`, `package.json`, `package-lock.json`, `scripts/resolve-release-version.mjs`), die MAUI-Projektkonfiguration (`src/Reporter/Reporter.csproj`, `Reporter.sln`) sowie der Test-Ausgangszustand von `Reporter.Tests`.
+
+## Zusammenfassung
+
+- **Alle sieben Vorlagen-Workflows existieren** und sind bereits auf `Reporter.sln`/`Reporter.Tests` adaptiert (keine `MyApp.*`-Verweise im `.github`-Bestand). Drei davon sind deaktiviert: `staging-ci.yml` (`push → staging`), `release.yml` (`push → main` + `tags: ['v*.*.*']`) und `pr-staging-ci.yml` (`pull_request → staging`) haben auskommentierte `on:`-Blöcke — verursacht durch den Branch `task/...-cicd-pipeline-pausieren`. Auf `origin/main` sind dieselben Dateien mit aktiven Triggern vorhanden.
+- **Zentrale Lücke in `staging-ci.yml` und `pr-staging-ci.yml`:** Der `detect-backmerge`-Job (inkl. `back-merge-skip` in der PR-Variante) fehlt komplett; `version`/`prerelease` hängen ohne Backmerge-Bedingung an `[static-checks, build-and-test]` bzw. `[version]`. Die kritische `rc_version`-Verdrahtung (Vorlage 11.2) ist dagegen korrekt umgesetzt.
+- **`release.yml` ist inhaltlich weitgehend vollständig** (Resolver, Tag-Checkout für Repair, Release-Gate auf `Reporter.Tests`, automatischer/manueller/Repair-Pfad), enthält aber kein eigenes `setup-dotnet`/Restore vor dem `dotnet test`-Gate und listet nur `release-win-x64.zip` + `update.json` als Assets.
+- **`build-and-package` erzeugt ausschließlich das Windows-ZIP** (`net10.0-windows10.0.19041.0`, `win-x64`, self-contained) plus `update.json` mit einem einzigen Asset. iOS-/Android-Publish fehlt; `net10.0-android` ist auch im `csproj` nicht als TFM enthalten (obwohl `Platforms/Android` und `Platforms/MacCatalyst` im Source liegen); `WindowsPackageType=None` verhindert `.msix` ohne Weiteres.
+- **`resolve-release-version.mjs` ist komplett implementiert** inkl. Prerelease-Guard (Vorlage 11.1), aber `EXPECTED_ASSETS` kennt nur das Windows-ZIP. Für das Skript existieren **keine Unit-Tests** (Vorlage 8.2 verlangt sie); der unbedingte Top-Level-Aufruf in Zeile 164 erschwert zudem den Import in Tests.
+- **`release.config.js` weicht von der Vorlage ab:** `branches` enthält zusätzlich `{ name: "staging", prerelease: "rc" }` (Vorlage: nur `"main"`); Asset-Liste hat nur einen `RELEASE_ASSET_PATHS`-Slot. `package.json` nutzt `^`-Ranges statt gepinnter Versionen; `package-lock.json` ist vorhanden.
+- **Promotion und Backmerge sind aktiv und vorlagenkonform** (`workflow_run` auf Display-Name `Pre-Release` passt; Backmerge-PR fordert Merge-Commit). Kleine Abweichung: `sync-staging-with-main.yml` zählt `origin/staging..HEAD` — entgegen der Vorlagen-Fassung, aber in der für „staging behind main" korrekten Richtung.
+- **Repository-Zustand:** `main` und `staging` existieren; 10 Tags inkl. stabilem `v0.0.1` und RCs bis `v1.0.0-rc.1` zeigen, dass die Pipeline bereits produktiv lief, bevor sie pausiert wurde. Branch-Protection/Labels sind nicht aus dem Code ableitbar (per `gh api` zu prüfen).
+- **Test-Ausgangszustand:** `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release` → **239/239 Tests erfolgreich**, Exit-Code 0, keine Fehlschläge, keine Übersprungenen. Nachweis und Details: [Tests](inventory/tests.md). Testlücken: keine Tests für `resolve-release-version.mjs`; Coverage-Gate (70 %) lokal nicht geprüft; MAUI-App-Projekt nicht Teil des Testlaufs (vom Testprojekt nicht referenziert).
+
+## Details
+
+- [Workflows](inventory/workflows.md) — alle sieben Dateien, Aktivierungsstatus, Jobs/Steps, Abweichungen zur Vorlage, Stand auf `main` vs. `staging`
+- [Composite Actions](inventory/actions.md) — `build-and-package` (Publish/ZIP/`update.json`) und `security-scan`
+- [Release-Tooling](inventory/release-tooling.md) — `resolve-release-version.mjs`, `release.config.js`, `package.json`/`package-lock.json`, `Run-StaticChecks.ps1`, `iOS-Deployment.ps1`, `.githooks/`
+- [Projekt- und Repository-Konfiguration](inventory/project-config.md) — `Reporter.csproj` (TFMs, `IncludeIosTarget`, `WindowsPackageType`), `Reporter.sln`, Branches/Tags, nicht aus Code ableitbare GitHub-Einstellungen
+- [Tests](inventory/tests.md) — Test-Ausgangszustand (239 Tests, alle grün), Nachweise, Testklassen und Hilfsmethoden, Testlücken
