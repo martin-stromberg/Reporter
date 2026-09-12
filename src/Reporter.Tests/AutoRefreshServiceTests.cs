@@ -13,6 +13,7 @@ public class AutoRefreshServiceTests : IDisposable
     private readonly TestDbContextFactory _factory;
     private readonly SettingsRepository _settingsRepository;
     private readonly FakeFeedSyncService _feedSyncService;
+    private readonly FakeNetworkStatusService _networkStatusService;
     private readonly FakeTimeProvider _timeProvider;
     private readonly AutoRefreshService _service;
 
@@ -24,8 +25,9 @@ public class AutoRefreshServiceTests : IDisposable
         _factory = new TestDbContextFactory();
         _settingsRepository = new SettingsRepository(_factory);
         _feedSyncService = new FakeFeedSyncService();
+        _networkStatusService = new FakeNetworkStatusService();
         _timeProvider = new FakeTimeProvider();
-        _service = new AutoRefreshService(_settingsRepository, _feedSyncService, _timeProvider);
+        _service = new AutoRefreshService(_settingsRepository, _feedSyncService, _networkStatusService, _timeProvider);
     }
 
     /// <summary>
@@ -174,6 +176,47 @@ public class AutoRefreshServiceTests : IDisposable
 
         blocker.SetResult(true);
         await _service.StopAsync();
+    }
+
+    /// <summary>
+    /// Verifies that a timer tick is skipped without calling SyncAllAsync while offline.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Tick_WhenOffline_SkipsSyncAll()
+    {
+        _networkStatusService.IsOnline = false;
+        await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15);
+
+        await _service.StartAsync();
+        _timeProvider.Advance(TimeSpan.FromMinutes(15));
+        await Task.Delay(100);
+        await _service.StopAsync();
+
+        Assert.Equal(0, _feedSyncService.SyncAllCallCount);
+    }
+
+    /// <summary>
+    /// Verifies that the next tick synchronizes again once the network is back.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Tick_WhenBackOnline_ResumesSync()
+    {
+        _networkStatusService.IsOnline = false;
+        await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15);
+
+        await _service.StartAsync();
+        _timeProvider.Advance(TimeSpan.FromMinutes(15));
+        await Task.Delay(100);
+        Assert.Equal(0, _feedSyncService.SyncAllCallCount);
+
+        _networkStatusService.IsOnline = true;
+        _timeProvider.Advance(TimeSpan.FromMinutes(15));
+        await TestWaitHelper.WaitUntilAsync(() => _feedSyncService.SyncAllCallCount == 1);
+        await _service.StopAsync();
+
+        Assert.Equal(1, _feedSyncService.SyncAllCallCount);
     }
 
     /// <summary>

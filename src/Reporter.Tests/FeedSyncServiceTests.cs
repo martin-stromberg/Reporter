@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Resources.Strings;
 using Reporter.Core.Services;
 using Reporter.Data.Repositories;
 
@@ -53,7 +54,7 @@ public class FeedSyncServiceTests : IDisposable
         return feedId;
     }
 
-    private FeedSyncService CreateService(string content, HttpStatusCode statusCode = HttpStatusCode.OK, INotificationService? notificationService = null)
+    private FeedSyncService CreateService(string content, HttpStatusCode statusCode = HttpStatusCode.OK, INotificationService? notificationService = null, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler((request) =>
         {
@@ -68,14 +69,14 @@ public class FeedSyncServiceTests : IDisposable
             };
         });
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService());
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService());
     }
 
-    private FeedSyncService CreateFailingService(Exception exception)
+    private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler(_ => throw exception);
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService());
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService());
     }
 
     private NotificationService CreateNotificationService(FakeLocalNotificationService localNotificationService)
@@ -299,6 +300,64 @@ public class FeedSyncServiceTests : IDisposable
 
         Assert.Equal(FeedHealth.Ok, result.Status);
         Assert.Equal(2, result.NewItems);
+    }
+
+    /// <summary>
+    /// Verifies that SyncAllAsync returns an offline error without writing a sync log
+    /// or changing feed health while there is no internet connection.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncAllAsync_WhenOffline_ReturnsErrorWithoutSyncLog()
+    {
+        var feedId = await SeedFeedAsync();
+        var feedBefore = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedBefore);
+        var service = CreateService(RssXml([
+            ("Item", "https://example.com/item", "guid-item", DateTime.UtcNow, "Desc"),
+        ]), networkStatusService: new FakeNetworkStatusService { IsOnline = false });
+
+        var result = await service.SyncAllAsync();
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal(AppResources.OfflineHint, result.Message);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        Assert.Empty(logs);
+
+        var feedAfter = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedAfter);
+        Assert.Equal(feedBefore.HealthStatus, feedAfter.HealthStatus);
+    }
+
+    /// <summary>
+    /// Verifies that SyncFeedAsync returns an offline error without writing a sync log,
+    /// changing feed health or performing an HTTP request while offline.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenOffline_ReturnsErrorWithoutHealthChange()
+    {
+        var feedId = await SeedFeedAsync();
+        var feedBefore = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedBefore);
+        var service = CreateFailingService(
+            new InvalidOperationException("HTTP must not be called while offline"),
+            new FakeNetworkStatusService { IsOnline = false });
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal(AppResources.OfflineHint, result.Message);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        Assert.Empty(logs);
+
+        var feedAfter = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedAfter);
+        Assert.Equal(feedBefore.HealthStatus, feedAfter.HealthStatus);
     }
 
     /// <summary>

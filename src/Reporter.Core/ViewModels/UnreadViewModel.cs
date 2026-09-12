@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
@@ -31,6 +32,7 @@ public partial class UnreadViewModel : BaseViewModel
     private string _selectedCategoryText = string.Empty;
     private string _unreadCountText = string.Empty;
     private int _currentPage;
+    private string _syncErrorMessage = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnreadViewModel"/> class.
@@ -38,11 +40,13 @@ public partial class UnreadViewModel : BaseViewModel
     /// <param name="itemRepository">The item repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
-    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService)
+    /// <param name="networkStatusService">The network connectivity status service.</param>
+    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService)
     {
         _itemRepository = itemRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        TrackConnectivity(networkStatusService);
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         LoadMoreCommand = new AsyncRelayCommand(LoadMoreAsync, () => !IsLoading && HasMore);
@@ -200,6 +204,28 @@ public partial class UnreadViewModel : BaseViewModel
     public bool HasError => _errorMessage.Length > 0;
 
     /// <summary>
+    /// Gets or sets the current synchronization error message, shown above the article list.
+    /// Kept separate from <see cref="ErrorMessage"/> so connectivity changes only clear
+    /// sync feedback and do not remove load errors.
+    /// </summary>
+    public string SyncErrorMessage
+    {
+        get => _syncErrorMessage;
+        set
+        {
+            if (SetProperty(ref _syncErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasSyncError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a synchronization error message is present.
+    /// </summary>
+    public bool HasSyncError => _syncErrorMessage.Length > 0;
+
+    /// <summary>
     /// Gets or sets the human-readable last sync time.
     /// </summary>
     public string LastSyncText
@@ -225,6 +251,7 @@ public partial class UnreadViewModel : BaseViewModel
     private async Task LoadAsync()
     {
         ErrorMessage = string.Empty;
+        SyncErrorMessage = string.Empty;
         _currentPage = 0;
         Articles = [];
         HasMore = false;
@@ -310,7 +337,8 @@ public partial class UnreadViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            Debug.WriteLine($"LoadPageAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorLoadFailed;
         }
         finally
         {
@@ -320,20 +348,35 @@ public partial class UnreadViewModel : BaseViewModel
 
     private async Task RefreshAsync()
     {
-        IsSyncing = true;
-        ErrorMessage = string.Empty;
+        if (!IsOnline)
+        {
+            // The RefreshView.IsRefreshing TwoWay binding may already have pushed
+            // IsSyncing to true before the command ran — reset it so the refresh
+            // indicator does not hang. No error is raised; the persistent offline
+            // hint already communicates the state.
+            IsSyncing = false;
+            return;
+        }
 
+        IsSyncing = true;
+        SyncErrorMessage = string.Empty;
+
+        var syncError = string.Empty;
         try
         {
             var result = await _feedSyncService.SyncAllAsync();
             if (result.Status == FeedHealth.Error)
             {
-                ErrorMessage = result.Message ?? AppResources.SyncStatusError;
+                // The technical detail stays in the SyncLog (persisted via
+                // FeedSyncService.UpdateLogAsync); the UI shows the localized
+                // generic message instead of raw English/exception text.
+                syncError = AppResources.SyncStatusError;
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            Debug.WriteLine($"RefreshAsync failed: {ex}");
+            syncError = AppResources.SyncStatusError;
         }
         finally
         {
@@ -342,6 +385,11 @@ public partial class UnreadViewModel : BaseViewModel
 
         LastSyncText = string.Format(CultureInfo.CurrentCulture, "{0:g}", DateTime.Now);
         await LoadAsync();
+
+        if (syncError.Length > 0)
+        {
+            SyncErrorMessage = syncError;
+        }
     }
 
     private async Task MarkAllReadAsync()
@@ -436,5 +484,11 @@ public partial class UnreadViewModel : BaseViewModel
         UnreadCountText = string.IsNullOrEmpty(LastSyncText)
             ? $"{UnreadCount} {AppResources.LabelUnreadArticles}"
             : $"{UnreadCount} {AppResources.LabelUnreadArticles} • {LastSyncText}";
+    }
+
+    /// <inheritdoc />
+    protected override void OnConnectivityChanged(bool isOnline)
+    {
+        SyncErrorMessage = string.Empty;
     }
 }

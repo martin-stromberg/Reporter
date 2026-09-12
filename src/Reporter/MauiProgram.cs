@@ -55,6 +55,7 @@ public static class MauiProgram
             .AddSingleton<IAppThemeService, AppThemeService>()
             .AddSingleton<INotificationService, NotificationService>()
             .AddSingleton<ILocalNotificationService, LocalNotificationService>()
+            .AddSingleton<INetworkStatusService, NetworkStatusService>()
             .AddSingleton<UnreadViewModel>()
             .AddSingleton<FeedsViewModel>()
             .AddSingleton<LaterViewModel>()

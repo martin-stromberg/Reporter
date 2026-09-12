@@ -348,4 +348,61 @@
   <data name="NotificationsIosOnlyHint" xml:space="preserve">
     <value>Benachrichtigungen sind derzeit nur auf iOS verfügbar.</value>
   </data>
+  <data name="ArticleTitleFallback" xml:space="preserve">
+    <value>Artikel</value>
+  </data>
+  <data name="ArticleReadLabel" xml:space="preserve">
+    <value>Gelesen</value>
+  </data>
+  <data name="ArticleFullContentAvailable" xml:space="preserve">
+    <value>Vollständiger Artikel verfügbar</value>
+  </data>
+  <data name="ArticleOpenInBrowser" xml:space="preserve">
+    <value>Im Browser öffnen</value>
+  </data>
+  <data name="AccessibilityBack" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="AccessibilityFontSize" xml:space="preserve">
+    <value>Schriftgröße wechseln</value>
+  </data>
+  <data name="AccessibilityShare" xml:space="preserve">
+    <value>Teilen</value>
+  </data>
+  <data name="ArticleBookmarkSet" xml:space="preserve">
+    <value>Lesezeichen setzen</value>
+  </data>
+  <data name="ArticleBookmarkRemove" xml:space="preserve">
+    <value>Lesezeichen entfernen</value>
+  </data>
+  <data name="ArticleMarkAsRead" xml:space="preserve">
+    <value>Als gelesen markieren</value>
+  </data>
+  <data name="ArticleAlreadyRead" xml:space="preserve">
+    <value>Bereits gelesen</value>
+  </data>
+  <data name="ArticleReadingTimeFormat" xml:space="preserve">
+    <value>{0} Min. Lesezeit</value>
+  </data>
+  <data name="ArticleOfflineLinksDisabled" xml:space="preserve">
+    <value>Links sind im Offline-Modus deaktiviert.</value>
+  </data>
+  <data name="OfflineHint" xml:space="preserve">
+    <value>Keine Internetverbindung.</value>
+  </data>
+  <data name="ButtonOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ErrorCategoryNameEmpty" xml:space="preserve">
+    <value>Der Kategoriename darf nicht leer sein.</value>
+  </data>
+  <data name="ErrorCategoryDuplicate" xml:space="preserve">
+    <value>Eine Kategorie mit diesem Namen existiert bereits.</value>
+  </data>
+  <data name="ErrorOpenInBrowserFailed" xml:space="preserve">
+    <value>Der Link konnte nicht im Browser geöffnet werden.</value>
+  </data>
+  <data name="ErrorLoadFailed" xml:space="preserve">
+    <value>Die Artikel konnten nicht geladen werden.</value>
+  </data>
 </root>

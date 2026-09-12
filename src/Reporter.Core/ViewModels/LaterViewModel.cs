@@ -18,9 +18,11 @@ public partial class LaterViewModel : BaseViewModel
     /// Initializes a new instance of the <see cref="LaterViewModel"/> class.
     /// </summary>
     /// <param name="itemRepository">The item repository.</param>
-    public LaterViewModel(IItemRepository itemRepository)
+    /// <param name="networkStatusService">The network connectivity status service.</param>
+    public LaterViewModel(IItemRepository itemRepository, INetworkStatusService networkStatusService)
     {
         _itemRepository = itemRepository;
+        TrackConnectivity(networkStatusService);
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         ToggleSavedCommand = new AsyncRelayCommand<ItemListItem?>(ToggleSavedAsync);
         MarkReadCommand = new AsyncRelayCommand<ItemListItem?>(MarkReadAsync);

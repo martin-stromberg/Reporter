@@ -1067,5 +1067,176 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("NotificationsIosOnlyHint", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Article ähnelt.
+        /// </summary>
+        public static string ArticleTitleFallback {
+            get {
+                return ResourceManager.GetString("ArticleTitleFallback", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Read ähnelt.
+        /// </summary>
+        public static string ArticleReadLabel {
+            get {
+                return ResourceManager.GetString("ArticleReadLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Full article available ähnelt.
+        /// </summary>
+        public static string ArticleFullContentAvailable {
+            get {
+                return ResourceManager.GetString("ArticleFullContentAvailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Open in browser ähnelt.
+        /// </summary>
+        public static string ArticleOpenInBrowser {
+            get {
+                return ResourceManager.GetString("ArticleOpenInBrowser", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Back ähnelt.
+        /// </summary>
+        public static string AccessibilityBack {
+            get {
+                return ResourceManager.GetString("AccessibilityBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Toggle font size ähnelt.
+        /// </summary>
+        public static string AccessibilityFontSize {
+            get {
+                return ResourceManager.GetString("AccessibilityFontSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Share ähnelt.
+        /// </summary>
+        public static string AccessibilityShare {
+            get {
+                return ResourceManager.GetString("AccessibilityShare", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Add bookmark ähnelt.
+        /// </summary>
+        public static string ArticleBookmarkSet {
+            get {
+                return ResourceManager.GetString("ArticleBookmarkSet", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Remove bookmark ähnelt.
+        /// </summary>
+        public static string ArticleBookmarkRemove {
+            get {
+                return ResourceManager.GetString("ArticleBookmarkRemove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark as read ähnelt.
+        /// </summary>
+        public static string ArticleMarkAsRead {
+            get {
+                return ResourceManager.GetString("ArticleMarkAsRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Already read ähnelt.
+        /// </summary>
+        public static string ArticleAlreadyRead {
+            get {
+                return ResourceManager.GetString("ArticleAlreadyRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} min read ähnelt.
+        /// </summary>
+        public static string ArticleReadingTimeFormat {
+            get {
+                return ResourceManager.GetString("ArticleReadingTimeFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Links are disabled while you are offline. ähnelt.
+        /// </summary>
+        public static string ArticleOfflineLinksDisabled {
+            get {
+                return ResourceManager.GetString("ArticleOfflineLinksDisabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No internet connection. ähnelt.
+        /// </summary>
+        public static string OfflineHint {
+            get {
+                return ResourceManager.GetString("OfflineHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die OK ähnelt.
+        /// </summary>
+        public static string ButtonOk {
+            get {
+                return ResourceManager.GetString("ButtonOk", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The category name cannot be empty. ähnelt.
+        /// </summary>
+        public static string ErrorCategoryNameEmpty {
+            get {
+                return ResourceManager.GetString("ErrorCategoryNameEmpty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die A category with this name already exists. ähnelt.
+        /// </summary>
+        public static string ErrorCategoryDuplicate {
+            get {
+                return ResourceManager.GetString("ErrorCategoryDuplicate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The link could not be opened in the browser. ähnelt.
+        /// </summary>
+        public static string ErrorOpenInBrowserFailed {
+            get {
+                return ResourceManager.GetString("ErrorOpenInBrowserFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The articles could not be loaded. ähnelt.
+        /// </summary>
+        public static string ErrorLoadFailed {
+            get {
+                return ResourceManager.GetString("ErrorLoadFailed", resourceCulture);
+            }
+        }
     }
 }

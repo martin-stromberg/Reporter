@@ -8,6 +8,11 @@
 
 ## What's New
 
+- Offline reading: already synced articles, feeds, categories and the "saved for later" list remain fully readable without an internet connection; all offline hints disappear automatically once connectivity returns.
+- Offline indicators: the sync button is dimmed and a "No internet connection." hint appears on Unread, plus banners on the Feeds and Later pages and in the article detail view — pull-to-refresh and manual syncs are skipped while offline.
+- Article reading offline: links inside article text are disabled (a localized hint dialog is shown on tap) and external images plus list thumbnails are hidden to avoid empty image frames.
+- "Open in browser" shows a hint instead of failing while offline; automatic background refresh pauses without network and resumes with the next interval (no sync log entries while offline).
+- Full localization: all UI texts — page titles, buttons, hints, placeholders and screen reader descriptions — appear in German or English following the device system language (English is the fallback); no manual language switch in the app, the sync log remains English.
 - Local iOS notifications for new articles after every feed sync (manual or automatic background refresh) — shown with banner and sound, even while the app is open.
 - Per-feed notifications switch on the Feeds page: individual feeds can be muted (enabled by default).
 - Quiet hours respected: notifications raised during the configured quiet hours are discarded, not delivered later.
@@ -38,6 +43,11 @@
 
 ## Neuerungen
 
+- Offline lesen: bereits synchronisierte Artikel, Feeds, Kategorien und die „Später"-Liste bleiben ohne Internetverbindung vollständig lesbar; alle Offline-Hinweise verschwinden bei Netzrückkehr von selbst.
+- Offline-Anzeigen: der Aktualisieren-Button wird abgedunkelt und der Hinweis „Keine Internetverbindung." erscheint unter Ungelesen, zusätzlich Banner auf den Seiten Feeds und Später sowie in der Artikeldetailansicht — Ziehen zum Aktualisieren und manuelle Abgleiche werden offline übersprungen.
+- Artikel offline lesen: Links im Artikeltext sind deaktiviert (bei Antippen erscheint ein lokalisierter Hinweisdialog), externe Bilder und Listen-Thumbnails werden offline ausgeblendet, damit keine leeren Bildrahmen entstehen.
+- „Im Browser öffnen" zeigt offline einen Hinweis statt zu scheitern; die automatische Hintergrund-Aktualisierung pausiert ohne Netzwerk und setzt mit dem nächsten Intervall fort (keine Sync-Protokoll-Einträge offline).
+- Vollständige Lokalisierung: alle UI-Texte — Seitentitel, Schaltflächen, Hinweise, Platzhalter und Screenreader-Beschreibungen — erscheinen je nach Systemsprache des Geräts auf Deutsch oder Englisch (Englisch ist die Ersatzsprache); kein manueller Sprachwechsel in der App, das Sync-Protokoll bleibt englisch.
 - Lokale iOS-Benachrichtigungen bei neuen Artikeln nach jedem Feed-Abgleich (manuell oder automatische Hintergrund-Aktualisierung) — mit Banner und Ton, auch bei geöffneter App.
 - Pro-Feed-Schalter für Benachrichtigungen auf der Feeds-Seite: einzelne Feeds lassen sich stummschalten (standardmäßig aktiviert).
 - Ruhezeiten werden berücksichtigt: Benachrichtigungen während der konfigurierten Ruhezeit werden verworfen, nicht nachgeholt.

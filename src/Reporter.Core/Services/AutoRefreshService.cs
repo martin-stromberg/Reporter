@@ -14,6 +14,7 @@ public class AutoRefreshService : IAutoRefreshService
 
     private readonly ISettingsRepository _settingsRepository;
     private readonly IFeedSyncService _feedSyncService;
+    private readonly INetworkStatusService _networkStatusService;
     private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _stateLock = new(1, 1);
     private CancellationTokenSource? _loopCts;
@@ -24,11 +25,13 @@ public class AutoRefreshService : IAutoRefreshService
     /// </summary>
     /// <param name="settingsRepository">The settings repository.</param>
     /// <param name="feedSyncService">The feed sync service.</param>
+    /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="timeProvider">The time provider used for the refresh timer.</param>
-    public AutoRefreshService(ISettingsRepository settingsRepository, IFeedSyncService feedSyncService, TimeProvider? timeProvider = null)
+    public AutoRefreshService(ISettingsRepository settingsRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService, TimeProvider? timeProvider = null)
     {
         _settingsRepository = settingsRepository;
         _feedSyncService = feedSyncService;
+        _networkStatusService = networkStatusService;
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -113,6 +116,11 @@ public class AutoRefreshService : IAutoRefreshService
         {
             while (await timer.WaitForNextTickAsync(cancellationToken))
             {
+                if (!_networkStatusService.IsOnline)
+                {
+                    continue;
+                }
+
                 try
                 {
                     await _feedSyncService.SyncAllAsync(cancellationToken);

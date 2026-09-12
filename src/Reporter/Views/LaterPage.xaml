@@ -11,8 +11,24 @@
     <Grid RowDefinitions="Auto,*"
           Padding="16,8"
           RowSpacing="12">
-        <Label Text="{x:Static strings:AppResources.PageTitleLater}"
-               Style="{StaticResource HeadlineStyle}"/>
+        <VerticalStackLayout Spacing="8">
+            <Label Text="{x:Static strings:AppResources.PageTitleLater}"
+                   Style="{StaticResource HeadlineStyle}"/>
+            <Border Padding="10"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="Transparent"
+                    IsVisible="False"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                        <Setter Property="IsVisible" Value="True"/>
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{x:Static strings:AppResources.OfflineHint}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+            </Border>
+        </VerticalStackLayout>
 
         <CollectionView Grid.Row="1"
                         ItemsSource="{Binding SavedItems}"
@@ -20,7 +36,8 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:ItemListItem">
                     <views:ArticleCardView ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
-                                           MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"/>
+                                           MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
+                                           IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
