@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,

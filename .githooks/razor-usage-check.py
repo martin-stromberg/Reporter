@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 """Razor component usage check.
 
 Warns (never blocks the commit) about orphaned Razor components: a .razor

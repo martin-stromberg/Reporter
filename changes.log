@@ -1,3 +1,16 @@
+Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
+## 2026-09-12 — PolyForm Noncommercial License 1.0.0 eingerichtet (Issue #57)
+
+- `LICENSE` im Projekt-Root mit dem vollständigen Text der PolyForm Noncommercial License 1.0.0 inklusive `Required Notice:`-Zeile und Hinweis auf kommerzielle Lizenzanfragen.
+- README: Lizenz-Badge, Abschnitt **Lizenz** (private/nicht-kommerzielle Nutzung erlaubt, kommerzielle Nutzung nur mit separater Genehmigung, Kontaktadresse) und **Lizenz-FAQ** inkl. Dual-Licensing-/Upgrade-Pfad.
+- `CONTRIBUTING.md` mit Beitrags-Lizenzbedingungen und `.github/pull_request_template.md` mit Bestätigungs-Checkbox für die Lizenz.
+- `COMMERCIAL-LICENSE.md` mit Vorgehen und Kontakt für kommerzielle Lizenzanfragen.
+- Paket-Manifeste: `license`-Feld in `package.json`/`package-lock.json`, `PackageLicenseExpression` in `Directory.Build.props`.
+- Kurzer Lizenzheader in allen kommentierfähigen Repository-Dateien via `scripts/add-license-headers.mjs` (idempotent; `--check` für das ganze Repo, `--staged` für gestagte Dateien).
+- Automatisierte Durchsetzung für neue Dateien: `pre-commit`-Hook prüft gestagte Dateien, der `static checks`-Job in `pr-staging-ci.yml`/`staging-ci.yml` und `Run-StaticChecks.ps1 -Check LicenseHeaders` prüfen das ganze Repo.
+- GitHub-Topics `polyform-noncommercial` und `noncommercial-license` gesetzt.
+
 ## 2026-09-12 — Release-Management, Pre-Releases und Staging-Promotion (Issue #29)
 
 - Vollständige GitHub-Actions-Release-Pipeline reaktiviert: Die auskommentierten Trigger in `staging-ci.yml` (Push auf `staging`), `pr-staging-ci.yml` (Pull Requests gegen `staging`) und `release.yml` (Push auf `main` bzw. Tag `v*.*.*`) sind wieder aktiv; jeder `staging`-Push erzeugt nach den Quality Gates ein RC-Pre-Release `vX.Y.Z-rc.N`, jeder `main`-Push ein stabiles Release `vX.Y.Z`.

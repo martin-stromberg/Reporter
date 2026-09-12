@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Mobile-UI-Design im Reporter
 
 Diese Checkliste sichert ab, dass neue und bestehende UI-Features im

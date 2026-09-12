@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # CI Workflows for a Staging-Based .NET Release Pipeline
 
 This document describes, step by step, how to set up a complete GitHub Actions CI/CD pipeline

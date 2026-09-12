@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 """Check for hardcoded UI strings in Razor files that should be localized.
 
 Run as a pre-commit hook (default: only staged files) or with --all to scan

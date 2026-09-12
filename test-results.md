@@ -1,4 +1,35 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Test- und Verifikationsergebnisse
+
+## Issue #57: PolyForm Noncommercial License 1.0.0
+
+Branch: `task/issue-57-08ef43ab80c44d8cabda37af9d9cb29a-polyform-noncommercial-license`
+
+### Verifikation
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security-Scan, Release-Build mit `TreatWarningsAsErrors` — 0 Warnungen, 0 Fehler) |
+| Node-Tests | `npm test` | 36 bestanden, 0 fehlgeschlagen |
+| .NET-Tests | `dotnet test Reporter.sln` | 239 bestanden, 0 fehlgeschlagen |
+| Lizenzheader-Abdeckung | `node scripts/add-license-headers.mjs --check` | 0 Dateien ohne Lizenzheader |
+| Lizenzheader-Staged-Modus | `node scripts/add-license-headers.mjs --staged` | neue Datei ohne Header → Exit 1; nach Fix → Exit 0 |
+
+Automatisierung für neue Dateien: `pre-commit`-Hook (`--staged`), CI-Step „License header check" im `static checks`-Job (`pr-staging-ci.yml`, `staging-ci.yml`) und `Run-StaticChecks.ps1 -Check LicenseHeaders`.
+
+### Konsistenzprüfung (gemäß Anforderung 10)
+
+- [x] `LICENSE` im Root vorhanden, unveränderter Volltext der PolyForm Noncommercial License 1.0.0 (plus `Required Notice:`-Zeile und klar abgetrenntem Hinweis auf kommerzielle Lizenzanfragen — keine zusätzlichen Bedingungen)
+- [x] README enthält Lizenzangabe, Erlaubnis für private/nicht-kommerzielle Nutzung, Verbot kommerzieller Nutzung, Kontaktadresse und Lizenz-FAQ (private vs. kommerzielle Nutzung, kommerzielle Lizenzierung, erlaubt/verboten)
+- [x] Quellcode enthält Lizenzheader (alle kommentierfähigen Dateien: `.cs`, `.xaml`, `.csproj`, `.resx`, `.xml`, `.plist`, `.yml`, `.ps1`, `.py`, `.mjs`, `.md` u. a.; Binärdateien, `.sln` und JSON-Dateien ohne Kommentarsyntax ausgenommen — `package.json` trägt das `license`-Feld)
+- [x] Keine widersprüchlichen Lizenzangaben: `package.json`/`package-lock.json` = `PolyForm-Noncommercial-1.0.0`, `Directory.Build.props` = `PackageLicenseExpression` `PolyForm-Noncommercial-1.0.0`
+- [x] Contributions: `CONTRIBUTING.md` + `.github/pull_request_template.md` mit Bestätigungs-Checkbox
+- [x] Kommerzielle Lizenzierung: `COMMERCIAL-LICENSE.md` + README-Hinweis; gilt nicht automatisch, individuell vereinbart
+- [x] Repository-Metadaten: GitHub-Topics `polyform-noncommercial`, `noncommercial-license` gesetzt; Lizenz-Anzeige im About-Bereich ergibt sich automatisch aus der `LICENSE`-Datei
+- [x] Abhängigkeiten: NuGet-/npm-Pakete permissiv lizenziert (MIT/Apache-2.0 o. ä.), keine restriktiven/inkompatiblen Lizenzen; Security-Scan ohne Befund
+
+Keine UI-Änderung — Mobile-UI-Design-Review nicht erforderlich.
 
 ## Issue #28: Offline-Fähigkeit und Mehrsprachigkeit (EN/DE)
 

@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # iOS-Deployment (Notizen)
 
 Dieses Dokument ergaenzt `iOS-Deployment.ps1` und fasst den aktuellen Stand,
