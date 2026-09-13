@@ -10,13 +10,6 @@
 
 Keine.
 
-Hinweis zum Fortsetzungslauf: Der in `continue.md` als außerhalb des Feature-Umfangs
-vermerkte Punkt (Lösch-Dialog auf `CategoriesPage` mit `ConfirmDeleteFeedTitle`
-„Feed löschen?") wurde in diesem Lauf behoben — der Dialog nutzt jetzt den neuen,
-korrekt beschrifteten Schlüssel `ConfirmDeleteCategoryTitle` („Kategorie löschen?" /
-„Delete category?"). `CategoriesPage.xaml.cs` ist damit Bestandteil des Branch-Diffs
-und wurde in dieses Review aufgenommen.
-
 ## Geprüfte Interaktionen
 
 Liste der aus der Anforderung geprüften Benutzerinteraktionen:
@@ -31,7 +24,7 @@ Liste der aus der Anforderung geprüften Benutzerinteraktionen:
 - Feed hinzufügen: URL oder Suchbegriff in ein `Entry` mit Placeholder + Accessibility-Description eingeben, per „Suchen"/Return oder „Direkt hinzufügen" absenden; Suchtreffer als Karten mit `DisplayTitle`, Site-Name/URL und Tap-Bestätigung → unauffällig (keine interne Kennung erforderlich)
 - Feed-Aktionen (Aktualisieren, Umbenennen, Kategorie ändern, Bearbeiten, Löschen) über Karten-Tap → `DisplayActionSheet` mit Klartext-Aktionen; Kategoriezuordnung per ActionSheet mit Kategorie-Namen → unauffällig
 - Feed-Gesundheitsstatus ablesen (Micro-Pill-Badge mit 6-pt-Dot und Klartext „In Ordnung"/„Warnung"/„Fehler", nicht nur Farbe) → unauffällig
-- Kategorie anlegen/bearbeiten/löschen (Freitext-`Entry` mit Placeholder + Semantic-Description, Liste mit Tap → ActionSheet; Lösch-Rückfrage jetzt korrekt mit „Kategorie löschen?" betitelt statt „Feed löschen?") → unauffällig
+- Kategorie anlegen/bearbeiten/löschen (Freitext-`Entry` mit Placeholder + Semantic-Description, Liste mit Tap → ActionSheet) → unauffällig
 - Später-Liste: gespeicherte Artikel seitenweise laden, öffnen, entfernen, als gelesen markieren; Lade-/Fehlerzustand über `ActivityIndicator` bzw. sichtbare `ErrorMessage`-Zeile → unauffällig
 - Einstellungen: Aufbewahrungsdauer per Slider mit aktuellem Wert in Klartext, Keywords als Chips mit benanntem Entfernen-Button, Sync-/Verzögerungs- und Theme-/Sprach-Auswahl über `Picker` mit `ItemDisplayBinding` (Klartext-Optionen, keine internen Werte), Ruhezeiten über `TimePicker` → unauffällig
 - Tab-Navigation zwischen Ungelesen/Feeds/Später/Kategorien/Einstellungen mit Icon + Klartext-Label → unauffällig
@@ -50,7 +43,6 @@ Liste aller geprüften UI-Dateien:
 - `src/Reporter/Views/LaterPage.xaml`
 - `src/Reporter/Views/LaterPage.xaml.cs`
 - `src/Reporter/Views/CategoriesPage.xaml`
-- `src/Reporter/Views/CategoriesPage.xaml.cs`
 - `src/Reporter/Views/SettingsPage.xaml`
 - `src/Reporter/AppShell.xaml.cs`
 - `src/Reporter/Resources/Styles/Colors.xaml`

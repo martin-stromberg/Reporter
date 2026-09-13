@@ -60,7 +60,7 @@ public partial class CategoriesPage : ContentPage
         else if (action == AppResources.ButtonDelete)
         {
             var confirmed = await DisplayAlertAsync(
-                AppResources.ConfirmDeleteFeedTitle,
+                AppResources.ConfirmDeleteCategoryTitle,
                 $"{category.Name} ({category.FeedCount} {AppResources.LabelCategoryFeedCount})",
                 AppResources.ButtonYes,
                 AppResources.ButtonNo);

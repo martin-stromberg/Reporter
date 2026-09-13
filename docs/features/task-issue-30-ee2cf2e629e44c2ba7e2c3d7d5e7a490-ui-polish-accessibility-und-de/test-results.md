@@ -5,23 +5,24 @@
 Issue #30 — UI-Polish, Accessibility und Design-System-Vollständigkeit.
 Lauf 1: 2026-09-13, Windows 11, unpackaged `win-x64`-Release-Build, Fenster 390 × 844 pt (per `GetWindowRect` verifiziert), deutsch lokalisierte UI.
 Lauf 2 (Iteration 2): 2026-09-13, gleiche Umgebung, nach den Review-/UIA-Fixes (`LaterViewModel`-Lock, gemeinsame `ItemRepository`-Projektion, `ItemListItem.CopyWith`, transparente `Button`-Controls in der Floating Bar, Chip-`MinimumHeightRequest`, neue Accessibility-resx-Schlüssel, `FeedSearchResult.DisplayTitle`).
-Lauf 3 (Iteration 3, dieser Lauf): 2026-09-13, gleiche Umgebung, nach den Review-Fixes der zweiten Runde (`LaterViewModel` `ErrorMessage`/`HasError` + try/catch, `LaterPage` Fehler-Label + `OnAppearing`-Absicherung, `DisplayTitle`-Binding der Treffer-Überschrift, `AccessibilityCategoryFilterSingular` EN/DE, `UnreadCount`-Dekrement in `UnreadViewModel.MarkReadAsync`, Doku-Eintrag in `mobile-ui-design.md`). Kein erneuter manueller E2E-Lauf — die E2E-Nachweise aus Iteration 2 stehen.
+Lauf 3 (Iteration 3): 2026-09-13, gleiche Umgebung, nach den Review-Fixes der zweiten Runde (`LaterViewModel` `ErrorMessage`/`HasError` + try/catch, `LaterPage` Fehler-Label + `OnAppearing`-Absicherung, `DisplayTitle`-Binding der Treffer-Überschrift, `AccessibilityCategoryFilterSingular` EN/DE, `UnreadCount`-Dekrement in `UnreadViewModel.MarkReadAsync`, Doku-Eintrag in `mobile-ui-design.md`). Kein erneuter manueller E2E-Lauf — die E2E-Nachweise aus Iteration 2 stehen.
+Lauf 4 (Fortsetzungslauf `continue.md`, dieser Lauf): 2026-09-13, gleiche Umgebung, nach den `continue.md`-Nacharbeiten (neue Basisklasse `DelegatingItemRepository` für die drei delegierenden Test-Fakes; neuer resx-Schlüssel `ConfirmDeleteCategoryTitle` EN/DE + Verwendung im `CategoriesPage`-Lösch-Dialog). Kein erneuter manueller E2E-Lauf — die Änderungen betreffen Testinfrastruktur und eine Dialogbeschriftung; die E2E-Nachweise aus Iteration 2 stehen.
 
 ## Ergebnis
 
 **Status:** Fehler vorhanden
 
-Begründung (Iteration 3): Alle 350 Unit-Tests bestehen, `Run-StaticChecks.ps1` läuft mit Exit-Code 0 durch. Alle Review-Befunde der zweiten Runde sind umgesetzt und test-/code-seitig verifiziert (s. Abschnitt „Iteration 3"); der Doku-Eintrag in `docs/help/anwendung/mobile-ui-design.md` ist ergänzt. Ein erneuter manueller E2E-Lauf war nicht nötig — die E2E-Nachweise aus Iteration 2 (Screenshots, UIA-Fix) stehen. Der Status bleibt „Fehler vorhanden", weil geplante Pflicht-E2E-Nachweise in dieser Umgebung weiterhin nicht ausführbar sind: Accessibility-Insights-FastPass (Tool nicht installiert), Narrator-Durchlauf (interaktiv), iOS-Verifikation (macOS erforderlich), Splash-Laufzeitnachweis und `DisplayTitle`-Laufzeitnachweis.
+Begründung (Lauf 4): Alle 350 Unit-Tests bestehen, `dotnet build Reporter.sln` (Debug) läuft mit 0 Fehlern (1 pre-existing CS8765-Warnung in `Platforms/iOS/AppDelegate.cs`), `Run-StaticChecks.ps1` läuft mit Exit-Code 0 durch. Beide lösbbaren `continue.md`-Punkte sind umgesetzt (`DelegatingItemRepository`-Basisklasse, `ConfirmDeleteCategoryTitle` im Kategorie-Lösch-Dialog). Ein erneuter manueller E2E-Lauf war nicht nötig — die E2E-Nachweise aus Iteration 2 (Screenshots, UIA-Fix) stehen. Der Status bleibt „Fehler vorhanden", weil geplante Pflicht-E2E-Nachweise in dieser Umgebung weiterhin nicht ausführbar sind: Accessibility-Insights-FastPass (Tool nicht installiert), Narrator-Durchlauf (interaktiv), iOS-Verifikation (macOS erforderlich), Splash-Laufzeitnachweis und `DisplayTitle`-Laufzeitnachweis.
 
 ## Fehlgeschlagene Tests
 
 ### Unit-Tests
 
-Keine — 350 von 350 bestanden (2 neue Tests in Iteration 3: `LaterViewModelTests.LoadCommand_WhenRepositoryFails_SetsLocalizedErrorMessage`, `UnreadViewModelTests.MarkReadCommand_DecrementsUnreadCount`).
+Keine — 350 von 350 bestanden (2 neue Tests in Iteration 3: `LaterViewModelTests.LoadCommand_WhenRepositoryFails_SetsLocalizedErrorMessage`, `UnreadViewModelTests.MarkReadCommand_DecrementsUnreadCount`; Lauf 4 ohne neue Tests — nur Refactoring der Test-Fakes auf `DelegatingItemRepository`).
 
 ### Statische Checks
 
-Keine — `.\scripts\Run-StaticChecks.ps1` vollständig mit Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build ohne Befund; erneut in Iteration 3 ausgeführt). Ein Iteration-2-Artefakt (`test-results/issue-30/iter2-uia-detail.txt`) erhielt nachträglich den Lizenzheader über `node scripts/add-license-headers.mjs`.
+Keine — `.\scripts\Run-StaticChecks.ps1` vollständig mit Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build ohne Befund; erneut in Iteration 3 und in Lauf 4 ausgeführt). Ein Iteration-2-Artefakt (`test-results/issue-30/iter2-uia-detail.txt`) erhielt nachträglich den Lizenzheader über `node scripts/add-license-headers.mjs`.
 
 ### Manuelle Verifikation
 
@@ -66,6 +67,9 @@ Ausgeführte Läufe:
 
 | Lauf | Befehl | Ergebnis |
 |------|--------|----------|
+| Build (Debug, Solution, Lauf 4) | `dotnet build Reporter.sln` | Erfolgreich, 1 Warnung (pre-existing CS8765 in `Platforms/iOS/AppDelegate.cs`), 0 Fehler |
+| Tests (Lauf 4) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --no-build --logger "console;verbosity=normal"` | 350 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Static Checks (Lauf 4) | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build 0 Warnungen/0 Fehler) |
 | Build (Release, Solution, It. 3) | `dotnet build Reporter.sln --configuration Release` | Erfolgreich, 1 Warnung (pre-existing CS8765 in `Platforms/iOS/AppDelegate.cs`), 0 Fehler |
 | Tests mit Coverage (It. 3) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release --collect:"XPlat Code Coverage" --settings src/Reporter.Tests/coverlet.runsettings` | 350 bestanden, 0 fehlgeschlagen, 0 übersprungen |
 | Static Checks (It. 3) | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build) |

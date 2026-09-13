@@ -171,6 +171,15 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Delete category? ähnelt.
+        /// </summary>
+        public static string ConfirmDeleteCategoryTitle {
+            get {
+                return ResourceManager.GetString("ConfirmDeleteCategoryTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die All articles belonging to this feed will also be deleted. Continue? ähnelt.
         /// </summary>
         public static string ConfirmDeleteFeedMessage {

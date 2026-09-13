@@ -515,77 +515,24 @@ public class UnreadViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// An <see cref="IItemRepository"/> decorator that delegates every call to an inner
-    /// repository but fails the paged unread query to simulate a load failure.
+    /// A <see cref="DelegatingItemRepository"/> that fails the paged unread query
+    /// to simulate a load failure.
     /// </summary>
-    private sealed class FailingItemRepository : IItemRepository
+    private sealed class FailingItemRepository : DelegatingItemRepository
     {
-        private readonly IItemRepository _inner;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="FailingItemRepository"/> class.
         /// </summary>
         /// <param name="inner">The repository to delegate to.</param>
         public FailingItemRepository(IItemRepository inner)
+            : base(inner)
         {
-            _inner = inner;
         }
 
         /// <inheritdoc />
-        public Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+        public override Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
         {
             return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
         }
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetAllAsync() => _inner.GetAllAsync();
-
-        /// <inheritdoc />
-        public Task<Item?> GetByIdAsync(Guid id) => _inner.GetByIdAsync(id);
-
-        /// <inheritdoc />
-        public Task AddAsync(Item item) => _inner.AddAsync(item);
-
-        /// <inheritdoc />
-        public Task UpdateAsync(Item item) => _inner.UpdateAsync(item);
-
-        /// <inheritdoc />
-        public Task DeleteAsync(Guid id) => _inner.DeleteAsync(id);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetUnreadByDateAsync() => _inner.GetUnreadByDateAsync();
-
-        /// <inheritdoc />
-        public Task<int> GetUnreadCountAsync(Guid? categoryId = null) => _inner.GetUnreadCountAsync(categoryId);
-
-        /// <inheritdoc />
-        public Task MarkAllAsReadAsync(Guid? categoryId = null) => _inner.MarkAllAsReadAsync(categoryId);
-
-        /// <inheritdoc />
-        public Task ToggleSavedForLaterAsync(Guid id) => _inner.ToggleSavedForLaterAsync(id);
-
-        /// <inheritdoc />
-        public Task MarkAsReadAsync(Guid id) => _inner.MarkAsReadAsync(id);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId) => _inner.GetByFeedAsync(feedId);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId) => _inner.GetByCategoryAsync(categoryId);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize) => _inner.GetSavedForLaterAsync(page, pageSize);
-
-        /// <inheritdoc />
-        public Task AddRangeAsync(IReadOnlyList<Item> items) => _inner.AddRangeAsync(items);
-
-        /// <inheritdoc />
-        public Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.DeleteExpiredAsync(cutoff, cancellationToken);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetExpiredKeywordCandidatesAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.GetExpiredKeywordCandidatesAsync(cutoff, cancellationToken);
-
-        /// <inheritdoc />
-        public Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default) => _inner.DeleteRangeAsync(ids, cancellationToken);
     }
 }

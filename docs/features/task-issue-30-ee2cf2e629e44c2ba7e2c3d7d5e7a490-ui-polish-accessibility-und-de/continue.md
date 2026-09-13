@@ -4,9 +4,10 @@
 
 Erstellt am: 2026-09-13
 Abbruchgrund: Maximale Iterationsanzahl erreicht
+Aktualisiert am: 2026-09-13 (Fortsetzungslauf — lösbare Punkte abgearbeitet)
 
 Die folgenden Aufgaben konnten im automatisierten Zyklus nicht abgeschlossen werden
-und müssen manuell oder in einem erneuten Lauf bearbeitet werden.
+und müssen manuell oder in einer geeigneten Umgebung bearbeitet werden.
 
 ## Offene Planelemente
 
@@ -14,14 +15,13 @@ Keine — `review.md` trägt den Status `Vollständig umgesetzt`.
 
 ## Code-Review-Befunde
 
-- [ ] `src/Reporter.Tests/LaterViewModelTests.cs:451` — `FailingItemRepository` ist ~95 % identisch mit `UnreadViewModelTests.FailingItemRepository` (`src/Reporter.Tests/UnreadViewModelTests.cs:521`); `GatedItemRepository` (`LaterViewModelTests.cs:375`) wiederholt denselben Boilerplate ein drittes Mal. Empfehlung: gemeinsame `DelegatingItemRepository`-Basisklasse mit `virtual`-Membern im Testprojekt. (Schwere: niedrig)
+- [x] `src/Reporter.Tests/LaterViewModelTests.cs` — `FailingItemRepository`/`GatedItemRepository` duplizierten den `IItemRepository`-Delegations-Boilerplate (zusammen mit `UnreadViewModelTests.FailingItemRepository` dreifach). **Erledigt:** Neue Basisklasse `src/Reporter.Tests/DelegatingItemRepository.cs` mit `virtual`-Membern, die an das innere Repository delegieren; alle drei Fakes erben davon und überschreiben nur die jeweils relevante Methode. `review-code.md` (Lauf 4): `Keine Befunde`.
 
 ## Usability-Befunde
 
 Keine — `review-usability.md` trägt den Status `Keine Befunde`.
 
-Hinweis außerhalb des Feature-Umfangs (Datei in diesem Branch unverändert, ggf. separates Issue):
-- [ ] `src/Reporter/Views/CategoriesPage.xaml.cs:62-66` — Der Lösch-Dialog für Kategorien verwendet `ConfirmDeleteFeedTitle` = „Feed löschen?"; für Endanwender irreführend beschriftet.
+- [x] `src/Reporter/Views/CategoriesPage.xaml.cs` — Der Lösch-Dialog für Kategorien verwendete `ConfirmDeleteFeedTitle` („Feed löschen?"). **Erledigt:** Neuer Schlüssel `ConfirmDeleteCategoryTitle` („Kategorie löschen?" / „Delete category?") in `AppResources.resx`/`AppResources.de.resx` + `AppResources.Designer.cs`; `CategoriesPage.xaml.cs` nutzt ihn jetzt.
 
 ## Fehlgeschlagene Tests / Ausstehende Verifikationen
 

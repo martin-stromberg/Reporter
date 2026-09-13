@@ -95,6 +95,9 @@
   <data name="CategoryNone" xml:space="preserve">
     <value>Keine Kategorie</value>
   </data>
+  <data name="ConfirmDeleteCategoryTitle" xml:space="preserve">
+    <value>Kategorie löschen?</value>
+  </data>
   <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
     <value>Alle zugehörigen Artikel werden ebenfalls gelöscht. Fortfahren?</value>
   </data>

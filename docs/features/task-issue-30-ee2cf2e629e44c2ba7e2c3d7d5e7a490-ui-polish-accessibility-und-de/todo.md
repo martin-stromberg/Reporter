@@ -28,6 +28,7 @@ Branch: `task/issue-30-ee2cf2e629e44c2ba7e2c3d7d5e7a490-ui-polish-accessibility-
 | [x] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
 | [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
 | [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
-| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) | `continue-done.md` |
+| [x] | 6–10 | Fortsetzungslauf (continue.md): Implementierung + Reviews + Tests — usability: `Keine Befunde`, code: `Keine Befunde`, tests: 350 grün, Static Checks 0 | `review-usability.md`, `review-code.md`, `test-results.md` |
+| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) — lösbare Punkte erledigt, Umgebungs-Verifikationen weiterhin offen | `continue-done.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | – | Commit durchführen (`5971f84`) | – |

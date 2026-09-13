@@ -95,6 +95,9 @@
   <data name="CategoryNone" xml:space="preserve">
     <value>No category</value>
   </data>
+  <data name="ConfirmDeleteCategoryTitle" xml:space="preserve">
+    <value>Delete category?</value>
+  </data>
   <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
     <value>All articles belonging to this feed will also be deleted. Continue?</value>
   </data>
