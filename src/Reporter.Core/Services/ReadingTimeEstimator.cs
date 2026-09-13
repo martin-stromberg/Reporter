@@ -31,7 +31,7 @@ public static class ReadingTimeEstimator
 
         var text = HtmlTagRegex.Replace(contentHtml, string.Empty);
         var wordCount = text.Split(new[] { ' ', '\t', '\n', '\r', ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
-        var minutes = Math.Max(1, (int)Math.Round(wordCount / WordsPerMinute));
+        var minutes = (int)Math.Round(wordCount / WordsPerMinute);
         if (minutes <= 1)
         {
             return string.Empty;

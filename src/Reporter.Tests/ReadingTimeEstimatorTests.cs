@@ -42,6 +42,25 @@ public class ReadingTimeEstimatorTests
     }
 
     /// <summary>
+    /// Verifies that content whose word count rounds down to zero minutes still
+    /// produces an empty reading time text.
+    /// </summary>
+    /// <remarks>
+    /// Regression note for the removed <c>Math.Max(1, …)</c> clamp in
+    /// <see cref="ReadingTimeEstimator.EstimateText"/>: the clamp was dead code
+    /// because the <c>minutes &lt;= 1</c> early return already covers a zero
+    /// result. No red test was possible — the removal is behavior-neutral —
+    /// so this test documents the zero-minute boundary instead.
+    /// </remarks>
+    [Fact]
+    public void EstimateText_SubMinuteContent_ReturnsEmpty()
+    {
+        var content = string.Join(' ', Enumerable.Repeat("word", 50));
+
+        Assert.Equal(string.Empty, ReadingTimeEstimator.EstimateText(content));
+    }
+
+    /// <summary>
     /// Verifies that content estimated at two minutes produces a reading time text.
     /// </summary>
     [Fact]

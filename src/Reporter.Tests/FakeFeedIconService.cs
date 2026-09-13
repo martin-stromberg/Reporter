@@ -27,6 +27,11 @@ public sealed class FakeFeedIconService : IFeedIconService
     /// </summary>
     public List<string> RequestedSiteUrls { get; } = [];
 
+    /// <summary>
+    /// Gets the cancellation tokens passed to <see cref="TryFindFaviconUrlAsync"/> in call order.
+    /// </summary>
+    public List<CancellationToken> ReceivedCancellationTokens { get; } = [];
+
     /// <inheritdoc />
     public Task<string?> FindFaviconUrlAsync(string siteUrl, CancellationToken cancellationToken = default)
     {
@@ -39,6 +44,7 @@ public sealed class FakeFeedIconService : IFeedIconService
     /// <inheritdoc />
     public async Task<string?> TryFindFaviconUrlAsync(string feedUrl, string? siteUrl, CancellationToken cancellationToken = default)
     {
+        ReceivedCancellationTokens.Add(cancellationToken);
         try
         {
             var resolvedSiteUrl = FeedSiteResolver.ResolveSiteUrl(feedUrl, siteUrl);

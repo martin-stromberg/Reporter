@@ -170,7 +170,7 @@ public class FeedSyncService : IFeedSyncService
         // Feeds stored before favicon discovery existed (or added while offline)
         // get their icon backfilled on the first successful sync; the lookup is
         // strictly isolated inside the icon service.
-        var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed).ConfigureAwait(false);
+        var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed, cancellationToken).ConfigureAwait(false);
 
         await UpdateFeedHealthAsync(feed, status, resolvedTitle, faviconUrl).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
@@ -308,13 +308,13 @@ public class FeedSyncService : IFeedSyncService
     // looks up its favicon; the icon service falls back to the feed URL's
     // authority and is strictly isolated, so a failure never affects the sync
     // result.
-    private async Task<string?> TryFindFaviconUrlAsync(string feedUrl, SyndicationFeed syndicationFeed)
+    private async Task<string?> TryFindFaviconUrlAsync(string feedUrl, SyndicationFeed syndicationFeed, CancellationToken cancellationToken)
     {
         var siteUrl = syndicationFeed.Links
             .FirstOrDefault(l => string.Equals(l.RelationshipType, "alternate", StringComparison.OrdinalIgnoreCase))
             ?.Uri?.AbsoluteUri;
 
-        return await _feedIconService.TryFindFaviconUrlAsync(feedUrl, siteUrl).ConfigureAwait(false);
+        return await _feedIconService.TryFindFaviconUrlAsync(feedUrl, siteUrl, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task UpdateLogAsync(SyncLog log, string status, string? message)

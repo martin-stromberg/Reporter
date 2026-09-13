@@ -921,4 +921,29 @@ public class FeedSyncServiceTests : IDisposable
         Assert.NotNull(feed);
         Assert.Null(feed.FaviconUrl);
     }
+
+    /// <summary>
+    /// Verifies that the cancellation token passed to
+    /// <see cref="FeedSyncService.SyncFeedAsync"/> is forwarded to the favicon
+    /// lookup, so an aborted synchronization does not wait for the icon HTTP
+    /// roundtrips.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MissingFavicon_ForwardsCancellationTokenToIconLookup()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+        using var cts = new CancellationTokenSource();
+
+        var result = await service.SyncFeedAsync(feedId, cts.Token);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var receivedToken = Assert.Single(_feedIconService.ReceivedCancellationTokens);
+        Assert.Equal(cts.Token, receivedToken);
+    }
 }
