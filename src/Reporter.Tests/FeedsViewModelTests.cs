@@ -1046,7 +1046,6 @@ public class FeedsViewModelTests : IDisposable
         await _categoryRepository.AddAsync(new Category { Id = categoryId, Name = "Tech" });
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(null);
-        viewModel.SelectedCategory = viewModel.Categories.First(c => c.Id == categoryId);
         viewModel.FeedNotificationsEnabled = false;
         var result = new FeedSearchResult
         {
@@ -1221,6 +1220,35 @@ public class FeedsViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that closing the sheet clears both error channels — the same
+    /// labels are bound in the page header above the feed list, so an error
+    /// shown inside the sheet must not stay visible after the sheet closes.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CloseAddFormCommand_WhenSheetShowsErrors_ClearsErrorChannels()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.OpenAddFormCommand.Execute(null);
+
+        // A rejected direct add raises the validation error inside the open
+        // sheet; the search error simulates a still-shown in-sheet failure.
+        await viewModel.DirectAddCommand.ExecuteAsync(null);
+        viewModel.SearchErrorMessage = AppResources.FeedSearchUnavailableRetry;
+        Assert.True(viewModel.HasError);
+        Assert.True(viewModel.HasSearchError);
+
+        viewModel.CloseAddFormCommand.Execute(null);
+
+        Assert.False(viewModel.ShowAddForm);
+        Assert.False(viewModel.HasError);
+        Assert.Equal(string.Empty, viewModel.ErrorMessage);
+        Assert.False(viewModel.HasSearchError);
+        Assert.Equal(string.Empty, viewModel.SearchErrorMessage);
+    }
+
+    /// <summary>
     /// Verifies that editing a feed opens the sheet in edit mode with the feed
     /// values loaded into the form.
     /// </summary>
@@ -1288,6 +1316,40 @@ public class FeedsViewModelTests : IDisposable
         Assert.Equal(AppResources.ErrorFeedDuplicate, viewModel.ErrorMessage);
         var saved = await _feedRepository.GetByIdAsync(feedId);
         Assert.Equal("https://example.com/feed-a", saved?.Url);
+    }
+
+    /// <summary>
+    /// Verifies that saving an edited feed keeps its stored category assignment
+    /// — the sheet no longer offers a category picker, so the stored value is
+    /// the only source of truth. Note: the original drift scenario (stale
+    /// <c>SelectedCategory</c> preserve-state reset by <c>LoadAsync</c>) cannot
+    /// be reproduced as a failing test because that write-only state was removed
+    /// with the picker; this test pins the surviving contract.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveCommand_EditMode_PreservesCategoryId()
+    {
+        var categoryId = Guid.NewGuid();
+        await _categoryRepository.AddAsync(new Category { Id = categoryId, Name = "Tech" });
+        var feedId = await SeedFeedAsync();
+        await _feedRepository.UpdateAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Test Feed",
+            CategoryId = categoryId,
+            NotificationsEnabled = true,
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+        await viewModel.EditCommand.ExecuteAsync(feed);
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        var saved = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(categoryId, saved?.CategoryId);
     }
 
     /// <summary>
@@ -1415,6 +1477,47 @@ public class FeedsViewModelTests : IDisposable
         var saved = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(saved);
         Assert.Null(saved.CategoryId);
+    }
+
+    /// <summary>
+    /// Verifies that repeated names get a counter suffix so each option label
+    /// is unique.
+    /// </summary>
+    [Fact]
+    public void MakeUniqueOptionLabels_DuplicateNames_AppendsCounterSuffix()
+    {
+        var labels = FeedsViewModel.MakeUniqueOptionLabels(["News", "News"]);
+
+        Assert.Equal(["News", "News (2)"], labels);
+    }
+
+    /// <summary>
+    /// Verifies that a literal name colliding with a generated suffix still
+    /// produces unique labels — the action sheet returns the tapped button's
+    /// text, so a duplicated label would map the selection to the wrong entry.
+    /// </summary>
+    [Fact]
+    public void MakeUniqueOptionLabels_WhenLiteralNameCollidesWithGeneratedSuffix_KeepsEveryLabelUnique()
+    {
+        var labels = FeedsViewModel.MakeUniqueOptionLabels(["News", "News", "News (2)"]);
+
+        Assert.Equal(3, labels.Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal("News", labels[0]);
+        Assert.Equal("News (2)", labels[1]);
+    }
+
+    /// <summary>
+    /// Verifies the same collision guarantee when the literal suffix name is
+    /// stored before the duplicates that would generate it.
+    /// </summary>
+    [Fact]
+    public void MakeUniqueOptionLabels_WhenLiteralSuffixNameComesFirst_KeepsEveryLabelUnique()
+    {
+        var labels = FeedsViewModel.MakeUniqueOptionLabels(["News (2)", "News", "News"]);
+
+        Assert.Equal(3, labels.Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal("News (2)", labels[0]);
+        Assert.Equal("News", labels[1]);
     }
 
     private sealed class FakeFeedSyncService : IFeedSyncService

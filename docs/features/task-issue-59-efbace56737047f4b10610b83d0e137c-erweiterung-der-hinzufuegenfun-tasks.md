@@ -6,6 +6,8 @@
 
 Review-Durchlauf abgeschlossen (`review.md`): Alle Aufgaben erledigt; `dotnet test -c Release`: 303/303 grün; `Run-StaticChecks.ps1`: Exit 0 (in `test-results.md` dokumentiert); manuelle UI-Verifikation 390 × 844 pt (Dark + Light) durchgeführt und dokumentiert.
 
+**Fortsetzungslauf abgeschlossen:** Nach 3 Review-Iterationen (Usability `Keine Befunde`, Tests `Keine Fehler`, Code-Review 3 geringfügige Restbefunde → `continue.md`) wurden alle verbleibenden Punkte nachgearbeitet: `ResetForm` leert beide Fehlerkanäle, `SaveAsync` nutzt `SelectedFeed.CategoryId` via `ToFeed`, `MakeUniqueOptionLabels` erzeugt kollisionsfreie ActionSheet-Labels, toter `SelectedCategory`-State entfernt. Abschluss-Reviews: `Keine Befunde`; `dotnet test`: 316/316 grün; `npm test`: 36/36 grün; `Run-StaticChecks.ps1`: Exit 0. Feature-Verzeichnis gelöscht (`continue-done.md` darin enthalten gewesen).
+
 | # | Bereich | Aufgabe | Status | Testnachweis |
 |---|---------|---------|--------|--------------|
 | 1 | Logik | `FeedTitleFallback` anlegen (`src/Reporter.Core/Services/FeedTitleFallback.cs`): `GetFallbackTitle(string url)` (letztes nicht-leeres, URL-dekodiertes Pfadsegment → `Host` → URL) und `IsFileNamePlaceholderTitle(string title, string url)` | Erledigt | `FeedTitleFallbackTests.GetFallbackTitle_ReturnsLastPathSegment`, `..._DecodesUrlEncodedSegment`, `..._FallsBackToHost_WhenNoPath`, `..._FallsBackToUrl_WhenUnparseable`, `..._TrailingSlash_UsesLastNonEmptySegment`, `IsFileNamePlaceholderTitle_WhenTitleMatchesFileName_ReturnsTrue`, `..._WhenTitleDiffers_ReturnsFalse`, `..._MatchesCaseInsensitive` |

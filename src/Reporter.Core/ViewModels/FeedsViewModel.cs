@@ -2,6 +2,7 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -30,7 +31,6 @@ public partial class FeedsViewModel : BaseViewModel
     private bool _showAddForm;
     private bool _isEditMode;
     private FeedListItem? _selectedFeed;
-    private Category? _selectedCategory;
     private ObservableCollection<FeedListItem> _feeds = [];
     private ObservableCollection<Category> _categories = [];
 
@@ -244,15 +244,6 @@ public partial class FeedsViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets or sets the category selected for a new or edited feed.
-    /// </summary>
-    public Category? SelectedCategory
-    {
-        get => _selectedCategory;
-        set => SetProperty(ref _selectedCategory, value);
-    }
-
-    /// <summary>
     /// Gets or sets the list of available categories.
     /// </summary>
     public ObservableCollection<Category> Categories
@@ -288,11 +279,6 @@ public partial class FeedsViewModel : BaseViewModel
 
         var feeds = await _feedRepository.GetAllWithDetailsAsync();
         Feeds = new ObservableCollection<FeedListItem>(feeds);
-
-        if (SelectedCategory is null || Categories.All(c => c.Id != SelectedCategory.Id))
-        {
-            SelectedCategory = Categories.FirstOrDefault();
-        }
     }
 
     private async Task SaveAsync()
@@ -328,19 +314,12 @@ public partial class FeedsViewModel : BaseViewModel
 
         ErrorMessage = string.Empty;
 
-        var categoryId = SelectedCategory?.Id == Guid.Empty ? null : SelectedCategory?.Id;
-
-        await _feedRepository.UpdateAsync(new Feed
-        {
-            Id = SelectedFeed.Id,
-            Url = url,
-            Title = title,
-            CategoryId = categoryId,
-            LastCheckedAt = SelectedFeed.LastCheckedAt,
-            HealthStatus = SelectedFeed.HealthStatus,
-            HealthLastChange = SelectedFeed.HealthLastChange,
-            NotificationsEnabled = FeedNotificationsEnabled,
-        });
+        await _feedRepository.UpdateAsync(ToFeed(
+            SelectedFeed,
+            url: url,
+            title: title,
+            categoryId: SelectedFeed.CategoryId,
+            notificationsEnabled: FeedNotificationsEnabled));
 
         ResetForm();
         await LoadAsync();
@@ -354,7 +333,6 @@ public partial class FeedsViewModel : BaseViewModel
             NewUrl = feed.Url;
             NewTitle = feed.Title;
             FeedNotificationsEnabled = feed.NotificationsEnabled;
-            SelectedCategory = Categories.FirstOrDefault(c => c.Id == (feed.CategoryId ?? Guid.Empty));
             ErrorMessage = string.Empty;
             IsEditMode = true;
             ShowAddForm = true;
@@ -386,9 +364,10 @@ public partial class FeedsViewModel : BaseViewModel
         NewUrl = string.Empty;
         NewTitle = string.Empty;
         FeedNotificationsEnabled = true;
-        SelectedCategory = Categories.FirstOrDefault();
         ShowAddForm = false;
         IsEditMode = false;
+        ErrorMessage = string.Empty;
+        SearchErrorMessage = string.Empty;
     }
 
     private async Task RefreshAsync(FeedListItem? feed)
@@ -492,7 +471,12 @@ public partial class FeedsViewModel : BaseViewModel
             return;
         }
 
-        await _feedRepository.UpdateAsync(ToFeed(feed, title: newTitle.Trim(), categoryId: feed.CategoryId));
+        await _feedRepository.UpdateAsync(ToFeed(
+            feed,
+            url: feed.Url,
+            title: newTitle.Trim(),
+            categoryId: feed.CategoryId,
+            notificationsEnabled: feed.NotificationsEnabled));
         ErrorMessage = string.Empty;
         await LoadAsync();
     }
@@ -512,26 +496,56 @@ public partial class FeedsViewModel : BaseViewModel
 
         await _feedRepository.UpdateAsync(ToFeed(
             feed,
+            url: feed.Url,
             title: feed.Title,
-            categoryId: category.Id == Guid.Empty ? null : category.Id));
+            categoryId: category.Id == Guid.Empty ? null : category.Id,
+            notificationsEnabled: feed.NotificationsEnabled));
         await LoadAsync();
     }
 
     // Rebuilds the stored feed from its list item for partial updates so the
-    // untouched fields survive; title and category id are supplied by the caller.
-    private static Feed ToFeed(FeedListItem feed, string title, Guid? categoryId)
+    // untouched fields survive; url, title, category id and the notifications
+    // flag are supplied by the caller.
+    private static Feed ToFeed(FeedListItem feed, string url, string title, Guid? categoryId, bool notificationsEnabled)
     {
         return new Feed
         {
             Id = feed.Id,
-            Url = feed.Url,
+            Url = url,
             Title = title,
             CategoryId = categoryId,
             LastCheckedAt = feed.LastCheckedAt,
             HealthStatus = feed.HealthStatus,
             HealthLastChange = feed.HealthLastChange,
-            NotificationsEnabled = feed.NotificationsEnabled,
+            NotificationsEnabled = notificationsEnabled,
         };
+    }
+
+    /// <summary>
+    /// Builds the action-sheet option labels for the given names, suffixing
+    /// repeated names so every returned label is unique and maps back to
+    /// exactly one entry. Candidates are checked against all already assigned
+    /// labels — a literal name like "News (2)" can collide with a generated
+    /// suffix, so the counter is raised until the label is unused.
+    /// </summary>
+    /// <param name="names">The option names in display order.</param>
+    /// <returns>The labels, aligned by index with <paramref name="names"/>.</returns>
+    public static List<string> MakeUniqueOptionLabels(IReadOnlyList<string> names)
+    {
+        var usedLabels = new HashSet<string>(StringComparer.Ordinal);
+        var labels = new List<string>(names.Count);
+        foreach (var name in names)
+        {
+            var label = name;
+            for (var suffix = 2; !usedLabels.Add(label); suffix++)
+            {
+                label = string.Format(CultureInfo.CurrentCulture, "{0} ({1})", name, suffix);
+            }
+
+            labels.Add(label);
+        }
+
+        return labels;
     }
 
     private void OpenAddForm()
@@ -540,7 +554,5 @@ public partial class FeedsViewModel : BaseViewModel
         // form — an abandoned edit must not leak its URL or selection into it.
         ResetForm();
         ShowAddForm = true;
-        ErrorMessage = string.Empty;
-        SearchErrorMessage = string.Empty;
     }
 }

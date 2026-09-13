@@ -130,18 +130,10 @@ public partial class FeedsPage : ContentPage
 
         // The action sheet returns the tapped button's text, not its position.
         // Categories cannot get duplicate names through the app, but a database
-        // edited elsewhere may contain them; suffixing repeated names keeps
-        // every option unique so the returned text maps to exactly one entry.
-        var nameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-        var options = new List<string>(categories.Count);
-        foreach (var category in categories)
-        {
-            nameCounts.TryGetValue(category.Name, out var count);
-            nameCounts[category.Name] = count + 1;
-            options.Add(count == 0
-                ? category.Name
-                : string.Format(CultureInfo.CurrentCulture, "{0} ({1})", category.Name, count + 1));
-        }
+        // edited elsewhere may contain them; the labels are made collision-free
+        // unique so the returned text maps to exactly one entry.
+        var options = FeedsViewModel.MakeUniqueOptionLabels(
+            categories.Select(c => c.Name).ToList());
 
         var selectedName = await DisplayActionSheetAsync(
             AppResources.LabelFeedCategory,
