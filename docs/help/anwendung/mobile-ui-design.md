@@ -120,3 +120,14 @@ Design-Entwurf folgen.
 - UIA-`Name`-Vollständigkeit über alle Seiten geprüft (inkl. Einstellungen-Slider/-Switches und Kategorien-Karten); Dark-Mode-Kontraste visuell und per Pixel-Stichproben verifiziert — die formale Kontrastmessung bleibt dem FastPass vorbehalten.
 - Screenshots: `test-results/issue-30/` (Iteration 1: `manual-*.png`, Iteration 2: `iter2-*.png`, UIA-Dumps `uia-detail-*.txt`/`iter2-uia-detail.txt`); Details in `docs/features/task-issue-30-ee2cf2e629e44c2ba7e2c3d7d5e7a490-ui-polish-accessibility-und-de/test-results.md`.
 - **Offen:** Accessibility-Insights-FastPass (Tool nicht installiert), Narrator-Durchlauf, iOS-Verifikation (macOS erforderlich), Splash-Laufzeitnachweis (zu kurz sichtbar) und `FeedSearchResult.DisplayTitle`-Laufzeitnachweis (feedsearch.dev ohne Treffer in der Prüfumgebung).
+
+### Verbesserungen der App (issue-77)
+- **Laufzeit-Verifikation durchgeführt** am Windows-Handy-Fenster 390 × 844 pt (`GetWindowRect`-verifiziert, unpackaged `win-x64`-Release-Build), Dark + Light, deutsch lokalisierte UI; Interaktion via UI Automation (`test-results/issue-59/uia.ps1`).
+- `SettingsPage` Sektion „Synchronisation & Lesefluss": neuer Schalter **Beim Programmstart abrufen** per UIA `TogglePattern` als **On** verifiziert (Voreinstellung); neuer `Picker` **Sortierung der ungelesenen Artikel** (159 × 52 pt, ≥ 44 pt Touch-Target) mit den Optionen „Neueste zuerst"/„Älteste zuerst" — Auswahl „Älteste zuerst" persistierte `unread_sort_order='asc'` und die Liste **Ungelesen** zeigte sofort aufsteigende Daten.
+- Start-Abruf: Beim Öffnen lief die Synchronisation im Hintergrund; der bestehende Feed erhielt dabei live sein Favicon per Sync-Nachrüstung.
+- Sprach-Neustart-Hinweis: Ohne Änderung nicht im UIA-Baum; nach Wechsel auf „Englisch" sichtbar unter dem Picker; Rückwahl auf „System" blendet ihn wieder aus.
+- Feed-Symbole: Feed-Karte zeigt links das gerenderte Favicon; ein direkt angelegter Feed ohne auffindbares Favicon zeigt den Initialen-Kreis. Die Artikelkarten-Kaskade (Artikelbild → Favicon → Initial) ist per XAML-`MultiTrigger` geprüft — in der Prüfung trugen alle vorhandenen Artikel ein Artikelbild, Favicon-/Initial-Zweig live über die Feed-Karten verifiziert.
+- Lesezeit: Bei ≤ 1 Minute entfällt die Angabe auf den Karten (zusätzlich über `ReadingTimeEstimatorTests`/`ItemRepositoryTests` abgedeckt).
+- Icon/Splash: Generierte Resizetizer-Assets gesichtet — App-Icon mit Badge-Optik (Hintergrund `#1e293b`), SplashScreen mit „Reporter"-Wortmarke als Pfad in Weiß.
+- Screenshots: `test-results/issue-77/manual-*.png` (16 Dateien, Light + Dark); Details in `test-results.md` (Abschnitt „Issue #77") und `docs/features/task-issue-77-b1023d3d5f804e239e02f48af24b0ac3-verbesserungen-der-app/test-results.md`.
+- **Offen:** iOS-Verifikation (`net10.0-ios` benötigt macOS) — Splash-/Icon-Darstellung, Favicon-Anzeige und neue Einstellungen sind auf einem Mac nachzuholen.

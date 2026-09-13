@@ -71,6 +71,28 @@
 
 **Umsetzung:** `AutoRefreshService`, `SettingsViewModel.RefreshIntervalOptions`.
 
+## Start-Abruf ist opt-out und fehlerisoliert
+
+**Beschreibung:** `Settings.RefreshOnStartupEnabled` (`bool`, Default `true`, Spalte `settings.refresh_on_startup_enabled`) steuert, ob beim App-Start einmalig alle Feeds abgerufen werden. Die Option ist bewusst unabhängig vom periodischen Intervall-Loop: Auch bei ausgeschalteter `AutoRefreshEnabled` läuft der Start-Abruf, solange der Schalter an ist.
+
+**Verhalten:**
+- `RefreshOnStartupEnabled == true` **und** `INetworkStatusService.IsOnline` → `AutoRefreshService.StartAsync` startet `RunStartupSyncAsync` fire-and-forget (`_ = …`) — der App-Start blockiert nie, ein Sync-Fehler wird per `Debug.WriteLine` protokolliert und geschluckt.
+- `RefreshOnStartupEnabled == false` oder offline → kein Start-Abruf; der Intervall-Loop bleibt davon unberührt.
+- Der Start-Abruf läuft zusätzlich zum Intervall-Loop — ein anschließender Timer-Tick ruft regulär erneut ab.
+
+**Umsetzung:** `AutoRefreshService.StartAsync`/`RunStartupSyncAsync`, `SettingsViewModel.RefreshOnStartupEnabled` (Schalter **Beim Programmstart abrufen**, `SettingsRefreshOnStartupLabel`/`SettingsRefreshOnStartupHint`).
+
+## `UnreadSortOrder`-String-Konvention
+
+**Beschreibung:** `Settings.UnreadSortOrder` ist ein `string?` mit den Werten `"desc"` (Default, *Neueste zuerst*) und `"asc"` (*Älteste zuerst*) — Konstanten `SettingsValues.SortOrderDescending`/`SortOrderAscending`, Spalte `settings.unread_sort_order`. Die Einstellung gilt ausschließlich für die Liste **Ungelesen**; **Später** bleibt fest absteigend sortiert.
+
+**Verhalten:**
+- `UnreadViewModel.LoadPageAsync` mappt den String auf das Bool `ascending` (`== SortOrderAscending`) und reicht es an `IItemRepository.GetUnreadByDateAsync`; jeder andere Wert (inkl. `null` oder unbekannt) fällt auf absteigend zurück — sowohl im `SettingsViewModel.LoadAsync`-Fallback auf die `"desc"`-`SortOrderOption` als auch implizit beim Bool-Vergleich.
+- `ascending == true` → `OrderBy(PublishedAt).ThenByDescending(Id)` (exakte Umkehr inkl. Tiebreaker); `false` → `OrderByDescending(PublishedAt).ThenBy(Id)`.
+- Artikel ohne `PublishedAt` folgen dem SQLite-NULL-Verhalten ohne gesonderten Code (bei `asc` zuerst, bei `desc` zuletzt) — dokumentiert in `ItemRepositoryTests.GetUnreadByDateAsync_Ascending_NullPublishedAt_SortsFirst`.
+
+**Umsetzung:** `SettingsValues` (Konstanten), `SortOrderOption` (Picker-Modell, Labels `SettingsSortOrderNewest`/`SettingsSortOrderOldest`), `SettingsViewModel.SelectedSortOrder`, `UnreadViewModel.LoadPageAsync`, `ItemRepository.GetUnreadByDateAsync`.
+
 ## Theme-String und Fallback
 
 **Beschreibung:** `Settings.Theme` ist ein `string?` mit den Werten `"system"`/`"light"`/`"dark"` (Default `"system"`).
@@ -90,6 +112,7 @@
 - `"system"`, `null`, unbekannt → `AppCulture.ResolveCulture` liefert `null`, `Apply` ist ein No-Op — die App folgt der Systemkultur (Konvention analog `AppThemeService.ApplyTheme`).
 - `SettingsViewModel.LoadAsync` fällt bei unbekanntem gespeicherten Wert auf die `LanguageOption` `"system"` zurück; `PersistAsync` schreibt `SelectedLanguage?.Value ?? LanguageSystem`.
 - Keine Laufzeit-Umschaltung: `PersistAsync` ruft keinen Service für `Language` auf — die UI weist per `SettingsLanguageRestartHint` auf den erforderlichen Neustart hin.
+- Der Hinweis-`Border` ist kein statischer Text: `SettingsViewModel.LanguageRestartHintVisible` steuert die Sichtbarkeit (`IsVisible`-Binding). Das Flag wird im `SelectedLanguage`-Setter auf `value?.Value != _loadedLanguage` gesetzt (außerhalb `_isLoading`) — es erscheint erst nach einer Abweichung vom persistierten Wert und verschwindet bei Rückwahl; `LoadAsync` setzt es zurück.
 
 **Umsetzung:** `AppCulture.ResolveCulture`/`Apply` (`Reporter.Core.Localization`), `MauiProgram.ApplyPersistedLanguage`, `SettingsViewModel.SelectedLanguage`, `SettingsValues.LanguageSystem`/`LanguageGerman`/`LanguageEnglish`.
 

@@ -23,6 +23,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly INotificationService _notificationService;
     private readonly INetworkStatusService _networkStatusService;
     private readonly IKeywordFilter _keywordFilter;
+    private readonly IFeedIconService _feedIconService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -34,6 +35,7 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="notificationService">The notification service invoked for newly stored items.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
+    /// <param name="feedIconService">The service used to backfill the favicon of feeds that have none.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
@@ -41,7 +43,8 @@ public class FeedSyncService : IFeedSyncService
         HttpClient httpClient,
         INotificationService notificationService,
         INetworkStatusService networkStatusService,
-        IKeywordFilter keywordFilter)
+        IKeywordFilter keywordFilter,
+        IFeedIconService feedIconService)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
@@ -50,6 +53,7 @@ public class FeedSyncService : IFeedSyncService
         _notificationService = notificationService;
         _networkStatusService = networkStatusService;
         _keywordFilter = keywordFilter;
+        _feedIconService = feedIconService;
     }
 
     /// <inheritdoc />
@@ -163,7 +167,12 @@ public class FeedSyncService : IFeedSyncService
 
         var resolvedTitle = ResolveFeedTitle(feed, syndicationFeed);
 
-        await UpdateFeedHealthAsync(feed, status, resolvedTitle).ConfigureAwait(false);
+        // Feeds stored before favicon discovery existed (or added while offline)
+        // get their icon backfilled on the first successful sync; the lookup is
+        // strictly isolated inside the icon service.
+        var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed).ConfigureAwait(false);
+
+        await UpdateFeedHealthAsync(feed, status, resolvedTitle, faviconUrl).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
 
         if (newItemEntities.Count > 0)
@@ -273,7 +282,7 @@ public class FeedSyncService : IFeedSyncService
         return FeedHealth.Ok;
     }
 
-    private async Task UpdateFeedHealthAsync(Feed feed, string status, string? resolvedTitle = null)
+    private async Task UpdateFeedHealthAsync(Feed feed, string status, string? resolvedTitle = null, string? faviconUrl = null)
     {
         var healthLastChange = feed.HealthLastChange;
         if (FeedHealth.Changed(feed.HealthStatus, status))
@@ -291,7 +300,21 @@ public class FeedSyncService : IFeedSyncService
             HealthStatus = status,
             HealthLastChange = healthLastChange,
             NotificationsEnabled = feed.NotificationsEnabled,
+            FaviconUrl = faviconUrl ?? feed.FaviconUrl,
         }).ConfigureAwait(false);
+    }
+
+    // Resolves the feed's website from the document's "alternate" site link and
+    // looks up its favicon; the icon service falls back to the feed URL's
+    // authority and is strictly isolated, so a failure never affects the sync
+    // result.
+    private async Task<string?> TryFindFaviconUrlAsync(string feedUrl, SyndicationFeed syndicationFeed)
+    {
+        var siteUrl = syndicationFeed.Links
+            .FirstOrDefault(l => string.Equals(l.RelationshipType, "alternate", StringComparison.OrdinalIgnoreCase))
+            ?.Uri?.AbsoluteUri;
+
+        return await _feedIconService.TryFindFaviconUrlAsync(feedUrl, siteUrl).ConfigureAwait(false);
     }
 
     private async Task UpdateLogAsync(SyncLog log, string status, string? message)

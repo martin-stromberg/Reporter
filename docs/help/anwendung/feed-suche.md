@@ -12,7 +12,7 @@ Statt die Feed-Adresse einer Website mühsam herauszusuchen, gibst du einfach di
 
 ## Funktionsweise
 
-Die Seite **Feeds** zeigt standardmäßig nur deine Feed-Liste — jede Karte trägt den Feed-Titel, die Adresse und ein Status-Badge zum Gesundheitszustand (**In Ordnung**, **Warnung**, **Fehler**). Über die Schaltfläche **+ Feed per URL hinzufügen** oberhalb der Liste öffnest du ein Formular, das sich von unten über die Seite schiebt (Titel **Feed per URL hinzufügen**):
+Die Seite **Feeds** zeigt standardmäßig nur deine Feed-Liste — jede Karte trägt den Feed-Titel, die Adresse und ein Status-Badge zum Gesundheitszustand (**In Ordnung**, **Warnung**, **Fehler**). Links auf der Karte erscheint das Symbol des Feeds: das Favicon der Website, sofern die App es ermitteln konnte, sonst ein Kreis mit dem Anfangsbuchstaben des Feeds. Über die Schaltfläche **+ Feed per URL hinzufügen** oberhalb der Liste öffnest du ein Formular, das sich von unten über die Seite schiebt (Titel **Feed per URL hinzufügen**):
 
 - Das Eingabefeld **Feed-URL oder Website-Adresse…** dient als kombinierte Such- und URL-Eingabe.
 - **Suchen** durchsucht ein öffentliches Feed-Verzeichnis sowie die Website selbst nach verfügbaren Feeds.
@@ -37,6 +37,10 @@ Freitext ohne Adressbezug (z. B. nur ein Stichwort) wird nicht gesucht — dafü
 ## Feed direkt per URL hinzufügen
 
 Kennst du die Feed-Adresse bereits oder willst du sie ohne Suche übernehmen, trägst du sie in das Eingabefeld ein und tippst auf **URL direkt hinzufügen**. Der Feed wird sofort in der Liste angelegt — ein Suchlauf entfällt. Diese Schaltfläche funktioniert auch offline.
+
+## Feed-Symbol (Favicon)
+
+Beim Anlegen eines Feeds — per Suche oder direkt per URL — versucht die App bei bestehender Internetverbindung, das Favicon der zugehörigen Website zu finden: Sie liest dazu die Symbol-Verweise der Website aus und prüft anschließend die übliche Symbol-Adresse der Website. Das gefundene Symbol wird gespeichert und auf den Feed-Karten sowie in den Artikellisten gezeigt. Ist kein Symbol auffindbar oder bestand beim Anlegen keine Verbindung, erscheint stattdessen ein Kreis mit dem Anfangsbuchstaben des Feeds — ein fehlendes Symbol holt die App beim nächsten erfolgreichen Abruf nach (siehe [Feeds synchronisieren](synchronisation.md)).
 
 ## Anzeigetitel und Platzhalter
 

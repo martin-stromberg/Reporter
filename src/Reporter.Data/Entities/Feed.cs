@@ -48,6 +48,11 @@ public class Feed
     public bool NotificationsEnabled { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the favicon URL of the feed's website, or <c>null</c> when none was discovered.
+    /// </summary>
+    public string? FaviconUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets the optional category of the feed.
     /// </summary>
     public Category? Category { get; set; }

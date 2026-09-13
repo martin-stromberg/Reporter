@@ -2,6 +2,111 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #77: Verbesserungen der App (Lesezeit, Favicons, Start-Abruf, Sortierung, Sprach-Hinweis, Icon/Splash)
+
+Branch: `task/issue-77-b1023d3d5f804e239e02f48af24b0ac3-verbesserungen-der-app`
+
+Umfang: R1 Lesezeit-Text ab ≤ 1 Min ausblenden; R2 Feed-Favicons mit
+Initial-Fallback; R3 optionaler Abruf beim App-Start (Voreinstellung: ein);
+R4 konfigurierbare Sortierung der Ungelesen-Liste; R5 Neustart-Hinweis nur
+nach Sprachänderung; R6 neue App-Icon- und Splash-Assets. R7/R8 wurden in die
+folgenden eigenen Issues ausgelagert: #81 (Debug-Versand per E-Mail) und
+#82 (Benachrichtigungen nur bei Hintergrundabruf).
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Restore | `dotnet restore Reporter.sln -r win-x64 -p:IncludeIosTarget=false` | Erfolgreich (iOS-Target auf diesem Windows-Arbeitsplatz deaktiviert, da `Microsoft.NETCore.App.Runtime.Mono.win-x64` 10.0.12 nicht im Feed liegt) |
+| Build (Release, Solution) | `dotnet build Reporter.sln -c Release --no-restore -p:IncludeIosTarget=false` | Erfolgreich, 0 Warnungen, 0 Fehler |
+| Tests (Release) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release --no-build` | 400 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Neue/geänderte Tests u. a.: `ReadingTimeEstimatorTests`
+(`EstimateText_OneMinuteContent_ReturnsEmpty`,
+`EstimateText_TwoMinuteContent_ReturnsText`, angepasste Kurzinhalt-/HTML-Fälle),
+`FeedIconServiceTests` (Link-Tags, relative URLs, `/favicon.ico`-Fallback,
+Fehlerfälle, Kandidaten-Durchlauf), `FeedsViewModelTests`
+(`DirectAddCommand_StoresFaviconUrl`, `_IconLookupFails_FeedStillAdded`,
+`_Offline_SkipsIconLookup`, `SubscribeResultCommand_UsesSiteUrlForFaviconLookup`,
+`RenameFeedAsync_PreservesFaviconUrl`), `FeedSyncServiceTests`
+(`SyncFeedAsync_MissingFavicon_BackfillsFromFeedAuthority`,
+`_ExistingFavicon_SkipsLookup`, `_FaviconLookupFails_SyncStillSucceeds`),
+`ItemRepositoryTests` (`GetUnreadByDateAsync_ProjectsFeedFaviconUrl`,
+`_Ascending_OrdersByPublishedAtAscending`,
+`_Ascending_NullPublishedAt_SortsFirst`), `FeedRepositoryTests`
+(`GetAllWithDetailsAsync_ProjectsFaviconUrl`, `UpdateAsync_PersistsFaviconUrl`),
+`AutoRefreshServiceTests` (`StartAsync_StartupRefreshEnabled_SyncsImmediately`,
+`_StartupRefreshDisabled_DoesNotSyncImmediately`, `_Offline_SkipsStartupSync`,
+`_StartupSyncThrows_StartStillCompletes`), `SettingsViewModelTests`
+(`LanguageChange_SetsRestartHint`, `LanguageReverted_ClearsRestartHint`,
+`Load_ResetsRestartHint`, `Load_PopulatesRefreshOnStartup`,
+`Load_PopulatesSelectedSortOrder`, `RefreshOnStartup_Change_Persists`,
+`SelectedSortOrder_Change_Persists`), `SettingsRepositoryTests`
+(`SaveAsync_PersistsStartupRefreshAndSortOrder`),
+`SettingsViewModelTests_E2E` (`E2E_RefreshOnStartup_PersistRoundtrip`,
+`E2E_SortOrder_PersistRoundtrip`), `UnreadViewModelTests`
+(`LoadPage_PassesSortOrderFromSettings`, `LoadPage_InvalidSortOrder_UsesDescending`).
+Neue Fakes: `FakeFeedIconService`.
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per `GetWindowRect`
+verifiziert: **390 × 844 pt**. Interaktion über UI Automation
+(`test-results/issue-59/uia.ps1`), deutsch lokalisierte UI. Screenshots unter
+`test-results/issue-77/manual-*.png`.
+
+- [x] **Start-Abruf (R3):** `settings.refresh_on_startup_enabled=1`
+  (Voreinstellung). Beim App-Start lief die Synchronisation — der bestehende
+  Feed `Golem.de` erhielt dabei live `favicon_url=https://www.golem.de/favicon.ico`
+  per Nachhole-Pfad (`SyncFeedAsync_MissingFavicon`…) — `manual-01`
+- [x] **Einstellungen Synchronisation & Lesefluss:** Schalter
+  „Beim Programmstart abrufen" sichtbar und per UIA `TogglePattern` als **On**
+  verifiziert; darunter der Picker „Sortierung der ungelesenen Artikel"
+  (159 × 52 pt) — `manual-03`, `manual-04`
+- [x] **Sortierung (R4):** Picker-Dropdown listet „Neueste zuerst" /
+  „Älteste zuerst" (`manual-05`); Auswahl „Älteste zuerst" persistiert
+  `unread_sort_order='asc'` und die Liste **Ungelesen** zeigt sofort
+  aufsteigende Daten (11.09. 11:30 → 11:42 → 12:05) — `manual-06`.
+  Anschließend auf „Neueste zuerst" zurückgestellt (`desc`)
+- [x] **Sprach-Hinweis (R5):** Ohne Änderung ist der Neustart-Hinweis in der
+  UIA-Baumstruktur nicht vorhanden (`manual-07`); nach Wechsel auf „Englisch"
+  erscheint „Die neue Sprache wird nach einem Neustart der App wirksam."
+  sichtbar unter dem Picker (`manual-08`, `manual-09`); Rückwahl auf „System"
+  blendet den Hinweis wieder aus (`manual-10`, UIA ohne Treffer)
+- [x] **Favicon auf Feed-Karte (R2):** Feed-Karte „Golem.de" zeigt links das
+  gerenderte Favicon — `manual-11`
+- [x] **Initial-Fallback (R2):** Per „URL direkt hinzufügen" angelegter Feed
+  `https://beispiel.invalid/feed.xml` (Favicon-Ermittlung schlägt fehl,
+  `favicon_url=NULL`, Feed wird trotzdem angelegt) zeigt den Kreis mit dem
+  Anfangsbuchstaben „F" — `manual-14`; Testfeed danach über
+  **Feed-Aktionen → Löschen → Ja** wieder entfernt (DB wieder nur `Golem.de`)
+- [x] **Light Mode:** Einstellungen und Ungelesen-Liste im hellen Schema
+  korrekt gerendert (`AppThemeBinding`) — `manual-15`, `manual-16`; danach
+  Farbschema auf „System" zurückgestellt
+- [x] **Icon/Splash (R6):** Generierte Resizetizer-Assets geprüft —
+  `resizetizer/r/appicon*.png` zeigt das neue Badge (dunkler Hintergrund
+  `#1e293b`, weißer Rahmen, Amber-Punkt `#f59e0b`); `resizetizer/sp/
+  splashSplashScreen.scale-400.png` enthält die Wortmarke „Reporter" als
+  gerenderten Pfad in Weiß (Füllung von `#1e293b` auf `#ffffff` angepasst,
+  damit sie auf dem dunklen Splash-Hintergrund sichtbar ist)
+
+Hinweis zur Artikelkarten-Kaskade: Auf **Ungelesen** zeigen alle vorhandenen
+Artikel ein `ImageUrl` (Golem-Tracking-Pixel `cpx.golem.de/cpx.php`), sodass
+per Spezifikation das Artikelbild Vorrang vor Favicon und Initial hat —
+der Favicon-/Initial-Zweig der Karte ist per XAML-`MultiTrigger` geprüft und
+über die Feed-Karten (Favicon bzw. Initial) live verifiziert.
+
+Bekannte Einschränkung: `favicon.ico`-Dateien ohne PNG-Link-Alternativen
+(z. B. golem.de) werden gespeichert und auf der Feeds-Seite gerendert;
+die Darstellung einzelner ICO-Varianten hängt vom Plattform-Decoder ab.
+
+### iOS-Verifikation
+
+Nicht möglich auf diesem Windows-Arbeitsplatz (`net10.0-ios` benötigt macOS).
+Nachzuholen auf einem Mac: Splash- und Icon-Darstellung, Favicon-Anzeige,
+neue Einstellungen bedienen.
+
 ## Issue #62: Manueller Sprachwechsel (EN/DE) in den Einstellungen
 
 Branch: `task/issue-62-c777ec701888411a864e714ceaa8f8b3-manueller-sprachwechsel-ende-i`

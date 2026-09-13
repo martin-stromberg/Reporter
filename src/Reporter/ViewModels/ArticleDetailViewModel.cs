@@ -270,6 +270,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
                     NotificationSummaryEnabled = false,
                     AutoRefreshEnabled = true,
                     RefreshIntervalMinutes = 30,
+                    RefreshOnStartupEnabled = true,
                 };
             }
 
@@ -292,7 +293,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
 
             Item = item;
             FeedName = feed?.Title ?? string.Empty;
-            FeedIconUrl = string.Empty;
+            FeedIconUrl = feed?.FaviconUrl ?? string.Empty;
             PublishedAtText = item.PublishedAt?.ToString("g", CultureInfo.CurrentCulture) ?? "—";
             ReadingTime = ReadingTimeEstimator.EstimateText(item.ContentHtml);
             RebuildHtml();

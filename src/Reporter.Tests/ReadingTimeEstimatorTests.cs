@@ -31,14 +31,27 @@ public class ReadingTimeEstimatorTests
     }
 
     /// <summary>
-    /// Verifies that short content is estimated at a minimum of one minute.
+    /// Verifies that content estimated at one minute or less produces an empty
+    /// reading time text — the label is hidden for very short articles.
     /// </summary>
     [Fact]
-    public void EstimateText_ShortContent_ReturnsOneMinute()
+    public void EstimateText_OneMinuteContent_ReturnsEmpty()
     {
-        var result = ReadingTimeEstimator.EstimateText("Hello world");
+        Assert.Equal(string.Empty, ReadingTimeEstimator.EstimateText("Hello world"));
+        Assert.Equal(string.Empty, ReadingTimeEstimator.EstimateText(string.Join(' ', Enumerable.Repeat("word", 200))));
+    }
 
-        Assert.Equal(Format(1), result);
+    /// <summary>
+    /// Verifies that content estimated at two minutes produces a reading time text.
+    /// </summary>
+    [Fact]
+    public void EstimateText_TwoMinuteContent_ReturnsText()
+    {
+        var content = string.Join(' ', Enumerable.Repeat("word", 400));
+
+        var result = ReadingTimeEstimator.EstimateText(content);
+
+        Assert.Equal(Format(2), result);
     }
 
     /// <summary>
@@ -47,9 +60,10 @@ public class ReadingTimeEstimatorTests
     [Fact]
     public void EstimateText_HtmlContent_StripsTags()
     {
-        var result = ReadingTimeEstimator.EstimateText("<p>Hello <strong>world</strong></p>");
+        var words = string.Join(' ', Enumerable.Repeat("word", 400));
+        var result = ReadingTimeEstimator.EstimateText($"<p><strong>{words}</strong></p>");
 
-        Assert.Equal(Format(1), result);
+        Assert.Equal(Format(2), result);
     }
 
     /// <summary>

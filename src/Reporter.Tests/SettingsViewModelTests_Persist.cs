@@ -336,6 +336,70 @@ public class SettingsViewModelTests_Persist : IDisposable
     }
 
     /// <summary>
+    /// Verifies that changing the startup-refresh switch persists the new value immediately.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshOnStartup_Change_Persists()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.RefreshOnStartupEnabled = false;
+        await TestWaitHelper.WaitUntilAsync(async () => !(await _settingsRepository.GetAsync()).RefreshOnStartupEnabled);
+
+        var settings = await _settingsRepository.GetAsync();
+        Assert.False(settings.RefreshOnStartupEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that changing the selected sort order persists the new value immediately.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SelectedSortOrder_Change_Persists()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.SelectedSortOrder = _viewModel.SortOrderOptions.First(o => o.Value == SettingsValues.SortOrderAscending);
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).UnreadSortOrder == SettingsValues.SortOrderAscending);
+
+        var settings = await _settingsRepository.GetAsync();
+        Assert.Equal(SettingsValues.SortOrderAscending, settings.UnreadSortOrder);
+    }
+
+    /// <summary>
+    /// Verifies that changing the selected language shows the restart hint.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LanguageChange_SetsRestartHint()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.False(_viewModel.LanguageRestartHintVisible);
+
+        _viewModel.SelectedLanguage = _viewModel.LanguageOptions.First(o => o.Value == "en");
+
+        Assert.True(_viewModel.LanguageRestartHintVisible);
+    }
+
+    /// <summary>
+    /// Verifies that switching back to the persisted language hides the restart hint.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LanguageReverted_ClearsRestartHint()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        var persisted = _viewModel.SelectedLanguage;
+        _viewModel.SelectedLanguage = _viewModel.LanguageOptions.First(o => o.Value == "en");
+        Assert.True(_viewModel.LanguageRestartHintVisible);
+
+        _viewModel.SelectedLanguage = persisted;
+
+        Assert.False(_viewModel.LanguageRestartHintVisible);
+    }
+
+    /// <summary>
     /// Verifies that persisting an unrelated setting does not lose the persisted language.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -396,6 +460,8 @@ public class SettingsViewModelTests_Persist : IDisposable
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
@@ -437,6 +503,8 @@ public class SettingsViewModelTests_Persist : IDisposable
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
@@ -476,6 +544,8 @@ public class SettingsViewModelTests_Persist : IDisposable
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
@@ -536,6 +606,8 @@ public class SettingsViewModelTests_Persist : IDisposable
             QuietHoursEnd = new TimeSpan(6, 15, 0),
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);

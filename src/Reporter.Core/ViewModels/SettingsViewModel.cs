@@ -40,6 +40,8 @@ public partial class SettingsViewModel : ObservableObject
     private string _retentionDaysText;
     private bool _autoRefreshEnabled = true;
     private RefreshIntervalOption? _selectedRefreshInterval;
+    private bool _refreshOnStartupEnabled = true;
+    private SortOrderOption? _selectedSortOrder;
     private bool _autoMarkReadEnabled = true;
     private AutoMarkReadDelayOption? _selectedAutoMarkReadDelay;
     private bool _notificationsEnabled = true;
@@ -51,6 +53,8 @@ public partial class SettingsViewModel : ObservableObject
     private TimeSpan? _quietHoursEnd;
     private ThemeOption? _selectedTheme;
     private LanguageOption? _selectedLanguage;
+    private string? _loadedLanguage;
+    private bool _languageRestartHintVisible;
     private bool _hasError;
     private string _errorMessage = string.Empty;
     private volatile bool _isLoading;
@@ -108,6 +112,11 @@ public partial class SettingsViewModel : ObservableObject
             new() { Value = SettingsValues.LanguageSystem, Label = AppResources.SettingsLanguageSystem },
             new() { Value = SettingsValues.LanguageGerman, Label = AppResources.SettingsLanguageGerman },
             new() { Value = SettingsValues.LanguageEnglish, Label = AppResources.SettingsLanguageEnglish },
+        };
+        SortOrderOptions = new List<SortOrderOption>
+        {
+            new() { Value = SettingsValues.SortOrderDescending, Label = AppResources.SettingsSortOrderNewest },
+            new() { Value = SettingsValues.SortOrderAscending, Label = AppResources.SettingsSortOrderOldest },
         };
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
@@ -168,6 +177,11 @@ public partial class SettingsViewModel : ObservableObject
     /// Gets the selectable language options.
     /// </summary>
     public IReadOnlyList<LanguageOption> LanguageOptions { get; }
+
+    /// <summary>
+    /// Gets the selectable sort order options for the unread articles list.
+    /// </summary>
+    public IReadOnlyList<SortOrderOption> SortOrderOptions { get; }
 
     /// <summary>
     /// Gets or sets the page title.
@@ -254,6 +268,36 @@ public partial class SettingsViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _selectedRefreshInterval, value))
+            {
+                PersistOnChange();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether feeds are refreshed when the application starts.
+    /// </summary>
+    public bool RefreshOnStartupEnabled
+    {
+        get => _refreshOnStartupEnabled;
+        set
+        {
+            if (SetProperty(ref _refreshOnStartupEnabled, value))
+            {
+                PersistOnChange();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the selected sort order option for the unread articles list.
+    /// </summary>
+    public SortOrderOption? SelectedSortOrder
+    {
+        get => _selectedSortOrder;
+        set
+        {
+            if (SetProperty(ref _selectedSortOrder, value))
             {
                 PersistOnChange();
             }
@@ -461,9 +505,26 @@ public partial class SettingsViewModel : ObservableObject
         {
             if (SetProperty(ref _selectedLanguage, value))
             {
+                if (!_isLoading)
+                {
+                    LanguageRestartHintVisible = value?.Value != _loadedLanguage;
+                }
+
                 PersistOnChange();
             }
         }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the hint that a language change requires an
+    /// app restart is visible. The hint is shown only after the selected language
+    /// differs from the persisted value and is hidden again when the persisted
+    /// language is reselected.
+    /// </summary>
+    public bool LanguageRestartHintVisible
+    {
+        get => _languageRestartHintVisible;
+        private set => SetProperty(ref _languageRestartHintVisible, value);
     }
 
     /// <summary>
@@ -501,6 +562,9 @@ public partial class SettingsViewModel : ObservableObject
             AutoRefreshEnabled = settings.AutoRefreshEnabled;
             SelectedRefreshInterval = RefreshIntervalOptions.FirstOrDefault(o => o.Minutes == settings.RefreshIntervalMinutes)
                 ?? RefreshIntervalOptions.First(o => o.Minutes == DefaultRefreshIntervalMinutes);
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled;
+            SelectedSortOrder = SortOrderOptions.FirstOrDefault(o => o.Value == settings.UnreadSortOrder)
+                ?? SortOrderOptions.First(o => o.Value == SettingsValues.SortOrderDescending);
             AutoMarkReadEnabled = SettingsValues.IsAutoMarkReadEnabled(settings.AutoMarkReadMode);
             SelectedAutoMarkReadDelay = AutoMarkReadDelayOptions.FirstOrDefault(o => o.Seconds == settings.AutoMarkReadDelaySeconds)
                 ?? AutoMarkReadDelayOptions.First(o => o.Seconds == DefaultAutoMarkReadDelaySeconds);
@@ -513,6 +577,8 @@ public partial class SettingsViewModel : ObservableObject
                 ?? ThemeOptions.First(o => o.Value == SettingsValues.ThemeSystem);
             SelectedLanguage = LanguageOptions.FirstOrDefault(o => o.Value == settings.Language)
                 ?? LanguageOptions.First(o => o.Value == SettingsValues.LanguageSystem);
+            _loadedLanguage = SelectedLanguage?.Value;
+            LanguageRestartHintVisible = false;
 
             Keywords.Clear();
             var keywords = await _keywordRepository.GetAllAsync();
@@ -683,6 +749,8 @@ public partial class SettingsViewModel : ObservableObject
                 QuietHoursEnd = QuietHoursEnabled ? QuietHoursEnd : null,
                 AutoRefreshEnabled = AutoRefreshEnabled,
                 RefreshIntervalMinutes = SelectedRefreshInterval?.Minutes ?? DefaultRefreshIntervalMinutes,
+                RefreshOnStartupEnabled = RefreshOnStartupEnabled,
+                UnreadSortOrder = SelectedSortOrder?.Value ?? SettingsValues.SortOrderDescending,
                 Theme = SelectedTheme?.Value ?? SettingsValues.ThemeSystem,
                 Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem,
             };

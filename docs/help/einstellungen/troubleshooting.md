@@ -24,6 +24,29 @@
 2. In der Datenbank verifizieren: `settings.auto_refresh_enabled = 1` und plausibles `refresh_interval_minutes` (wird auf 1–1440 geclamppt).
 3. Beachten: Sync-Fehler einzelner Ticks stoppen den Timer nicht — nur stille `SyncLog`-Einträge bzw. Debug-Ausgaben zeigen sie an.
 
+## Start-Abruf läuft nicht
+
+**Symptom:** Beim Öffnen der App werden die Feeds nicht automatisch abgerufen, obwohl „Beim Programmstart abrufen" eingeschaltet ist.
+
+**Ursache:** Der Start-Abruf läuft in `AutoRefreshService.StartAsync` über `RunStartupSyncAsync` — fehlerisoliert und fire-and-forget; Fehler erscheinen nur als `Debug.WriteLine` (`"AutoRefreshService startup sync failed"`). Ohne Netzwerk (`INetworkStatusService.IsOnline == false`) wird er still übersprungen.
+
+**Lösung:**
+1. `settings.refresh_on_startup_enabled = 1` in der Datenbank verifizieren (Default `1`; Migration `AddSettingsStartupRefreshAndSortOrder`).
+2. Sicherstellen, dass beim Start eine Internetverbindung bestand.
+3. Debug-Ausgabe auf `AutoRefreshService startup sync failed` und `App.OnStart auto refresh start failed` prüfen.
+4. Beachten: Der Start-Abruf ist unabhängig von `auto_refresh_enabled` — er läuft auch bei ausgeschalteter Hintergrund-Aktualisierung.
+
+## Ungelesen-Liste zeigt falsche Reihenfolge
+
+**Symptom:** Die Liste **Ungelesen** sortiert entgegen der gewählten Einstellung **Sortierung der ungelesenen Artikel**.
+
+**Ursache:** `UnreadViewModel.LoadPageAsync` wertet `settings.unread_sort_order` aus (`"desc"`/`"asc"`); jeder andere Wert fällt auf `"desc"` zurück. Artikel ohne Veröffentlichungsdatum folgen dem SQLite-NULL-Verhalten (bei aufsteigender Sortierung zuerst, bei absteigender zuletzt).
+
+**Lösung:**
+1. `settings.unread_sort_order` prüfen — gültig sind nur `desc` und `asc`.
+2. Beachten: Die Einstellung gilt nur für **Ungelesen**; die Liste **Später** ist bewusst fest absteigend sortiert.
+3. Bei gemischter Reihenfolge Artikel ohne Veröffentlichungsdatum berücksichtigen.
+
 ## Gefilterte Artikel erscheinen weiterhin in den Listen
 
 **Symptom:** Ein Artikel mit Keyword-Treffer ist trotz eingerichtetem Schlagwort in der Ungelesen-Liste sichtbar.

@@ -4,7 +4,7 @@
 
 # Artikeldetailansicht
 
-Tippe auf einen Artikel in der Liste (z. B. unter **Ungelesen** oder **Später**), um die Detailansicht zu öffnen. Hier wird der gespeicherte Volltext im Lesefenster angezeigt, zusammen mit Titel, Feed-Name, Veröffentlichungsdatum und geschätzter Lesezeit.
+Tippe auf einen Artikel in der Liste (z. B. unter **Ungelesen** oder **Später**), um die Detailansicht zu öffnen. Hier wird der gespeicherte Volltext im Lesefenster angezeigt, zusammen mit Titel, Feed-Name (mit dem Favicon des Feeds, sofern bekannt), Veröffentlichungsdatum und geschätzter Lesezeit — bei sehr kurzen Artikeln von höchstens einer Minute Lesezeit entfällt die Lesezeit-Angabe.
 
 ## Bedienelemente
 

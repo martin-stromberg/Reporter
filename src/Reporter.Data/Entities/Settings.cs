@@ -61,6 +61,16 @@ public class Settings
     public int RefreshIntervalMinutes { get; set; } = 30;
 
     /// <summary>
+    /// Gets or sets a value indicating whether feeds are refreshed when the application starts.
+    /// </summary>
+    public bool RefreshOnStartupEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the sort order of the unread articles list ("desc" or "asc").
+    /// </summary>
+    public string? UnreadSortOrder { get; set; } = SettingsValues.SortOrderDescending;
+
+    /// <summary>
     /// Gets or sets the appearance theme ("system", "light" or "dark").
     /// </summary>
     public string? Theme { get; set; } = SettingsValues.ThemeSystem;

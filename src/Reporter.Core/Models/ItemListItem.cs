@@ -63,6 +63,23 @@ public class ItemListItem
     public string? ImageUrl { get; init; }
 
     /// <summary>
+    /// Gets the favicon URL of the item's feed, or <c>null</c> when none was discovered.
+    /// </summary>
+    public string? FeedFaviconUrl { get; init; }
+
+    /// <summary>
+    /// Gets the first letter of the feed title in upper case for the fallback avatar,
+    /// or <c>"?"</c> when the feed title is empty.
+    /// </summary>
+    public string FeedInitial
+    {
+        get
+        {
+            return FeedAvatar.Initial(FeedTitle);
+        }
+    }
+
+    /// <summary>
     /// Gets a plain-text summary of the article content.
     /// </summary>
     public string? Summary { get; init; }
@@ -93,6 +110,7 @@ public class ItemListItem
             CategoryId = CategoryId,
             CategoryName = CategoryName,
             ImageUrl = ImageUrl,
+            FeedFaviconUrl = FeedFaviconUrl,
             Summary = Summary,
             ReadingTimeText = ReadingTimeText,
         };

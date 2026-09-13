@@ -19,6 +19,7 @@ public partial class FeedsViewModel : BaseViewModel
     private readonly IFeedRepository _feedRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IFeedSyncService _feedSyncService;
+    private readonly IFeedIconService _feedIconService;
     private readonly ILocalNotificationService? _localNotificationService;
 
     private string _newUrl = string.Empty;
@@ -41,6 +42,7 @@ public partial class FeedsViewModel : BaseViewModel
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
     /// <param name="feedSearchService">The feed search service.</param>
+    /// <param name="feedIconService">The service used to discover the favicon of a feed's website.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="localNotificationService">The platform notification service, used to detect whether notifications are supported at all.</param>
     public FeedsViewModel(
@@ -48,6 +50,7 @@ public partial class FeedsViewModel : BaseViewModel
         ICategoryRepository categoryRepository,
         IFeedSyncService feedSyncService,
         IFeedSearchService feedSearchService,
+        IFeedIconService feedIconService,
         INetworkStatusService networkStatusService,
         ILocalNotificationService? localNotificationService = null)
     {
@@ -55,6 +58,7 @@ public partial class FeedsViewModel : BaseViewModel
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
         _feedSearchService = feedSearchService;
+        _feedIconService = feedIconService;
         TrackConnectivity(networkStatusService);
         _localNotificationService = localNotificationService;
         LoadCommand = new AsyncRelayCommand(LoadCommandAsync);
@@ -518,6 +522,7 @@ public partial class FeedsViewModel : BaseViewModel
             HealthStatus = feed.HealthStatus,
             HealthLastChange = feed.HealthLastChange,
             NotificationsEnabled = notificationsEnabled,
+            FaviconUrl = feed.FaviconUrl,
         };
     }
 

@@ -19,7 +19,7 @@ Issue #77 bündelt acht Verbesserungen an der .NET-MAUI-App „Reporter". Gemä�
 | R7 — Debug-Versand per E-Mail | **Abspalten** | Mittlerer Umfang mit offenem fachlichem Rahmen (Bedeutung von „gesammelt werden": dauerhafte Protokollierung vs. On-Demand-Momentaufnahme; Empfängeradresse unklar). Eigene Issue-Klärung sinnvoll. |
 | R8 — Benachrichtigungen nur bei Hintergrundabruf | **Abspalten** | Erfordert nicht existierende iOS-Hintergrundinfrastruktur (`BGTaskScheduler`/`BGAppRefreshTask`, `UIBackgroundModes` in `Info.plist`); Windows besitzt keine Hintergrundinfrastruktur. Ein reines Unterdrücken der Vordergrund-Darstellung würde bedeuten, dass **nie wieder** Benachrichtigungen erscheinen — der Punkt ist ohne den Infrastruktur-Ausbau nicht sinnvoll umsetzbar und ist der größte Einzelumfang. |
 
-Für R7 und R8 werden als erster Umsetzungsschritt eigenständige GitHub-Issues mit fachlicher Beschreibung angelegt (`gh issue create`; `gh`-CLI ist installiert und als `martin-stromberg` mit `repo`-Scope authentifiziert).
+Für R7 und R8 werden als erster Umsetzungsschritt eigenständige GitHub-Issues mit fachlicher Beschreibung angelegt (`gh issue create`; `gh`-CLI ist installiert und als `martin-stromberg` mit `repo`-Scope authentifiziert). **Erledigt:** R7 → Issue #81, R8 → Issue #82.
 
 ## Designentscheidungen
 
@@ -31,7 +31,7 @@ Für R7 und R8 werden als erster Umsetzungsschritt eigenständige GitHub-Issues 
 | `FeedIconService` (R2) | Neuer `HttpClient`-basierter Service in `Reporter.Core` (Gateway-frei, da reines HTTP+Parsing): HTML der Webseite laden, `<link rel="icon|shortcut icon|apple-touch-icon">` auswerten (Regex-Muster aus `FeedSearchService.ExtractFeedLinks`), relative URLs auflösen, Fallback `{Host}/favicon.ico`. Kandidaten werden per Request verifiziert (erfolgreiche Antwort), sonst `null`. | Ein ungeprüftes `/favicon.ico` würde bei 404 eine defekte Bild-URL speichern und den Initialen-Fallback verhindern. Service ist analog `FeedSearchService` unit-testbar (`FakeHttpMessageHandler`). |
 | Generiertes Ersatzbild (R2) | Kein echtes Bitmap: Kreis-`Border` mit `Label` (Initialbuchstabe) in `ArticleCardView` **und** im Feed-Karten-Template der `FeedsPage`, analog den bestehenden Badge-/Kreis-Mustern (Aktions-`Border`s mit `RoundRectangle`). Der Initialbuchstabe kommt als berechnete Eigenschaft `FeedInitial` aus `ItemListItem.FeedTitle` bzw. `FeedListItem.Title`. | Erfüllt die Anforderung („Kreis mit dem ersten Buchstaben des Feed-Namens") ohne Bildgenerierung; Dark-Mode-fähig via `AppThemeBinding`. |
 | Standardbild auf der Feeds-Seite (R2) | `FeedListItem` erhält `FaviconUrl` + `FeedInitial`; `FeedRepository.GetAllWithDetailsAsync` projiziert `f.FaviconUrl`; `FeedsViewModel.ToFeed` führt `FaviconUrl` beim Rekonstruieren des `Feed` mit. | Laut Klärung soll das Standardbild auch auf der Feeds-Seite erscheinen. Die `ToFeed`-Mitnahme ist zwingend: `RenameFeedAsync`, `ChangeFeedCategoryAsync` und `SaveAsync` (Edit) schreiben über `UpdateAsync` den kompletten Datensatz — ohne Mitnahme ginge das Favicon bei jeder Teil-Aktualisierung verloren. |
-| Favicon-Nachrüstung für Bestandsfeeds (R2) | Nachhole-Pfad in `FeedSyncService.UpdateFeedHealthAsync`: bei erfolgreichem Sync und `feed.FaviconUrl == null` wird das Favicon fehlerisoliert ermittelt und mit demselben `UpdateAsync` persistiert. Kein separater Backfill-Job. | Laut Klärung; nutzt den vorhandenen erfolgreichen Sync als natürlichen Trigger und bleibt strikt fehlerisoliert. |
+| Favicon-Nachrüstung für Bestandsfeeds (R2) | Nachhole-Pfad in `FeedSyncService.RunSyncAsync`: bei erfolgreichem Sync und `feed.FaviconUrl == null` wird das Favicon fehlerisoliert ermittelt, an `UpdateFeedHealthAsync` übergeben und mit demselben `UpdateAsync` persistiert (Review-Nacharbeit: die Auflösung liegt im Aufrufer, damit `UpdateFeedHealthAsync` reine Persistenz bleibt). Kein separater Backfill-Job. | Laut Klärung; nutzt den vorhandenen erfolgreichen Sync als natürlichen Trigger und bleibt strikt fehlerisoliert. |
 | Start-Abruf (R3) | Umsetzung in `AutoRefreshService.StartAsync`: nach dem Laden der Settings wird bei `RefreshOnStartupEnabled == true` und `IsOnline` ein `SyncAllAsync` fehlerisoliert und nicht-blockierend (fire-and-forget mit `Debug.WriteLine`-Logging) gestartet. Defaultwert `RefreshOnStartupEnabled = true`. | `StartAsync` lädt die Settings ohnehin und besitzt bereits `ISettingsRepository`-, `IFeedSyncService`- und `INetworkStatusService`-Abhängigkeiten — kein Eingriff in `App.OnStart` nötig und über `AutoRefreshServiceTests` mit `TestWaitHelper`/`TimeProvider` unit-testbar. Default `true` laut Klärung (analog `AutoRefreshEnabled = true`). |
 | Sortierparameter (R4) | `IItemRepository.GetUnreadByDateAsync(page, pageSize, categoryId, bool ascending = false)`; aufsteigend = `OrderBy(PublishedAt).ThenByDescending(Id)` (exakte Umkehr inkl. Tiebreaker), absteigend = unverändert. | Optionaler Parameter hält den Bruch minimal; die String-Einstellung wird ausschließlich in `UnreadViewModel` ausgewertet und als Bool an das Repository weitergereicht. |
 | Settings-Speicher (R4) | `Settings.UnreadSortOrder` als `string?` mit `SettingsValues`-Konstanten `SortOrderDescending`/`SortOrderAscending` (`"desc"`/`"asc"`), Default `"desc"`. | Folgt dem `Theme`-/`Language`-Muster (stringbasierte Konstanten statt Enum), ungültige persistierte Werte fallen in `LoadAsync` auf den Default zurück. |
@@ -55,9 +55,9 @@ Beteiligte Klassen/Komponenten: `ReadingTimeEstimator`, `ItemRepository`, `ItemL
 2. `TryPersistNewFeedAsync` bestimmt die Site-URL: übergebenes `siteUrl`, sonst Schema+Host der Feed-URL.
 3. Bei `INetworkStatusService.IsOnline` wird `IFeedIconService.FindFaviconUrlAsync(siteUrl)` fehlerisoliert aufgerufen (eigener `try/catch`, Fehler → `null`, die Anlage wird nie blockiert); offline wird der Schritt übersprungen.
 4. Der neue `Feed`-Datensatz wird mit `FaviconUrl` persistiert.
-5. Nachhole-Pfad: `FeedSyncService.UpdateFeedHealthAsync` — war der Sync erfolgreich und `feed.FaviconUrl` ist `null`, wird die Site-URL aus dem Feed-Dokument (`SyndicationFeed.Links`, `RelationshipType == "alternate"`, Fallback Host der Feed-URL) bestimmt, `IFeedIconService` fehlerisoliert aufgerufen und `FaviconUrl` mit persistiert. `FeedSyncService` erhält dafür eine `IFeedIconService`-Abhängigkeit.
+5. Nachhole-Pfad: `FeedSyncService.RunSyncAsync` — war der Sync erfolgreich und `feed.FaviconUrl` ist `null`, wird die Site-URL aus dem Feed-Dokument (`SyndicationFeed.Links`, `RelationshipType == "alternate"`, Fallback Host der Feed-URL via `FeedSiteResolver`) bestimmt, `IFeedIconService` fehlerisoliert aufgerufen und die aufgelöste `FaviconUrl` an `UpdateFeedHealthAsync` übergeben, die sie mit persistiert. `FeedSyncService` erhält dafür eine `IFeedIconService`-Abhängigkeit.
 
-Beteiligte Klassen/Komponenten: `IFeedIconService`/`FeedIconService` (neu), `FeedsViewModel`, `FeedSyncService`, `IFeedRepository`/`FeedRepository`, `Feed`
+Beteiligte Klassen/Komponenten: `IFeedIconService`/`FeedIconService`/`FeedSiteResolver` (neu), `FeedsViewModel`, `FeedSyncService`, `IFeedRepository`/`FeedRepository`, `Feed`
 
 ### R2 — Standardbild-Anzeige in der Artikelkarte
 
@@ -139,6 +139,7 @@ Beteiligte Klassen/Komponenten: keine (Meta-Aufgabe)
 |--------|-----|-------|
 | `IFeedIconService` (`src/Reporter.Core/Interfaces/`) | Interface | Contract der Favicon-Ermittlung: `FindFaviconUrlAsync(string siteUrl, CancellationToken)` → `Task<string?>` (R2) |
 | `FeedIconService` (`src/Reporter.Core/Services/`) | Klasse | `HttpClient`-basierte Favicon-Discovery: `<link rel="icon…">`-Parsing (Muster aus `FeedSearchService.ExtractFeedLinks`), relative-URL-Auflösung, `/favicon.ico`-Fallback, Verifikation der Kandidaten (R2) |
+| `FeedSiteResolver` (`src/Reporter.Core/Services/`) | Hilfsklasse (statisch) | Gemeinsame Site-URL-Auflösung (`siteUrl`, Fallback: Authority der Feed-URL) für `FeedIconService` und Test-Fakes — in der Review-Nacharbeit ergänzt, um die Duplikation zwischen `FeedIconService.TryFindFaviconUrlAsync` und `FakeFeedIconService` zu beseitigen (R2) |
 | `SortOrderOption` (`src/Reporter.Core/ViewModels/`) | Datenmodellklasse | Picker-Option (`Value`/`Label`) analog `LanguageOption`/`RefreshIntervalOption` (R4) |
 | EF-Migration `AddFeedFaviconUrl` | Migration | Spalte `feeds.favicon_url` (R2) |
 | EF-Migration `AddSettingsStartupRefreshAndSortOrder` | Migration | Spalten `settings.refresh_on_startup_enabled`, `settings.unread_sort_order` (R3/R4) |
@@ -218,7 +219,9 @@ Beteiligte Klassen/Komponenten: keine (Meta-Aufgabe)
 ### `FeedSyncService` (`src/Reporter.Core/Services/`)
 
 - **Neue Abhängigkeit:** `IFeedIconService` (R2-Nachhole-Pfad).
-- **Geänderte Methoden:** `UpdateFeedHealthAsync` — bei erfolgreichem Sync und `feed.FaviconUrl == null` Site-Link des Feed-Dokuments auswerten (Fallback: Host der Feed-URL), Favicon fehlerisoliert ermitteln und mit demselben `UpdateAsync` persistieren (R2).
+- **Geänderte Methoden:**
+  - `RunSyncAsync` — bei erfolgreichem Sync und `feed.FaviconUrl == null` Site-Link des Feed-Dokuments auswerten (Fallback: Host der Feed-URL), Favicon fehlerisoliert ermitteln und an `UpdateFeedHealthAsync` übergeben (R2).
+  - `UpdateFeedHealthAsync` — neuer Parameter `faviconUrl`; persistiert die übergebene bzw. die bereits gespeicherte URL — reine Persistenz ohne Netzwerk-Seiteneffekt (R2, Review-Nacharbeit).
 
 ### `AutoRefreshService` (`src/Reporter.Core/Services/`)
 
@@ -309,7 +312,7 @@ Hinweis: Die Migrationen werden mit `dotnet ef migrations add` gegen `Reporter.D
 
 5. **R2b: Favicon-Erfassung bei Feed-Anlage und Sync-Nachholung**
    - Voraussetzungen: Schritte 2 und 4.
-   - Beschreibung: `FeedsViewModel.TryPersistNewFeedAsync`-Signatur um `siteUrl` erweitern, `SubscribeResultAsync`/`DirectAddAsync`/`OfferDirectAddAsync` anpassen, fehlerisolierten Icon-Abruf mit `IsOnline`-Guard einbauen; `FeedSyncService.UpdateFeedHealthAsync` um den Nachhole-Pfad erweitern.
+   - Beschreibung: `FeedsViewModel.TryPersistNewFeedAsync`-Signatur um `siteUrl` erweitern, `SubscribeResultAsync`/`DirectAddAsync`/`OfferDirectAddAsync` anpassen, fehlerisolierten Icon-Abruf mit `IsOnline`-Guard einbauen; `FeedSyncService` um den Nachhole-Pfad erweitern (Auflösung in `RunSyncAsync`, Persistenz über `UpdateFeedHealthAsync`).
 
 6. **R2c: Standardbild-Anzeige auf Artikelkarte, Detailseite und Feeds-Seite**
    - Voraussetzungen: Schritte 2 und 5.
@@ -406,3 +409,23 @@ Welche bestehenden E2E-Tests müssen angepasst werden?
 ## Offene Punkte
 
 Keine.
+
+## Umsetzungsstand (Abschluss)
+
+- **R0 erledigt:** R7 -> Issue #81, R8 -> Issue #82 (fachliche Beschreibung
+  inkl. offener Klaerungspunkte jeweils im Issue-Body).
+- **R1-R6 umgesetzt** wie geplant. Abweichung in R6: Die Wortmarke im Splash
+  wurde nach Pfadkonvertierung weiss (`#ffffff`) statt dunkel (`#1e293b`)
+  eingefaerbt, damit sie auf dem dunklen Splash-Hintergrund `Color="#1e293b"`
+  sichtbar bleibt.
+- **Verifikation:** `dotnet build Reporter.sln -c Release` 0 Warnungen/
+  0 Fehler; `dotnet test` 400/400 bestanden; `Run-StaticChecks.ps1`
+  Exit-Code 0 ohne Befund. Manuelle UI-Verifikation am 390 x 844-pt-
+  Windows-Fenster (Dark + Light) durchgefuehrt und inkl. Screenshots in
+  `test-results.md` dokumentiert (`test-results/issue-77/manual-*.png`).
+- **Hilfeseiten** aktualisiert: `synchronisation.md`, `ungelesen.md`,
+  `sprache.md`, `feed-suche.md`, `datenmodell.md`,
+  `einstellungen/beschreibung.md`.
+- **Bekannte Einschraenkung:** `.ico`-Favicons ohne PNG-Alternative werden
+  gespeichert; die Decodierung obliegt dem Plattform-Renderer (unter Windows
+  auf der Feeds-Seite verifiziert gerendert).

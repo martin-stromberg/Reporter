@@ -51,6 +51,11 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("category_id");
 
+                    b.Property<string>("FaviconUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("favicon_url");
+
                     b.Property<DateTime?>("HealthLastChange")
                         .HasColumnType("TEXT")
                         .HasColumnName("health_last_change");
@@ -219,6 +224,12 @@ namespace Reporter.Data.Migrations
                         .HasDefaultValue(30)
                         .HasColumnName("refresh_interval_minutes");
 
+                    b.Property<bool>("RefreshOnStartupEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true)
+                        .HasColumnName("refresh_on_startup_enabled");
+
                     b.Property<int>("RetentionDays")
                         .HasColumnType("INTEGER")
                         .HasColumnName("retention_days");
@@ -227,6 +238,11 @@ namespace Reporter.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT")
                         .HasColumnName("theme");
+
+                    b.Property<string>("UnreadSortOrder")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("unread_sort_order");
 
                     b.HasKey("Id");
 
@@ -243,8 +259,10 @@ namespace Reporter.Data.Migrations
                             NotificationSummaryEnabled = false,
                             NotificationsEnabled = true,
                             RefreshIntervalMinutes = 30,
+                            RefreshOnStartupEnabled = true,
                             RetentionDays = 30,
-                            Theme = "system"
+                            Theme = "system",
+                            UnreadSortOrder = "desc"
                         });
                 });
 

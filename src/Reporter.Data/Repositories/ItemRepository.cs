@@ -104,7 +104,7 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
     {
         await using var context = await _factory.CreateDbContextAsync();
         var query = context.Items
@@ -120,9 +120,11 @@ public class ItemRepository : IItemRepository
             query = query.Where(i => feedIds.Contains(i.FeedId));
         }
 
-        var entities = await SelectListItemRows(query
-                .OrderByDescending(i => i.PublishedAt)
-                .ThenBy(i => i.Id)
+        var ordered = ascending
+            ? query.OrderBy(i => i.PublishedAt).ThenByDescending(i => i.Id)
+            : query.OrderByDescending(i => i.PublishedAt).ThenBy(i => i.Id);
+
+        var entities = await SelectListItemRows(ordered
                 .Skip(page * pageSize)
                 .Take(pageSize))
             .ToListAsync();
@@ -307,6 +309,7 @@ public class ItemRepository : IItemRepository
             IsSavedForLater = i.IsSavedForLater,
             ContentHtml = i.ContentHtml,
             FeedTitle = i.Feed.Title,
+            FeedFaviconUrl = i.Feed.FaviconUrl,
             CategoryId = i.Feed.CategoryId,
             CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
         });
@@ -324,6 +327,7 @@ public class ItemRepository : IItemRepository
             IsRead = row.IsRead,
             IsSavedForLater = row.IsSavedForLater,
             FeedTitle = row.FeedTitle,
+            FeedFaviconUrl = row.FeedFaviconUrl,
             CategoryId = row.CategoryId,
             CategoryName = row.CategoryName,
             ImageUrl = ExtractImageUrl(row.ContentHtml),
@@ -419,6 +423,8 @@ public class ItemRepository : IItemRepository
         public string? ContentHtml { get; set; }
 
         public string FeedTitle { get; set; } = string.Empty;
+
+        public string? FeedFaviconUrl { get; set; }
 
         public Guid? CategoryId { get; set; }
 

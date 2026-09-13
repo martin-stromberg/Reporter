@@ -1028,4 +1028,164 @@ public class ItemRepositoryTests : IDisposable
 
         Assert.Equal(0, deleted);
     }
+
+    /// <summary>
+    /// Verifies that items estimated at one minute of reading time or less project
+    /// an empty <c>ReadingTimeText</c> so the label stays hidden in the UI.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_OneMinuteReadingTime_ProjectsEmpty()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Short",
+            GuidOrHash = "short",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>Hello world</p>",
+        });
+
+        var result = await _repository.GetUnreadByDateAsync(0, 20);
+
+        Assert.Single(result);
+        Assert.True(string.IsNullOrEmpty(result[0].ReadingTimeText));
+    }
+
+    /// <summary>
+    /// Verifies that GetUnreadByDateAsync projects the favicon URL of the item's feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_ProjectsFeedFaviconUrl()
+    {
+        var feedRepository = new FeedRepository(_factory);
+        var feedId = Guid.NewGuid();
+        await feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/feed",
+            Title = "Example Feed",
+            NotificationsEnabled = true,
+            FaviconUrl = "https://example.com/favicon.ico",
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Unread",
+            GuidOrHash = "unread",
+            IsRead = false,
+            IsSavedForLater = false,
+        });
+
+        var result = await _repository.GetUnreadByDateAsync(0, 20);
+
+        Assert.Single(result);
+        Assert.Equal("https://example.com/favicon.ico", result[0].FeedFaviconUrl);
+        Assert.Equal("E", result[0].FeedInitial);
+    }
+
+    /// <summary>
+    /// Verifies that the ascending sort order returns the oldest items first and
+    /// reverses the id tiebreaker direction for equal timestamps.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_Ascending_OrdersByPublishedAtAscending()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var sameStamp = new DateTime(2026, 1, 2, 12, 0, 0, DateTimeKind.Utc);
+        var tiedLowerId = new Guid("00000000-0000-0000-0000-000000000001");
+        var tiedHigherId = new Guid("00000000-0000-0000-0000-000000000002");
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Newest",
+            GuidOrHash = "newest",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc),
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = tiedLowerId,
+            FeedId = feedId,
+            Title = "TiedLow",
+            GuidOrHash = "tiedlow",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = sameStamp,
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = tiedHigherId,
+            FeedId = feedId,
+            Title = "TiedHigh",
+            GuidOrHash = "tiedhigh",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = sameStamp,
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Oldest",
+            GuidOrHash = "oldest",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        });
+
+        var result = await _repository.GetUnreadByDateAsync(0, 20, ascending: true);
+
+        Assert.Equal(4, result.Count);
+        Assert.Equal("Oldest", result[0].Title);
+        Assert.Equal("Newest", result[3].Title);
+        // Equal PublishedAt values are tie-broken by id in descending order.
+        Assert.Equal(tiedHigherId, result[1].Id);
+        Assert.Equal(tiedLowerId, result[2].Id);
+    }
+
+    /// <summary>
+    /// Verifies the documented SQLite NULL ordering: items without a
+    /// <c>PublishedAt</c> timestamp sort first in ascending order.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_Ascending_NullPublishedAt_SortsFirst()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Dated",
+            GuidOrHash = "dated",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        });
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Undated",
+            GuidOrHash = "undated",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = null,
+        });
+
+        var result = await _repository.GetUnreadByDateAsync(0, 20, ascending: true);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Undated", result[0].Title);
+        Assert.Equal("Dated", result[1].Title);
+    }
 }

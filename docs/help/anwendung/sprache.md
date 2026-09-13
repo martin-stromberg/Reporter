@@ -16,7 +16,7 @@ Die App richtet sich an deutsch- und englischsprachige Anwender. Über die Sprac
   - **System** (Voreinstellung) — die App folgt der Systemsprache des Geräts: Deutsch bei deutscher Gerätesprache, Englisch bei englischer. Bei jeder anderen Systemsprache (z. B. Französisch) verwendet die App **Englisch als Ersatzsprache**.
   - **Deutsch** — alle Texte erscheinen auf Deutsch, unabhängig von der Gerätesprache.
   - **Englisch** — alle Texte erscheinen auf Englisch, unabhängig von der Gerätesprache.
-- Die Auswahl wird sofort gespeichert, wirkt aber erst nach einem **Neustart der App**. Unter dem Auswahlfeld weist der Hinweis „Die neue Sprache wird nach einem Neustart der App wirksam." darauf hin.
+- Die Auswahl wird sofort gespeichert, wirkt aber erst nach einem **Neustart der App**. Sobald du eine andere Sprache wählst, erscheint unter dem Auswahlfeld der Hinweis „Die neue Sprache wird nach einem Neustart der App wirksam." — stellst du die Auswahl wieder auf die bisherige Sprache zurück, verschwindet der Hinweis. Ohne Änderung bleibt er ausgeblendet.
 - Nach dem Neustart erscheinen alle sichtbaren Texte inklusive Zahlen- und Datumsformaten in der gewählten Sprache.
 
 ## Beispiele

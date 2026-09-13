@@ -900,6 +900,51 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Refresh on app start ähnelt.
+        /// </summary>
+        public static string SettingsRefreshOnStartupLabel {
+            get {
+                return ResourceManager.GetString("SettingsRefreshOnStartupLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Load feeds when the app starts ähnelt.
+        /// </summary>
+        public static string SettingsRefreshOnStartupHint {
+            get {
+                return ResourceManager.GetString("SettingsRefreshOnStartupHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Sort order of unread articles ähnelt.
+        /// </summary>
+        public static string SettingsSortOrderLabel {
+            get {
+                return ResourceManager.GetString("SettingsSortOrderLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Newest first ähnelt.
+        /// </summary>
+        public static string SettingsSortOrderNewest {
+            get {
+                return ResourceManager.GetString("SettingsSortOrderNewest", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Oldest first ähnelt.
+        /// </summary>
+        public static string SettingsSortOrderOldest {
+            get {
+                return ResourceManager.GetString("SettingsSortOrderOldest", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Color scheme ähnelt.
         /// </summary>
         public static string SettingsThemeLabel {

@@ -86,10 +86,49 @@
                         <Setter Property="IsVisible" Value="False"/>
                     </DataTrigger>
                 </Border.Triggers>
-                <Image Source="{Binding ImageUrl}"
-                       Aspect="AspectFill"
-                       WidthRequest="80"
-                       HeightRequest="80"/>
+                <Grid>
+                    <Image Source="{Binding ImageUrl}"
+                           Aspect="AspectFill"
+                           WidthRequest="80"
+                           HeightRequest="80"
+                           IsVisible="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+                    <Image Source="{Binding FeedFaviconUrl}"
+                           Aspect="AspectFit"
+                           WidthRequest="48"
+                           HeightRequest="48"
+                           IsVisible="False">
+                        <Image.Triggers>
+                            <MultiTrigger TargetType="Image">
+                                <MultiTrigger.Conditions>
+                                    <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                    <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="IsVisible" Value="True"/>
+                            </MultiTrigger>
+                        </Image.Triggers>
+                    </Image>
+                    <Border StrokeShape="RoundRectangle 40"
+                            WidthRequest="80"
+                            HeightRequest="80"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+                            IsVisible="False">
+                        <Border.Triggers>
+                            <MultiTrigger TargetType="Border">
+                                <MultiTrigger.Conditions>
+                                    <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                    <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="IsVisible" Value="True"/>
+                            </MultiTrigger>
+                        </Border.Triggers>
+                        <Label Text="{Binding FeedInitial}"
+                               FontSize="28"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
+                </Grid>
             </Border>
 
             <Label Grid.Row="2"

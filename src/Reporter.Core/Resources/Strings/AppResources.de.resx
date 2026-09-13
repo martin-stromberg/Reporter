@@ -233,6 +233,21 @@
   <data name="SettingsRefreshIntervalLabel" xml:space="preserve">
     <value>Abruf-Intervall</value>
   </data>
+  <data name="SettingsRefreshOnStartupLabel" xml:space="preserve">
+    <value>Beim Programmstart abrufen</value>
+  </data>
+  <data name="SettingsRefreshOnStartupHint" xml:space="preserve">
+    <value>Feeds beim Start der App laden</value>
+  </data>
+  <data name="SettingsSortOrderLabel" xml:space="preserve">
+    <value>Sortierung der ungelesenen Artikel</value>
+  </data>
+  <data name="SettingsSortOrderNewest" xml:space="preserve">
+    <value>Neueste zuerst</value>
+  </data>
+  <data name="SettingsSortOrderOldest" xml:space="preserve">
+    <value>Älteste zuerst</value>
+  </data>
   <data name="SettingsInterval15Min" xml:space="preserve">
     <value>Alle 15 Minuten</value>
   </data>

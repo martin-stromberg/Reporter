@@ -52,13 +52,14 @@ public interface IItemRepository
     Task<IReadOnlyList<Item>> GetUnreadByDateAsync();
 
     /// <summary>
-    /// Gets a paged list of unread items sorted by publication date descending asynchronously.
+    /// Gets a paged list of unread items sorted by publication date asynchronously.
     /// </summary>
     /// <param name="page">The zero-based page index.</param>
     /// <param name="pageSize">The number of items per page.</param>
     /// <param name="categoryId">The optional category to filter by.</param>
+    /// <param name="ascending"><c>true</c> to sort oldest first; <c>false</c> (the default) for newest first.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the unread items for the page.</returns>
-    Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null);
+    Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false);
 
     /// <summary>
     /// Gets the total count of unread items for the optional category filter.

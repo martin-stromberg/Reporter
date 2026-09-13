@@ -19,6 +19,7 @@ public class FeedsViewModelTests : IDisposable
     private readonly CategoryRepository _categoryRepository;
     private readonly FakeFeedSyncService _syncService;
     private readonly FakeFeedSearchService _searchService;
+    private readonly FakeFeedIconService _feedIconService;
     private readonly FakeNetworkStatusService _networkStatusService;
 
     /// <summary>
@@ -31,6 +32,7 @@ public class FeedsViewModelTests : IDisposable
         _categoryRepository = new CategoryRepository(_factory);
         _syncService = new FakeFeedSyncService();
         _searchService = new FakeFeedSearchService();
+        _feedIconService = new FakeFeedIconService();
         _networkStatusService = new FakeNetworkStatusService();
     }
 
@@ -44,7 +46,7 @@ public class FeedsViewModelTests : IDisposable
 
     private FeedsViewModel CreateViewModel()
     {
-        return new FeedsViewModel(_feedRepository, _categoryRepository, _syncService, _searchService, _networkStatusService);
+        return new FeedsViewModel(_feedRepository, _categoryRepository, _syncService, _searchService, _feedIconService, _networkStatusService);
     }
 
     private async Task<Guid> SeedFeedAsync(string title = "Test Feed", string url = "https://example.com/rss", bool notificationsEnabled = true)
@@ -1518,6 +1520,125 @@ public class FeedsViewModelTests : IDisposable
         Assert.Equal(3, labels.Distinct(StringComparer.Ordinal).Count());
         Assert.Equal("News (2)", labels[0]);
         Assert.Equal("News", labels[1]);
+    }
+
+    /// <summary>
+    /// Verifies that a direct add stores the favicon discovered from the feed
+    /// URL's authority.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DirectAddCommand_StoresFaviconUrl()
+    {
+        _feedIconService.NextResult = "https://example.com/favicon.ico";
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NewUrl = "https://example.com/rss";
+
+        await viewModel.DirectAddCommand.ExecuteAsync(null);
+
+        var saved = await _feedRepository.GetByUrlAsync("https://example.com/rss");
+        Assert.NotNull(saved);
+        Assert.Equal("https://example.com/favicon.ico", saved.FaviconUrl);
+        Assert.Equal("https://example.com", Assert.Single(_feedIconService.RequestedSiteUrls));
+    }
+
+    /// <summary>
+    /// Verifies that subscribing a search result uses the result's site URL for
+    /// the favicon lookup.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SubscribeResultCommand_UsesSiteUrlForFaviconLookup()
+    {
+        _feedIconService.NextResult = "https://site.example/icon.png";
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var result = new FeedSearchResult
+        {
+            FeedUrl = "https://feeds.example.com/rss",
+            Title = "Example Feed",
+            SiteUrl = "https://site.example",
+            MatchKind = FeedSearchMatchKind.Directory,
+        };
+
+        await viewModel.SubscribeResultCommand.ExecuteAsync(result);
+
+        var saved = await _feedRepository.GetByUrlAsync("https://feeds.example.com/rss");
+        Assert.NotNull(saved);
+        Assert.Equal("https://site.example/icon.png", saved.FaviconUrl);
+        Assert.Equal("https://site.example", Assert.Single(_feedIconService.RequestedSiteUrls));
+    }
+
+    /// <summary>
+    /// Verifies that a failing favicon lookup does not prevent the feed from
+    /// being added.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DirectAddCommand_IconLookupFails_FeedStillAdded()
+    {
+        _feedIconService.NextException = new InvalidOperationException("lookup failed");
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NewUrl = "https://example.com/rss";
+
+        await viewModel.DirectAddCommand.ExecuteAsync(null);
+
+        var saved = await _feedRepository.GetByUrlAsync("https://example.com/rss");
+        Assert.NotNull(saved);
+        Assert.Null(saved.FaviconUrl);
+        Assert.False(viewModel.HasError);
+    }
+
+    /// <summary>
+    /// Verifies that the favicon lookup is skipped while offline.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DirectAddCommand_Offline_SkipsIconLookup()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        _networkStatusService.IsOnline = false;
+        _networkStatusService.RaiseConnectivityChanged();
+        viewModel.OpenAddFormCommand.Execute(null);
+        viewModel.NewUrl = "https://example.com/rss";
+
+        await viewModel.DirectAddCommand.ExecuteAsync(null);
+
+        var saved = await _feedRepository.GetByUrlAsync("https://example.com/rss");
+        Assert.NotNull(saved);
+        Assert.Null(saved.FaviconUrl);
+        Assert.Empty(_feedIconService.RequestedSiteUrls);
+    }
+
+    /// <summary>
+    /// Verifies that renaming a feed keeps the stored favicon URL.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RenameFeedAsync_PreservesFaviconUrl()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Old Title",
+            NotificationsEnabled = true,
+            FaviconUrl = "https://example.com/favicon.ico",
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+
+        await viewModel.RenameFeedAsync(feed, "New Title");
+
+        var saved = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(saved);
+        Assert.Equal("New Title", saved.Title);
+        Assert.Equal("https://example.com/favicon.ico", saved.FaviconUrl);
     }
 
     private sealed class FakeFeedSyncService : IFeedSyncService

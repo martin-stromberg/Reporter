@@ -31,6 +31,14 @@ Der Abruf läuft im Hintergrund — die App bleibt währenddessen bedienbar, und
 
 Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie das Herunterziehen der Liste, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Die automatische Aktualisierung läuft nur, solange die App geöffnet ist; dauert ein Abruf länger als das eingestellte Intervall, startet der nächste erst nach seinem Abschluss — Abrufe laufen nie parallel. Details siehe [Einstellungen](../einstellungen/index.md).
 
+### Aktualisierung beim App-Start
+
+Der Schalter **Beim Programmstart abrufen** in den **Einstellungen** (Voreinstellung: ein) lässt die App beim Öffnen einmalig alle Feeds abrufen — unabhängig vom Intervall der Hintergrund-Aktualisierung. Der Abruf läuft im Hintergrund und verzögert den Start der App nicht; ohne Internetverbindung wird er übersprungen.
+
+### Feed-Symbole beim Abruf
+
+Beim Anlegen eines Feeds versucht die App, das Favicon der zugehörigen Website zu ermitteln und zu speichern. Fehlt das Symbol noch — etwa weil der Feed offline angelegt wurde —, holt die App es beim nächsten erfolgreichen Abruf nach. Gelingt die Ermittlung nicht, bleibt der Feed funktionsfähig und zeigt stattdessen seinen Anfangsbuchstaben (siehe [Feeds suchen und hinzufügen](feed-suche.md)).
+
 ## Anzeigetitel beim ersten Abruf
 
 Wurde ein Feed ohne bekannten Anzeigetitel angelegt — etwa über die **Suche** mit einem Treffer ohne Titel oder über **URL direkt hinzufügen** bzw. den Direkt-Hinzufügen-Dialog (siehe [Feeds suchen und hinzufügen](feed-suche.md)) —, zeigt die Liste zunächst einen Platzhalter aus der Feed-Adresse: den Dateinamen (z. B. `heise-atom.xml`), bei Adressen ohne Dateipfad den Website-Namen oder notfalls die Adresse selbst. Beim ersten erfolgreichen Abruf ersetzt die App den Platzhalter automatisch durch den echten Titel aus dem Feed. Selbst vergebene Titel (über **Umbenennen**) bleiben unverändert und werden nie überschrieben.

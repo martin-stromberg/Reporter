@@ -39,12 +39,22 @@
 
 **Symptom:** Neue Artikel erscheinen erst nach manuellem Aktualisieren.
 
-**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — die automatische Aktualisierung läuft nur bei geöffneter App.
+**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — die automatische Aktualisierung läuft nur bei geöffneter App. Sollen die Feeds bereits beim Öffnen der App abgerufen werden, ist zusätzlich der Schalter **Beim Programmstart abrufen** zuständig; ohne Internetverbindung wird dieser Abruf übersprungen.
 
 **Lösung:**
 1. In den **Einstellungen** den Schalter **Automatische Hintergrund-Aktualisierung** einschalten.
-2. Das gewünschte **Abruf-Intervall** wählen.
+2. Das gewünschte **Abruf-Intervall** wählen; für einen Abruf beim App-Start **Beim Programmstart abrufen** einschalten.
 3. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
+
+## Ungelesene Artikel erscheinen in unerwünschter Reihenfolge
+
+**Symptom:** Die Liste **Ungelesen** zeigt ältere Artikel zuerst — oder umgekehrt.
+
+**Ursache:** Die Reihenfolge folgt der Einstellung **Sortierung der ungelesenen Artikel** in den **Einstellungen**.
+
+**Lösung:**
+1. In den **Einstellungen** unter **Synchronisation & Lesefluss** das Auswahlfeld **Sortierung der ungelesenen Artikel** öffnen.
+2. *Neueste zuerst* oder *Älteste zuerst* wählen — die Änderung gilt sofort beim nächsten Laden der Liste.
 
 ## Es kommen keine Benachrichtigungen
 

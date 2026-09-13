@@ -79,6 +79,7 @@ public class SettingsRepositoryTests : IDisposable
             NotificationSummaryEnabled = true,
             AutoRefreshEnabled = false,
             RefreshIntervalMinutes = 15,
+            RefreshOnStartupEnabled = false,
             Theme = "dark",
         });
 
@@ -106,6 +107,7 @@ public class SettingsRepositoryTests : IDisposable
             NotificationSummaryEnabled = false,
             AutoRefreshEnabled = true,
             RefreshIntervalMinutes = 60,
+            RefreshOnStartupEnabled = true,
             Theme = "light",
         });
 
@@ -149,6 +151,7 @@ public class SettingsRepositoryTests : IDisposable
             NotificationSummaryEnabled = true,
             AutoRefreshEnabled = false,
             RefreshIntervalMinutes = 240,
+            RefreshOnStartupEnabled = false,
             Theme = "dark",
         });
 
@@ -158,6 +161,34 @@ public class SettingsRepositoryTests : IDisposable
         Assert.Equal(240, result.RefreshIntervalMinutes);
         Assert.Equal("dark", result.Theme);
         Assert.True(result.NotificationSummaryEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that SaveAsync persists the startup-refresh switch and the unread
+    /// sort order and GetAsync reads them back.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveAsync_PersistsStartupRefreshAndSortOrder()
+    {
+        await _repository.SaveAsync(new Settings
+        {
+            Id = Settings.DefaultId,
+            RetentionDays = 30,
+            AutoMarkReadDelaySeconds = 5,
+            NotificationsEnabled = true,
+            NotificationSummaryEnabled = false,
+            AutoRefreshEnabled = true,
+            RefreshIntervalMinutes = 30,
+            RefreshOnStartupEnabled = false,
+            UnreadSortOrder = SettingsValues.SortOrderAscending,
+            Theme = "system",
+        });
+
+        var result = await _repository.GetAsync();
+
+        Assert.False(result.RefreshOnStartupEnabled);
+        Assert.Equal(SettingsValues.SortOrderAscending, result.UnreadSortOrder);
     }
 
     /// <summary>
@@ -176,6 +207,7 @@ public class SettingsRepositoryTests : IDisposable
             NotificationSummaryEnabled = false,
             AutoRefreshEnabled = true,
             RefreshIntervalMinutes = 30,
+            RefreshOnStartupEnabled = true,
             Theme = "system",
             Language = "de",
         });
