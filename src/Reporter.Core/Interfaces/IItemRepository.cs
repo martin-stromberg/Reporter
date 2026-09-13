@@ -103,18 +103,19 @@ public interface IItemRepository
     Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId);
 
     /// <summary>
-    /// Gets all items saved for later asynchronously.
+    /// Gets a paged list of items saved for later sorted by publication date descending asynchronously.
     /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the saved items.</returns>
-    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync();
+    /// <param name="page">The zero-based page index.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the saved items for the page.</returns>
+    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize);
 
     /// <summary>
-    /// Gets the item with the specified GUID or hash for the specified feed asynchronously.
+    /// Adds the specified items asynchronously in a single batch.
     /// </summary>
-    /// <param name="feedId">The feed identifier.</param>
-    /// <param name="guidOrHash">The original GUID or hash.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the item, or <c>null</c> if not found.</returns>
-    Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash);
+    /// <param name="items">The items to add.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    Task AddRangeAsync(IReadOnlyList<Item> items);
 
     /// <summary>
     /// Deletes all expired items asynchronously.

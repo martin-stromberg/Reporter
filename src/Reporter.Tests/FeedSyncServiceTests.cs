@@ -176,6 +176,70 @@ public class FeedSyncServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that items duplicated within the same feed document are inserted only once.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_DuplicatesWithinSameDocument_InsertsOnce()
+    {
+        var feedId = await SeedFeedAsync();
+        var now = DateTime.UtcNow;
+        var xml = RssXml(
+        [
+            ("Item One", "https://example.com/1", "guid-1", now, "Description one"),
+            ("Item One Copy", "https://example.com/1", "guid-1", now, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+    }
+
+    /// <summary>
+    /// Verifies that a sync with mixed new and existing items batch-inserts only the new ones.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MixedNewAndExisting_BatchInsertsOnlyNew()
+    {
+        var feedId = await SeedFeedAsync();
+        var now = DateTime.UtcNow;
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Existing",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = now,
+        });
+        var xml = RssXml(
+        [
+            ("Existing", "https://example.com/1", "guid-1", now, "Description one"),
+            ("New One", "https://example.com/2", "guid-2", now, "Description two"),
+            ("New Two", "https://example.com/3", "guid-3", now, "Description three"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(2, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Equal(3, items.Count);
+        Assert.Single(items, i => i.GuidOrHash == "guid-1");
+        Assert.Contains(items, i => i.GuidOrHash == "guid-2");
+        Assert.Contains(items, i => i.GuidOrHash == "guid-3");
+    }
+
+    /// <summary>
     /// Verifies that an unreachable feed sets health to Error and preserves existing items.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>

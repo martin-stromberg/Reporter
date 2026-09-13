@@ -31,7 +31,6 @@ public partial class UnreadViewModel : BaseViewModel
     private bool _hasMore;
     private string _errorMessage = string.Empty;
     private string _lastSyncText = string.Empty;
-    private string _selectedCategoryText = string.Empty;
     private string _unreadCountText = string.Empty;
     private int _currentPage;
     private string _syncErrorMessage = string.Empty;
@@ -132,18 +131,8 @@ public partial class UnreadViewModel : BaseViewModel
             if (SetProperty(ref _selectedCategory, value))
             {
                 UpdateCategorySelection();
-                SelectedCategoryText = value is not null ? $"{value.Name} ({value.Count})" : string.Empty;
             }
         }
-    }
-
-    /// <summary>
-    /// Gets or sets the text of the selected category filter.
-    /// </summary>
-    public string SelectedCategoryText
-    {
-        get => _selectedCategoryText;
-        set => SetProperty(ref _selectedCategoryText, value);
     }
 
     /// <summary>
@@ -333,7 +322,6 @@ public partial class UnreadViewModel : BaseViewModel
                 var updatedCount = await _itemRepository.GetUnreadCountAsync(SelectedCategory.CategoryId);
                 SelectedCategory.Count = updatedCount;
                 UnreadCount = updatedCount;
-                SelectedCategoryText = $"{SelectedCategory.Name} ({SelectedCategory.Count})";
                 UpdateUnreadCountText();
             }
         }
@@ -427,21 +415,7 @@ public partial class UnreadViewModel : BaseViewModel
         if (updated is not null)
         {
             var index = Articles.IndexOf(updated);
-            Articles[index] = new ItemListItem
-            {
-                Id = updated.Id,
-                FeedId = updated.FeedId,
-                Title = updated.Title,
-                Link = updated.Link,
-                PublishedAt = updated.PublishedAt,
-                IsRead = updated.IsRead,
-                IsSavedForLater = !updated.IsSavedForLater,
-                FeedTitle = updated.FeedTitle,
-                CategoryId = updated.CategoryId,
-                CategoryName = updated.CategoryName,
-                ImageUrl = updated.ImageUrl,
-                Summary = updated.Summary,
-            };
+            Articles[index] = updated.CopyWith(isSavedForLater: !updated.IsSavedForLater);
         }
     }
 
@@ -460,6 +434,7 @@ public partial class UnreadViewModel : BaseViewModel
             SelectedCategory.Count--;
         }
 
+        UnreadCount = Math.Max(0, UnreadCount - 1);
         UpdateUnreadCountText();
 
         if (Articles.Count == 0)

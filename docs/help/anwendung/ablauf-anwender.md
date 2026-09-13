@@ -17,7 +17,7 @@ Tippe auf das App-Icon **Reporter**. Nach dem Start-Screen erscheint die Navigat
 
 ### 2. Zwischen den Bereichen wechseln
 
-Tippe auf einen der fünf Tabs:
+Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 
 - **Ungelesen** — Übersicht neuer Artikel.
 - **Feeds** — Übersicht deiner Feeds. Hier kannst du einen oder alle Feeds aktualisieren.
@@ -26,6 +26,8 @@ Tippe auf einen der fünf Tabs:
 - **Einstellungen** — App-Einstellungen.
 
 > **Hinweis:** Die App ist auch ohne Internetverbindung nutzbar — bereits geladene Artikel bleiben lesbar, und ein Hinweis **„Keine Internetverbindung."** erscheint auf den betroffenen Seiten. Details siehe [Offline lesen](offline.md).
+
+> **Tipp:** Auf **Ungelesen** kannst du die Liste über die Filter-Chips unter dem Seitentitel auf eine Kategorie eingrenzen. Jeder Chip zeigt den Kategorienamen und die Anzahl ungelesener Artikel.
 
 ### 3. Feed suchen und hinzufügen
 
@@ -53,3 +55,7 @@ Tippe auf einen der fünf Tabs:
 ## Ergebnis
 
 Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an, die Sprache folgt der Systemsprache des Geräts oder der manuellen Auswahl unter **Einstellungen** → **Sprache** (Deutsch oder Englisch — siehe [Sprache](sprache.md)).
+
+## Barrierefreiheit
+
+Die App unterstützt den Screenreader des Geräts: Alle Symbole und Karten tragen gesprochene Beschriftungen — Filter-Chips nennen Kategoriename, Anzahl und Auswahlzustand, Artikelkarten den Titel samt Hinweis zum Öffnen, die Symbole der schwebenden Aktionsleiste in der Artikeldetailansicht ihre Aktion. Texte folgen der Schriftgrößen-Einstellung des Geräts, und die Bedienflächen sind mindestens 44 × 44 pt groß. Details siehe [Barrierefreiheit](barrierefreiheit.md).

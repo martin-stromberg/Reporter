@@ -314,10 +314,148 @@ public class ItemRepositoryTests : IDisposable
             IsSavedForLater = false,
         });
 
-        var result = await _repository.GetSavedForLaterAsync();
+        var result = await _repository.GetSavedForLaterAsync(0, 20);
 
         Assert.Single(result);
         Assert.Equal("Saved", result[0].Title);
+    }
+
+    /// <summary>
+    /// Verifies that GetSavedForLaterAsync returns the requested page of saved items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetSavedForLaterAsync_Paged_ReturnsPage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        for (var i = 0; i < 5; i++)
+        {
+            await _repository.AddAsync(new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = $"Saved {i}",
+                GuidOrHash = $"saved-{i}",
+                IsRead = false,
+                IsSavedForLater = true,
+                PublishedAt = new DateTime(2026, 1, 1).AddDays(i),
+            });
+        }
+
+        var firstPage = await _repository.GetSavedForLaterAsync(0, 2);
+        var secondPage = await _repository.GetSavedForLaterAsync(1, 2);
+        var thirdPage = await _repository.GetSavedForLaterAsync(2, 2);
+
+        Assert.Equal(2, firstPage.Count);
+        Assert.Equal("Saved 4", firstPage[0].Title);
+        Assert.Equal("Saved 3", firstPage[1].Title);
+        Assert.Equal(2, secondPage.Count);
+        Assert.Equal("Saved 2", secondPage[0].Title);
+        Assert.Equal("Saved 1", secondPage[1].Title);
+        Assert.Single(thirdPage);
+        Assert.Equal("Saved 0", thirdPage[0].Title);
+    }
+
+    /// <summary>
+    /// Verifies that GetSavedForLaterAsync projects a formatted reading time.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetSavedForLaterAsync_ProjectsReadingTimeText()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Saved",
+            GuidOrHash = "saved",
+            IsRead = false,
+            IsSavedForLater = true,
+            ContentHtml = "<p>" + string.Join(' ', Enumerable.Repeat("word", 400)) + "</p>",
+        });
+
+        var result = await _repository.GetSavedForLaterAsync(0, 20);
+
+        Assert.Single(result);
+        Assert.False(string.IsNullOrEmpty(result[0].ReadingTimeText));
+    }
+
+    /// <summary>
+    /// Verifies that GetUnreadByDateAsync projects a formatted reading time.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_Paged_ProjectsReadingTimeText()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Unread",
+            GuidOrHash = "unread",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>" + string.Join(' ', Enumerable.Repeat("word", 400)) + "</p>",
+        });
+
+        var result = await _repository.GetUnreadByDateAsync(0, 20);
+
+        Assert.Single(result);
+        Assert.False(string.IsNullOrEmpty(result[0].ReadingTimeText));
+    }
+
+    /// <summary>
+    /// Verifies that AddRangeAsync persists all supplied items in one batch.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddRangeAsync_InsertsAllItems()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var items = new List<Item>
+        {
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "First",
+                GuidOrHash = "first",
+                IsRead = false,
+                IsSavedForLater = false,
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Second",
+                GuidOrHash = "second",
+                IsRead = false,
+                IsSavedForLater = false,
+            },
+        };
+
+        await _repository.AddRangeAsync(items);
+
+        var persisted = await _repository.GetByFeedAsync(feedId);
+        Assert.Equal(2, persisted.Count);
+        Assert.Contains(persisted, i => i.Title == "First");
+        Assert.Contains(persisted, i => i.Title == "Second");
+    }
+
+    /// <summary>
+    /// Verifies that AddRangeAsync with an empty list does nothing.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddRangeAsync_EmptyList_DoesNothing()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+
+        await _repository.AddRangeAsync(new List<Item>());
+
+        Assert.Empty(await _repository.GetByFeedAsync(feedId));
     }
 
     /// <summary>
@@ -658,7 +796,7 @@ public class ItemRepositoryTests : IDisposable
             PublishedAt = new DateTime(2026, 1, 2),
         });
 
-        var result = await _repository.GetSavedForLaterAsync();
+        var result = await _repository.GetSavedForLaterAsync(0, 20);
 
         Assert.Equal(2, result.Count);
         Assert.Equal("Newer", result[0].Title);

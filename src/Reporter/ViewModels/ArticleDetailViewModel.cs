@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
@@ -19,10 +18,7 @@ namespace Reporter.Core.ViewModels;
 /// </summary>
 public partial class ArticleDetailViewModel : BaseViewModel
 {
-    private const double WordsPerMinute = 200.0;
     private const int DefaultAutoMarkDelaySeconds = 5;
-
-    private static readonly Regex HtmlTagRegex = new Regex("<[^>]+>", RegexOptions.Singleline | RegexOptions.CultureInvariant);
 
     private readonly IItemRepository _itemRepository;
     private readonly IFeedRepository _feedRepository;
@@ -298,7 +294,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
             FeedName = feed?.Title ?? string.Empty;
             FeedIconUrl = string.Empty;
             PublishedAtText = item.PublishedAt?.ToString("g", CultureInfo.CurrentCulture) ?? "—";
-            ReadingTime = CalculateReadingTime(item.ContentHtml);
+            ReadingTime = ReadingTimeEstimator.EstimateText(item.ContentHtml);
             RebuildHtml();
 
             if (IsAutoMarkRead && IsAutoMarkReadAvailable && !Item.IsRead)
@@ -350,19 +346,6 @@ public partial class ArticleDetailViewModel : BaseViewModel
     {
         ErrorMessage = string.Empty;
         RebuildHtml();
-    }
-
-    private static string CalculateReadingTime(string? contentHtml)
-    {
-        if (string.IsNullOrWhiteSpace(contentHtml))
-        {
-            return string.Empty;
-        }
-
-        var text = HtmlTagRegex.Replace(contentHtml, string.Empty);
-        var wordCount = text.Split(new[] { ' ', '\t', '\n', '\r', '\u00A0' }, StringSplitOptions.RemoveEmptyEntries).Length;
-        var minutes = Math.Max(1, (int)Math.Round(wordCount / WordsPerMinute));
-        return string.Format(CultureInfo.CurrentCulture, AppResources.ArticleReadingTimeFormat, minutes);
     }
 
     private void RebuildHtml()

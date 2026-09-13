@@ -131,24 +131,15 @@
                    Style="{StaticResource BodySmallStyle}"/>
         </VerticalStackLayout>
 
-        <!-- WebView -->
-        <WebView Grid.Row="3"
-                 x:Name="ArticleWebView"
-                 Navigating="OnWebViewNavigating"
-                 VerticalOptions="Fill"
-                 HorizontalOptions="Fill">
-            <WebView.Source>
-                <HtmlWebViewSource Html="{Binding HtmlSource}"/>
-            </WebView.Source>
-        </WebView>
-
-        <!-- Source footer -->
+        <!-- Source footer. Declared before the WebView so it stays reachable in the
+             Windows UI Automation control tree (WebView2 subtrees can cut off
+             enumeration of later siblings). -->
         <Border Grid.Row="4"
                 Padding="16,12"
                 Margin="16,8"
                 StrokeShape="RoundRectangle 12"
                 Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
-                Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
+                Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}">
             <Grid ColumnDefinitions="*,Auto"
                   ColumnSpacing="12">
                 <VerticalStackLayout Grid.Column="0"
@@ -173,22 +164,28 @@
             </Grid>
         </Border>
 
-        <!-- Bottom action bar -->
-        <Grid Grid.Row="5"
-              Padding="8,8,8,24"
-              ColumnDefinitions="*,*,*,*,*,*"
-              Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
-            <Border Grid.Column="0"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 22"
-                    Background="Transparent"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityBack}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding GoBackCommand}"/>
-                </Border.GestureRecognizers>
+        <!-- Floating reader control bar. Also declared before the WebView and built
+             from real Button controls so the actions appear in the UIA control tree.
+             The Path/Label elements only paint the icon; the transparent Button on
+             top supplies the native automation peer and the 44×44 touch target. -->
+        <Border Grid.Row="5"
+                Margin="16,0,16,12"
+                StrokeShape="RoundRectangle 26"
+                Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
+                Background="{AppThemeBinding Light={StaticResource LightSurfaceCardTranslucent}, Dark={StaticResource DarkSurfaceCardTranslucent}}">
+            <Border.Shadow>
+                <Shadow Brush="Black"
+                        Offset="0,4"
+                        Radius="16"
+                        Opacity="0.12"/>
+            </Border.Shadow>
+            <Grid Padding="8,4"
+                  ColumnDefinitions="*,*,*,*,*,*">
+            <Grid Grid.Column="0"
+                  WidthRequest="44"
+                  HeightRequest="44"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
                 <Path Data="M18,8 L10,16 L18,24"
                       Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
                       StrokeThickness="2"
@@ -199,19 +196,19 @@
                       HeightRequest="22"
                       HorizontalOptions="Center"
                       VerticalOptions="Center"
+                      InputTransparent="True"
                       Fill="Transparent"/>
-            </Border>
-            <Border Grid.Column="1"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 22"
-                    Background="Transparent"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{Binding BookmarkButtonLabel}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleSavedForLaterCommand}"/>
-                </Border.GestureRecognizers>
+                <Button Command="{Binding GoBackCommand}"
+                        SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityBack}"
+                        Background="Transparent"
+                        Padding="0"
+                        CornerRadius="22"/>
+            </Grid>
+            <Grid Grid.Column="1"
+                  WidthRequest="44"
+                  HeightRequest="44"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
                 <Path Data="M6,4 L22,4 L22,26 L14,20 L6,26 Z"
                       Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
                       StrokeThickness="2"
@@ -222,6 +219,7 @@
                       HeightRequest="18"
                       HorizontalOptions="Center"
                       VerticalOptions="Center"
+                      InputTransparent="True"
                       Fill="Transparent">
                     <Path.Triggers>
                         <DataTrigger TargetType="Path" Binding="{Binding Item.IsSavedForLater}" Value="True">
@@ -229,34 +227,33 @@
                         </DataTrigger>
                     </Path.Triggers>
                 </Path>
-            </Border>
-            <Border Grid.Column="2"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 22"
-                    Background="Transparent"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityFontSize}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleFontSizeCommand}"/>
-                </Border.GestureRecognizers>
+                <Button Command="{Binding ToggleSavedForLaterCommand}"
+                        SemanticProperties.Description="{Binding BookmarkButtonLabel}"
+                        Background="Transparent"
+                        Padding="0"
+                        CornerRadius="22"/>
+            </Grid>
+            <Grid Grid.Column="2"
+                  WidthRequest="44"
+                  HeightRequest="44"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
                 <Label Text="{Binding FontSizeLabel}"
                        Style="{StaticResource UiLabelStyle}"
                        HorizontalOptions="Center"
-                       VerticalOptions="Center"/>
-            </Border>
-            <Border Grid.Column="3"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 22"
-                    Background="Transparent"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{Binding MarkAsReadButtonLabel}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleMarkReadCommand}"/>
-                </Border.GestureRecognizers>
+                       VerticalOptions="Center"
+                       InputTransparent="True"/>
+                <Button Command="{Binding ToggleFontSizeCommand}"
+                        SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityFontSize}"
+                        Background="Transparent"
+                        Padding="0"
+                        CornerRadius="22"/>
+            </Grid>
+            <Grid Grid.Column="3"
+                  WidthRequest="44"
+                  HeightRequest="44"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
                 <Path Data="M4,14 L12,22 L26,8"
                       Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
                       StrokeThickness="2"
@@ -267,6 +264,7 @@
                       HeightRequest="18"
                       HorizontalOptions="Center"
                       VerticalOptions="Center"
+                      InputTransparent="True"
                       Fill="Transparent">
                     <Path.Triggers>
                         <DataTrigger TargetType="Path" Binding="{Binding Item.IsRead}" Value="True">
@@ -274,18 +272,17 @@
                         </DataTrigger>
                     </Path.Triggers>
                 </Path>
-            </Border>
-            <Border Grid.Column="4"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 22"
-                    Background="Transparent"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityShare}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ShareCommand}"/>
-                </Border.GestureRecognizers>
+                <Button Command="{Binding ToggleMarkReadCommand}"
+                        SemanticProperties.Description="{Binding MarkAsReadButtonLabel}"
+                        Background="Transparent"
+                        Padding="0"
+                        CornerRadius="22"/>
+            </Grid>
+            <Grid Grid.Column="4"
+                  WidthRequest="44"
+                  HeightRequest="44"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
                 <Path Data="M20,8 L30,16 L20,24 M30,16 L8,16"
                       Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
                       StrokeThickness="2"
@@ -296,19 +293,19 @@
                       HeightRequest="22"
                       HorizontalOptions="Center"
                       VerticalOptions="Center"
+                      InputTransparent="True"
                       Fill="Transparent"/>
-            </Border>
-            <Border Grid.Column="5"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 22"
-                    Background="Transparent"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{x:Static strings:AppResources.ArticleOpenInBrowser}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenInBrowserCommand}"/>
-                </Border.GestureRecognizers>
+                <Button Command="{Binding ShareCommand}"
+                        SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityShare}"
+                        Background="Transparent"
+                        Padding="0"
+                        CornerRadius="22"/>
+            </Grid>
+            <Grid Grid.Column="5"
+                  WidthRequest="44"
+                  HeightRequest="44"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
                 <Path Data="M2,8 L30,8 M2,8 L2,28 L30,28 L30,8 M8,4 L8,8"
                       Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
                       StrokeThickness="2"
@@ -319,8 +316,26 @@
                       HeightRequest="22"
                       HorizontalOptions="Center"
                       VerticalOptions="Center"
+                      InputTransparent="True"
                       Fill="Transparent"/>
-            </Border>
-        </Grid>
+                <Button Command="{Binding OpenInBrowserCommand}"
+                        SemanticProperties.Description="{x:Static strings:AppResources.ArticleOpenInBrowser}"
+                        Background="Transparent"
+                        Padding="0"
+                        CornerRadius="22"/>
+            </Grid>
+            </Grid>
+        </Border>
+
+        <!-- WebView -->
+        <WebView Grid.Row="3"
+                 x:Name="ArticleWebView"
+                 Navigating="OnWebViewNavigating"
+                 VerticalOptions="Fill"
+                 HorizontalOptions="Fill">
+            <WebView.Source>
+                <HtmlWebViewSource Html="{Binding HtmlSource}"/>
+            </WebView.Source>
+        </WebView>
     </Grid>
 </ContentPage>

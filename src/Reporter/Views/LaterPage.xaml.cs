@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Diagnostics;
 using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
@@ -26,7 +27,14 @@ public partial class LaterPage : ContentPage
 
         if (BindingContext is LaterViewModel viewModel)
         {
-            await viewModel.LoadCommand.ExecuteAsync(null);
+            try
+            {
+                await viewModel.LoadCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"LaterPage.OnAppearing failed: {ex}");
+            }
         }
     }
 }

@@ -66,4 +66,35 @@ public class ItemListItem
     /// Gets a plain-text summary of the article content.
     /// </summary>
     public string? Summary { get; init; }
+
+    /// <summary>
+    /// Gets the formatted reading time estimate, or <c>null</c> when unavailable.
+    /// </summary>
+    public string? ReadingTimeText { get; init; }
+
+    /// <summary>
+    /// Creates a copy of this item with optionally overridden read or saved-for-later state.
+    /// </summary>
+    /// <param name="isRead">The new read state, or <c>null</c> to keep the current value.</param>
+    /// <param name="isSavedForLater">The new saved-for-later state, or <c>null</c> to keep the current value.</param>
+    /// <returns>A new <see cref="ItemListItem"/> with the requested state applied.</returns>
+    public ItemListItem CopyWith(bool? isRead = null, bool? isSavedForLater = null)
+    {
+        return new ItemListItem
+        {
+            Id = Id,
+            FeedId = FeedId,
+            Title = Title,
+            Link = Link,
+            PublishedAt = PublishedAt,
+            IsRead = isRead ?? IsRead,
+            IsSavedForLater = isSavedForLater ?? IsSavedForLater,
+            FeedTitle = FeedTitle,
+            CategoryId = CategoryId,
+            CategoryName = CategoryName,
+            ImageUrl = ImageUrl,
+            Summary = Summary,
+            ReadingTimeText = ReadingTimeText,
+        };
+    }
 }

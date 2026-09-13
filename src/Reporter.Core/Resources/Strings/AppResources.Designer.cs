@@ -171,6 +171,15 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Delete category? ähnelt.
+        /// </summary>
+        public static string ConfirmDeleteCategoryTitle {
+            get {
+                return ResourceManager.GetString("ConfirmDeleteCategoryTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die All articles belonging to this feed will also be deleted. Continue? ähnelt.
         /// </summary>
         public static string ConfirmDeleteFeedMessage {
@@ -1166,6 +1175,69 @@ namespace Reporter.Core.Resources.Strings {
         public static string AccessibilityShare {
             get {
                 return ResourceManager.GetString("AccessibilityShare", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Close ähnelt.
+        /// </summary>
+        public static string AccessibilityDismissSheet {
+            get {
+                return ResourceManager.GetString("AccessibilityDismissSheet", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Double-tap for actions ähnelt.
+        /// </summary>
+        public static string AccessibilityTapForActions {
+            get {
+                return ResourceManager.GetString("AccessibilityTapForActions", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Double-tap to open the article ähnelt.
+        /// </summary>
+        public static string AccessibilityOpenArticle {
+            get {
+                return ResourceManager.GetString("AccessibilityOpenArticle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} filter, {1} unread articles, {2} ähnelt.
+        /// </summary>
+        public static string AccessibilityCategoryFilter {
+            get {
+                return ResourceManager.GetString("AccessibilityCategoryFilter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} filter, {1} unread article, {2} ähnelt.
+        /// </summary>
+        public static string AccessibilityCategoryFilterSingular {
+            get {
+                return ResourceManager.GetString("AccessibilityCategoryFilterSingular", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die selected ähnelt.
+        /// </summary>
+        public static string AccessibilitySelected {
+            get {
+                return ResourceManager.GetString("AccessibilitySelected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die not selected ähnelt.
+        /// </summary>
+        public static string AccessibilityNotSelected {
+            get {
+                return ResourceManager.GetString("AccessibilityNotSelected", resourceCulture);
             }
         }
 

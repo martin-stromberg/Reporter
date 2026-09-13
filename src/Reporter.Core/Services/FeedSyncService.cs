@@ -141,8 +141,10 @@ public class FeedSyncService : IFeedSyncService
         var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(reader), cancellationToken).ConfigureAwait(false);
 
         var feedItems = syndicationFeed.Items.ToList();
-        var newItems = 0;
         var newItemEntities = new List<Item>();
+        var knownKeys = new HashSet<string>(
+            existingItems.Select(i => i.GuidOrHash),
+            StringComparer.Ordinal);
 
         foreach (var feedItem in feedItems)
         {
@@ -154,13 +156,12 @@ public class FeedSyncService : IFeedSyncService
                 : feedItem.PublishDate.UtcDateTime;
             var guidOrHash = NormalizeGuidOrHash(feedItem, link, publishedAt);
 
-            var existing = await _itemRepository.GetByGuidOrHashAsync(feed.Id, guidOrHash).ConfigureAwait(false);
-            if (existing is not null)
+            if (!knownKeys.Add(guidOrHash))
             {
                 continue;
             }
 
-            var item = new Item
+            newItemEntities.Add(new Item
             {
                 Id = Guid.NewGuid(),
                 FeedId = feed.Id,
@@ -171,11 +172,13 @@ public class FeedSyncService : IFeedSyncService
                 IsRead = false,
                 IsSavedForLater = false,
                 ContentHtml = GetContentHtml(feedItem),
-            };
+            });
+        }
 
-            await _itemRepository.AddAsync(item).ConfigureAwait(false);
-            newItems++;
-            newItemEntities.Add(item);
+        var newItems = newItemEntities.Count;
+        if (newItems > 0)
+        {
+            await _itemRepository.AddRangeAsync(newItemEntities).ConfigureAwait(false);
         }
 
         var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);

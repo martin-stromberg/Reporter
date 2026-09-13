@@ -16,6 +16,7 @@ Reporter ist ein lokaler RSS-/Feed-Reader als .NET MAUI-App. Feeds können über
 - [Später — Artikel für später merken](spaeter.md)
 - [Offline lesen](offline.md)
 - [Sprache (Deutsch / Englisch)](sprache.md)
+- [Barrierefreiheit](barrierefreiheit.md)
 - [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md)
 - [Architektur](architektur.md)
 - [Datenmodell](datenmodell.md)

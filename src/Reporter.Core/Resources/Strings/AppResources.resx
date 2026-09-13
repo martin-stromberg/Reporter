@@ -95,6 +95,9 @@
   <data name="CategoryNone" xml:space="preserve">
     <value>No category</value>
   </data>
+  <data name="ConfirmDeleteCategoryTitle" xml:space="preserve">
+    <value>Delete category?</value>
+  </data>
   <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
     <value>All articles belonging to this feed will also be deleted. Continue?</value>
   </data>
@@ -382,6 +385,27 @@
   </data>
   <data name="AccessibilityShare" xml:space="preserve">
     <value>Share</value>
+  </data>
+  <data name="AccessibilityDismissSheet" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="AccessibilityTapForActions" xml:space="preserve">
+    <value>Double-tap for actions</value>
+  </data>
+  <data name="AccessibilityOpenArticle" xml:space="preserve">
+    <value>Double-tap to open the article</value>
+  </data>
+  <data name="AccessibilityCategoryFilter" xml:space="preserve">
+    <value>{0} filter, {1} unread articles, {2}</value>
+  </data>
+  <data name="AccessibilityCategoryFilterSingular" xml:space="preserve">
+    <value>{0} filter, {1} unread article, {2}</value>
+  </data>
+  <data name="AccessibilitySelected" xml:space="preserve">
+    <value>selected</value>
+  </data>
+  <data name="AccessibilityNotSelected" xml:space="preserve">
+    <value>not selected</value>
   </data>
   <data name="ArticleBookmarkSet" xml:space="preserve">
     <value>Add bookmark</value>

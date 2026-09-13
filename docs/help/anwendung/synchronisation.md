@@ -25,6 +25,8 @@
 2. Ziehe die Feed-Liste nach unten (Ziehen zum Aktualisieren).
 3. Alle konfigurierten Feeds werden nacheinander abgerufen.
 
+Der Abruf läuft im Hintergrund — die App bleibt währenddessen bedienbar, und du kannst bereits geladene Artikel weiterlesen. Schlägt ein einzelner Feed fehl, werden die übrigen Feeds trotzdem abgerufen.
+
 ### Automatische Aktualisierung
 
 Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie das Herunterziehen der Liste, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Die automatische Aktualisierung läuft nur, solange die App geöffnet ist; dauert ein Abruf länger als das eingestellte Intervall, startet der nächste erst nach seinem Abschluss — Abrufe laufen nie parallel. Details siehe [Einstellungen](../einstellungen/index.md).
@@ -44,6 +46,8 @@ Hat das Gerät keine Internetverbindung, wird kein Abruf gestartet:
 Details zum Offline-Verhalten siehe [Offline lesen](offline.md).
 
 ## Gesundheitsstatus
+
+Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt und Text — so bleibt er auch unabhängig von der Farbe erkennbar:
 
 | Status | Bedeutung |
 |--------|-----------|

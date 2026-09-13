@@ -24,7 +24,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto">
                                 <Label Text="{x:Static strings:AppResources.SettingsRetentionLabel}"
@@ -62,7 +62,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8">
@@ -145,7 +145,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8">
@@ -237,7 +237,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8"
@@ -429,7 +429,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <Grid ColumnDefinitions="*,Auto"
                               ColumnSpacing="8">
                             <Label Text="{x:Static strings:AppResources.SettingsThemeLabel}"
@@ -452,7 +452,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8">
