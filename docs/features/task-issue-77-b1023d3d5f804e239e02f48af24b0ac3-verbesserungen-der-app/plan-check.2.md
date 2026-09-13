@@ -1,0 +1,49 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+# Plan-Gegenprüfung
+
+## Ergebnis
+
+**Status:** Plan lückenhaft
+
+## Abgleich Akzeptanzkriterien
+
+| Akzeptanzkriterium | Umsetzung im Plan | Testnachweis im Plan | Status |
+|--------------------|-------------------|----------------------|--------|
+| R0 — Bewertung, Auswahl und Abspaltung in GitHub-Issues vor Implementierung | Triage-Tabelle mit Begründung für alle acht Punkte; Programmablauf „R0 — Abspaltung in GitHub-Issues"; Schritt 1 der Umsetzungsreihenfolge legt zwei Issues via `gh issue create` an und vermerkt die Nummern in `plan.md`/`todo.md` | Meta-Aufgabe, kein Test erforderlich | Abgedeckt |
+| R1 — Lesezeit bei 1-Minuten-Beiträgen in der Auflistung nicht anzeigen | `ReadingTimeEstimator.EstimateText` liefert `string.Empty` bei ≤ 1 Minute; greift über `ItemRepository.MapToListItem` auf **Ungelesen**/**Später** und über `ArticleDetailViewModel` in der Detailansicht (geklärte Erweiterung); keine XAML-Änderung nötig (`StringNotEmptyToBoolConverter`) | `EstimateText_OneMinuteContent_ReturnsEmpty`, `EstimateText_TwoMinuteContent_ReturnsText`, `GetUnreadByDateAsync_OneMinuteReadingTime_ProjectsEmpty`; Anpassung `EstimateText_ShortContent_ReturnsOneMinute`; manuelle Verifikation `UnreadPage`/`ArticleDetailPage` | Abgedeckt |
+| R2 — Standardbild: Favicon bei Feed-Anlage suchen und persistent speichern (EF-Migration), Kaskade Favicon → generierter Initialen-Kreis | `Feed.FaviconUrl` + Migration `AddFeedFaviconUrl`; `IFeedIconService`/`FeedIconService` (Link-Tag-Parsing, `/favicon.ico`-Fallback mit Verifikation); Erfassung in `TryPersistNewFeedAsync` für alle drei Anlage-Wege (`siteUrl`-Parameter, `IsOnline`-Guard, fehlerisoliert); Nachhole-Pfad in `FeedSyncService.UpdateFeedHealthAsync` für Bestandsfeeds; Anzeige-Kaskade in `ArticleCardView`, `FeedsPage` und `ArticleDetailPage` (`FeedIconUrl` aus bereits geladenem `feed`); `ToFeed`-Mitnahme gegen Datenverlust bei Teil-Updates | `FeedIconServiceTests` (Link-Tag, relative URLs, Fallback, Fehler), `GetUnreadByDateAsync_ProjectsFeedFaviconUrl`, `GetAllWithDetailsAsync_ProjectsFaviconUrl`, `UpdateAsync_PersistsFaviconUrl`, `TryPersistNewFeed_*` (3 Tests), `RenameFeedAsync_PreservesFaviconUrl`, `SyncFeed_SetsFaviconWhenMissing`; manuelle Verifikation Light + Dark | Abgedeckt (Umsetzung/Tests), aber ein betroffener Bestandstest fehlt — siehe Lücken |
+| R3 — Konfigurierbarer Feed-Abgleich beim Programmstart | `Settings.RefreshOnStartupEnabled` (`bool`, `required`, Default `true`) + Migration; `Switch` in Sektion **Synchronisation & Lesefluss**; Sofort-Persistierung via `PersistOnChange`/`PersistAsync`; Start-Sync in `AutoRefreshService.StartAsync` (fehlerisoliert, `IsOnline`-Guard, fire-and-forget, kein Eingriff in `App.OnStart` nötig) | `StartAsync_StartupRefreshEnabled_SyncsImmediately` / `_Disabled_DoesNotSyncImmediately` / `_Offline_SkipsStartupSync`; `Load_PopulatesRefreshOnStartup`, `RefreshOnStartup_Change_Persists`, `SaveAsync_PersistsNewFields`, `E2E_RefreshOnStartup_PersistRoundtrip`; betroffene `new Settings`-Initializer (`AutoRefreshServiceTests`, `SettingsRepositoryTests`, `RetentionCleanupServiceTests`, `SettingsViewModelTests_*`, `TestSettingsHelper`, `ArticleDetailViewModel`-Fallback) vollständig benannt | Abgedeckt |
+| R4 — Konfigurierbare Datums-Sortierung der Startseite **Ungelesen** | `Settings.UnreadSortOrder` (`"desc"`/`"asc"`, `SettingsValues`-Konstanten, Default `"desc"`) + Migration; `SortOrderOption` + `Picker`; `IItemRepository.GetUnreadByDateAsync(…, ascending)` inkl. Tiebreaker-Umkehr; `ISettingsRepository`-Abhängigkeit in `UnreadViewModel`; **Später** bleibt absteigend; `PublishedAt == null`-Verhalten dokumentiert | `GetUnreadByDateAsync_Ascending_*` (Sortierung + NULL-Doku), `LoadPage_PassesSortOrderFromSettings`, `Load_PopulatesSelectedSortOrder`, `InvalidSortOrder_UsesDescFallback`, `SelectedSortOrder_Change_Persists`, `E2E_SortOrder_PersistRoundtrip`; `DelegatingItemRepository`/Fakes/`UnreadViewModelTests` mitgezogen | Abgedeckt |
+| R5 — Neustart-Hinweis nur nach Sprachänderung | `LanguageRestartHintVisible`-Flag in `SettingsViewModel`; Setzen/Rücksetzen im `SelectedLanguage`-Setter (außerhalb `_isLoading`, Vergleich mit persistiertem Wert, Rückkehr löscht Flag); Reset in `LoadAsync`; `IsVisible`-Binding auf Hinweis-`Border` | `LanguageChange_SetsRestartHint`, `LanguageReverted_ClearsRestartHint`, `Load_ResetsRestartHint`; manuelle Verifikation | Abgedeckt |
+| R6 — Neues Programmsymbol (Icon- und SplashScreen-Variante) | Attachments als SVG verifiziert beschaffbar (authentifizierter Download); `appiconfg.svg`/`splash.svg` ersetzen, `appicon.svg`-Hintergrund `#1e293b` bleibt; `<text>`→Pfade wegen Resizetizer; `MauiIcon`/`MauiSplashScreen`/`Color`/`BaseSize` geprüft; `Info.plist`/`Package.appxmanifest` unverändert | Manuelle Sichtprüfung der generierten Assets (Windows-Build, iOS via `scripts/iOS-Deployment.ps1`) — nicht automatisierbar | Abgedeckt |
+| R7 — Debuginformationen per E-Mail | **Abgespalten** — Issue-Anlage mit fachlicher Beschreibung in Plan-Schritt 1 verankert | — | Abgedeckt (Abspaltung verankert) |
+| R8 — Benachrichtigungen nur bei Hintergrundabruf | **Abgespalten** — Issue-Anlage inkl. Infrastruktur-Befund in Plan-Schritt 1 verankert | — | Abgedeckt (Abspaltung verankert) |
+
+## Fehlende oder unvollständige Testanforderungen
+
+- [ ] **R2 — `KeywordFilterTests_E2E` fehlt in „Betroffene bestehende Tests".** Die Hilfsmethode `CreateService` instanziiert `new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService, new FakeNetworkStatusService(), _keywordFilter)` direkt (`src/Reporter.Tests/KeywordFilterTests_E2E.cs` Zeile 60). Da der Plan `FeedSyncService` eine neue `IFeedIconService`-Konstruktorabhängigkeit verpasst (R2-Nachhole-Pfad), schlägt diese Stelle kompiliertechnisch fehl. Die Tabelle „Betroffene bestehende Tests" nennt nur `FeedSyncServiceTests` (Konstruktoraufrufe) — `KeywordFilterTests_E2E` ist zu ergänzen (Konstruktoraufruf um `IFeedIconService`-Fake erweitern, z. B. `null`-tolerantes oder minimales Fake).
+
+## E2E-Abdeckung
+
+| Benutzerfluss / Akzeptanzkriterium | Geplanter E2E-Test | Status |
+|------------------------------------|--------------------|--------|
+| R1 — Keine Lesezeit auf Karten und Detailseite bei 1-Minuten-Beitrag | `ItemRepositoryTests` (Datenebene) + manuelle Verifikation `UnreadPage`/`ArticleDetailPage` | Abgedeckt — projektkonform: keine UI-Testautomatisierung vorhanden, manuelle Verifikation mit Screenshot-Doku ist in `AGENTS.md` als Nachweis definiert; Begründung im Plan-Abschnitt „E2E-Tests" verankert |
+| R2 — Artikelkarte ohne `ImageUrl` zeigt Favicon bzw. Initialen-Kreis | Manuelle Verifikation (Light + Dark, Screenshot) | Abgedeckt — rein visueller Zustand, Begründung wie oben |
+| R2 — Feeds-Seite zeigt Favicon bzw. Initialen-Kreis | Manuelle Verifikation (Light + Dark, Screenshot) | Abgedeckt — Begründung wie oben |
+| R3 — Schalter persistiert und triggert Sync beim Start | `E2E_RefreshOnStartup_PersistRoundtrip` (echte SQLite-Repositories) + `AutoRefreshServiceTests` + manuelle Verifikation | Abgedeckt |
+| R4 — Sortier-Picker ändert Reihenfolge der Startseite | `E2E_SortOrder_PersistRoundtrip` + `ItemRepositoryTests` + manuelle Verifikation | Abgedeckt |
+| R5 — Neustart-Hinweis erscheint erst nach Sprachänderung, verschwindet bei Rückwahl | `SettingsViewModelTests` + manuelle Verifikation | Abgedeckt — Sichtbarkeits-Binding nur UI-seitig prüfbar, Begründung im Plan |
+| R6 — Neues Icon/Splash im Build | Manuelle Sichtprüfung Windows-Build (+ iOS via `scripts/iOS-Deployment.ps1`) | Abgedeckt — generierte Assets nur visuell verifizierbar |
+| R7/R8 — Abspaltung | Issue-Anlage als Plan-Schritt 1 | Nicht erforderlich — Meta-Aufgabe ohne Benutzerfluss in diesem Lauf |
+
+## Fehlende oder unvollständige Planbestandteile
+
+- [ ] Die Tabelle „Betroffene bestehende Tests" ist um `KeywordFilterTests_E2E` (`CreateService`, `src/Reporter.Tests/KeywordFilterTests_E2E.cs` Zeile 60) zu vervollständigen: Der direkte `new FeedSyncService(...)`-Aufruf bricht durch die neue `IFeedIconService`-Konstruktorabhängigkeit (R2) und benötigt ein Fake/den zusätzlichen Parameter.
+
+## Hinweise
+
+- Die beiden Lücken aus `plan-check.1.md` sind vollständig eingearbeitet: `AutoRefreshServiceTests` ist nun mit Kompilier- und Verhaltensbruch (Zähler-Assertions, explizite Steuerung von `RefreshOnStartupEnabled` in den Test-Settings) benannt; `SettingsRepositoryTests` (Zeilen 73, 100, 143, 170), `RetentionCleanupServiceTests` (Zeile 43), `SettingsViewModelTests_Load` (Zeilen 50, 92), `SettingsViewModelTests_Persist` (Zeilen 387, 428, 467, 527), `TestSettingsHelper` (als Pflicht) und der Produktiv-Initializer in `ArticleDetailViewModel` (Zeile 263) sind sämtlich verifiziert und im Plan gelistet — die Fundstellen stimmen mit dem Repo überein.
+- Verifiziert gegen `src/Reporter.Tests`: `FailingItemRepository` in `UnreadViewModelTests` (Zeile 533) überschreibt die geänderte `GetUnreadByDateAsync`-Signatur — die Datei ist bereits als betroffen gelistet und der Plan vermerkt generisch „DelegatingItemRepository/Fakes mitziehen"; `LaterViewModelTests`-Fakes überschreiben nur `GetSavedForLaterAsync` (unverändert) und sind korrekt nicht gelistet.
+- `ServiceCollectionTests` ist korrekt benannt: `AddReporterServices_ResolvesFeedSyncService` löst `FeedSyncService` per DI auf und bräche ohne `IFeedIconService`-Registrierung — im Plan als „`IFeedIconService`-Registrierung ergänzen" abgedeckt.
+- `entity.HasData(new Settings())` in `ReporterDbContext` (Entity-Typ, Property-Default `true`) ist vom `required`-Member des Domänenmodells nicht betroffen; der Plan vermerkt die Seed-Defaults explizit.
