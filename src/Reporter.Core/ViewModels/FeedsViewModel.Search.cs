@@ -128,10 +128,8 @@ public partial class FeedsViewModel
         try
         {
             var results = await _feedSearchService.SearchAsync(searchUrl);
-            if (!string.Equals(NewUrl.Trim(), input, StringComparison.Ordinal))
+            if (IsStaleInput(input))
             {
-                // The URL was edited while the search was in flight — the late
-                // results belong to the abandoned query and must not resurface.
                 return;
             }
 
@@ -150,7 +148,7 @@ public partial class FeedsViewModel
                 Debug.WriteLine($"SearchAsync failed: {ex}");
             }
 
-            if (!string.Equals(NewUrl.Trim(), input, StringComparison.Ordinal))
+            if (IsStaleInput(input))
             {
                 return;
             }
@@ -173,6 +171,13 @@ public partial class FeedsViewModel
         {
             await OfferDirectAddAsync(input);
         }
+    }
+
+    // The URL may be edited while a search is in flight — late results or errors
+    // of the abandoned query must not resurface, so both outcomes are discarded.
+    private bool IsStaleInput(string input)
+    {
+        return !string.Equals(NewUrl.Trim(), input, StringComparison.Ordinal);
     }
 
     private static bool TryResolveSearchUrl(string input, out string searchUrl, out bool isDirectUrl)

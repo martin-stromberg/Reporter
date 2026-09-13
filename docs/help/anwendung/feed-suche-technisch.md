@@ -55,7 +55,7 @@ Der Hinzufügen-Dialog auf der `FeedsPage` kombiniert Suche und direkte URL-Eing
 
 ### 4. Titel-Befüllung beim ersten Sync (`FeedSyncService.RunSyncAsync`)
 
-- `resolvedTitle` wird nur an `UpdateFeedHealthAsync` übergeben, wenn der gespeicherte Titel ein Platzhalter ist (`IsNullOrWhiteSpace` oder `== feed.Url`, `OrdinalIgnoreCase`) **und** `syndicationFeed.Title?.Text` nicht leer ist — sonst `null` und der Titel bleibt unverändert. Nutzer- und trefferseitig gesetzte Titel werden nie überschrieben.
+- `resolvedTitle` wird nur an `UpdateFeedHealthAsync` übergeben, wenn der gespeicherte Titel ein Platzhalter ist (`IsNullOrWhiteSpace`, `== feed.Url` oder `== Host der Feed-URL` via `IsHostPlaceholderTitle`, jeweils `OrdinalIgnoreCase`) **und** `syndicationFeed.Title?.Text` nicht leer ist — sonst `null` und der Titel bleibt unverändert. Nutzer- und trefferseitig gesetzte Titel werden nie überschrieben.
 
 ## Diagramm
 
@@ -95,7 +95,7 @@ flowchart TD
 - **Eingabe-Klassifikation:** Nur absolute http(s)-URLs und domain-artige Eingaben erreichen den Such-Service; nur bei gültiger URL wird der Direkt-Hinzufügen-Dialog angeboten.
 - **Fehlerkontrakt:** `FeedSearchUnavailableException` nur bei Ausfall **beider** Quellen; eine leere Trefferliste ist kein Fehler.
 - **Sortierung:** `ExactUrl` → `Directory` → `Discovered`, dann `Score` absteigend, dann `FeedUrl` ordinal.
-- **Platzhalter-Titel:** `Title == Url` oder leer gilt als Platzhalter und wird beim ersten Sync ersetzt.
+- **Platzhalter-Titel:** `Title == Url`, `Title == Host der Feed-URL` oder leer gilt als Platzhalter und wird beim ersten Sync ersetzt.
 - **Kategorie/Beschreibung:** `CategoryId` kommt aus `SelectedCategory`; `Description` wird nur angezeigt, nie persistiert — `Feed` bleibt unverändert, keine Migration nötig.
 
 ## Tests

@@ -31,7 +31,7 @@ Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktu
 
 ## Anzeigetitel beim ersten Abruf
 
-Wurde ein Feed über die **Suche** ohne Anzeigetitel abonniert (siehe [Feeds suchen und hinzufügen](feed-suche.md)), zeigt die Liste zunächst die Feed-Adresse als Platzhalter. Beim ersten erfolgreichen Abruf ersetzt die App den Platzhalter automatisch durch den echten Titel aus dem Feed. Selbst vergebene Titel — etwa beim direkten Hinzufügen über **Speichern** — bleiben unverändert und werden nie überschrieben.
+Wurde ein Feed über die **Suche** ohne Anzeigetitel abonniert (siehe [Feeds suchen und hinzufügen](feed-suche.md)), zeigt die Liste zunächst die Feed-Adresse als Platzhalter; beim direkten Hinzufügen über den Fallback-Dialog ist der Platzhalter der Hostname der Adresse. Beim ersten erfolgreichen Abruf ersetzt die App den Platzhalter automatisch durch den echten Titel aus dem Feed. Selbst vergebene Titel bleiben unverändert und werden nie überschrieben.
 
 ## Verhalten ohne Internetverbindung
 

@@ -517,6 +517,37 @@ public class FeedSyncServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a placeholder title in the form the direct-add flow produces
+    /// (the host name stored as title) is replaced by the feed document title on
+    /// the first sync — same as the URL-as-title placeholder.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsHostPlaceholder_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://example.com/rss";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = url,
+            Title = "example.com",
+            NotificationsEnabled = true,
+        });
+        var xml = RssXml([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Resolved Feed Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Feed Title", feed.Title);
+    }
+
+    /// <summary>
     /// Verifies that an explicitly set feed title is never overwritten by the
     /// feed document title.
     /// </summary>

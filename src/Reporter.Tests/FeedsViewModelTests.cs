@@ -751,6 +751,34 @@ public class FeedsViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a search failure is discarded when the user changed the URL
+    /// while the search was still in flight — the stale error of the abandoned
+    /// query must not surface. This covers the stale-input check in the catch
+    /// path; the check itself is a duplicated guard, so the test pins the
+    /// observable contract rather than a defect that can fail beforehand.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SearchCommand_WhenUrlChangesDuringFailedSearch_DiscardsStaleError()
+    {
+        var pending = new TaskCompletionSource<IReadOnlyList<FeedSearchResult>>();
+        _searchService.PendingResult = pending;
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.NewUrl = "https://example.com";
+
+        var searchTask = viewModel.SearchCommand.ExecuteAsync(null);
+        viewModel.NewUrl = "https://other.example.com";
+        pending.SetException(new FeedSearchUnavailableException("down"));
+        await searchTask;
+
+        Assert.False(viewModel.HasSearchError);
+        Assert.Equal(string.Empty, viewModel.SearchErrorMessage);
+        Assert.False(viewModel.ShowSearchResults);
+        Assert.False(viewModel.IsSearching);
+    }
+
+    /// <summary>
     /// Verifies that subscribing a result persists a feed built from the result and
     /// the form state, then resets the search view.
     /// </summary>
