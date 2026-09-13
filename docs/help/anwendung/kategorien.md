@@ -26,3 +26,7 @@ Ein leerer oder bereits vorhandener Name wird abgelehnt.
 
 1. Tippe neben der Kategorie auf **Löschen**.
 2. Die Kategorie wird entfernt; zugeordnete Feeds verlieren automatisch ihre Kategorie-Zuordnung.
+
+## Barrierefreiheit
+
+Das Eingabefeld und alle Kategoriekarten sind für Screenreader beschriftet — Karten nennen den Kategorienamen mit dem Hinweis **„Tippen für Aktionen"**. Details siehe [Barrierefreiheit](barrierefreiheit.md).

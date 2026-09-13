@@ -15,11 +15,13 @@
                    Style="{StaticResource HeadlineStyle}"/>
             <Border Padding="16"
                     StrokeShape="RoundRectangle 12"
-                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                    Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                 <VerticalStackLayout Spacing="12">
                     <Entry x:Name="CategoryNameEntry"
                            Text="{Binding NewCategoryName}"
                            Placeholder="{x:Static strings:AppResources.LabelCategoryName}"
+                           SemanticProperties.Description="{x:Static strings:AppResources.LabelCategoryName}"
                            ReturnCommand="{Binding SaveCommand}"/>
                     <Label Text="{Binding ErrorMessage}"
                            TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
@@ -39,7 +41,10 @@
                     <Border Padding="16"
                             Margin="0,6"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
+                            SemanticProperties.Description="{Binding Name}"
+                            SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityTapForActions}"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnCategoryTapped"
                                                   CommandParameter="{Binding .}"/>

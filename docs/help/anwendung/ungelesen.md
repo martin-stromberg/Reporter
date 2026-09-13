@@ -8,6 +8,14 @@ Die Startseite **Ungelesen** zeigt alle ungelesenen Artikel aller Feeds, absteig
 
 - **Scrollen**: Weitere Artikel werden automatisch nachgeladen, wenn das Listenende erreicht wird (Infinity-Scroll).
 - **Pull-to-Refresh**: Herunterziehen der Liste synchronisiert alle Feeds und lädt die Liste neu. Ohne Internetverbindung wird der Aktualisieren-Button abgedunkelt, ein Hinweis **„Keine Internetverbindung."** erscheint in der Statuszeile und der Abruf wird übersprungen (siehe [Offline lesen](offline.md)).
-- **Kategoriefilter**: Horizontale Chips oben über der Liste filtern nach Kategorie. `Alle` zeigt alle ungelesenen Artikel.
-- **Aktionen**: Antippen einer Karte öffnet ein ActionSheet mit den Aktionen `Öffnen`, `Lesezeichen` und `Als gelesen`. Wählst du `Öffnen`, wird die [Artikeldetailansicht](artikeldetailansicht.md) angezeigt.
+- **Kategoriefilter**: Unter dem Seitentitel liegt eine horizontal scrollbare Leiste mit Filter-Chips. Jeder Chip zeigt den Kategorienamen und in einer kleinen Kapsel die Anzahl der ungelesenen Artikel. Der aktuell gewählte Chip ist dunkel hinterlegt. **Alle** steht an erster Stelle und zeigt alle ungelesenen Artikel. Ein Tipp auf einen Chip filtert die Liste sofort.
+- **Aktionen**: Antippen einer Karte öffnet ein Menü mit den Aktionen **Öffnen**, **Lesezeichen** und **Als gelesen**. Wählst du **Öffnen**, wird die [Artikeldetailansicht](artikeldetailansicht.md) angezeigt.
 - **Alles gelesen**: Über die Schaltfläche oben rechts werden alle sichtbaren ungelesenen Artikel als gelesen markiert.
+
+## Artikelkarten
+
+Jede Karte zeigt den Feed-Titel, das Veröffentlichungsdatum, den Titel, einen kurzen Teasertext und — sofern im Artikel ein Bild enthalten ist — ein Vorschaubild. Darunter steht die geschätzte Lesezeit (z. B. **„3 Min. Lesezeit"**). Ungelesene Artikel tragen zusätzlich einen kleinen Punkt in der Kopfzeile neben dem Feed-Titel. Unten rechts auf der Karte liegen das **Lesezeichen** (füllt sich golden, sobald der Artikel unter **Später** gemerkt ist) und die **Als gelesen**-Aktion.
+
+## Barrierefreiheit
+
+Alle Schaltflächen und Karten auf dieser Seite sind für Screenreader beschriftet — die Filter-Chips nennen Kategoriename, Anzahl und Auswahlzustand, die Karten den Artikeltitel mit dem Hinweis **„Tippen, um den Artikel zu öffnen"**. Details siehe [Barrierefreiheit](barrierefreiheit.md).

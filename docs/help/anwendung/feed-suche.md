@@ -12,7 +12,7 @@ Statt die Feed-Adresse einer Website mühsam herauszusuchen, gibst du einfach di
 
 ## Funktionsweise
 
-Die Seite **Feeds** zeigt standardmäßig nur deine Feed-Liste. Über die Schaltfläche **+ Feed per URL hinzufügen** oberhalb der Liste öffnest du ein Formular, das sich von unten über die Seite schiebt (Titel **Feed per URL hinzufügen**):
+Die Seite **Feeds** zeigt standardmäßig nur deine Feed-Liste — jede Karte trägt den Feed-Titel, die Adresse und ein Status-Badge zum Gesundheitszustand (**In Ordnung**, **Warnung**, **Fehler**). Über die Schaltfläche **+ Feed per URL hinzufügen** oberhalb der Liste öffnest du ein Formular, das sich von unten über die Seite schiebt (Titel **Feed per URL hinzufügen**):
 
 - Das Eingabefeld **Feed-URL oder Website-Adresse…** dient als kombinierte Such- und URL-Eingabe.
 - **Suchen** durchsucht ein öffentliches Feed-Verzeichnis sowie die Website selbst nach verfügbaren Feeds.

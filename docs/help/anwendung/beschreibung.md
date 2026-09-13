@@ -10,13 +10,15 @@ Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lese
 
 ## Funktionsweise
 
-Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
+Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen — jeder Tab wird mit einem eigenen Symbol und seinem Namen dargestellt:
 
-- **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden.
-- **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus. Über **+ Feed per URL hinzufügen** fügst du neue Feeds per Suche hinzu — eine Website-Adresse genügt — oder direkt per URL; ein Tipp auf eine Feed-Karte öffnet Aktionen wie **Aktualisieren**, **Umbenennen**, **Kategorie ändern**, **Bearbeiten** und **Löschen** (Details siehe [Feeds suchen und hinzufügen](feed-suche.md)).
-- **Später** — Zeigt Artikel, die du dir für später merkst.
+- **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden. Eine horizontal scrollbare Filterleiste mit Chips (Kategoriename plus Anzahl ungelesener Artikel) grenzt die Liste auf eine Kategorie ein.
+- **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus als kompaktes Status-Badge (**In Ordnung**, **Warnung**, **Fehler**) auf jeder Feed-Karte. Über **+ Feed per URL hinzufügen** fügst du neue Feeds per Suche hinzu — eine Website-Adresse genügt — oder direkt per URL; ein Tipp auf eine Feed-Karte öffnet Aktionen wie **Aktualisieren**, **Umbenennen**, **Kategorie ändern**, **Bearbeiten** und **Löschen** (Details siehe [Feeds suchen und hinzufügen](feed-suche.md)).
+- **Später** — Zeigt Artikel, die du dir für später merkst; weitere Einträge laden beim Scrollen automatisch nach.
 - **Kategorien** — Verwaltet Kategorien für Feeds.
 - **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten, das Farbschema und die Sprache. Details siehe [Einstellungen](../einstellungen/index.md).
+
+Artikelkarten zeigen neben Titel und Teasertext eine geschätzte Lesezeit sowie bei ungelesenen Artikeln einen kleinen Punkt in der Kopfzeile; gemerkte Artikel erkennst du am ausgefüllten Lesezeichen. In der Artikeldetailansicht schwebt die Aktionsleiste (Zurück, Lesezeichen, Schriftgröße, Gelesen-Markierung, Teilen, Im Browser öffnen) als abgerundete Leiste über dem Seitenrand. Die App ist für die Bedienung per Screenreader vorbereitet und folgt der Schriftgrößen-Einstellung des Geräts — siehe [Barrierefreiheit](barrierefreiheit.md).
 
 Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt — ebenso gelesene Artikel, die ein Filter-Schlagwort enthalten. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 

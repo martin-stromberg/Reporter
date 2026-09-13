@@ -21,19 +21,19 @@ public partial class AppShell : Shell
 
         Routing.RegisterRoute("articledetail", typeof(ArticleDetailPage));
 
-        var unreadTab = new Tab { Title = AppResources.TabUnread };
+        var unreadTab = new Tab { Title = AppResources.TabUnread, Icon = "tab_unread.png" };
         unreadTab.Items.Add(new ShellContent { Route = "unread", Title = AppResources.TabUnread, Content = services.GetRequiredService<UnreadPage>() });
 
-        var feedsTab = new Tab { Title = AppResources.TabFeeds };
+        var feedsTab = new Tab { Title = AppResources.TabFeeds, Icon = "tab_feeds.png" };
         feedsTab.Items.Add(new ShellContent { Title = AppResources.TabFeeds, Content = services.GetRequiredService<FeedsPage>() });
 
-        var laterTab = new Tab { Title = AppResources.TabLater };
+        var laterTab = new Tab { Title = AppResources.TabLater, Icon = "tab_later.png" };
         laterTab.Items.Add(new ShellContent { Title = AppResources.TabLater, Content = services.GetRequiredService<LaterPage>() });
 
-        var categoriesTab = new Tab { Title = AppResources.TabCategories };
+        var categoriesTab = new Tab { Title = AppResources.TabCategories, Icon = "tab_categories.png" };
         categoriesTab.Items.Add(new ShellContent { Title = AppResources.TabCategories, Content = services.GetRequiredService<CategoriesPage>() });
 
-        var settingsTab = new Tab { Title = AppResources.TabSettings };
+        var settingsTab = new Tab { Title = AppResources.TabSettings, Icon = "tab_settings.png" };
         settingsTab.Items.Add(new ShellContent { Title = AppResources.TabSettings, Content = services.GetRequiredService<SettingsPage>() });
 
         var tabBar = new TabBar();

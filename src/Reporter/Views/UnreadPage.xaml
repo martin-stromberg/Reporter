@@ -17,7 +17,7 @@
             <Label Text="{x:Static strings:AppResources.PageTitleUnread}"
                    Style="{StaticResource HeadlineStyle}"/>
 
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+            <Grid ColumnDefinitions="Auto,*,Auto"
                   ColumnSpacing="12"
                   RowDefinitions="Auto">
                 <Border Grid.Column="0"
@@ -25,6 +25,7 @@
                         HeightRequest="44"
                         StrokeShape="RoundRectangle 22"
                         Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+                        SemanticProperties.Description="{x:Static strings:AppResources.ButtonRefresh}"
                         VerticalOptions="Center">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
@@ -53,25 +54,7 @@
                     </Path>
                 </Border>
 
-                <Border Grid.Column="1"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
-                        VerticalOptions="Center">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnFilterClicked"/>
-                    </Border.GestureRecognizers>
-                    <Path Data="M12,10 L36,10 L28,22 L28,34 L20,42 L20,22 Z"
-                          Fill="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-                          Aspect="Uniform"
-                          WidthRequest="24"
-                          HeightRequest="24"
-                          HorizontalOptions="Center"
-                          VerticalOptions="Center"/>
-                </Border>
-
-                <VerticalStackLayout Grid.Column="2"
+                <VerticalStackLayout Grid.Column="1"
                                      Spacing="2"
                                      VerticalOptions="Center">
                     <Label Text="{Binding UnreadCountText}"
@@ -90,12 +73,13 @@
                     </Label>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="3"
+                <Border Grid.Column="2"
                         Padding="12,8"
                         StrokeShape="RoundRectangle 22"
                         Background="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
                         MinimumHeightRequest="44"
                         MinimumWidthRequest="44"
+                        SemanticProperties.Description="{x:Static strings:AppResources.ButtonMarkAllRead}"
                         VerticalOptions="Center">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding MarkAllReadCommand}"/>
@@ -121,8 +105,73 @@
                 </Border>
             </Grid>
 
-            <Label Text="{Binding SelectedCategoryText}"
-                   Style="{StaticResource MetaStyle}"/>
+            <CollectionView ItemsSource="{Binding Categories}"
+                            MinimumHeightRequest="44">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal"
+                                       ItemSpacing="8"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:CategoryFilterItem">
+                        <Border MinimumHeightRequest="44"
+                                Padding="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 22"
+                                Background="Transparent"
+                                SemanticProperties.Description="{Binding AccessibilityDescription}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding BindingContext.SelectCategoryCommand, Source={x:Reference PageRoot}}"
+                                                      CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Border Padding="12,6"
+                                    StrokeShape="RoundRectangle 9999"
+                                    Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+                                    VerticalOptions="Center">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <HorizontalStackLayout Spacing="6">
+                                    <Label Text="{Binding Name}"
+                                           Style="{StaticResource LabelMdStyle}"
+                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                           VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border Padding="6,2"
+                                            StrokeShape="RoundRectangle 10"
+                                            Stroke="Transparent"
+                                            Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}"
+                                            VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightChipCountCapsule}, Dark={StaticResource DarkChipCountCapsule}}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="{Binding Count}"
+                                               Style="{StaticResource LabelSmStyle}"
+                                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                               VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"/>
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Border>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"

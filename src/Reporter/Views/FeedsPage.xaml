@@ -71,22 +71,19 @@
                                 Margin="0,6"
                                 MinimumHeightRequest="44"
                                 StrokeShape="RoundRectangle 12"
-                                Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                                Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
+                                SemanticProperties.Description="{Binding DisplayTitle}"
+                                SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityTapForActions}"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnSearchResultTapped"
                                                       CommandParameter="{Binding .}"/>
                             </Border.GestureRecognizers>
                             <VerticalStackLayout Spacing="6">
-                                <Label Text="{Binding FeedUrl}"
+                                <Label Text="{Binding DisplayTitle}"
                                        Style="{StaticResource HeadlineSmallStyle}"
                                        LineBreakMode="TailTruncation"
-                                       MaxLines="2">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding Title, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True">
-                                            <Setter Property="Text" Value="{Binding Title}"/>
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
+                                       MaxLines="2"/>
                                 <Label Text="{Binding Description}"
                                        Style="{StaticResource BodySmallStyle}"
                                        LineBreakMode="TailTruncation"
@@ -148,7 +145,10 @@
                         <Border Padding="16"
                                 Margin="0,6"
                                 StrokeShape="RoundRectangle 12"
-                                Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                                Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
+                                SemanticProperties.Description="{Binding Title}"
+                                SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityTapForActions}"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnFeedTapped"
                                                       CommandParameter="{Binding .}"/>
@@ -160,9 +160,9 @@
                                 <Label Text="{Binding Title}"
                                        Style="{StaticResource HeadlineSmallStyle}"
                                        VerticalOptions="Center"/>
-                                <BoxView WidthRequest="12"
-                                         HeightRequest="12"
-                                         CornerRadius="6"
+                                <BoxView WidthRequest="8"
+                                         HeightRequest="8"
+                                         CornerRadius="4"
                                          VerticalOptions="Center"
                                          HorizontalOptions="End"
                                          Grid.Column="1">
@@ -200,24 +200,54 @@
                                            Style="{StaticResource MetaStyle}"/>
                                 </HorizontalStackLayout>
 
-                                <Label Grid.Row="2"
-                                       Grid.ColumnSpan="2"
-                                       Text="{Binding HealthStatus}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="OK">
-                                            <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusOkLabel}" />
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}" />
+                                <Border Grid.Row="2"
+                                        Grid.ColumnSpan="2"
+                                        Padding="8,2"
+                                        StrokeShape="RoundRectangle 9999"
+                                        Stroke="Transparent"
+                                        HorizontalOptions="Start"
+                                        Background="{AppThemeBinding Light={StaticResource LightStatusOkTint}, Dark={StaticResource DarkStatusOkTint}}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding HealthStatus}" Value="Warning">
+                                            <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightStatusWarningTint}, Dark={StaticResource DarkStatusWarningTint}}" />
                                         </DataTrigger>
-                                        <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Warning">
-                                            <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusWarningLabel}" />
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}" />
+                                        <DataTrigger TargetType="Border" Binding="{Binding HealthStatus}" Value="Error">
+                                            <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightStatusErrorTint}, Dark={StaticResource DarkStatusErrorTint}}" />
                                         </DataTrigger>
-                                        <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Error">
-                                            <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusErrorLabel}" />
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
+                                    </Border.Triggers>
+                                    <HorizontalStackLayout Spacing="6"
+                                                           VerticalOptions="Center">
+                                        <BoxView WidthRequest="6"
+                                                 HeightRequest="6"
+                                                 CornerRadius="3"
+                                                 VerticalOptions="Center"
+                                                 Color="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}">
+                                            <BoxView.Triggers>
+                                                <DataTrigger TargetType="BoxView" Binding="{Binding HealthStatus}" Value="Warning">
+                                                    <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="BoxView" Binding="{Binding HealthStatus}" Value="Error">
+                                                    <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}" />
+                                                </DataTrigger>
+                                            </BoxView.Triggers>
+                                        </BoxView>
+                                        <Label Text="{x:Static strings:AppResources.HealthStatusOkLabel}"
+                                               Style="{StaticResource LabelMetaStyle}"
+                                               TextColor="{AppThemeBinding Light={StaticResource LightStatusOkText}, Dark={StaticResource DarkStatusOkText}}"
+                                               VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Warning">
+                                                    <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusWarningLabel}" />
+                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusWarningText}, Dark={StaticResource DarkStatusWarningText}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding HealthStatus}" Value="Error">
+                                                    <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusErrorLabel}" />
+                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusErrorText}, Dark={StaticResource DarkStatusErrorText}}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </HorizontalStackLayout>
+                                </Border>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -233,7 +263,8 @@
                 </DataTrigger>
             </Grid.Triggers>
             <BoxView Opacity="0.5"
-                     Color="{AppThemeBinding Light={StaticResource LightOnSurface}, Dark={StaticResource DarkSurface}}">
+                     Color="{AppThemeBinding Light={StaticResource LightOnSurface}, Dark={StaticResource DarkSurface}}"
+                     SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityDismissSheet}">
                 <BoxView.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding CloseAddFormCommand}"/>
                 </BoxView.GestureRecognizers>
@@ -283,6 +314,7 @@
                     <Entry x:Name="NewUrlEntry"
                            Text="{Binding NewUrl}"
                            Placeholder="{x:Static strings:AppResources.PlaceholderFeedSearch}"
+                           SemanticProperties.Description="{x:Static strings:AppResources.PlaceholderFeedSearch}"
                            Keyboard="Url"
                            ReturnCommand="{Binding SearchCommand}"/>
                     <ActivityIndicator IsVisible="{Binding IsSearching}"

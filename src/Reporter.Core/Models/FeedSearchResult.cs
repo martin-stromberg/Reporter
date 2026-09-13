@@ -41,4 +41,12 @@ public class FeedSearchResult
     /// Gets the kind of match that produced this result.
     /// </summary>
     public FeedSearchMatchKind MatchKind { get; init; }
+
+    /// <summary>
+    /// Gets the human-readable display title: the feed title when known, otherwise the feed URL.
+    /// </summary>
+    public string DisplayTitle
+    {
+        get { return string.IsNullOrWhiteSpace(Title) ? FeedUrl : Title; }
+    }
 }

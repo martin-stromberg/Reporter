@@ -1,5 +1,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -12,9 +14,18 @@ namespace Reporter.Core.ViewModels;
 /// </summary>
 public partial class LaterViewModel : BaseViewModel
 {
+    /// <summary>
+    /// The number of saved items loaded per page.
+    /// </summary>
+    public const int PageSize = 20;
+
     private readonly IItemRepository _itemRepository;
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
     private string _title = AppResources.PageTitleLater;
-    private IReadOnlyList<ItemListItem> _savedItems = new List<ItemListItem>();
+    private bool _isLoading;
+    private bool _hasMore = true;
+    private int _currentPage;
+    private string _errorMessage = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LaterViewModel"/> class.
@@ -26,14 +37,20 @@ public partial class LaterViewModel : BaseViewModel
         _itemRepository = itemRepository;
         TrackConnectivity(networkStatusService);
         LoadCommand = new AsyncRelayCommand(LoadAsync);
+        LoadMoreCommand = new AsyncRelayCommand(LoadMoreAsync, () => HasMore && !IsLoading);
         ToggleSavedCommand = new AsyncRelayCommand<ItemListItem?>(ToggleSavedAsync);
         MarkReadCommand = new AsyncRelayCommand<ItemListItem?>(MarkReadAsync);
     }
 
     /// <summary>
-    /// Gets the command that loads saved-for-later articles.
+    /// Gets the command that loads the first page of saved-for-later articles.
     /// </summary>
     public AsyncRelayCommand LoadCommand { get; }
+
+    /// <summary>
+    /// Gets the command that loads the next page of saved-for-later articles.
+    /// </summary>
+    public AsyncRelayCommand LoadMoreCommand { get; }
 
     /// <summary>
     /// Gets the command that toggles the saved-for-later state of an article.
@@ -55,17 +72,125 @@ public partial class LaterViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets or sets the list of items saved for later.
+    /// Gets the items saved for later.
     /// </summary>
-    public IReadOnlyList<ItemListItem> SavedItems
+    /// <returns>The observable collection of saved items.</returns>
+    public ObservableCollection<ItemListItem> SavedItems { get; } = new();
+
+    /// <summary>
+    /// Gets a value indicating whether a page is currently being loaded.
+    /// </summary>
+    public bool IsLoading
     {
-        get => _savedItems;
-        set => SetProperty(ref _savedItems, value);
+        get => _isLoading;
+        private set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                LoadMoreCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
+
+    /// <summary>
+    /// Gets a value indicating whether more saved items can be loaded.
+    /// </summary>
+    public bool HasMore
+    {
+        get => _hasMore;
+        private set
+        {
+            if (SetProperty(ref _hasMore, value))
+            {
+                LoadMoreCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the current error message.
+    /// </summary>
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        set
+        {
+            if (SetProperty(ref _errorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an error message is present.
+    /// </summary>
+    public bool HasError => _errorMessage.Length > 0;
 
     private async Task LoadAsync()
     {
-        SavedItems = await _itemRepository.GetSavedForLaterAsync();
+        await _loadLock.WaitAsync();
+        try
+        {
+            ErrorMessage = string.Empty;
+            _currentPage = 0;
+            HasMore = true;
+            SavedItems.Clear();
+            await LoadPageCoreAsync();
+        }
+        finally
+        {
+            _loadLock.Release();
+        }
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        if (IsLoading || !HasMore)
+        {
+            return;
+        }
+
+        await _loadLock.WaitAsync();
+        try
+        {
+            if (IsLoading || !HasMore)
+            {
+                return;
+            }
+
+            await LoadPageCoreAsync();
+        }
+        finally
+        {
+            _loadLock.Release();
+        }
+    }
+
+    private async Task LoadPageCoreAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            var items = await _itemRepository.GetSavedForLaterAsync(_currentPage, PageSize);
+            foreach (var item in items)
+            {
+                SavedItems.Add(item);
+            }
+
+            _currentPage++;
+            HasMore = items.Count == PageSize;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"LoadPageCoreAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorLoadFailed;
+            HasMore = false;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task ToggleSavedAsync(ItemListItem? item)
@@ -76,7 +201,7 @@ public partial class LaterViewModel : BaseViewModel
         }
 
         await _itemRepository.ToggleSavedForLaterAsync(item.Id);
-        await LoadAsync();
+        SavedItems.Remove(item);
     }
 
     private async Task MarkReadAsync(ItemListItem? item)
@@ -87,6 +212,13 @@ public partial class LaterViewModel : BaseViewModel
         }
 
         await _itemRepository.MarkAsReadAsync(item.Id);
-        await LoadAsync();
+
+        var index = SavedItems.IndexOf(item);
+        if (index < 0)
+        {
+            return;
+        }
+
+        SavedItems[index] = item.CopyWith(isRead: true);
     }
 }

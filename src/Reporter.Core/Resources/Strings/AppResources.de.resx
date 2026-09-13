@@ -383,6 +383,27 @@
   <data name="AccessibilityShare" xml:space="preserve">
     <value>Teilen</value>
   </data>
+  <data name="AccessibilityDismissSheet" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="AccessibilityTapForActions" xml:space="preserve">
+    <value>Tippen für Aktionen</value>
+  </data>
+  <data name="AccessibilityOpenArticle" xml:space="preserve">
+    <value>Tippen, um den Artikel zu öffnen</value>
+  </data>
+  <data name="AccessibilityCategoryFilter" xml:space="preserve">
+    <value>Filter {0}, {1} ungelesene Artikel, {2}</value>
+  </data>
+  <data name="AccessibilityCategoryFilterSingular" xml:space="preserve">
+    <value>Filter {0}, {1} ungelesener Artikel, {2}</value>
+  </data>
+  <data name="AccessibilitySelected" xml:space="preserve">
+    <value>ausgewählt</value>
+  </data>
+  <data name="AccessibilityNotSelected" xml:space="preserve">
+    <value>nicht ausgewählt</value>
+  </data>
   <data name="ArticleBookmarkSet" xml:space="preserve">
     <value>Lesezeichen setzen</value>
   </data>

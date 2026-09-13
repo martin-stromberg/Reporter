@@ -14,16 +14,20 @@ Branch: `task/issue-30-ee2cf2e629e44c2ba7e2c3d7d5e7a490-ui-polish-accessibility-
 | [x] | 5 | Umsetzungsplanung (Unteragent) | `plan.md` |
 | [x] | 5a | Offene Punkte prüfen und ggf. Planung wiederholen | `plan.md` (aktualisiert) |
 | [x] | 5b | Plan gegen Anforderung und Testbedarf prüfen (Unteragent) | `plan-check.md` |
-| [ ] | 5c | Planungscommit | – |
-| [ ] | 6 | Implementierung (Unteragent) | Codeänderungen |
-| [ ] | 7 | Plan-Review (Unteragent, bedingt) | `review.md` |
-| [ ] | 8 | Usability-Review (Unteragent, bei UI-Änderungen) | `review-usability.md` |
-| [ ] | 9 | Code-Review (Unteragent) | `review-code.md` |
-| [ ] | 10 | Tests ausführen (Unteragent) | `test-results.md` |
-| [ ] | – | Iteration oder Abschluss entscheiden | – |
-| [ ] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
-| [ ] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
-| [ ] | 12b | README aktualisieren (Unteragent) | `README.md` |
-| [ ] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
+| [x] | 5c | Planungscommit | – |
+| [x] | 6 | Implementierung (Unteragent) — Iteration 1 | Codeänderungen |
+| [x] | 7 | Plan-Review (Unteragent, bedingt) — `Vollständig umgesetzt` | `review.md` |
+| [x] | 8 | Usability-Review (Unteragent) — `Befunde vorhanden` (3) | `review-usability.md` |
+| [x] | 9 | Code-Review (Unteragent) — `Befunde vorhanden` (4) | `review-code.md` |
+| [x] | 10 | Tests ausführen (Unteragent) — Iteration 1: 347 grün, 1 E2E-Befund, ausstehende Verifikationen | `test-results.md` |
+| [x] | – | Iteration oder Abschluss entscheiden — 3 Iterationen, Abbruch → continue.md | – |
+| [x] | 6 | Implementierung (Unteragent) — Iteration 3 | Codeänderungen |
+| [x] | 7–10 | Reviews+Tests Iteration 3 — usability: 0, code: 1 Befund, tests: 350 grün, ausstehende Umgebungs-Verifikationen | `review-usability.md`, `review-code.md`, `test-results.md` |
+| [x] | 6 | Implementierung (Unteragent) — Iteration 2 | Codeänderungen (alle 8 Review-Befunde behoben; 348 Tests grün; Static Checks 0; UIA-Fix verifiziert, s. `test-results.md` „Iteration 2") |
+| [x] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
+| [x] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
+| [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
+| [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
+| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) | `continue-done.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
 | [ ] | – | Commit durchführen | – |

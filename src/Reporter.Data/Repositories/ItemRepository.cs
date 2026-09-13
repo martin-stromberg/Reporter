@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Services;
 using ItemEntity = Reporter.Data.Entities.Item;
 
 namespace Reporter.Data.Repositories;
@@ -119,42 +120,14 @@ public class ItemRepository : IItemRepository
             query = query.Where(i => feedIds.Contains(i.FeedId));
         }
 
-        var entities = await query
-            .OrderByDescending(i => i.PublishedAt)
-            .ThenBy(i => i.Id)
-            .Skip(page * pageSize)
-            .Take(pageSize)
-            .Select(i => new
-            {
-                i.Id,
-                i.FeedId,
-                i.Title,
-                i.Link,
-                i.PublishedAt,
-                i.IsRead,
-                i.IsSavedForLater,
-                i.ContentHtml,
-                FeedTitle = i.Feed.Title,
-                CategoryId = i.Feed.CategoryId,
-                CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
-            })
+        var entities = await SelectListItemRows(query
+                .OrderByDescending(i => i.PublishedAt)
+                .ThenBy(i => i.Id)
+                .Skip(page * pageSize)
+                .Take(pageSize))
             .ToListAsync();
 
-        return entities.Select(e => new ItemListItem
-        {
-            Id = e.Id,
-            FeedId = e.FeedId,
-            Title = e.Title,
-            Link = e.Link,
-            PublishedAt = e.PublishedAt,
-            IsRead = e.IsRead,
-            IsSavedForLater = e.IsSavedForLater,
-            FeedTitle = e.FeedTitle,
-            CategoryId = e.CategoryId,
-            CategoryName = e.CategoryName,
-            ImageUrl = ExtractImageUrl(e.ContentHtml),
-            Summary = ExtractSummary(e.ContentHtml),
-        }).ToList();
+        return entities.Select(MapToListItem).ToList();
     }
 
     /// <inheritdoc />
@@ -253,54 +226,32 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync()
+    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
     {
         await using var context = await _factory.CreateDbContextAsync();
-        var entities = await context.Items
-            .AsNoTracking()
-            .Where(i => i.IsSavedForLater)
-            .OrderByDescending(i => i.PublishedAt)
-            .Select(i => new
-            {
-                i.Id,
-                i.FeedId,
-                i.Title,
-                i.Link,
-                i.PublishedAt,
-                i.IsRead,
-                i.IsSavedForLater,
-                i.ContentHtml,
-                FeedTitle = i.Feed.Title,
-                CategoryId = i.Feed.CategoryId,
-                CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
-            })
+        var entities = await SelectListItemRows(context.Items
+                .AsNoTracking()
+                .Where(i => i.IsSavedForLater)
+                .OrderByDescending(i => i.PublishedAt)
+                .ThenBy(i => i.Id)
+                .Skip(page * pageSize)
+                .Take(pageSize))
             .ToListAsync();
 
-        return entities.Select(e => new ItemListItem
-        {
-            Id = e.Id,
-            FeedId = e.FeedId,
-            Title = e.Title,
-            Link = e.Link,
-            PublishedAt = e.PublishedAt,
-            IsRead = e.IsRead,
-            IsSavedForLater = e.IsSavedForLater,
-            FeedTitle = e.FeedTitle,
-            CategoryId = e.CategoryId,
-            CategoryName = e.CategoryName,
-            ImageUrl = ExtractImageUrl(e.ContentHtml),
-            Summary = ExtractSummary(e.ContentHtml),
-        }).ToList();
+        return entities.Select(MapToListItem).ToList();
     }
 
     /// <inheritdoc />
-    public async Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash)
+    public async Task AddRangeAsync(IReadOnlyList<Item> items)
     {
+        if (items.Count == 0)
+        {
+            return;
+        }
+
         await using var context = await _factory.CreateDbContextAsync();
-        var entity = await context.Items
-            .AsNoTracking()
-            .FirstOrDefaultAsync(i => i.FeedId == feedId && i.GuidOrHash == guidOrHash);
-        return entity is null ? null : MapToModel(entity);
+        context.Items.AddRange(items.Select(MapToEntity));
+        await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
@@ -335,6 +286,50 @@ public class ItemRepository : IItemRepository
         return await context.Items
             .Where(i => ids.Contains(i.Id))
             .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Projects item entities including feed and category data into flat list rows.
+    /// Shared by the unread and saved-for-later paged queries.
+    /// </summary>
+    /// <param name="query">The item query to project.</param>
+    /// <returns>A queryable of flat list rows.</returns>
+    private static IQueryable<ItemListRow> SelectListItemRows(IQueryable<ItemEntity> query)
+    {
+        return query.Select(i => new ItemListRow
+        {
+            Id = i.Id,
+            FeedId = i.FeedId,
+            Title = i.Title,
+            Link = i.Link,
+            PublishedAt = i.PublishedAt,
+            IsRead = i.IsRead,
+            IsSavedForLater = i.IsSavedForLater,
+            ContentHtml = i.ContentHtml,
+            FeedTitle = i.Feed.Title,
+            CategoryId = i.Feed.CategoryId,
+            CategoryName = i.Feed.Category != null ? i.Feed.Category.Name : null,
+        });
+    }
+
+    private static ItemListItem MapToListItem(ItemListRow row)
+    {
+        return new ItemListItem
+        {
+            Id = row.Id,
+            FeedId = row.FeedId,
+            Title = row.Title,
+            Link = row.Link,
+            PublishedAt = row.PublishedAt,
+            IsRead = row.IsRead,
+            IsSavedForLater = row.IsSavedForLater,
+            FeedTitle = row.FeedTitle,
+            CategoryId = row.CategoryId,
+            CategoryName = row.CategoryName,
+            ImageUrl = ExtractImageUrl(row.ContentHtml),
+            Summary = ExtractSummary(row.ContentHtml),
+            ReadingTimeText = ReadingTimeEstimator.EstimateText(row.ContentHtml),
+        };
     }
 
     private static string? ExtractImageUrl(string? contentHtml)
@@ -400,5 +395,33 @@ public class ItemRepository : IItemRepository
             ReadAt = model.ReadAt,
             ContentHtml = model.ContentHtml,
         };
+    }
+
+    /// <summary>
+    /// Flat database row used by the paged <see cref="ItemListItem"/> projections.
+    /// </summary>
+    private sealed class ItemListRow
+    {
+        public Guid Id { get; set; }
+
+        public Guid FeedId { get; set; }
+
+        public string Title { get; set; } = string.Empty;
+
+        public string? Link { get; set; }
+
+        public DateTime? PublishedAt { get; set; }
+
+        public bool IsRead { get; set; }
+
+        public bool IsSavedForLater { get; set; }
+
+        public string? ContentHtml { get; set; }
+
+        public string FeedTitle { get; set; } = string.Empty;
+
+        public Guid? CategoryId { get; set; }
+
+        public string? CategoryName { get; set; }
     }
 }

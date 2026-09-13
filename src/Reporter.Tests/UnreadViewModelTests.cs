@@ -122,6 +122,46 @@ public class UnreadViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that selecting a category filter chip updates the IsSelected
+    /// state on the chip collection for the chip bar rendering.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SelectCategoryCommand_UpdatesChipSelectionState()
+    {
+        var (feedId, categoryId) = await SeedFeedAndCategoryAsync();
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Sample",
+            GuidOrHash = "sample",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        });
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.Categories.First().IsSelected);
+        Assert.Null(_viewModel.Categories.First().CategoryId);
+
+        var category = _viewModel.Categories.FirstOrDefault(c => c.CategoryId == categoryId);
+        Assert.NotNull(category);
+        Assert.False(category.IsSelected);
+
+        await _viewModel.SelectCategoryCommand.ExecuteAsync(category);
+
+        Assert.True(category.IsSelected);
+        Assert.False(_viewModel.Categories.First().IsSelected);
+        Assert.Single(_viewModel.Categories, c => c.IsSelected);
+
+        await _viewModel.SelectCategoryCommand.ExecuteAsync(_viewModel.Categories.First());
+
+        Assert.True(_viewModel.Categories.First().IsSelected);
+        Assert.False(category.IsSelected);
+    }
+
+    /// <summary>
     /// Verifies that MarkReadCommand removes the article from the list.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -148,6 +188,51 @@ public class UnreadViewModelTests : IDisposable
         await _viewModel.MarkReadCommand.ExecuteAsync(article);
 
         Assert.DoesNotContain(_viewModel.Articles, a => a.Id == item.Id);
+    }
+
+    /// <summary>
+    /// Verifies that MarkReadCommand decrements the UnreadCount and refreshes the
+    /// UnreadCountText shown in the header, so the counter does not stay stale.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task MarkReadCommand_DecrementsUnreadCount()
+    {
+        var (feedId, _) = await SeedFeedAndCategoryAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "First",
+            GuidOrHash = "first",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        };
+        await _itemRepository.AddAsync(item);
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Second",
+            GuidOrHash = "second",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 2),
+        });
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(2, _viewModel.UnreadCount);
+        Assert.StartsWith("2 ", _viewModel.UnreadCountText);
+
+        var article = _viewModel.Articles.FirstOrDefault(a => a.Id == item.Id);
+        Assert.NotNull(article);
+
+        await _viewModel.MarkReadCommand.ExecuteAsync(article);
+
+        Assert.Equal(1, _viewModel.UnreadCount);
+        Assert.StartsWith("1 ", _viewModel.UnreadCountText);
+        Assert.Equal(1, _viewModel.SelectedCategory!.Count);
     }
 
     /// <summary>
@@ -489,10 +574,10 @@ public class UnreadViewModelTests : IDisposable
         public Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId) => _inner.GetByCategoryAsync(categoryId);
 
         /// <inheritdoc />
-        public Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync() => _inner.GetSavedForLaterAsync();
+        public Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize) => _inner.GetSavedForLaterAsync(page, pageSize);
 
         /// <inheritdoc />
-        public Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash) => _inner.GetByGuidOrHashAsync(feedId, guidOrHash);
+        public Task AddRangeAsync(IReadOnlyList<Item> items) => _inner.AddRangeAsync(items);
 
         /// <inheritdoc />
         public Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.DeleteExpiredAsync(cutoff, cancellationToken);

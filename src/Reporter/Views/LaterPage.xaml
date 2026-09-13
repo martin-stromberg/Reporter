@@ -10,7 +10,7 @@
              x:Class="Reporter.Views.LaterPage"
              Title="{x:Static strings:AppResources.PageTitleLater}"
              Shell.NavBarIsVisible="False">
-    <Grid RowDefinitions="Auto,*"
+    <Grid RowDefinitions="Auto,*,Auto"
           Padding="16,8"
           RowSpacing="12">
         <VerticalStackLayout Spacing="8">
@@ -30,10 +30,16 @@
                        Style="{StaticResource BodySmallStyle}"
                        TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
             </Border>
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasError}"
+                   Style="{StaticResource BodySmallStyle}"/>
         </VerticalStackLayout>
 
         <CollectionView Grid.Row="1"
                         ItemsSource="{Binding SavedItems}"
+                        RemainingItemsThreshold="2"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
                         EmptyView="{x:Static strings:AppResources.PlaceholderLater}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:ItemListItem">
@@ -43,5 +49,11 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <ActivityIndicator Grid.Row="2"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HeightRequest="24"
+                           Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
     </Grid>
 </ContentPage>
