@@ -1,0 +1,32 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+# Tasks: Manueller Sprachwechsel (EN/DE) in den Einstellungen (#62)
+
+| # | Bereich | Aufgabe | Status | Testnachweis |
+|---|---------|---------|--------|--------------|
+| 1 | Datenmodell | `SettingsValues` (`src/Reporter.Core/Models/SettingsValues.cs`): Konstanten `LanguageSystem = "system"`, `LanguageGerman = "de"`, `LanguageEnglish = "en"` ergänzen | Offen | — |
+| 2 | Datenmodell | `Settings`-Entity (`src/Reporter.Data/Entities/Settings.cs`): Property `Language` (`string?`, Default `SettingsValues.LanguageSystem`) ergänzen | Offen | — |
+| 3 | Datenmodell | `Settings`-Domainmodell (`src/Reporter.Core/Models/Settings.cs`): `init`-Property `Language` (`string?`, Default `SettingsValues.LanguageSystem`) ergänzen | Offen | — |
+| 4 | Datenmodell | `ReporterDbContext.ConfigureSettings` (`src/Reporter.Data/ReporterDbContext.cs`): `language`-Spalte mappen (`HasMaxLength(50)`, nullable TEXT, analog `theme`) | Offen | — |
+| 5 | Migration | Migration `AddSettingsLanguage` via `dotnet ef migrations add` (Projekt `src/Reporter.Data`) erzeugen: `AddColumn<string>` auf `settings` + `UpdateData` `"system"` für Singleton-Datensatz; `ReporterDbContextModelSnapshot.cs` wird mitaktualisiert | Offen | — |
+| 6 | Persistenz | `SettingsRepository.SaveAsync` (`src/Reporter.Data/Repositories/SettingsRepository.cs`): `entity.Language = settings.Language` ergänzen | Offen | — |
+| 7 | Persistenz | `SettingsRepository.MapToModel`: `Language = entity.Language` ergänzen | Offen | — |
+| 8 | Ressourcen | Neue Schlüssel `SettingsSectionLanguage`, `SettingsLanguageLabel`, `SettingsLanguageSystem`, `SettingsLanguageGerman`, `SettingsLanguageEnglish`, `SettingsLanguageRestartHint` in `AppResources.resx` **und** `AppResources.de.resx` eintragen; `AppResources.Designer.cs` regenerieren bzw. manuell im Muster ergänzen | Offen | — |
+| 9 | Logik | `LanguageOption` anlegen (`src/Reporter.Core/ViewModels/LanguageOption.cs`): `required string Value` + `required string Label` (Muster `ThemeOption`) | Offen | — |
+| 10 | Logik | `SettingsViewModel`: `LanguageOptions` (`IReadOnlyList<LanguageOption>`) im Konstruktor befüllen — Reihenfolge System/Deutsch/English, Labels aus `AppResources` | Offen | — |
+| 11 | Logik | `SettingsViewModel`: bindbare Property `SelectedLanguage` (`LanguageOption?`) mit Feld `_selectedLanguage` und `PersistOnChange()` im Setter (Muster `SelectedTheme`) | Offen | — |
+| 12 | Logik | `SettingsViewModel.LoadAsync`: `settings.Language` auf `SelectedLanguage` mappen, Fallback auf `LanguageSystem`-Option bei unbekanntem Wert | Offen | — |
+| 13 | Logik | `SettingsViewModel.PersistAsync`: `Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem` im neu aufgebauten `Settings`-Objekt ergänzen | Offen | — |
+| 14 | Logik | `AppCulture` anlegen (`src/Reporter.Core/Localization/AppCulture.cs`, Namespace `Reporter.Core.Localization`): `ResolveCulture(string?) → CultureInfo?` (`"de"`/`"en"` → Kultur, sonst `null`) und `Apply(string?)` (setzt `CurrentUICulture`/`CurrentCulture`/`DefaultThreadCurrentUICulture`/`DefaultThreadCurrentCulture`, No-Op bei `null`) | Offen | — |
+| 15 | Logik | `MauiProgram.CreateMauiApp`: private Hilfsmethode `ApplyPersistedLanguage(MauiApp)` nach `builder.Build()` aufrufen — Scope → `ReporterDbContext.Database.Migrate()` (synchron) → `ISettingsRepository.GetAsync().GetAwaiter().GetResult()` → `AppCulture.Apply(settings.Language)`; gesamter Block try/catch mit `Debug.WriteLine` | Offen | — |
+| 16 | UI | `SettingsPage.xaml`: neue Sektion „Sprache" nach „Erscheinungsbild" — Sektions-`Label` `SettingsSectionLanguage` (`UiLabelStyle`) + Karten-`Border` mit Picker-Zeile (`Grid ColumnDefinitions="*,Auto"`, `Label` `SettingsLanguageLabel`, `Picker` `LanguageOptions`/`SelectedLanguage`/`ItemDisplayBinding Label`, `MinimumWidthRequest="44"`, `MinimumHeightRequest="44"`, `SemanticProperties.Description`, `HorizontalTextAlignment="End"`) | Offen | — |
+| 17 | UI | `SettingsPage.xaml`: Neustart-Hinweis-`Border` mit `SettingsLanguageRestartHint` in der Sprach-Karte (Info-Border-Muster `SettingsRetentionInfo`: `Padding="10"`, `RoundRectangle 8`, `Stroke="Transparent"`, `AppThemeBinding` `*SurfaceSubtle`, `BodySmallStyle`) | Offen | — |
+| 18 | Tests | `TestSettingsHelper.SaveAsync` (`src/Reporter.Tests/TestSettingsHelper.cs`): `Language = language ?? settings.Language` mitkopieren und optionalen Parameter `string? language = null` ergänzen | Offen | — |
+| 19 | Tests | `SettingsRepositoryTests`: `SaveAsync_PersistsLanguage` — Roundtrip der `language`-Spalte | Offen | — |
+| 20 | Tests | `SettingsViewModelTests_Load`: `LanguageOptions_ExposePersistedValues` (exakt `["system","de","en"]`) sowie Sprach-Fallback/`SelectedLanguage`-Mapping (`Load_InvalidPersistedValues_UsesFallbacks`/`Load_PopulatesAllOptions` erweitern oder eigene Tests) | Offen | — |
+| 21 | Tests | `SettingsViewModelTests_Persist`: `SelectedLanguage_Change_Persists` (Sofort-Persist via `TestWaitHelper`) und `OtherChange_DoesNotLoseLanguage` (`PersistAsync` verliert `Language` bei anderen Änderungen nicht) | Offen | — |
+| 22 | Tests | `AppCultureTests` anlegen (`src/Reporter.Tests/AppCultureTests.cs`): `ResolveCulture`-Theory (`"de"`/`"en"`/`"system"`/`null`/unbekannt) und optional `Apply`-Test mit Kultur-Restore im `finally`/`Dispose` | Offen | — |
+| 23 | E2E-Tests | `SettingsViewModelTests_E2E`: `E2E_ChangeLanguage_PersistRoundtrip` — `SelectedLanguage`-Wechsel → Persist → Reload in neuer ViewModel-Instanz → Wert wiederhergestellt | Offen | — |
+| 24 | UI-Verifikation | Manuelle UI-Verifikation (AGENTS.md): Windows-Fenster 390×844, Light+Dark — Picker sichtbar/bedienbar, Wechsel → App-Neustart → Texte (Tab-Titel, Einstellungen) in gewählter Sprache; Vergleich mit `design-draft/stitch_local_rss_feed_reader/einstellungen_filter/screen.png`; Screenshot + Formfaktor in `test-results.md`/`docs/help/anwendung/mobile-ui-design.md` dokumentieren; Checklistenpunkt `test-results.md` Zeile 538 aktualisieren | Offen | — |
+| 25 | Dokumentation | `docs/help/anwendung/sprache.md` aktualisieren: Sprach-Auswahl in den Einstellungen beschreiben, Abschnitt „kein manueller Wechsel vorgesehen" entfernen/ersetzen | Offen | — |
+| 26 | Abschluss | `dotnet build Reporter.sln`, `dotnet test src/Reporter.Tests/Reporter.Tests.csproj` und `.\scripts\Run-StaticChecks.ps1` ausführen — alle grün / Exit 0 | Offen | — |
