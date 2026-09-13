@@ -51,7 +51,7 @@ Bei ungültiger Eingabe erscheint eine rote Fehlermeldung unter dem Feld:
 
 ## Hinweise
 
-- Alle Einstellungen gelten anwendungsweit, nicht pro Feed — mit einer Ausnahme: Benachrichtigungen lassen sich zusätzlich pro Feed im Feed-Formular auf der Seite **Feeds** steuern (Schalter **Benachrichtigungen**).
+- Alle Einstellungen gelten anwendungsweit, nicht pro Feed — mit einer Ausnahme: Benachrichtigungen lassen sich zusätzlich pro Feed auf der Seite **Feeds** steuern (Feed antippen → **Bearbeiten** → Schalter **Benachrichtigungen**).
 - Benachrichtigungen benötigen auf iOS eine System-Berechtigung; sie wird beim ersten Einschalten des Hauptschalters angefragt (nicht beim App-Start). Bei Verweigerung weist eine Hinweiszeile mit **Einstellungen öffnen** darauf hin; wurde die Berechtigung noch nie angefragt, bietet eine neutrale Zeile **Benachrichtigungen erlauben** den direkten Weg zum System-Dialog.
 - Die automatische Hintergrund-Aktualisierung läuft nur bei geöffneter App.
 - Ungelesene und für später gemerkte Artikel sind von jeder automatischen Löschung ausgenommen.

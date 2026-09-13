@@ -15,15 +15,15 @@ Neue Anforderung (2. Lauf auf diesem Branch): Hinzufügen-Formular einklappbar/h
 | [x] | 4 | Bestandsaufnahme (Unteragent) | `inventory.md`, `inventory/` |
 | [x] | 5 | Umsetzungsplanung (Unteragent) | `plan.md` |
 | [x] | 5a | Offene Punkte prüfen und ggf. Planung wiederholen | `plan.md` (aktualisiert, 5 Antworten eingearbeitet) |
-| [ ] | 5b | Plan gegen Anforderung und Testbedarf prüfen (Unteragent) | `plan-check.md` |
-| [ ] | 5c | Planungscommit | – |
-| [ ] | 6 | Implementierung (Unteragent) | Codeänderungen |
-| [ ] | 7 | Plan-Review (Unteragent, bedingt) | `review.md` |
-| [ ] | 8 | Usability-Review (Unteragent, bei UI-Änderungen) | `review-usability.md` |
-| [ ] | 9 | Code-Review (Unteragent) | `review-code.md` |
-| [ ] | 10 | Tests ausführen (Unteragent) | `test-results.md` |
-| [ ] | – | Iteration oder Abschluss entscheiden | – |
-| [ ] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
+| [x] | 5b | Plan gegen Anforderung und Testbedarf prüfen (Unteragent) | `plan-check.md` (Plan vollständig, 3. Iteration) |
+| [x] | 5c | Planungscommit | Commit 813c271 |
+| [x] | 6 | Implementierung (Unteragent) | Codeänderungen (Listenansicht + Bottom-Sheet, `FeedTitleFallback`, Umbenennen/Kategorie, 303 Tests grün, Static Checks Exit 0, manuelle UI-Verifikation 390×844 Dark+Light) |
+| [x] | 7 | Plan-Review (Unteragent, bedingt) | `review.md` (Vollständig umgesetzt) |
+| [x] | 8 | Usability-Review (Unteragent, bei UI-Änderungen) | `review-usability.md` (3 Befunde) |
+| [x] | 9 | Code-Review (Unteragent) | `review-code.md` (8 Befunde) |
+| [x] | 10 | Tests ausführen (Unteragent) | `test-results.md` (Keine Fehler) |
+| [x] | – | Iteration oder Abschluss entscheiden | It. 1: 11 offene Punkte → It. 2 → 9 offene Punkte → It. 3 → 3 offene Punkte, Iterationsmaximum erreicht → Abbruch |
+| [x] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` (3 Restbefunde aus `review-code.md` It. 3) |
 | [ ] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
 | [ ] | 12b | README aktualisieren (Unteragent) | `README.md` |
 | [ ] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |

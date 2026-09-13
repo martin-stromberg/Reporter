@@ -20,6 +20,8 @@ public class Win32u {
     public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
     public const uint LEFTDOWN = 0x02; public const uint LEFTUP = 0x04;
     public const uint WHEEL = 0x0800;
+    public const uint XDOWN = 0x0080; public const uint XUP = 0x0100;
+    public const int XBUTTON1 = 0x0001;
 }
 "@
 $p = Get-Process Reporter -ErrorAction Stop
@@ -89,6 +91,18 @@ switch ($Action) {
             [System.Windows.Forms.SendKeys]::SendWait($Text)
             Write-Output "typed into edit: $Text"
         }
+    }
+    "sysback" {
+        # Simulate the system back button via XButton1 (WindowsBack) over the window center
+        $r = New-Object Win32u+RECT
+        [Win32u]::GetWindowRect($p.MainWindowHandle, [ref]$r) | Out-Null
+        $cx = [int](($r.Left + $r.Right) / 2); $cy = [int](($r.Top + $r.Bottom) / 2)
+        [Win32u]::SetCursorPos($cx, $cy) | Out-Null
+        Start-Sleep -Milliseconds 150
+        [Win32u]::mouse_event([Win32u]::XDOWN, 0, 0, [Win32u]::XBUTTON1, [UIntPtr]::Zero)
+        Start-Sleep -Milliseconds 60
+        [Win32u]::mouse_event([Win32u]::XUP, 0, 0, [Win32u]::XBUTTON1, [UIntPtr]::Zero)
+        Write-Output "sent XButton1 (system back) at $cx,$cy"
     }
     "list" {
         $root = [System.Windows.Automation.AutomationElement]::FromHandle($p.MainWindowHandle)

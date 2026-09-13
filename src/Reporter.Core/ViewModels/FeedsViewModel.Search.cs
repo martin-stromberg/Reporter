@@ -29,6 +29,12 @@ public partial class FeedsViewModel
     public AsyncRelayCommand SearchCommand { get; }
 
     /// <summary>
+    /// Gets the command that persists the entered URL directly without searching —
+    /// unlike <see cref="SearchCommand"/> it stays available while offline.
+    /// </summary>
+    public AsyncRelayCommand DirectAddCommand { get; }
+
+    /// <summary>
     /// Gets the command that subscribes to a feed search result.
     /// </summary>
     public AsyncRelayCommand<FeedSearchResult?> SubscribeResultCommand { get; }
@@ -68,6 +74,7 @@ public partial class FeedsViewModel
             if (SetProperty(ref _isSearching, value))
             {
                 SearchCommand.NotifyCanExecuteChanged();
+                DirectAddCommand.NotifyCanExecuteChanged();
             }
         }
     }
@@ -107,7 +114,10 @@ public partial class FeedsViewModel
             return;
         }
 
-        if (!IsOnline)
+        // Searching replaces the add form with the results view; in edit mode
+        // that would silently discard an in-progress edit (e.g. via the entry's
+        // ReturnCommand), so the search only runs from add mode.
+        if (!IsOnline || IsEditMode)
         {
             return;
         }
@@ -116,6 +126,7 @@ public partial class FeedsViewModel
         {
             SearchResults.Clear();
             ShowSearchResults = true;
+            ShowAddForm = false;
             return;
         }
 
@@ -139,26 +150,12 @@ public partial class FeedsViewModel
             }
 
             ShowSearchResults = true;
+            ShowAddForm = false;
             offerDirectAdd = results.Count == 0 && isDirectUrl;
         }
         catch (Exception ex)
         {
-            if (ex is not FeedSearchUnavailableException)
-            {
-                Debug.WriteLine($"SearchAsync failed: {ex}");
-            }
-
-            if (IsStaleInput(input))
-            {
-                return;
-            }
-
-            SearchErrorMessage = isDirectUrl
-                ? AppResources.FeedSearchUnavailable
-                : AppResources.FeedSearchUnavailableRetry;
-            SearchResults.Clear();
-            ShowSearchResults = false;
-            offerDirectAdd = isDirectUrl;
+            offerDirectAdd = HandleSearchFailure(ex, input, isDirectUrl);
         }
         finally
         {
@@ -171,6 +168,30 @@ public partial class FeedsViewModel
         {
             await OfferDirectAddAsync(input);
         }
+    }
+
+    // Reports a failed search on the search error channel, unless the input was
+    // edited in the meantime — a stale failure of the abandoned query is
+    // discarded like stale results. Returns whether the direct-add confirmation
+    // should be offered for the entered URL.
+    private bool HandleSearchFailure(Exception ex, string input, bool isDirectUrl)
+    {
+        if (ex is not FeedSearchUnavailableException)
+        {
+            Debug.WriteLine($"SearchAsync failed: {ex}");
+        }
+
+        if (IsStaleInput(input))
+        {
+            return false;
+        }
+
+        SearchErrorMessage = isDirectUrl
+            ? AppResources.FeedSearchUnavailable
+            : AppResources.FeedSearchUnavailableRetry;
+        SearchResults.Clear();
+        ShowSearchResults = false;
+        return isDirectUrl;
     }
 
     // The URL may be edited while a search is in flight — late results or errors
@@ -230,14 +251,88 @@ public partial class FeedsViewModel
             return;
         }
 
-        if (confirmed && string.IsNullOrWhiteSpace(NewTitle) &&
-            Uri.TryCreate(input, UriKind.Absolute, out var hostUri))
+        if (!confirmed)
         {
-            NewTitle = hostUri.Host;
+            SearchResults.Clear();
+            ShowSearchResults = false;
+            return;
         }
 
+        if (!await TryPersistNewFeedAsync(input, FeedTitleFallback.GetFallbackTitle(input)))
+        {
+            // The sheet stays open so the duplicate error is the only visible
+            // message in its hint block and the user can correct the URL; the
+            // results view closes so the sheet reopens above the feed list.
+            SearchResults.Clear();
+            ShowSearchResults = false;
+            ShowAddForm = true;
+            return;
+        }
+
+        await FinishAddFlowAsync();
+    }
+
+    private async Task DirectAddAsync()
+    {
+        // Same precondition as SearchAsync: adding while an edit is in progress
+        // would create a new feed from the edit form's URL and silently discard
+        // the edit, so the direct add only runs from add mode.
+        if (IsEditMode)
+        {
+            return;
+        }
+
+        var input = NewUrl.Trim();
+        if (input.Length == 0 || !TryResolveSearchUrl(input, out var url, out _))
+        {
+            ErrorMessage = AppResources.ErrorFeedUrlInvalid;
+            return;
+        }
+
+        if (await TryPersistNewFeedAsync(url, FeedTitleFallback.GetFallbackTitle(url)))
+        {
+            await FinishAddFlowAsync();
+        }
+    }
+
+    // Shared persist step of the add flows: rejects duplicates and stores the
+    // feed with the fixed defaults. Both error channels are cleared so a stale
+    // search error never stays next to the duplicate message in the sheet.
+    private async Task<bool> TryPersistNewFeedAsync(string url, string title)
+    {
+        var existing = await _feedRepository.GetByUrlAsync(url);
+        if (existing is not null)
+        {
+            ErrorMessage = AppResources.ErrorFeedDuplicate;
+            SearchErrorMessage = string.Empty;
+            return false;
+        }
+
+        ErrorMessage = string.Empty;
+        SearchErrorMessage = string.Empty;
+
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = Guid.NewGuid(),
+            Url = url,
+            Title = title,
+            CategoryId = null,
+            LastCheckedAt = null,
+            HealthStatus = FeedHealth.Ok,
+            HealthLastChange = null,
+            NotificationsEnabled = true,
+        });
+        return true;
+    }
+
+    // Shared completion of every successful add flow: leaves the search results
+    // view, resets the sheet and reloads the feed list.
+    private async Task FinishAddFlowAsync()
+    {
         SearchResults.Clear();
         ShowSearchResults = false;
+        ResetForm();
+        await LoadAsync();
     }
 
     private void CloseSearchResults()
@@ -253,31 +348,15 @@ public partial class FeedsViewModel
             return;
         }
 
-        var existing = await _feedRepository.GetByUrlAsync(result.FeedUrl);
-        if (existing is not null)
+        var title = !string.IsNullOrWhiteSpace(result.Title)
+            ? result.Title.Trim()
+            : FeedTitleFallback.GetFallbackTitle(result.FeedUrl);
+
+        if (!await TryPersistNewFeedAsync(result.FeedUrl, title))
         {
-            ErrorMessage = AppResources.ErrorFeedDuplicate;
             return;
         }
 
-        ErrorMessage = string.Empty;
-        var categoryId = SelectedCategory?.Id == Guid.Empty ? null : SelectedCategory?.Id;
-
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = Guid.NewGuid(),
-            Url = result.FeedUrl,
-            Title = !string.IsNullOrWhiteSpace(result.Title) ? result.Title.Trim() : result.FeedUrl,
-            CategoryId = categoryId,
-            LastCheckedAt = null,
-            HealthStatus = FeedHealth.Ok,
-            HealthLastChange = null,
-            NotificationsEnabled = FeedNotificationsEnabled,
-        });
-
-        SearchResults.Clear();
-        ShowSearchResults = false;
-        ResetForm();
-        await LoadAsync();
+        await FinishAddFlowAsync();
     }
 }

@@ -186,7 +186,8 @@ public class FeedSyncService : IFeedSyncService
         var documentTitle = syndicationFeed.Title?.Text;
         var isPlaceholderTitle = string.IsNullOrWhiteSpace(feed.Title) ||
             string.Equals(feed.Title, feed.Url, StringComparison.OrdinalIgnoreCase) ||
-            IsHostPlaceholderTitle(feed);
+            IsHostPlaceholderTitle(feed) ||
+            FeedTitleFallback.IsFileNamePlaceholderTitle(feed.Title, feed.Url);
         var resolvedTitle = isPlaceholderTitle && !string.IsNullOrWhiteSpace(documentTitle)
             ? documentTitle
             : null;
@@ -210,8 +211,9 @@ public class FeedSyncService : IFeedSyncService
         return new SyncResult(status, newItems, message);
     }
 
-    // The direct-add flow pre-fills the title with the URL host, so a title equal
-    // to the feed URL's host counts as an auto-generated placeholder as well.
+    // Direct-add and search fallback titles (FeedTitleFallback) can equal the
+    // URL host or file name, so a title equal to the feed URL's host counts as
+    // an auto-generated placeholder as well.
     private static bool IsHostPlaceholderTitle(Feed feed)
     {
         return Uri.TryCreate(feed.Url, UriKind.Absolute, out var feedUri) &&

@@ -548,6 +548,37 @@ public class FeedSyncServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a placeholder title in the form the file-name fallback
+    /// produces (the last URL path segment stored as title) is replaced by the
+    /// feed document title on the first sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsFileNamePlaceholder_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://heise.de/rss/heise-atom.xml";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = url,
+            Title = "heise-atom.xml",
+            NotificationsEnabled = true,
+        });
+        var xml = RssXml([
+            ("Item One", "https://heise.de/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Resolved Feed Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Feed Title", feed.Title);
+    }
+
+    /// <summary>
     /// Verifies that an explicitly set feed title is never overwritten by the
     /// feed document title.
     /// </summary>

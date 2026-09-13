@@ -44,7 +44,7 @@
 **Lösung:**
 1. In den **Einstellungen** den Schalter **Automatische Hintergrund-Aktualisierung** einschalten.
 2. Das gewünschte **Abruf-Intervall** wählen.
-3. Alternativ auf der Seite **Feeds** manuell über **Alle aktualisieren** abrufen.
+3. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
 
 ## Es kommen keine Benachrichtigungen
 
@@ -54,7 +54,7 @@
 
 **Lösung:**
 1. In den **Einstellungen** unter **Benachrichtigungen & Ruhezeiten** den Schalter **Benachrichtigungen** prüfen; bei sichtbarer Hinweiszeile **Benachrichtigungen erlauben** tippen (öffnet den iOS-Dialog) bzw. **Einstellungen öffnen** tippen und die Berechtigung in iOS freischalten.
-2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed → **Bearbeiten**) prüfen.
+2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed antippen → **Bearbeiten**) prüfen.
 3. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
 
 ## Erscheinungsbild wechselt nicht

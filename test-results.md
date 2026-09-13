@@ -2,6 +2,321 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #59 (Iteration 5): Review-Nacharbeiten (Offline-Hint im Edit-Modus, Refactorings, ActionSheet-Disambiguierung)
+
+Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+Nacharbeiten aus `review-usability.md` (1 Befund) und `review-code.md`
+(8 Befunde):
+
+- Sheet-`FeedSearchOfflineHint` wird im Edit-Modus per zusätzlichem
+  `DataTrigger` auf `IsEditMode` ausgeblendet — der Hinweis verspricht
+  „Suchen"/„URL direkt hinzufügen", die es in diesem Modus nicht gibt.
+- `FeedsViewModel.Search.cs`: gemeinsame Hilfsmethoden
+  `TryPersistNewFeedAsync` (Dubletten-Prüfung + `Feed`-Initializer +
+  Bereinigung beider Fehlerkanäle) und `FinishAddFlowAsync`
+  (Trefferansicht schließen + `ResetForm` + `LoadAsync`) für
+  `OfferDirectAddAsync`, `DirectAddAsync` und `SubscribeResultAsync`;
+  `catch`-Block von `SearchAsync` in `HandleSearchFailure` ausgelagert;
+  `DirectAddAsync` mit `IsEditMode`-Guard und
+  `DirectAddCommand.CanExecute = !IsSearching && !IsEditMode`
+  (`NotifyCanExecuteChanged` im `IsEditMode`-Setter) — symmetrisch zu
+  `SearchCommand`.
+- `DirectAddAsync` bereinigt jetzt `SearchErrorMessage` zentral im
+  Persist-Schritt — Such- und Dubletten-Fehler stehen nicht mehr
+  gleichzeitig im Sheet.
+- `FeedsViewModel.cs`: `OpenAddForm` verwendet `ResetForm` statt des
+  duplizierten Reset-Blocks; `FeedListItem`→`Feed`-Mapping über die
+  gemeinsame Hilfsmethode `ToFeed` in `RenameFeedAsync`/
+  `ChangeFeedCategoryAsync`; `SaveCommand`-XML-Doc auf „saves the feed
+  currently being edited" korrigiert.
+- `FeedsPage.xaml`: `MinimumHeightRequest="44"` an „Suchen", „URL direkt
+  hinzufügen" und „Speichern" ergänzt; URL-Meta-Zeile der Trefferkarte per
+  `DataTrigger` (`StringNotEmptyToBoolConverter` → `False`) ausgeblendet,
+  wenn `Title` leer ist — die URL erscheint nicht mehr doppelt.
+- `FeedsPage.xaml.cs`: `ChangeCategoryAsync` löst die ActionSheet-Auswahl
+  positionsbasiert auf; gleichnamige Kategorien erhalten einen Zählsuffix
+  („News", „News (2)"), damit jeder angezeigte Eintrag eindeutig einer
+  Kategorie zugeordnet wird.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 311 bestanden, 0 fehlgeschlagen, 0 übersprungen (Vorher: 309) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Teständerungen (netto +2): neu `DirectAddCommand_WhenDuplicate_ClearsStaleSearchError`
+(vor dem Fix rot: `HasSearchError` blieb `true`) und
+`DirectAddCommand_InEditMode_DoesNotAddFeed` (vor dem Fix rot: `CanExecute`
+war `true` und der Direkt-Add legte während eines laufenden Edits einen
+neuen Feed an).
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 5)
+
+Unpackaged `win-x64`-Release-Build, Fenstergröße per `GetWindowRect`
+verifiziert: **390 × 844 pt**. Interaktion über UI Automation
+(`test-results/issue-59/uia.ps1`), Texteingabe über `ValuePattern.SetValue`;
+deutsch lokalisierte UI, Dark Mode. Screenshots unter
+`test-results/issue-59/manual-5-*.png`.
+
+- [x] Add-Sheet: „Suchen" und „URL direkt hinzufügen" je 308 × 44 pt —
+  `manual-5-02`
+- [x] Kategorie-ActionSheet mit DB-seitig geseedeten Namens-Dubletten
+  (`IX_categories_name` temporär entfernt, anschließend vollständig
+  wiederhergestellt): Optionen „News" und „News (2)" getrennt wählbar;
+  Tippen auf „News (2)" weist die **zweite** News-Kategorie zu (SQLite:
+  `category_id` des Feeds = Duplikat-GUID `AAAAAAAA-…`, bestehende
+  „News"-Zuordnung eines anderen Feeds unverändert) — `manual-5-04`
+  (Sheet), `manual-5-05` (Karte zeigt „News")
+- [x] Trefferkarte mit leerem Titel (`https://github.com/dotnet/maui/commits.atom`
+  → `ExactUrl`-Discovery-Ergebnis ohne `Title`): Feed-URL erscheint nur
+  einmal als Headline, die Meta-URL-Zeile ist ausgeblendet (UIA: genau
+  ein `github.com/…`-Text-Element) — `manual-5-06`
+- [x] Edit-Sheet: nur URL-Feld, Benachrichtigungs-Switch, iOS-Hinweis und
+  „Speichern" (308 × 44 pt); kein „Suchen", kein „URL direkt hinzufügen",
+  kein Offline-Hinweis — `manual-5-07`
+- [x] Listenansicht unverändert — `manual-5-01`
+
+Nicht interaktiv verifizierbar in dieser Umgebung:
+
+- Offline-Hinweis im Edit-Modus (`Disable-NetAdapter` ohne Adminrechte
+  nicht möglich): der neue `DataTrigger` auf `IsEditMode` ist deckungsgleich
+  mit dem live verifizierten Trigger der „Suchen"-/„URL direkt
+  hinzufügen"-Buttons (in `manual-5-07` ausgeblendet) und per XAML-Review
+  geprüft; im Edit-Modus ist der Hinweis auch online nicht sichtbar.
+
+## Issue #59 (Iteration 4): Review-Nacharbeiten (Offline-Direkt-Add, Sheet-UX, Lebenszyklus)
+
+Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+Nacharbeiten aus `review-usability.md` (3 Befunde) und `review-code.md`
+(8 Befunde):
+
+- Hinzufügen-Sheet hat jetzt einen zweiten, **offline aktiven** Button
+  „URL direkt hinzufügen" (`ButtonDirectAdd` → `DirectAddCommand`,
+  `CanExecute = !IsSearching`): persistiert die eingegebene URL ohne Suche
+  direkt mit `FeedTitleFallback`-Titel, `CategoryId = null`,
+  `NotificationsEnabled = true`; Domain-Eingaben werden wie bei der Suche zu
+  `https://…` normalisiert; Dubletten/ungültige URLs melden den Fehler im
+  geöffneten Sheet. Damit ist der `FeedSearchOfflineHint` („…bleibt möglich")
+  wieder wahr.
+- „Suchen"- und „URL direkt hinzufügen"-Buttons werden im Edit-Modus per
+  `DataTrigger` auf `IsEditMode` ausgeblendet — eine begonnene Bearbeitung
+  kann nicht mehr lautlos durch „Suchen" verworfen werden; `SearchCommand`
+  ist zusätzlich per `CanExecute`/`SearchAsync`-Guard im Edit-Modus
+  deaktiviert (deckt auch `Entry.ReturnCommand`/Enter-Taste ab).
+- Kategorie-ActionSheet: Pseudo-Eintrag `CategoryNone` jetzt Klartext
+  „Keine Kategorie"/„No category" (statt „—"); Kategorien, die exakt wie der
+  Abbrechen-Button heißen, werden aus den Optionen gefiltert, damit Abbruch
+  und Auswahl unterscheidbar bleiben (gleiches Muster in `UnreadPage`
+  bewusst unverändert gelassen).
+- `FeedsPage.xaml.cs`: `PropertyChanged`-Lambda durch benannten Handler
+  `OnViewModelPropertyChanged` ersetzt — an `OnAppearing` abonniert, in
+  `OnDisappearing` abgemeldet (Singleton-VM × Transient-Page); `OnFeedTapped`
+  in `RenameFeedAsync`/`ChangeCategoryAsync`/`ConfirmDeleteFeedAsync`
+  aufgeteilt.
+- `FeedsViewModel.Search.cs`: Dubletten-Pfad des Direkt-Hinzufügens schließt
+  jetzt die Trefferansicht (`ShowSearchResults = false`), das Sheet öffnet
+  über der Feed-Liste; Persist-Logik in `TryAddFeedDirectlyAsync`
+  zusammengeführt (durch `OfferDirectAddAsync` und `DirectAddAsync` geteilt).
+- `FeedsViewModel.cs`: `OpenAddForm` setzt `SelectedFeed`/`NewUrl`/`NewTitle`/
+  `FeedNotificationsEnabled`/`SelectedCategory` zurück (Invariante „Add-Modus
+  ⇒ kein `SelectedFeed`"); toter Add-Zweig aus `SaveAsync` entfernt —
+  Hinzufügen läuft ausschließlich über Suche/Abonnieren/Direkt-Add, der
+  Speichern-Button existiert nur im Edit-Modus (Entscheidung: bereinigt statt
+  umwidmen, weil `DirectAddAsync` ohne `NewTitle`/`SelectedCategory` mit
+  `FeedTitleFallback` persistiert und den Pfad nicht benötigt).
+- `FeedSyncService.cs`: veralteter Kommentar zur Host-Vorbelegung korrigiert;
+  toter Schlüssel `PlaceholderFeedTitle` aus beiden resx + Designer entfernt;
+  Doku-Wert `RoundRectangle 20,20,0,0` → `12,12,0,0` korrigiert.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 309 bestanden, 0 fehlgeschlagen, 0 übersprungen (Vorher: 303) |
+| MAUI-App-Build (Windows) | `dotnet build src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0 -c Release` | Erfolgreich, 0 Warnungen, 0 Fehler (XAML-SourceGen) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Teständerungen (netto +6): neu `DirectAddCommand_WhenOffline_PersistsFeedWithDefaults`,
+`DirectAddCommand_DomainInput_NormalizesToHttpsUrl`,
+`DirectAddCommand_WhenUrlInvalid_SetsErrorAndKeepsSheetOpen`,
+`DirectAddCommand_WhenDuplicate_SetsErrorAndKeepsSheetOpen`,
+`SaveCommand_WithoutSelectedFeed_DoesNotAddFeed`,
+`SearchCommand_InEditMode_DoesNotDiscardEdit` sowie die Regressionstests
+`SearchCommand_NoResultsAndConfirmedDuplicate_ClosesResultsView` (vor Fix rot:
+`ShowSearchResults` blieb `true`) und `OpenAddFormCommand_AfterEdit_ClearsStaleEditState`
+(vor Fix rot: `SelectedFeed`/`NewUrl` veraltet); entfernt
+`SaveCommand_NewFeed_PersistsNotificationsEnabledFalse` und
+`SaveCommand_NewFeed_PersistsHealthStatusOk` (toter UI-Pfad, Kontrakt jetzt
+über `DirectAddCommand`-Tests abgedeckt); `SaveCommand_ResetsFeedNotificationsEnabled`
+läuft jetzt über den Edit-Pfad.
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 4)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per
+`GetWindowRect` verifiziert: **390 × 844 pt**. Interaktion über UI Automation
++ `mouse_event` (`test-results/issue-59/uia.ps1`), Texteingabe über
+`ValuePattern.SetValue`. Theme-Umschaltung über `settings.theme` in der
+SQLite-DB mit App-Neustart. Screenshots unter
+`test-results/issue-59/manual-4-*.png`; deutsch lokalisierte UI.
+
+Verifizierte Szenarien (Live-Lauf):
+
+- [x] Add-Sheet zeigt neben „Suchen" den neuen Button „URL direkt hinzufügen"
+  (beide 44 pt, vertikal gestapelt) — `manual-4-02` (Dark), `manual-4-06`
+  (Light)
+- [x] „URL direkt hinzufügen" mit `https://example.com/direkt-add.xml` →
+  Sheet schließt ohne Dialog, Feed `direkt-add.xml` (Dateinamen-Fallback) in
+  Liste und SQLite (`category_id=NULL`, `notifications_enabled=1`) —
+  `manual-4-03` (Dark)
+- [x] Dublette über Direkt-Add → „Ein Feed mit dieser URL existiert bereits."
+  im geöffneten Sheet, kein zweiter Feed (SQLite: 1 Zeile) — `manual-4-07`
+  (Light)
+- [x] Kategorie-ActionSheet zeigt Klartext „Keine Kategorie" statt „—" —
+  `manual-4-04` (Dark)
+- [x] Edit-Modus („Feed bearbeiten") zeigt nur noch URL-Feld,
+  Benachrichtigungs-Switch, iOS-Hinweis und „Speichern" — kein „Suchen",
+  kein „URL direkt hinzufügen" — `manual-4-05` (Dark)
+- [x] Listenansicht unverändert — `manual-4-01` (Dark)
+
+Nicht interaktiv verifizierbar in dieser Umgebung (durch Tests abgedeckt):
+
+- Offline-Schaltung (`Disable-NetAdapter` ohne Adminrechte nicht möglich):
+  der Direkt-Add-Button ist online wie offline sichtbar und funktional;
+  `DirectAddCommand_WhenOffline_PersistsFeedWithDefaults` belegt, dass der
+  Pfad bei `IsOnline == false` persistiert, während `SearchCommand` deaktiviert
+  bleibt (`CanExecute = false`).
+
+## Issue #59 (Iteration 3): Listenansicht, Bottom-Sheet, Umbenennen/Kategorie
+
+Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+Die `FeedsPage` wurde von einer kombinierten Formular-plus-Liste-Seite zu einer
+reinen Listenansicht umgebaut: Ein primärer „+“-Button öffnet das
+Hinzufügen-Formular als Bottom-Sheet-Overlay; Feeds ohne Titel erhalten den
+Dateinamen der Feed-URL als Fallback; das Feed-Kontextmenü bietet neu
+„Umbenennen" und „Kategorie ändern".
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 303 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline der Iteration: 274) |
+| MAUI-App-Build (Windows) | `dotnet build src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0 -c Release` | Erfolgreich, 0 Warnungen, 0 Fehler (XAML-SourceGen) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Neue Tests (29): `FeedTitleFallbackTests` (8 Fälle: letztes Pfadsegment,
+URL-Dekodierung, Host-Fallback, unparsebare URL → Original-String, Trailing
+Slash, Placeholder-Match/-Mismatch, Case-insensitiv), `FeedsViewModelTests`
+(ca. 20 neue/angepasste: `OpenAddFormCommand`/`CloseAddFormCommand`,
+`EditAsync` öffnet Sheet im Edit-Modus, `RenameFeedAsync` Erfolg/leer/null,
+`ChangeFeedCategoryAsync` Setzen/`Guid.Empty`→null/null-Argumente,
+Suche schließt Sheet bei Treffern, Sheet bleibt bei
+`FeedSearchUnavailableException` und Save-Validierungsfehlern offen,
+Direkt-Hinzufügen bestätigt → sofort persistiert mit Dateinamen-Titel +
+`CategoryId = null` + `NotificationsEnabled = true`, Dublette →
+`ErrorFeedDuplicate` im offenen Sheet, Abbruch bewahrt Formularzustand,
+Treffer-Abonnieren nutzt `FeedTitleFallback` bei leerem Titel),
+`FeedSyncServiceTests` (1 neu: Dateinamen-Platzhalter-Titel wird beim Sync
+durch den Dokumenttitel ersetzt; explizite Titel bleiben unverändert).
+
+Zusätzlich: `scripts/add-license-headers.mjs` überspringt jetzt `.vs` und
+`TestResults` (git-ignorierte, maschinenlokale VS-/Test-Artefakte — analog zu
+`bin`/`obj`), weil VS die Datei `.vs\...\testlog.manifest` im laufenden Betrieb
+sperrt und der Check sonst falsch-negativ anschlägt.
+
+### Mobile-UI-Design-Review „Feeds" (Listenansicht + Bottom-Sheet)
+
+Statische XAML-Prüfung der Änderungen an `FeedsPage.xaml` gegen die
+AGENTS.md-Regeln und den Design-Entwurf:
+
+- [x] Seite ist list-first: permanente Formularkarte entfernt, Row 0 enthält
+  nur den vollflächigen Primär-Button „+ Feed per URL hinzufügen"
+  (`ActionAddFeed`, `MinimumHeightRequest="44"`), die Feed-Liste liegt in
+  `Grid`-Row `*`
+- [x] Bottom-Sheet als `Grid`-Overlay über beide Rows: halbtransparenter
+  Backdrop (`AppThemeBinding`) mit `TapGestureRecognizer` →
+  `CloseAddFormCommand`, bottom-alignierter `Border` mit oberen Rundungen
+  (`RoundRectangle 12,12,0,0`), Sichtbarkeit per `DataTrigger` auf
+  `ShowAddForm`
+- [x] Sheet-Titel lokalisiert je nach Modus (`FeedAddSheetTitle` /
+  `FeedEditSheetTitle` per `DataTrigger` auf `IsEditMode`), Schließen-Button
+  ≥ 44 pt
+- [x] Sheet enthält `ErrorMessage` + `SearchErrorMessage`, Offline-Hint,
+  `NewUrl`-Entry (`ReturnCommand` = `SearchCommand`), `ActivityIndicator`,
+  Suchen-Button; Edit-Modus zusätzlich Benachrichtigungs-Switch + iOS-Hinweis
+  + Speichern-Button — alles vertikal gestapelt, keine Button-Reihen
+- [x] Seiten-Fehler (`ErrorMessage`) liegt außerhalb des Sheets und bleibt
+  sichtbar, wenn das Sheet schließt
+- [x] Keine `ScrollView`/`CollectionView`-Verschachtelung; Trefferliste,
+  Attribution, RefreshView und Offline-Banner unverändert
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle neuen Texte aus
+  `AppResources.*` (EN + DE, 7 neue Schlüssel: `ActionAddFeed`,
+  `FeedAddSheetTitle`, `FeedEditSheetTitle`, `ButtonRename`,
+  `ButtonChangeCategory`, `PromptRenameFeedTitle`, `PromptRenameFeedMessage`)
+- [x] `FeedsPage.xaml.cs`: `PropertyChanged` → `NewUrlEntry.Focus()` via
+  `Dispatcher.Dispatch`; Kontextmenü erweitert um „Umbenennen"
+  (`DisplayPromptAsync` mit Titel-Vorbelegung → `RenameFeedAsync`) und
+  „Kategorie ändern" (`DisplayActionSheetAsync` mit `CategoryNone` +
+  Kategorien → `ChangeFeedCategoryAsync`); `OnBackButtonPressed` schließt
+  offenes Sheet
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 3)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per
+`GetWindowRect` verifiziert: **390 × 844 pt**. Interaktion über UI Automation
++ `mouse_event` (`test-results/issue-59/uia.ps1`, um `sysback` für
+XButton1/System-Zurück erweitert), Texteingabe über `ValuePattern.SetValue`.
+Theme-Umschaltung über `settings.theme` in der SQLite-DB mit App-Neustart.
+Screenshots unter `test-results/issue-59/manual-2-*.png` (Dark) und
+`manual-3-*.png` (Light); deutsch lokalisierte UI.
+
+Verifizierte Szenarien (Live-Lauf):
+
+- [x] Listenansicht: Feed-Liste + Primär-Button „+ Feed per URL hinzufügen",
+  kein permanentes Formular — `manual-2-01` (Dark), `manual-3-01` (Light)
+- [x] Sheet öffnet sich als Bottom-Overlay, URL-Feld erhält Fokus —
+  `manual-2-02` (Dark), `manual-3-02` (Light)
+- [x] Schließen-Button und Backdrop-Tap schließen das Sheet; System-Zurück
+  (XButton1 via `uia.ps1 -Action sysback`) schließt das Sheet, App bleibt auf
+  der Feeds-Seite
+- [x] Suche → Trefferliste ersetzt die Liste → Treffer-Tap →
+  „Feed abonnieren?"-Dialog → „Ja" → Feed in Liste, SQLite-persistiert —
+  `manual-2-03` … `manual-2-06` (Dark)
+- [x] Kontextmenü: „Aktualisieren", „Umbenennen", „Kategorie ändern",
+  „Bearbeiten", „Löschen" — `manual-2-07` (Dark)
+- [x] Umbenennen: Prompt mit vorbefülltem Titel → persistiert + Liste zeigt
+  neuen Titel (`Heise umbenannt`) — `manual-2-08` (Dark)
+- [x] Kategorie ändern: ActionSheet mit „—" (`CategoryNone`), „News",
+  „Sport", „Unterhaltung" → Auswahl persistiert (`category_id` in SQLite
+  geprüft) — `manual-2-09` (Dark)
+- [x] Bearbeiten: Sheet im Edit-Modus (Titel „Feed bearbeiten", URL + Switch
+  „Benachrichtigungen" + iOS-Hinweis + Speichern) — `manual-2-10` (Dark)
+- [x] Ungültige URL im Edit-Modus → `ErrorMessage` im geöffneten Sheet —
+  `manual-2-11` (Dark); doppelte URL → `ErrorFeedDuplicate` im Sheet —
+  `manual-2-12` (Dark)
+- [x] Direkt-Hinzufügen: `https://example.com/mein-feed.xml` → „Kein Feed
+  gefunden"-Dialog → „Ja" → Sheet schließt, Liste zeigt `mein-feed.xml`
+  (Dateinamen-Fallback), SQLite: `title='mein-feed.xml'`,
+  `category_id=NULL`, `notifications_enabled=1` — `manual-2-13`,
+  `manual-2-14` (Dark)
+- [x] Sync-Platzhalter-Auflösung: per SQL eingefügter Feed mit Titel
+  `heise-Rubrik-IT-atom.xml` → Kontextmenü „Aktualisieren" → Titel wird zu
+  „heise online IT" — `manual-2-15` (Dark)
+- [x] Suche nicht erreichbar (`nonexistent.invalid`) →
+  `FeedSearchUnavailableRetry` im geöffneten Sheet, Suchen-Button bleibt —
+  `manual-2-16` (Dark)
+
+Nicht interaktiv verifizierbar in dieser Umgebung (durch Tests abgedeckt):
+
+- Offline-Hint im Sheet (`FeedSearchOfflineHint` + deaktivierter
+  Suchen-Button): `Disable-NetAdapter` ohne Adminrechte nicht möglich.
+  Abgedeckt durch `SearchCommand_WhenOffline_SkipsSearchWithoutError` und
+  `ConnectivityChanged_UpdatesSearchCommandCanExecute`.
+- iOS-Simulator: nicht möglich auf Windows (siehe `scripts/iOS-Deployment.ps1`).
+
 ## Issue #59: Feed-Suche über feedsearch.dev und clientseitige Autodiscovery
 
 Branch: `task/issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`

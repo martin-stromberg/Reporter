@@ -20,7 +20,7 @@ const STAGED_ONLY = process.argv.includes("--staged");
 const MARKER = "PolyForm Noncommercial License";
 const TEXT = "Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.";
 
-const SKIP_DIRS = new Set([".git", "node_modules", "bin", "obj"]);
+const SKIP_DIRS = new Set([".git", ".vs", "node_modules", "bin", "obj", "TestResults"]);
 const SKIP_FILES = new Set(["LICENSE"]);
 
 // Comment style per extension / basename.

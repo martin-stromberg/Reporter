@@ -29,17 +29,18 @@ Tippe auf einen der fünf Tabs:
 
 ### 3. Feed suchen und hinzufügen
 
-- Öffne **Feeds** und gib oben in das Feld **Feed-URL oder Website-Adresse…** eine Website-Adresse oder Feed-URL ein.
+- Öffne **Feeds** und tippe auf **+ Feed per URL hinzufügen** — das Formular schiebt sich von unten über die Seite.
+- Gib in das Feld **Feed-URL oder Website-Adresse…** eine Website-Adresse oder Feed-URL ein.
 - Tippe auf **Suchen** — die gefundenen Feeds erscheinen als Kartenliste.
 - Tippe auf eine Trefferkarte und bestätige **Feed abonnieren?** mit **Ja**. Der Feed erscheint in deiner Liste.
-- Alternativ kannst du eine bekannte Feed-URL mit **Anzeigetitel** und **Kategorie** direkt über **Speichern** hinzufügen.
+- Alternativ legt **URL direkt hinzufügen** eine bekannte Feed-URL sofort an — ohne Suche und auch offline.
 - Details siehe [Feeds suchen und hinzufügen](feed-suche.md).
 
 ### 4. Feeds synchronisieren
 
 - Öffne **Feeds**.
-- Tippe auf **Alle aktualisieren**, um alle Feeds abzurufen.
-- Oder tippe in einer Feed-Zeile auf **Aktualisieren**, um nur diesen Feed abzurufen.
+- Ziehe die Feed-Liste nach unten (Ziehen zum Aktualisieren), um alle Feeds abzurufen.
+- Oder tippe eine Feed-Karte an und wähle **Aktualisieren**, um nur diesen Feed abzurufen.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
 - Auf iOS kann dabei eine Benachrichtigung erscheinen — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
 
