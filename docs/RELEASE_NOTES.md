@@ -9,6 +9,7 @@
 
 ## What's New
 
+- Fixed keyword filter: articles matching a filter keyword are now discarded while the feed is being retrieved and no longer appear in the article lists — the filtered count is noted in the internal sync log.
 - Unified design across all pages: cards with subtle borders and consistent rounding, refined typography (Newsreader headlines, Inter UI text) and harmonized colors in light and dark mode.
 - Unread page: the category filter is now a horizontally scrolling chip bar that shows each category's unread count — the previous funnel button and action sheet are replaced.
 - Article view: the action bar is now a floating, pill-shaped control bar with a translucent background and shadow.
@@ -36,6 +37,7 @@
 
 ## Neuerungen
 
+- Schlagwortfilter korrigiert: Artikel, die auf ein Filter-Schlagwort passen, werden jetzt bereits beim Abruf des Feeds verworfen und erscheinen nicht mehr in den Artikellisten — die Anzahl der verworfenen Artikel wird im internen Sync-Protokoll vermerkt.
 - Einheitliches Design auf allen Seiten: Karten mit feinen Rahmen und konsistenten Rundungen, verfeinerte Typografie (Newsreader für Überschriften, Inter für UI-Texte) und abgestimmte Farben im hellen und dunklen Modus.
 - Ungelesen-Seite: Der Kategoriefilter ist jetzt eine horizontal scrollbare Chip-Leiste, die die Ungelesen-Anzahl je Kategorie anzeigt — der bisherige Trichter-Button mit Aktionsmenü entfällt.
 - Artikelansicht: Die Aktionsleiste ist jetzt eine schwebende, pillenförmige Steuerleiste mit transluzentem Hintergrund und Schatten.

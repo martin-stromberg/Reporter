@@ -13,7 +13,7 @@
 2. Siehst du darunter eine Hinweiszeile *„Benachrichtigungen sind für diese App in den Systemeinstellungen deaktiviert …"*, tippe auf **Einstellungen öffnen** und erlaube Benachrichtigungen in den iOS-Einstellungen der App. Steht dort stattdessen *„Benachrichtigungen sind noch nicht erlaubt …"*, tippe auf **Benachrichtigungen erlauben** — iOS fragt dann direkt nach.
 3. Prüfe die **Ruhezeit (Nicht stören)**: Liegt die aktuelle Uhrzeit zwischen **VON** und **BIS**, werden Benachrichtigungen verworfen — sie werden nicht nachgeholt.
 4. Öffne **Feeds**, tippe den betroffenen Feed an, wähle **Bearbeiten** und prüfe den Schalter **Benachrichtigungen** des Feeds.
-5. Prüfe die **Schlagwort-Filter**: Enthält der Artikel ein eingerichtetes Schlagwort in Titel oder Text, wird er nicht benachrichtigt.
+5. Prüfe die **Schlagwort-Filter**: Enthält der Artikel ein eingerichtetes Schlagwort in Titel oder Text, wird er nicht benachrichtigt — neue Treffer werden bereits beim Abruf verworfen und erscheinen gar nicht erst in den Listen.
 6. Beachte: Benachrichtigungen entstehen nur bei einem Feed-Abgleich. Läuft die automatische Aktualisierung nicht (App geschlossen), gibt es auch keine neuen Artikel und damit keine Benachrichtigung.
 
 ## Beim Einschalten kommt kein Berechtigungsdialog

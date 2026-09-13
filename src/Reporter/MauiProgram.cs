@@ -56,6 +56,7 @@ public static class MauiProgram
             .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<IRetentionCleanupService, RetentionCleanupService>()
             .AddSingleton<IKeywordMatcher, KeywordMatcher>()
+            .AddSingleton<IKeywordFilter, KeywordFilter>()
             .AddSingleton<IAutoRefreshService, AutoRefreshService>()
             .AddSingleton<IAppThemeService, AppThemeService>()
             .AddSingleton<INotificationService, NotificationService>()

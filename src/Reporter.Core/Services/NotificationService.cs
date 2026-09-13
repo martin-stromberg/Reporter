@@ -19,8 +19,7 @@ public class NotificationService : INotificationService
     private const int MaxSummaryTitlesLength = 160;
 
     private readonly ISettingsRepository _settingsRepository;
-    private readonly IKeywordRepository _keywordRepository;
-    private readonly IKeywordMatcher _keywordMatcher;
+    private readonly IKeywordFilter _keywordFilter;
     private readonly ILocalNotificationService _localNotificationService;
     private readonly TimeProvider _timeProvider;
 
@@ -28,20 +27,17 @@ public class NotificationService : INotificationService
     /// Initializes a new instance of the <see cref="NotificationService"/> class.
     /// </summary>
     /// <param name="settingsRepository">The settings repository.</param>
-    /// <param name="keywordRepository">The keyword repository.</param>
-    /// <param name="keywordMatcher">The keyword matcher.</param>
+    /// <param name="keywordFilter">The keyword filter used to exclude matching items.</param>
     /// <param name="localNotificationService">The platform notification service.</param>
     /// <param name="timeProvider">The time provider used for the quiet-hours evaluation.</param>
     public NotificationService(
         ISettingsRepository settingsRepository,
-        IKeywordRepository keywordRepository,
-        IKeywordMatcher keywordMatcher,
+        IKeywordFilter keywordFilter,
         ILocalNotificationService localNotificationService,
         TimeProvider? timeProvider = null)
     {
         _settingsRepository = settingsRepository;
-        _keywordRepository = keywordRepository;
-        _keywordMatcher = keywordMatcher;
+        _keywordFilter = keywordFilter;
         _localNotificationService = localNotificationService;
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
@@ -65,10 +61,9 @@ public class NotificationService : INotificationService
             return;
         }
 
-        var keywords = await _keywordRepository.GetAllAsync().ConfigureAwait(false);
-        var keywordTexts = keywords.Select(k => k.KeywordText).ToList();
+        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
         var candidates = newItems
-            .Where(i => !_keywordMatcher.MatchesAny(i.Title, i.ContentHtml, keywordTexts))
+            .Where(i => !_keywordFilter.MatchesAny(i.Title, i.ContentHtml, keywordTexts))
             .ToList();
         if (candidates.Count == 0)
         {

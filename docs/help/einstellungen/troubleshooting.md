@@ -24,17 +24,18 @@
 2. In der Datenbank verifizieren: `settings.auto_refresh_enabled = 1` und plausibles `refresh_interval_minutes` (wird auf 1–1440 geclamppt).
 3. Beachten: Sync-Fehler einzelner Ticks stoppen den Timer nicht — nur stille `SyncLog`-Einträge bzw. Debug-Ausgaben zeigen sie an.
 
-## Gefilterte Artikel werden nicht gelöscht
+## Gefilterte Artikel erscheinen weiterhin in den Listen
 
-**Symptom:** Gelesene Artikel mit Keyword-Treffer bleiben über die Frist hinaus erhalten.
+**Symptom:** Ein Artikel mit Keyword-Treffer ist trotz eingerichtetem Schlagwort in der Ungelesen-Liste sichtbar.
 
-**Ursache:** Mehrere Bedingungen müssen gleichzeitig erfüllt sein: `IsRead`, `!IsSavedForLater`, `(PublishedAt ?? ReadAt) < cutoff`, Keyword-Match auf `Title`/`ContentHtml`. Der Cleanup läuft ausschließlich in `App.OnStart` — nicht nach jedem Sync oder periodisch.
+**Ursache:** Der Keyword-Filter wirkt beim Feed-Abruf (Ingest) — nur neue `SyndicationItem`s werden in `FeedSyncService.RunSyncAsync` gegen die Liste gematcht und vor dem Speichern verworfen. Artikel, die bereits vor Anlage des Schlagworts gespeichert wurden, bleiben sichtbar, bis sie gelesen wurden und die Keyword-Löschregel beim App-Start greift (`IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff`).
 
 **Lösung:**
-1. App neu starten — der Cleanup läuft nur beim Start.
-2. Prüfen, ob das Keyword tatsächlich in `Title` oder `ContentHtml` vorkommt (Teilwort, `OrdinalIgnoreCase`; `Link` wird nicht gematcht).
-3. `settings.retention_days > 0` verifizieren — `<= 0` deaktiviert beide Löschregeln.
-4. Debug-Ausgabe auf `App.OnStart retention cleanup failed` prüfen.
+1. Prüfen, ob das Keyword tatsächlich in `Title` oder `ContentHtml` vorkommt (Teilwort, `OrdinalIgnoreCase`; `Link` wird nicht gematcht).
+2. Den Sync-Verlauf prüfen — die `SyncLog.Message` weist verworfene Treffer als `, N filtered` aus.
+3. Für bereits gespeicherte Treffer: Artikel als gelesen markieren und App neu starten — die Löschregel läuft nur beim Start.
+4. `settings.retention_days > 0` verifizieren — `<= 0` deaktiviert beide Löschregeln.
+5. Debug-Ausgabe auf `App.OnStart retention cleanup failed` prüfen.
 
 ## „Automatisch als gelesen markieren“ greift nicht
 

@@ -222,7 +222,7 @@
     <value>Always on</value>
   </data>
   <data name="SettingsKeywordInfo" xml:space="preserve">
-    <value>Filtered articles are deleted after the retention period based on their publication date.</value>
+    <value>Filtered articles are discarded while the feed is fetched and never appear in the lists.</value>
   </data>
   <data name="SettingsAutoRefreshLabel" xml:space="preserve">
     <value>Automatic background refresh</value>

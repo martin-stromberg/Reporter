@@ -25,7 +25,7 @@
 | `settings.notification_summary_enabled` | `bool` | `false` | Benachrichtigungsmodus: `false` = eine Benachrichtigung pro Artikel, `true` = Sammel-Benachrichtigung pro Feed; Schalter **Sammel-Benachrichtigung** auf der `SettingsPage`. |
 | `settings.quiet_hours_start` / `settings.quiet_hours_end` | `TimeSpan?` | `null` | Ruhezeit in lokaler Gerätezeit; beide Werte müssen gesetzt sein, `Start == End` gilt als leeres Intervall (keine Ruhezeit). |
 | `feeds.notifications_enabled` | `bool` | `true` | Pro-Feed-Schalter; pflegbar im Feed-Formular auf `FeedsPage`. Bestehende Feeds erhalten per Migration `true`. |
-| `keywords`-Tabelle | — | — | Bestehender Keyword-Filter; Treffer auf `Title`/`ContentHtml` unterdrücken die Benachrichtigung des Artikels. |
+| `keywords`-Tabelle | — | — | Bestehender Keyword-Filter; Treffer auf `Title`/`ContentHtml` werden regulär bereits beim Feed-Abruf verworfen (Ingest-Filter in `FeedSyncService`) — der Check in `NotificationService` bleibt als Tiefenverteidigung. |
 
 Migrationen:
 
