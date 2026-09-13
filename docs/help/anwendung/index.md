@@ -23,5 +23,5 @@ Reporter ist ein lokaler RSS-/Feed-Reader als .NET MAUI-App. Feeds können über
 
 ## Verwandte Bereiche
 
-- [Einstellungen](../einstellungen/index.md) — Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung, Lesefluss, Benachrichtigungen und Erscheinungsbild konfigurieren.
+- [Einstellungen](../einstellungen/index.md) — Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung, Lesefluss, Benachrichtigungen, Erscheinungsbild und Sprache konfigurieren.
 - [Benachrichtigungen](../benachrichtigungen/index.md) — Lokale iOS-Benachrichtigungen über neue Artikel nach dem Feed-Abgleich.

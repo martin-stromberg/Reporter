@@ -135,6 +135,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.RefreshIntervalMinutes).HasColumnName("refresh_interval_minutes").IsRequired().HasDefaultValue(30);
         entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
         entity.Property(e => e.NotificationSummaryEnabled).HasColumnName("notification_summary_enabled").IsRequired().HasDefaultValue(false);
+        entity.Property(e => e.Language).HasColumnName("language").HasMaxLength(50);
 
         entity.HasData(new Settings());
     }

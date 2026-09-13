@@ -2,6 +2,83 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #62: Manueller Sprachwechsel (EN/DE) in den Einstellungen
+
+Branch: `task/issue-62-c777ec701888411a864e714ceaa8f8b3-manueller-sprachwechsel-ende-i`
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Build (Debug, Solution) | `dotnet build Reporter.sln` | Erfolgreich, 1 Warnung (pre-existing CS8765 in `AppDelegate.FinishedLaunching`), 0 Fehler |
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --no-build` | 331 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 316) |
+| Tests mit Coverage | `dotnet test --collect:"XPlat Code Coverage"` | 331 bestanden, 53,5 % Zeilenabdeckung |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security, Static-Analysis-Release-Build ohne Befund) |
+
+Neue Tests (15): `AppCultureTests` (3), `SettingsRepositoryTests.SaveAsync_PersistsLanguage`,
+`SettingsViewModelTests_Load` (3: `LanguageOptions_ExposePersistedValues`,
+`Load_InvalidLanguage_UsesSystemFallback`, `Load_PopulatesSelectedLanguage`),
+`SettingsViewModelTests_Persist` (`SelectedLanguage_Change_Persists`,
+`OtherChange_DoesNotLoseLanguage`), `SettingsViewModelTests_E2E`
+(`E2E_ChangeLanguage_PersistRoundtrip` — VM → Repository → SQLite → Reload als
+simulierter Neustart). `TestSettingsHelper.SaveAsync` um optionalen
+`language`-Parameter erweitert.
+
+### Mobile-UI-Design-Review „Sprache"-Sektion
+
+Statische XAML-Prüfung von `SettingsPage.xaml` gegen
+`design-draft/stitch_local_rss_feed_reader/einstellungen_filter/` (Light) und
+`..._dark_mode/` sowie die AGENTS.md-Regeln:
+
+- [x] Neue Sektions-Karte „Sprache" (`Border` + `RoundRectangle 12`,
+  `AppThemeBinding` `SurfaceContainer`) im bestehenden `ScrollView` unter
+  `Grid RowDefinitions="Auto,*"` — keine Verschachtelung von
+  `ScrollView`/`CollectionView`, Sektion folgt exakt dem
+  „Erscheinungsbild"-Kartenmuster
+- [x] `Picker` (System/Deutsch/English) als Zeilen-Control wie der
+  „Farbschema"-Picker; Klartext-Labels, keine internen Kennungen
+- [x] Neustart-Hinweis als statischer Info-`Border` unterhalb der Zeile
+  (`SettingsInfoBox`-Muster wie `SettingsRetentionInfo`)
+- [x] Touch-Ziele ≥ 44 pt (Picker-Zeile 52 pt per UIA-Rect gemessen)
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle Texte aus
+  `AppResources.*` (EN + DE), `SemanticProperties.Description` gesetzt
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Die App wurde auf dem Windows-Target im 390 × 844-pt-Fenster gestartet
+(unpackaged `win-x64`-Debug-Build, Fenstergröße via `App.CreateWindow`, per
+UIA-`BoundingRectangle` verifiziert: 390 × 844). Interaktion über UI Automation
++ `mouse_event`. Screenshots unter `test-results/issue-62/manual-*.png`:
+
+- [x] `SettingsPage` Dark Mode (System-Theme dunkel): Sektionen und Karten
+  unverändert, deutsche Texte (`manual-01`)
+- [x] Karte „Sprache": Zeilenlabel „Sprache", Picker „System", Info-Text
+  „Die neue Sprache wird nach einem Neustart der App wirksam." (`manual-02`);
+  Picker-Dropdown listet „System / Deutsch / Englisch" (per
+  `ExpandCollapsePattern` verifiziert)
+- [x] Sprachwechsel „Englisch" → Auswahl sofort persistiert
+  (`settings.language='en'`); App-Neustart → komplette UI englisch: Tabs
+  „Unread/Feeds/Later", „228 unread articles", „Pull down to refresh",
+  US-Datumsformat `9/12/2026 9:49 PM` (`CurrentCulture` mit umgeschaltet);
+  `SettingsPage` zeigt „Language"-Karte mit Picker „English" und
+  englischem Neustart-Hinweis (`manual-03`) — Nachweis, dass `AppCulture.Apply`
+  in `MauiProgram` vor `CreateWindow` wirkt
+- [x] Light Mode: „Color scheme" → „Light" → Sprach-Karte und Hinweis-Box
+  korrekt hell gerendert (`manual-04`)
+- [x] Rückweg: Sprache „System" → App-Neustart → UI wieder Deutsch
+  (Systemsprache); Theme „System" wiederhergestellt
+
+Hinweis: Der Windows-TabBar-Overflow-Button „Mehr" ist ein Plattform-String von
+WinUI/MAUI und wechselt nicht mit der App-Sprache — bekanntes
+Plattformverhalten, nicht Teil des App-Ressourcen-Umfangs.
+
+### iOS-Simulator-Verifikation
+
+Nicht möglich auf diesem Windows-Arbeitsplatz — der iOS-Build
+(`net10.0-ios`) und `scripts/iOS-Deployment.ps1` benötigen macOS.
+Nachzuholen auf einem Mac: Sprach-Picker in den Einstellungen bedienen,
+App-Neustart, Tab-Titel und Einstellungstexte in der gewählten Sprache prüfen.
+
 ## Issue #59 (Iteration 5): Review-Nacharbeiten (Offline-Hint im Edit-Modus, Refactorings, ActionSheet-Disambiguierung)
 
 Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`

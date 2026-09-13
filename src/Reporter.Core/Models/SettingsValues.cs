@@ -38,6 +38,21 @@ public static class SettingsValues
     public const string ThemeDark = "dark";
 
     /// <summary>
+    /// The language value that follows the operating system language.
+    /// </summary>
+    public const string LanguageSystem = "system";
+
+    /// <summary>
+    /// The language value for German.
+    /// </summary>
+    public const string LanguageGerman = "de";
+
+    /// <summary>
+    /// The language value for English.
+    /// </summary>
+    public const string LanguageEnglish = "en";
+
+    /// <summary>
     /// Determines whether the automatic mark-as-read feature is active for the given persisted mode.
     /// </summary>
     /// <param name="autoMarkReadMode">The persisted auto-mark-as-read mode, or <c>null</c>.</param>

@@ -927,6 +927,60 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Language ähnelt.
+        /// </summary>
+        public static string SettingsSectionLanguage {
+            get {
+                return ResourceManager.GetString("SettingsSectionLanguage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Language ähnelt.
+        /// </summary>
+        public static string SettingsLanguageLabel {
+            get {
+                return ResourceManager.GetString("SettingsLanguageLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die System ähnelt.
+        /// </summary>
+        public static string SettingsLanguageSystem {
+            get {
+                return ResourceManager.GetString("SettingsLanguageSystem", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die German ähnelt.
+        /// </summary>
+        public static string SettingsLanguageGerman {
+            get {
+                return ResourceManager.GetString("SettingsLanguageGerman", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die English ähnelt.
+        /// </summary>
+        public static string SettingsLanguageEnglish {
+            get {
+                return ResourceManager.GetString("SettingsLanguageEnglish", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The new language takes effect after restarting the app. ähnelt.
+        /// </summary>
+        public static string SettingsLanguageRestartHint {
+            get {
+                return ResourceManager.GetString("SettingsLanguageRestartHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Auto-read (disabled in settings) ähnelt.
         /// </summary>
         public static string ArticleAutoMarkReadDisabled {

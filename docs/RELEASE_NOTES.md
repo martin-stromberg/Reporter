@@ -9,6 +9,8 @@
 
 ## What's New
 
+- Settings: new "Language" section with a "Language" picker offering "System" (default, follows the device language), "German" and "English" — the selection is saved immediately and takes effect after restarting the app (a hint is shown below the picker).
+- After the restart all visible texts — including number and date formats — appear in the selected language, independent of the device language.
 - Feeds page now opens with just the feed list; "+ Add feed by URL" opens a bottom sheet with a URL field plus "Search" and "Add URL directly" buttons — direct add stays available offline (search is disabled with a hint).
 - Feed context menu extended: "Rename" (prompt dialog) and "Change category" (action sheet including "No category"); "Edit" opens the same bottom sheet in edit mode with URL, notifications toggle and Save.
 - Feeds subscribed without a title get a fallback title derived from the URL (file name such as `heise-atom.xml`, otherwise the host); the first sync replaces it with the real feed title.
@@ -24,6 +26,8 @@
 
 ## Neuerungen
 
+- Einstellungen: neue Sektion „Sprache" mit Auswahlfeld „Sprache" — Optionen „System" (Voreinstellung, folgt der Gerätesprache), „Deutsch" und „Englisch"; die Auswahl wird sofort gespeichert und wirkt nach einem Neustart der App (Hinweis unter dem Auswahlfeld).
+- Nach dem Neustart erscheinen alle sichtbaren Texte — inklusive Zahlen- und Datumsformaten — in der gewählten Sprache, unabhängig von der Gerätesprache.
 - Die Feeds-Seite zeigt zunächst nur die Feed-Liste; „+ Feed per URL hinzufügen" öffnet ein Bottom-Sheet mit URL-Feld sowie den Schaltflächen „Suchen" und „URL direkt hinzufügen" — das direkte Hinzufügen bleibt offline verfügbar (die Suche ist mit Hinweis deaktiviert).
 - Feed-Kontextmenü erweitert: „Umbenennen" (Dialog) und „Kategorie ändern" (ActionSheet inklusive „Keine Kategorie"); „Bearbeiten" öffnet dasselbe Bottom-Sheet im Bearbeitungsmodus mit URL, Benachrichtigungs-Schalter und Speichern.
 - Feeds ohne Titel erhalten einen aus der URL abgeleiteten Ersatztitel (Dateiname wie `heise-atom.xml`, sonst der Host); beim ersten Abgleich wird er durch den echten Feed-Titel ersetzt.

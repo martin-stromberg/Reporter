@@ -320,6 +320,39 @@ public class SettingsViewModelTests_Persist : IDisposable
     }
 
     /// <summary>
+    /// Verifies that changing the selected language persists the new value immediately.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SelectedLanguage_Change_Persists()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.SelectedLanguage = _viewModel.LanguageOptions.First(o => o.Value == "en");
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).Language == "en");
+
+        var settings = await _settingsRepository.GetAsync();
+        Assert.Equal("en", settings.Language);
+    }
+
+    /// <summary>
+    /// Verifies that persisting an unrelated setting does not lose the persisted language.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task OtherChange_DoesNotLoseLanguage()
+    {
+        await TestSettingsHelper.SaveAsync(_settingsRepository, language: "de");
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.AutoRefreshEnabled = false;
+        await TestWaitHelper.WaitUntilAsync(async () => !(await _settingsRepository.GetAsync()).AutoRefreshEnabled);
+
+        var settings = await _settingsRepository.GetAsync();
+        Assert.Equal("de", settings.Language);
+    }
+
+    /// <summary>
     /// Verifies that changing the auto-refresh options applies the settings through the auto refresh service.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>

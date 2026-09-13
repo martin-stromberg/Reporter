@@ -70,4 +70,9 @@ public class Settings
     /// notification per feed instead of one notification per item.
     /// </summary>
     public bool NotificationSummaryEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the language selection ("system", "de" or "en").
+    /// </summary>
+    public string? Language { get; set; } = SettingsValues.LanguageSystem;
 }

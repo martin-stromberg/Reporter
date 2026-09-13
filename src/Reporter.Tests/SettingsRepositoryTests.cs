@@ -161,6 +161,31 @@ public class SettingsRepositoryTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that SaveAsync persists the language column and GetAsync reads it back.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveAsync_PersistsLanguage()
+    {
+        await _repository.SaveAsync(new Settings
+        {
+            Id = Settings.DefaultId,
+            RetentionDays = 30,
+            AutoMarkReadDelaySeconds = 5,
+            NotificationsEnabled = true,
+            NotificationSummaryEnabled = false,
+            AutoRefreshEnabled = true,
+            RefreshIntervalMinutes = 30,
+            Theme = "system",
+            Language = "de",
+        });
+
+        var result = await _repository.GetAsync();
+
+        Assert.Equal("de", result.Language);
+    }
+
+    /// <summary>
     /// Verifies that SaveAsync persists the notification summary flag in both directions.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
