@@ -50,6 +50,7 @@ public static class MauiProgram
             .AddSingleton<ISettingsRepository, SettingsRepository>()
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()
             .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            .AddSingleton<IFeedSearchService, FeedSearchService>()
             .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<IRetentionCleanupService, RetentionCleanupService>()
             .AddSingleton<IKeywordMatcher, KeywordMatcher>()

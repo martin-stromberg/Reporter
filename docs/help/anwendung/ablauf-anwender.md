@@ -27,15 +27,24 @@ Tippe auf einen der fünf Tabs:
 
 > **Hinweis:** Die App ist auch ohne Internetverbindung nutzbar — bereits geladene Artikel bleiben lesbar, und ein Hinweis **„Keine Internetverbindung."** erscheint auf den betroffenen Seiten. Details siehe [Offline lesen](offline.md).
 
-### 3. Feeds synchronisieren
+### 3. Feed suchen und hinzufügen
+
+- Öffne **Feeds** und tippe auf **+ Feed per URL hinzufügen** — das Formular schiebt sich von unten über die Seite.
+- Gib in das Feld **Feed-URL oder Website-Adresse…** eine Website-Adresse oder Feed-URL ein.
+- Tippe auf **Suchen** — die gefundenen Feeds erscheinen als Kartenliste.
+- Tippe auf eine Trefferkarte und bestätige **Feed abonnieren?** mit **Ja**. Der Feed erscheint in deiner Liste.
+- Alternativ legt **URL direkt hinzufügen** eine bekannte Feed-URL sofort an — ohne Suche und auch offline.
+- Details siehe [Feeds suchen und hinzufügen](feed-suche.md).
+
+### 4. Feeds synchronisieren
 
 - Öffne **Feeds**.
-- Tippe auf **Alle aktualisieren**, um alle Feeds abzurufen.
-- Oder tippe in einer Feed-Zeile auf **Aktualisieren**, um nur diesen Feed abzurufen.
+- Ziehe die Feed-Liste nach unten (Ziehen zum Aktualisieren), um alle Feeds abzurufen.
+- Oder tippe eine Feed-Karte an und wähle **Aktualisieren**, um nur diesen Feed abzurufen.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
 - Auf iOS kann dabei eine Benachrichtigung erscheinen — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
 
-### 4. Artikel für später merken
+### 5. Artikel für später merken
 
 - Tippe auf einer Artikelkarte auf das Lesezeichen-Symbol, um den Artikel zu merken.
 - Alle gemerkten Artikel findest du gesammelt unter **Später**. Ein erneutes Tippen auf das Lesezeichen-Symbol entfernt die Merkung.

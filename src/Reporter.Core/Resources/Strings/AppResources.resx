@@ -93,7 +93,7 @@
     <value>Yes</value>
   </data>
   <data name="CategoryNone" xml:space="preserve">
-    <value>—</value>
+    <value>No category</value>
   </data>
   <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
     <value>All articles belonging to this feed will also be deleted. Continue?</value>
@@ -127,12 +127,6 @@
   </data>
   <data name="LabelFeedUnreadCount" xml:space="preserve">
     <value>Unread</value>
-  </data>
-  <data name="PlaceholderFeedTitle" xml:space="preserve">
-    <value>Display title</value>
-  </data>
-  <data name="PlaceholderFeedUrl" xml:space="preserve">
-    <value>https://example.com/feed</value>
   </data>
   <data name="SyncStatusError" xml:space="preserve">
     <value>Synchronization failed.</value>
@@ -406,5 +400,65 @@
   </data>
   <data name="ErrorLoadFailed" xml:space="preserve">
     <value>The articles could not be loaded.</value>
+  </data>
+  <data name="PlaceholderFeedSearch" xml:space="preserve">
+    <value>Feed URL or website address…</value>
+  </data>
+  <data name="ButtonSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="ButtonDirectAdd" xml:space="preserve">
+    <value>Add URL directly</value>
+  </data>
+  <data name="FeedSearchNoResults" xml:space="preserve">
+    <value>No feeds found.</value>
+  </data>
+  <data name="FeedSearchNoResultsTitle" xml:space="preserve">
+    <value>No feed found</value>
+  </data>
+  <data name="FeedSearchNoResultsAddUrl" xml:space="preserve">
+    <value>No feed found. Do you want to add "{0}" directly?</value>
+  </data>
+  <data name="FeedSearchUnavailable" xml:space="preserve">
+    <value>Feed search is unavailable. You can add the URL directly.</value>
+  </data>
+  <data name="FeedSearchUnavailableRetry" xml:space="preserve">
+    <value>Feed search is unavailable. Please try again later or enter a complete feed URL.</value>
+  </data>
+  <data name="FeedSearchOfflineHint" xml:space="preserve">
+    <value>Feed search is not available offline — you can still add a URL directly.</value>
+  </data>
+  <data name="FeedSearchAttribution" xml:space="preserve">
+    <value>Search powered by feedsearch.dev</value>
+  </data>
+  <data name="ConfirmSubscribeFeedTitle" xml:space="preserve">
+    <value>Subscribe to feed?</value>
+  </data>
+  <data name="ConfirmSubscribeFeedMessage" xml:space="preserve">
+    <value>Subscribe to "{0}"?</value>
+  </data>
+  <data name="ButtonCloseSearchResults" xml:space="preserve">
+    <value>Back to my feeds</value>
+  </data>
+  <data name="ActionAddFeed" xml:space="preserve">
+    <value>+ Add feed by URL</value>
+  </data>
+  <data name="FeedAddSheetTitle" xml:space="preserve">
+    <value>Add feed by URL</value>
+  </data>
+  <data name="FeedEditSheetTitle" xml:space="preserve">
+    <value>Edit feed</value>
+  </data>
+  <data name="ButtonRename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="ButtonChangeCategory" xml:space="preserve">
+    <value>Change category</value>
+  </data>
+  <data name="PromptRenameFeedTitle" xml:space="preserve">
+    <value>Rename feed</value>
+  </data>
+  <data name="PromptRenameFeedMessage" xml:space="preserve">
+    <value>New display title</value>
   </data>
 </root>

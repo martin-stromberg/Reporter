@@ -162,7 +162,7 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die — ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die No category ähnelt.
         /// </summary>
         public static string CategoryNone {
             get {
@@ -383,24 +383,6 @@ namespace Reporter.Core.Resources.Strings {
         public static string PlaceholderFeeds {
             get {
                 return ResourceManager.GetString("PlaceholderFeeds", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Display title ähnelt.
-        /// </summary>
-        public static string PlaceholderFeedTitle {
-            get {
-                return ResourceManager.GetString("PlaceholderFeedTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die https://example.com/feed ähnelt.
-        /// </summary>
-        public static string PlaceholderFeedUrl {
-            get {
-                return ResourceManager.GetString("PlaceholderFeedUrl", resourceCulture);
             }
         }
         
@@ -1238,6 +1220,186 @@ namespace Reporter.Core.Resources.Strings {
         public static string ErrorLoadFailed {
             get {
                 return ResourceManager.GetString("ErrorLoadFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed URL or website address… ähnelt.
+        /// </summary>
+        public static string PlaceholderFeedSearch {
+            get {
+                return ResourceManager.GetString("PlaceholderFeedSearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Search ähnelt.
+        /// </summary>
+        public static string ButtonSearch {
+            get {
+                return ResourceManager.GetString("ButtonSearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No feeds found. ähnelt.
+        /// </summary>
+        public static string FeedSearchNoResults {
+            get {
+                return ResourceManager.GetString("FeedSearchNoResults", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No feed found ähnelt.
+        /// </summary>
+        public static string FeedSearchNoResultsTitle {
+            get {
+                return ResourceManager.GetString("FeedSearchNoResultsTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No feed found. Do you want to add &quot;{0}&quot; directly? ähnelt.
+        /// </summary>
+        public static string FeedSearchNoResultsAddUrl {
+            get {
+                return ResourceManager.GetString("FeedSearchNoResultsAddUrl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed search is unavailable. You can add the URL directly. ähnelt.
+        /// </summary>
+        public static string FeedSearchUnavailable {
+            get {
+                return ResourceManager.GetString("FeedSearchUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed search is unavailable. Please try again later or enter a complete feed URL. ähnelt.
+        /// </summary>
+        public static string FeedSearchUnavailableRetry {
+            get {
+                return ResourceManager.GetString("FeedSearchUnavailableRetry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed search is not available offline — you can still add a URL directly. ähnelt.
+        /// </summary>
+        public static string FeedSearchOfflineHint {
+            get {
+                return ResourceManager.GetString("FeedSearchOfflineHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Search powered by feedsearch.dev ähnelt.
+        /// </summary>
+        public static string FeedSearchAttribution {
+            get {
+                return ResourceManager.GetString("FeedSearchAttribution", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Subscribe to feed? ähnelt.
+        /// </summary>
+        public static string ConfirmSubscribeFeedTitle {
+            get {
+                return ResourceManager.GetString("ConfirmSubscribeFeedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Subscribe to &quot;{0}&quot;? ähnelt.
+        /// </summary>
+        public static string ConfirmSubscribeFeedMessage {
+            get {
+                return ResourceManager.GetString("ConfirmSubscribeFeedMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Back to my feeds ähnelt.
+        /// </summary>
+        public static string ButtonCloseSearchResults {
+            get {
+                return ResourceManager.GetString("ButtonCloseSearchResults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die + Add feed by URL ähnelt.
+        /// </summary>
+        public static string ActionAddFeed {
+            get {
+                return ResourceManager.GetString("ActionAddFeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Add feed by URL ähnelt.
+        /// </summary>
+        public static string FeedAddSheetTitle {
+            get {
+                return ResourceManager.GetString("FeedAddSheetTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Edit feed ähnelt.
+        /// </summary>
+        public static string FeedEditSheetTitle {
+            get {
+                return ResourceManager.GetString("FeedEditSheetTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Rename ähnelt.
+        /// </summary>
+        public static string ButtonRename {
+            get {
+                return ResourceManager.GetString("ButtonRename", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Change category ähnelt.
+        /// </summary>
+        public static string ButtonChangeCategory {
+            get {
+                return ResourceManager.GetString("ButtonChangeCategory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Rename feed ähnelt.
+        /// </summary>
+        public static string PromptRenameFeedTitle {
+            get {
+                return ResourceManager.GetString("PromptRenameFeedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die New display title ähnelt.
+        /// </summary>
+        public static string PromptRenameFeedMessage {
+            get {
+                return ResourceManager.GetString("PromptRenameFeedMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Add URL directly ähnelt.
+        /// </summary>
+        public static string ButtonDirectAdd {
+            get {
+                return ResourceManager.GetString("ButtonDirectAdd", resourceCulture);
             }
         }
     }

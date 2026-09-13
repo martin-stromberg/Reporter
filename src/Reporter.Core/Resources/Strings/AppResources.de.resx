@@ -93,7 +93,7 @@
     <value>Ja</value>
   </data>
   <data name="CategoryNone" xml:space="preserve">
-    <value>—</value>
+    <value>Keine Kategorie</value>
   </data>
   <data name="ConfirmDeleteFeedMessage" xml:space="preserve">
     <value>Alle zugehörigen Artikel werden ebenfalls gelöscht. Fortfahren?</value>
@@ -127,12 +127,6 @@
   </data>
   <data name="LabelFeedUnreadCount" xml:space="preserve">
     <value>Ungelesen</value>
-  </data>
-  <data name="PlaceholderFeedTitle" xml:space="preserve">
-    <value>Anzeigetitel</value>
-  </data>
-  <data name="PlaceholderFeedUrl" xml:space="preserve">
-    <value>https://beispiel.de/feed</value>
   </data>
   <data name="SyncStatusError" xml:space="preserve">
     <value>Synchronisation fehlgeschlagen.</value>
@@ -406,5 +400,65 @@
   </data>
   <data name="ErrorLoadFailed" xml:space="preserve">
     <value>Die Artikel konnten nicht geladen werden.</value>
+  </data>
+  <data name="PlaceholderFeedSearch" xml:space="preserve">
+    <value>Feed-URL oder Website-Adresse…</value>
+  </data>
+  <data name="ButtonSearch" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="ButtonDirectAdd" xml:space="preserve">
+    <value>URL direkt hinzufügen</value>
+  </data>
+  <data name="FeedSearchNoResults" xml:space="preserve">
+    <value>Keine Feeds gefunden.</value>
+  </data>
+  <data name="FeedSearchNoResultsTitle" xml:space="preserve">
+    <value>Kein Feed gefunden</value>
+  </data>
+  <data name="FeedSearchNoResultsAddUrl" xml:space="preserve">
+    <value>Kein Feed gefunden. Möchtest du die Adresse „{0}“ direkt hinzufügen?</value>
+  </data>
+  <data name="FeedSearchUnavailable" xml:space="preserve">
+    <value>Die Feed-Suche ist nicht erreichbar. Du kannst die URL direkt hinzufügen.</value>
+  </data>
+  <data name="FeedSearchUnavailableRetry" xml:space="preserve">
+    <value>Die Feed-Suche ist nicht erreichbar. Bitte versuche es später erneut oder gib eine vollständige Feed-URL ein.</value>
+  </data>
+  <data name="FeedSearchOfflineHint" xml:space="preserve">
+    <value>Feed-Suche offline nicht verfügbar — URL direkt hinzufügen bleibt möglich.</value>
+  </data>
+  <data name="FeedSearchAttribution" xml:space="preserve">
+    <value>Suche powered by feedsearch.dev</value>
+  </data>
+  <data name="ConfirmSubscribeFeedTitle" xml:space="preserve">
+    <value>Feed abonnieren?</value>
+  </data>
+  <data name="ConfirmSubscribeFeedMessage" xml:space="preserve">
+    <value>„{0}“ abonnieren?</value>
+  </data>
+  <data name="ButtonCloseSearchResults" xml:space="preserve">
+    <value>Zurück zu meinen Feeds</value>
+  </data>
+  <data name="ActionAddFeed" xml:space="preserve">
+    <value>+ Feed per URL hinzufügen</value>
+  </data>
+  <data name="FeedAddSheetTitle" xml:space="preserve">
+    <value>Feed per URL hinzufügen</value>
+  </data>
+  <data name="FeedEditSheetTitle" xml:space="preserve">
+    <value>Feed bearbeiten</value>
+  </data>
+  <data name="ButtonRename" xml:space="preserve">
+    <value>Umbenennen</value>
+  </data>
+  <data name="ButtonChangeCategory" xml:space="preserve">
+    <value>Kategorie ändern</value>
+  </data>
+  <data name="PromptRenameFeedTitle" xml:space="preserve">
+    <value>Feed umbenennen</value>
+  </data>
+  <data name="PromptRenameFeedMessage" xml:space="preserve">
+    <value>Neuer Anzeigetitel</value>
   </data>
 </root>

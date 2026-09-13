@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Services;
 using Reporter.Data;
 using Reporter.Data.Repositories;
 
@@ -42,5 +43,21 @@ public class ServiceCollectionTests
         Assert.NotNull(provider.GetRequiredService<ISyncLogRepository>());
 
         connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the feed search service can be resolved when an <see cref="HttpClient"/>
+    /// is registered, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesFeedSearchService()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            .AddSingleton<IFeedSearchService, FeedSearchService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IFeedSearchService>());
     }
 }

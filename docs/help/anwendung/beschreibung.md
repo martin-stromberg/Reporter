@@ -13,7 +13,7 @@ Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lese
 Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
 
 - **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden.
-- **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus.
+- **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus. Über **+ Feed per URL hinzufügen** fügst du neue Feeds per Suche hinzu — eine Website-Adresse genügt — oder direkt per URL; ein Tipp auf eine Feed-Karte öffnet Aktionen wie **Aktualisieren**, **Umbenennen**, **Kategorie ändern**, **Bearbeiten** und **Löschen** (Details siehe [Feeds suchen und hinzufügen](feed-suche.md)).
 - **Später** — Zeigt Artikel, die du dir für später merkst.
 - **Kategorien** — Verwaltet Kategorien für Feeds.
 - **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten und das Farbschema. Details siehe [Einstellungen](../einstellungen/index.md).
