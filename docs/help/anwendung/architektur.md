@@ -20,6 +20,7 @@
 - `Reporter.Tests` referenziert `Reporter.Core` und `Reporter.Data`.
 - `Microsoft.Extensions.DependencyInjection` wird für alle Services und ViewModels verwendet.
 - `CommunityToolkit.Mvvm` bildet die Basis für die ViewModels.
+- Externe Abhängigkeit der Feed-Suche: die öffentliche Verzeichnis-API `feedsearch.dev` (JSON-GET ohne Authentifizierung) plus Abruf der jeweils eingegebenen Website für die clientseitige Feed-Autodiscovery — beides synchron über den DI-`HttpClient`; Details siehe [Feed-Suche — Technischer Ablauf](feed-suche-technisch.md).
 
 ## Datenfluss
 
@@ -27,13 +28,16 @@
 graph TD
     A[UI / View] --> B[ViewModel]
     B --> C[IFeedSyncService]
+    B --> K[IFeedSearchService]
     C --> D[HttpClient]
+    K --> D
     C --> E[IFeedRepository]
     C --> F[IItemRepository]
     C --> G[ISyncLogRepository]
     E --> H[FeedRepository]
     F --> I[ItemRepository]
     G --> J[SyncLogRepository]
+    D --> L[feedsearch.dev / Websites]
 ```
 
 ## Wichtige Klassen
@@ -48,7 +52,8 @@ graph TD
 - `UnreadPage` / `UnreadViewModel` — Ansicht und ViewModel für ungelesene Artikel.
 - `FeedsPage` / `FeedsViewModel` — Ansicht und ViewModel für Feeds (inkl. Refresh-Buttons).
 - `LaterPage` / `LaterViewModel` — Ansicht und ViewModel für später gemerkte Artikel.
-- `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten; ruft nach jedem Sync mit neuen Artikeln fehlerisoliert `INotificationService.NotifyNewItemsAsync` auf.
+- `IFeedSyncService` / `FeedSyncService` — Service zum Abruf, Parsen und Speichern von Feed-Inhalten; ruft nach jedem Sync mit neuen Artikeln fehlerisoliert `INotificationService.NotifyNewItemsAsync` auf. Ersetzt beim ersten Sync einen Platzhalter-`Feed.Title` (leer oder `== Url`) durch `SyndicationFeed.Title`.
+- `IFeedSearchService` / `FeedSearchService` (`Reporter.Core`) — Feed-Suche hinter einem Gateway-Vertrag: Verzeichnisabfrage gegen `feedsearch.dev` (`skip_crawl=true`) plus clientseitige Autodiscovery (`<link rel="alternate">`-Parsing, Standardpfade) in einem gemeinsamen 2-s-Zeitbudget; Treffermodell `FeedSearchResult` mit `FeedSearchMatchKind`, Fehler nur als `FeedSearchUnavailableException` bei Ausfall beider Quellen. Der UI-Teil (Eingabe-Klassifikation, `SearchResults`/`ShowSearchResults`, `SearchCommand`/`SubscribeResultCommand`/`CloseSearchResultsCommand`, `ConfirmDirectAddAsync`-Callback) liegt in `FeedsViewModel.Search.cs`; Details siehe [Feed-Suche — Technischer Ablauf](feed-suche-technisch.md).
 - `INotificationService` / `NotificationService` (`Reporter.Core`) — Entscheidungslogik für lokale Benachrichtigungen (Feed-/globaler Schalter, Ruhezeit via `TimeProvider`, Keyword-Filter, Einzel- vs. Sammel-Modus); Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 - `ILocalNotificationService` / `LocalNotificationService` (`src/Reporter/Services/`) — Plattformabstraktion für lokale Benachrichtigungen; iOS-Ausprägung über `UserNotifications` (`#if IOS`), No-Op auf anderen Targets. Tap-Handling und Vordergrund-Darstellung über `NotificationDelegate`/`AppDelegate` unter `Platforms/iOS`.
 - `IRetentionCleanupService` / `RetentionCleanupService` — Service für das automatische Aufräumen gelesener Artikel nach `Settings.RetentionDays` inkl. Keyword-Löschregel; wird in `App.OnStart` aufgerufen, ungelesene und gemerkte Artikel bleiben erhalten. Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).

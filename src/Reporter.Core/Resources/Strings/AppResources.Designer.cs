@@ -396,15 +396,6 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die https://example.com/feed ähnelt.
-        /// </summary>
-        public static string PlaceholderFeedUrl {
-            get {
-                return ResourceManager.GetString("PlaceholderFeedUrl", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Articles you save for later will appear here. ähnelt.
         /// </summary>
         public static string PlaceholderLater {
@@ -1238,6 +1229,114 @@ namespace Reporter.Core.Resources.Strings {
         public static string ErrorLoadFailed {
             get {
                 return ResourceManager.GetString("ErrorLoadFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed URL or website address… ähnelt.
+        /// </summary>
+        public static string PlaceholderFeedSearch {
+            get {
+                return ResourceManager.GetString("PlaceholderFeedSearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Search ähnelt.
+        /// </summary>
+        public static string ButtonSearch {
+            get {
+                return ResourceManager.GetString("ButtonSearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No feeds found. ähnelt.
+        /// </summary>
+        public static string FeedSearchNoResults {
+            get {
+                return ResourceManager.GetString("FeedSearchNoResults", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No feed found ähnelt.
+        /// </summary>
+        public static string FeedSearchNoResultsTitle {
+            get {
+                return ResourceManager.GetString("FeedSearchNoResultsTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No feed found. Do you want to add &quot;{0}&quot; directly? ähnelt.
+        /// </summary>
+        public static string FeedSearchNoResultsAddUrl {
+            get {
+                return ResourceManager.GetString("FeedSearchNoResultsAddUrl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed search is unavailable. You can add the URL directly. ähnelt.
+        /// </summary>
+        public static string FeedSearchUnavailable {
+            get {
+                return ResourceManager.GetString("FeedSearchUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed search is unavailable. Please try again later or enter a complete feed URL. ähnelt.
+        /// </summary>
+        public static string FeedSearchUnavailableRetry {
+            get {
+                return ResourceManager.GetString("FeedSearchUnavailableRetry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed search is not available offline — you can still add a URL directly. ähnelt.
+        /// </summary>
+        public static string FeedSearchOfflineHint {
+            get {
+                return ResourceManager.GetString("FeedSearchOfflineHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Search powered by feedsearch.dev ähnelt.
+        /// </summary>
+        public static string FeedSearchAttribution {
+            get {
+                return ResourceManager.GetString("FeedSearchAttribution", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Subscribe to feed? ähnelt.
+        /// </summary>
+        public static string ConfirmSubscribeFeedTitle {
+            get {
+                return ResourceManager.GetString("ConfirmSubscribeFeedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Subscribe to &quot;{0}&quot;? ähnelt.
+        /// </summary>
+        public static string ConfirmSubscribeFeedMessage {
+            get {
+                return ResourceManager.GetString("ConfirmSubscribeFeedMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Back to my feeds ähnelt.
+        /// </summary>
+        public static string ButtonCloseSearchResults {
+            get {
+                return ResourceManager.GetString("ButtonCloseSearchResults", resourceCulture);
             }
         }
     }

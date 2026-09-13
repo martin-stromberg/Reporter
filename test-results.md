@@ -2,6 +2,128 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #59: Feed-Suche über feedsearch.dev und clientseitige Autodiscovery
+
+Branch: `task/issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 274 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 239) |
+| MAUI-App-Build (Windows) | `dotnet build src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0 -c Release` | Erfolgreich, 0 Warnungen, 0 Fehler (XAML-SourceGen) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Neue Tests (35): `FeedSearchServiceTests` (15 Fälle: Directory-Mapping inkl.
+`bozo`-Filter, Sortierung `MatchKind`→`Score`→`FeedUrl`, `ExactUrl`-Erkennung,
+Autodiscovery via Link-Tags/Standardpfade/Feed-Dokument, Fast-Path ohne
+Site-Request, Dedupe nach `FeedUrl` getrennt für Directory und Discovery,
+Fehler beider Quellen/Timeout/Parsefehler → `FeedSearchUnavailableException`,
+Aufrufer-Abbruch → `OperationCanceledException`, leere Liste),
+`FeedSyncServiceTests` (2: Platzhalter-Titel `Title == Url` wird durch
+`SyndicationFeed.Title` ersetzt, gesetzter Titel bleibt unverändert),
+`FeedsViewModelTests` (17: Suche befüllt Trefferliste, Domain-Normalisierung
+`https://…`, Freitext ohne Service-Aufruf, leere Eingabe, Offline-Hint,
+`FeedSearchUnavailable`-Fehlerkanal, Retry-Hinweis bei Domain-Eingabe,
+`ConfirmDirectAddAsync`-Fallback bestätigt/abgelehnt (getrennte Tests),
+Dialog-Fehler löst keinen Doppel-Dialog aus, Domain ohne Treffer ohne Dialog,
+`NewUrl`-Reset, `CloseSearchResultsCommand`, Abonnieren inkl.
+Kategorie/Notifications/Platzhalter-Titel, Dublette, Connectivity-CanExecute),
+`ServiceCollectionTests` (`AddReporterServices_ResolvesFeedSearchService`).
+Neue Hilfsklassen: `FakeFeedSearchService`, `StubHttpMessageHandler` (privat in
+`FeedSearchServiceTests`).
+
+### Mobile-UI-Design-Review „Feeds"
+
+Statische XAML-Prüfung der Änderungen an `FeedsPage.xaml` gegen die
+AGENTS.md-Regeln und den Design-Entwurf
+`design-draft/stitch_local_rss_feed_reader/feeds_health_status/screen.png`:
+
+- [x] Kein horizontales Datentabellen-Layout; Trefferliste als kartenbasierte
+  `CollectionView` (`Border` + `RoundRectangle 12`, `AppThemeBinding`
+  `SurfaceContainer`) mit `TapGestureRecognizer` → `OnSearchResultTapped` +
+  `DisplayAlertAsync`-Bestätigung
+- [x] Keine mehreren Text-Buttons in einer Zeile — „Suchen" und „Speichern"
+  vertikal gestapelt im Formular
+- [x] Treffer-`CollectionView` in `Grid`-Row `*` (Row 1, Wrapper `*,Auto` mit
+  Attribution-Footer), keine `ScrollView`-/`CollectionView`-Verschachtelung;
+  Sichtbarkeit per `DataTrigger` auf `ShowSearchResults`, Feed-Liste invers
+- [x] Touch-Ziele ≥ 44 pt: Trefferkarte `MinimumHeightRequest="44"`, Buttons über
+  globalen Style (`MinimumHeightRequest="44"`)
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle neuen Texte aus
+  `AppResources.*` (EN + DE, 12 neue Schlüssel inkl. `FeedSearchUnavailableRetry`
+  und `ButtonCloseSearchResults` aus Iteration 2; `PlaceholderFeedUrl`
+  entfernt, Designer-Properties ergänzt)
+- [x] `EmptyView` „Keine Feeds gefunden." bei leerem Ergebnis;
+  `FeedSearchAttribution` („powered by feedsearch.dev") sichtbar unter der
+  Trefferliste (Nutzungsbedingung der API)
+- [x] Offline: Suchen-Button per `SearchCommand.CanExecute` deaktiviert,
+  `FeedSearchOfflineHint`-Label per `DataTrigger` (`IsOnline == false`)
+- [x] Sichtbarer Rückweg aus der Trefferansicht: Button „Zurück zu meinen
+  Feeds" (`CloseSearchResultsCommand`, `MinimumHeightRequest="44"`) unterhalb
+  der Attribution (Iteration 2, Usability-Befund)
+- [x] Fehlerhinweis differenziert: `FeedSearchUnavailable` (Direkt-Hinzufügen-
+  Angebot) nur bei gültiger URL, sonst `FeedSearchUnavailableRetry`
+  (Iteration 2, Usability-Befund)
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 2)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per
+`GetWindowRect` verifiziert: **390 × 844 pt** (Größe wird in
+`App.xaml.cs` `CreateWindow` gesetzt). Interaktion über UI Automation +
+`mouse_event` (`test-results/issue-59/uia.ps1`), Texteingabe über
+`ValuePattern.SetValue`. Theme-Umschaltung über `settings.theme` in der
+SQLite-Datenbank (`system`/`dark`/`light`) mit App-Neustart; OS-Default ist
+Dark. Screenshots unter `test-results/issue-59/manual-*.png`.
+
+Verifizierte Szenarien (Live-Lauf, deutsch lokalisierte UI):
+
+- [x] Domain-Suche `tagesschau.de`/`heise.de` → Trefferliste als Karten
+  (Titel, Site-Name + Site-URL, Feed-URL) mit Attribution „Suche powered by
+  feedsearch.dev" und Button „Zurück zu meinen Feeds" (44 pt) —
+  `manual-04`/`manual-09` (Dark), `manual-11` (Light)
+- [x] Treffer-Tap → Bestätigungsdialog „Feed abonnieren?" mit Titel in der
+  Nachricht → „Ja" → Feed erscheint in der Feed-Liste; Persistenz per SQLite-
+  Abfrage verifiziert (`Kommentare zu: Der Tötungsfall in Offenburg`,
+  Health `OK`) — `manual-05`, `manual-06` (Dark)
+- [x] URL ohne Treffer (`https://example.com/`, `https://iana.org/`) →
+  Direkt-Hinzufügen-Dialog nennt die eingegebene Adresse (`{0}`-Platzhalter)
+  → „Ja" → `NewTitle` mit Host vorbefüllt (`example.com`, per UIA
+  `ValuePattern` ausgelesen) → „Speichern" persistiert den Feed —
+  `manual-12` (Light); derselbe Dialog im Dark-Lauf `manual-03`
+- [x] Suche nicht erreichbar: beide Quellen schlugen fehl (feedsearch.dev
+  lehnt localhost-Anfragen mit 400 ab; Discovery gegen `127.0.0.1:8099`
+  schlug im App-Prozess fehl) → Hinweis „Die Feed-Suche ist nicht
+  erreichbar. Du kannst die URL direkt hinzufügen." + Direkt-Hinzufügen-
+  Dialog bleibt nutzbar — `manual-03` (Dark)
+- [x] Dubletten-Treffer abonnieren → „Ein Feed mit dieser URL existiert
+  bereits.", kein zweiter Feed (SQLite-Abfrage: 1 Zeile) — `manual-07` (Dark)
+- [x] „Zurück zu meinen Feeds" verlässt die Trefferansicht und zeigt die
+  Feed-Liste wieder (per UIA-Elementliste verifiziert)
+- [x] Layout: Karten ≥ 44 pt, `AppThemeBinding` Light/Dark (Hintergrund
+  hell 236,238,240 / dunkel 28,32,40 per Pixelprobe), keine
+  Scroll-Verschachtelung, `EmptyView`, Attribution sichtbar;
+  `FeedsPage`-Formular `manual-02`/`manual-08` (Dark), `manual-10` (Light)
+
+Nicht interaktiv verifizierbar in dieser Umgebung (durch Tests abgedeckt):
+
+- Offline-Szenario (Suchen-Button deaktiviert + `FeedSearchOfflineHint`):
+  `Disable-NetAdapter` scheitert ohne Adminrechte („Zugriff verweigert").
+  Abgedeckt durch `SearchCommand_WhenOffline_DoesNotCallService_AndSetsHint`
+  und `ConnectivityChanged_UpdatesSearchCommandCanExecute`.
+- Treffer ohne Titel → Titel-Befüllung nach erstem Sync: lokaler
+  Stub-Feed-Server (`test-results/issue-59/stubserver.py`) ist vom
+  App-Prozess aus nicht erreichbar (Anfragen kommen nicht am Stub an,
+  während `dotnet fsi` denselben `FeedSearchService` erfolgreich in 135 ms
+  mit 1 `Discovered`-Treffer beantwortet — siehe `probe.fsx`). Abgedeckt
+  durch `SubscribeResultCommand_WhenTitleEmpty_StoresFeedUrlAsPlaceholder`
+  und `SyncFeedAsync_WhenTitleIsPlaceholder_UpdatesTitleFromFeedDocument`.
+- iOS-Simulator: nicht möglich auf Windows (siehe `scripts/iOS-Deployment.ps1`).
+
+Hinweis zu den Screenshots: `manual-01` bis `manual-09` wurden bei
+OS-Dark-Mode aufgenommen (`theme=system`/`dark`), `manual-10` bis
+`manual-12` bei `theme=light`.
+
 ## Issue #57: PolyForm Noncommercial License 1.0.0
 
 Branch: `task/issue-57-08ef43ab80c44d8cabda37af9d9cb29a-polyform-noncommercial-license`

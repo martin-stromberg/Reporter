@@ -183,7 +183,14 @@ public class FeedSyncService : IFeedSyncService
             ? $"Synchronized {feedItems.Count} items, {newItems} new. Health warning triggered."
             : $"Synchronized {feedItems.Count} items, {newItems} new.";
 
-        await UpdateFeedHealthAsync(feed, status).ConfigureAwait(false);
+        var documentTitle = syndicationFeed.Title?.Text;
+        var isPlaceholderTitle = string.IsNullOrWhiteSpace(feed.Title) ||
+            string.Equals(feed.Title, feed.Url, StringComparison.OrdinalIgnoreCase);
+        var resolvedTitle = isPlaceholderTitle && !string.IsNullOrWhiteSpace(documentTitle)
+            ? documentTitle
+            : null;
+
+        await UpdateFeedHealthAsync(feed, status, resolvedTitle).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
 
         if (newItemEntities.Count > 0)
@@ -218,7 +225,7 @@ public class FeedSyncService : IFeedSyncService
         return FeedHealth.Ok;
     }
 
-    private async Task UpdateFeedHealthAsync(Feed feed, string status)
+    private async Task UpdateFeedHealthAsync(Feed feed, string status, string? resolvedTitle = null)
     {
         var healthLastChange = feed.HealthLastChange;
         if (FeedHealth.Changed(feed.HealthStatus, status))
@@ -230,7 +237,7 @@ public class FeedSyncService : IFeedSyncService
         {
             Id = feed.Id,
             Url = feed.Url,
-            Title = feed.Title,
+            Title = resolvedTitle ?? feed.Title,
             CategoryId = feed.CategoryId,
             LastCheckedAt = DateTime.UtcNow,
             HealthStatus = status,

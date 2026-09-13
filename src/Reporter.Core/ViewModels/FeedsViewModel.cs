@@ -38,18 +38,21 @@ public partial class FeedsViewModel : BaseViewModel
     /// <param name="feedRepository">The feed repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
+    /// <param name="feedSearchService">The feed search service.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="localNotificationService">The platform notification service, used to detect whether notifications are supported at all.</param>
     public FeedsViewModel(
         IFeedRepository feedRepository,
         ICategoryRepository categoryRepository,
         IFeedSyncService feedSyncService,
+        IFeedSearchService feedSearchService,
         INetworkStatusService networkStatusService,
         ILocalNotificationService? localNotificationService = null)
     {
         _feedRepository = feedRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        _feedSearchService = feedSearchService;
         TrackConnectivity(networkStatusService);
         _localNotificationService = localNotificationService;
         LoadCommand = new AsyncRelayCommand(LoadCommandAsync);
@@ -58,6 +61,9 @@ public partial class FeedsViewModel : BaseViewModel
         DeleteCommand = new AsyncRelayCommand<FeedListItem?>(DeleteAsync);
         RefreshCommand = new AsyncRelayCommand<FeedListItem?>(RefreshAsync, _ => !IsSyncing);
         RefreshAllCommand = new AsyncRelayCommand(RefreshAllAsync, () => !IsSyncing);
+        SearchCommand = new AsyncRelayCommand(SearchAsync, () => IsOnline && !IsSearching);
+        SubscribeResultCommand = new AsyncRelayCommand<FeedSearchResult?>(SubscribeResultAsync);
+        CloseSearchResultsCommand = new RelayCommand(CloseSearchResults);
     }
 
     /// <summary>
@@ -96,7 +102,15 @@ public partial class FeedsViewModel : BaseViewModel
     public string NewUrl
     {
         get => _newUrl;
-        set => SetProperty(ref _newUrl, value);
+        set
+        {
+            if (SetProperty(ref _newUrl, value))
+            {
+                SearchResults.Clear();
+                ShowSearchResults = false;
+                SearchErrorMessage = string.Empty;
+            }
+        }
     }
 
     /// <summary>
@@ -245,8 +259,7 @@ public partial class FeedsViewModel : BaseViewModel
         var url = NewUrl.Trim();
         var title = NewTitle.Trim();
 
-        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        if (string.IsNullOrWhiteSpace(url) || !IsValidFeedUrl(url))
         {
             ErrorMessage = AppResources.ErrorFeedUrlInvalid;
             return;
@@ -278,7 +291,7 @@ public partial class FeedsViewModel : BaseViewModel
                 Title = title,
                 CategoryId = categoryId,
                 LastCheckedAt = null,
-                HealthStatus = "OK",
+                HealthStatus = FeedHealth.Ok,
                 HealthLastChange = null,
                 NotificationsEnabled = FeedNotificationsEnabled,
             });
@@ -411,9 +424,17 @@ public partial class FeedsViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    private static bool IsValidFeedUrl(string url)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
     /// <inheritdoc />
     protected override void OnConnectivityChanged(bool isOnline)
     {
         SyncErrorMessage = string.Empty;
+        SearchErrorMessage = string.Empty;
+        SearchCommand.NotifyCanExecuteChanged();
     }
 }

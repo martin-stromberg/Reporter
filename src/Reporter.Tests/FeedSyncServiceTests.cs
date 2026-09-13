@@ -86,13 +86,13 @@ public class FeedSyncServiceTests : IDisposable
         return new NotificationService(_settingsRepository, _keywordRepository, new KeywordMatcher(), localNotificationService);
     }
 
-    private static string RssXml(IEnumerable<(string Title, string Link, string Guid, DateTime? PubDate, string? Description)> items)
+    private static string RssXml(IEnumerable<(string Title, string Link, string Guid, DateTime? PubDate, string? Description)> items, string channelTitle = "Test Feed")
     {
         var builder = new StringBuilder();
         builder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         builder.AppendLine("<rss version=\"2.0\">");
         builder.AppendLine("  <channel>");
-        builder.AppendLine("    <title>Test Feed</title>");
+        builder.AppendLine($"    <title>{channelTitle}</title>");
         foreach (var item in items)
         {
             builder.AppendLine("    <item>");
@@ -484,6 +484,58 @@ public class FeedSyncServiceTests : IDisposable
         Assert.Equal(FeedHealth.Ok, feed?.HealthStatus);
         var items = await _itemRepository.GetByFeedAsync(feedId);
         Assert.Single(items);
+    }
+
+    /// <summary>
+    /// Verifies that a placeholder title (the feed URL stored as title) is replaced
+    /// by the feed document title on the first sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsPlaceholder_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://example.com/rss";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = url,
+            Title = url,
+            NotificationsEnabled = true,
+        });
+        var xml = RssXml([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Resolved Feed Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Feed Title", feed.Title);
+    }
+
+    /// <summary>
+    /// Verifies that an explicitly set feed title is never overwritten by the
+    /// feed document title.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsSet_DoesNotOverwriteTitle()
+    {
+        var feedId = await SeedFeedAsync();
+        var xml = RssXml([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Different Document Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Test Feed", feed.Title);
     }
 
     private sealed class FakeHttpMessageHandler : HttpMessageHandler

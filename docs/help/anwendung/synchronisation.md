@@ -29,6 +29,10 @@
 
 Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie **Alle aktualisieren**, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Die automatische Aktualisierung läuft nur, solange die App geöffnet ist; dauert ein Abruf länger als das eingestellte Intervall, startet der nächste erst nach seinem Abschluss — Abrufe laufen nie parallel. Details siehe [Einstellungen](../einstellungen/index.md).
 
+## Anzeigetitel beim ersten Abruf
+
+Wurde ein Feed über die **Suche** ohne Anzeigetitel abonniert (siehe [Feeds suchen und hinzufügen](feed-suche.md)), zeigt die Liste zunächst die Feed-Adresse als Platzhalter. Beim ersten erfolgreichen Abruf ersetzt die App den Platzhalter automatisch durch den echten Titel aus dem Feed. Selbst vergebene Titel — etwa beim direkten Hinzufügen über **Speichern** — bleiben unverändert und werden nie überschrieben.
+
 ## Verhalten ohne Internetverbindung
 
 Hat das Gerät keine Internetverbindung, wird kein Abruf gestartet:
