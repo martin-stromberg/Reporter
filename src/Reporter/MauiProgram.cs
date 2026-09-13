@@ -1,9 +1,11 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Localization;
 using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 using Reporter.Data;
@@ -77,6 +79,37 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+        ApplyPersistedLanguage(app);
+        return app;
+    }
+
+    /// <summary>
+    /// Applies the persisted language selection to the process-wide culture before
+    /// <see cref="App.CreateWindow"/> resolves the shell: <c>AppShell</c> reads the
+    /// localized tab titles and creates all pages (including the singleton
+    /// <see cref="SettingsViewModel"/>, which reads its option labels from
+    /// <c>AppResources</c>) eagerly, so the culture must already be effective here.
+    /// The database is migrated synchronously first so the <c>language</c> column
+    /// exists on upgraded databases.
+    /// </summary>
+    /// <param name="app">The built <see cref="MauiApp"/> whose services are used.</param>
+    private static void ApplyPersistedLanguage(MauiApp app)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
+            context.Database.Migrate();
+
+            var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
+            var settings = settingsRepository.GetAsync().GetAwaiter().GetResult();
+            AppCulture.Apply(settings.Language);
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Anwenden der Sprache darf den App-Start nicht verhindern.
+            Debug.WriteLine($"MauiProgram.ApplyPersistedLanguage failed: {ex}");
+        }
     }
 }

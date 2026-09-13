@@ -293,6 +293,24 @@
   <data name="SettingsThemeDark" xml:space="preserve">
     <value>Dark</value>
   </data>
+  <data name="SettingsSectionLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageLabel" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="SettingsLanguageGerman" xml:space="preserve">
+    <value>German</value>
+  </data>
+  <data name="SettingsLanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SettingsLanguageRestartHint" xml:space="preserve">
+    <value>The new language takes effect after restarting the app.</value>
+  </data>
   <data name="ErrorKeywordEmpty" xml:space="preserve">
     <value>Please enter a keyword.</value>
   </data>

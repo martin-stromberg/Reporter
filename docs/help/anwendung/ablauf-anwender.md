@@ -52,4 +52,4 @@ Tippe auf einen der fünf Tabs:
 
 ## Ergebnis
 
-Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an, die Sprache an die Systemsprache des Geräts (Deutsch oder Englisch — siehe [Sprache](sprache.md)).
+Der jeweilige Bereich wird im Hauptbereich der App angezeigt. Das Theme passt sich automatisch an das System-Design an, die Sprache folgt der Systemsprache des Geräts oder der manuellen Auswahl unter **Einstellungen** → **Sprache** (Deutsch oder Englisch — siehe [Sprache](sprache.md)).

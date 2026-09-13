@@ -50,6 +50,7 @@ public partial class SettingsViewModel : ObservableObject
     private TimeSpan? _quietHoursStart;
     private TimeSpan? _quietHoursEnd;
     private ThemeOption? _selectedTheme;
+    private LanguageOption? _selectedLanguage;
     private bool _hasError;
     private string _errorMessage = string.Empty;
     private volatile bool _isLoading;
@@ -101,6 +102,12 @@ public partial class SettingsViewModel : ObservableObject
             new() { Value = SettingsValues.ThemeSystem, Label = AppResources.SettingsThemeSystem },
             new() { Value = SettingsValues.ThemeLight, Label = AppResources.SettingsThemeLight },
             new() { Value = SettingsValues.ThemeDark, Label = AppResources.SettingsThemeDark },
+        };
+        LanguageOptions = new List<LanguageOption>
+        {
+            new() { Value = SettingsValues.LanguageSystem, Label = AppResources.SettingsLanguageSystem },
+            new() { Value = SettingsValues.LanguageGerman, Label = AppResources.SettingsLanguageGerman },
+            new() { Value = SettingsValues.LanguageEnglish, Label = AppResources.SettingsLanguageEnglish },
         };
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
@@ -156,6 +163,11 @@ public partial class SettingsViewModel : ObservableObject
     /// Gets the selectable theme options.
     /// </summary>
     public IReadOnlyList<ThemeOption> ThemeOptions { get; }
+
+    /// <summary>
+    /// Gets the selectable language options.
+    /// </summary>
+    public IReadOnlyList<LanguageOption> LanguageOptions { get; }
 
     /// <summary>
     /// Gets or sets the page title.
@@ -440,6 +452,21 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Gets or sets the selected language option.
+    /// </summary>
+    public LanguageOption? SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set
+        {
+            if (SetProperty(ref _selectedLanguage, value))
+            {
+                PersistOnChange();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets a value indicating whether a validation error is present.
     /// </summary>
     public bool HasError
@@ -484,6 +511,8 @@ public partial class SettingsViewModel : ObservableObject
             QuietHoursEnabled = settings.QuietHoursStart is not null || settings.QuietHoursEnd is not null;
             SelectedTheme = ThemeOptions.FirstOrDefault(o => o.Value == settings.Theme)
                 ?? ThemeOptions.First(o => o.Value == SettingsValues.ThemeSystem);
+            SelectedLanguage = LanguageOptions.FirstOrDefault(o => o.Value == settings.Language)
+                ?? LanguageOptions.First(o => o.Value == SettingsValues.LanguageSystem);
 
             Keywords.Clear();
             var keywords = await _keywordRepository.GetAllAsync();
@@ -655,6 +684,7 @@ public partial class SettingsViewModel : ObservableObject
                 AutoRefreshEnabled = AutoRefreshEnabled,
                 RefreshIntervalMinutes = SelectedRefreshInterval?.Minutes ?? DefaultRefreshIntervalMinutes,
                 Theme = SelectedTheme?.Value ?? SettingsValues.ThemeSystem,
+                Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem,
             };
 
             await _settingsRepository.SaveAsync(updated);

@@ -23,6 +23,7 @@ Alle Einstellungen findest du auf dem Tab **Einstellungen**. Jede Änderung wird
 | **Sammel-Benachrichtigung** | Ein/Aus (Voreinstellung aus). Aus = eine Benachrichtigung pro neuem Artikel; Ein = eine gemeinsame Benachrichtigung pro Feed und Abgleich. Nur bei eingeschaltetem Hauptschalter bedienbar. |
 | **Ruhezeit (Nicht stören)** | Ein/Aus-Schalter für einen Zeitraum ohne Benachrichtigungen. Schaltet die Uhrzeitfelder **VON** und **BIS** frei; beim ersten Einschalten sind 22:00 bis 07:00 Uhr voreingestellt. Bereiche über Mitternacht (z. B. 22:00–07:00 Uhr) sind zulässig. In der Ruhezeit anfallende Benachrichtigungen werden verworfen, nicht nachgeholt. Beim Ausschalten gilt keine Ruhezeit mehr; die eingestellten Zeiten bleiben sichtbar und werden beim Wiedereinschalten derselben Sitzung wieder verwendet. |
 | **Farbschema** | *System* (Voreinstellung), *Hell* oder *Dunkel*. Wirkt sofort auf die gesamte App. |
+| **Sprache** | *System* (Voreinstellung), *Deutsch* oder *Englisch*. Bei *System* folgt die App der Gerätesprache (Englisch als Ersatzsprache). Wird sofort gespeichert, wirkt aber erst nach einem Neustart der App — Hinweis unter dem Auswahlfeld. |
 
 ## Vorgehen
 
@@ -57,3 +58,4 @@ Bei ungültiger Eingabe erscheint eine rote Fehlermeldung unter dem Feld:
 - Ungelesene und für später gemerkte Artikel sind von jeder automatischen Löschung ausgenommen.
 - Optionen unter einem ausgeschalteten Schalter (Abruf-Intervall, Verzögerung, Ruhezeit) sind abgedunkelt und nicht bedienbar.
 - Der **×**-Schalter zum Entfernen eines Schlagworts trägt eine Screenreader-Beschriftung („Schlagwort … entfernen").
+- Die **Sprache** wirkt erst nach einem Neustart der App: App vollständig schließen und wieder öffnen, damit alle Texte in der gewählten Sprache erscheinen.

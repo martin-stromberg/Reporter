@@ -68,3 +68,15 @@
 1. `settings.theme` in der Datenbank prüfen (`system`/`light`/`dark`).
 2. Debug-Ausgabe auf `App.OnStart theme apply failed` (Start) bzw. `Failed to save settings` (Änderung über Picker) prüfen.
 3. Sicherstellen, dass die Styles `AppThemeBinding` verwenden — hart codierte Farben reagieren nicht auf Theme-Wechsel.
+
+## Sprachwechsel wirkt nicht
+
+**Symptom:** Nach Auswahl von „Deutsch"/„English" im `Sprache`-Picker bleibt die App in der bisherigen Sprache.
+
+**Ursache:** Es gibt keine Laufzeit-Umschaltung — `SettingsViewModel.PersistAsync` schreibt `Language` nur in den Datensatz; die Kultur wird ausschließlich beim App-Start in `MauiProgram.ApplyPersistedLanguage` angewendet (vor `CreateWindow`, da `AppShell` lokalisierte Tab-Titel und alle Pages eager erzeugt). Schlägt dieser Block fehl, wird er per `try/catch` + `Debug.WriteLine` (`MauiProgram.ApplyPersistedLanguage failed`) geschluckt und die Systemkultur bleibt wirksam.
+
+**Lösung:**
+1. App vollständig neu starten — ohne Neustart kann die Auswahl nicht wirken.
+2. `settings.language` in der Datenbank prüfen (`system`/`de`/`en`); unbekannte Werte fallen in `AppCulture.ResolveCulture` auf `null` → No-Op → Systemkultur.
+3. Debug-Ausgabe auf `MauiProgram.ApplyPersistedLanguage failed` prüfen — dort werden Fehler beim synchronen `Database.Migrate()` oder `GetAsync` sichtbar (z. B. fehlende `language`-Spalte bei abgelaufener Migration `AddSettingsLanguage`).
+4. Beachten: `AppCulture.Apply` setzt auch `CurrentCulture` und die `DefaultThreadCurrent*`-Defaults — bei teilweise falscher Formatierung (z. B. Datumsformat) ist der persistierte Wert zu prüfen.

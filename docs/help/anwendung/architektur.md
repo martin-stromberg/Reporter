@@ -42,7 +42,7 @@ graph TD
 
 ## Wichtige Klassen
 
-- `MauiProgram.CreateMauiApp()` — Konfiguriert DI, Fonts und MAUI.
+- `MauiProgram.CreateMauiApp()` — Konfiguriert DI, Fonts und MAUI; wendet nach `builder.Build()` über `ApplyPersistedLanguage` die gespeicherte Sprachwahl an (`AppCulture.Apply`), bevor `CreateWindow` die `AppShell` erzeugt.
 - `Colors.xaml` / `Styles.xaml` — Enthalten das Design-System (Farb- und Typografie-Tokens, Light/Dark-Styles). Beide haben ein `x:Class`-Code-Behind und werden in `App.xaml.cs` der `MergedDictionaries` hinzugefügt.
 - Alle `.csproj` erzwingen XML-Dokumentation (`GenerateDocumentationFile` + `CS1591` als Fehler).
 - `AppShell` — Definiert die Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**.
@@ -65,7 +65,7 @@ graph TD
 - `ArticleHtmlSanitizer` (`Reporter.Core.Services`, statisch) — Regex-basierte Sanitize-Pipeline für das Artikel-HTML (Skript-/Event-Handler-Entfernung); mit `forOffline: true` werden `<a>`-Tags durch ihren Text ersetzt und `<img>`-Elemente entfernt. Wird von `ArticleDetailViewModel.RebuildHtml` mit `forOffline: !IsOnline` aufgerufen; in `Reporter.Tests` unit-testbar (`ArticleHtmlSanitizerTests`).
 - `WebViewNavigationGuard` (`Reporter.Core.Services`, statisch) — `IsExternalUrl` klassifiziert `Navigating`-URLs; nur http/https gilt als extern. `ArticleDetailPage.OnWebViewNavigating` bricht externe Navigation offline mit `e.Cancel = true` ab und zeigt einen lokalisierten Alert.
 - `ArticleCardView` — Wiederverwendbare Artikelkarte; das `BindableProperty IsOnline` (Default `true`) blendet den 80×80-Thumbnail-`Border` offline per `DataTrigger` aus; gebunden auf `UnreadPage` und `LaterPage` über `Source={x:Reference PageRoot}`.
-- `AppResources` — Typisierter Zugriff auf RESX-Lokalisierung: neutrale `AppResources.resx` = Englisch = Fallback für alle Nicht-DE-Systemsprachen, `AppResources.de.resx` = Deutsch; Auswahl automatisch über `CultureInfo.CurrentUICulture`. Persistierte `SyncLog`-Meldungen bleiben bewusst englisch. Ein manueller Sprachwechsel ist nicht implementiert (zurückgestellt).
+- `AppResources` — Typisierter Zugriff auf RESX-Lokalisierung: neutrale `AppResources.resx` = Englisch = Fallback für alle Nicht-DE-Systemsprachen, `AppResources.de.resx` = Deutsch; Auswahl über `CultureInfo.CurrentUICulture`. Die statische Klasse `AppCulture` (`Reporter.Core.Localization`) setzt beim App-Start `CurrentUICulture`/`CurrentCulture` sowie `DefaultThreadCurrentUICulture`/`DefaultThreadCurrentCulture` aus der persistierten Sprachwahl (`Settings.Language`: `"system"`/`"de"`/`"en"`); bei `"system"` bleibt die Gerätesprache wirksam. Persistierte `SyncLog`-Meldungen bleiben bewusst englisch.
 - `SettingsPage` / `SettingsViewModel` — Ausgebaute Einstellungsseite mit Sofort-Persistierung und Keyword-Verwaltung; Details siehe [Einstellungen](../einstellungen/index.md).
 - `Item` — Domänenmodell für einen Artikel (`Id`, `Title`, `IsRead`, `ContentHtml`).
 - `IItemRepository` / `ItemRepository` — Schnittstelle und Implementierung für den Artikel-Zugriff.

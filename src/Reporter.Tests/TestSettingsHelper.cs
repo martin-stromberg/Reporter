@@ -20,13 +20,15 @@ public static class TestSettingsHelper
     /// <param name="notificationSummaryEnabled">The summary-mode switch override, or <see langword="null"/> to keep the persisted value.</param>
     /// <param name="quietHoursStart">The quiet-hours start override, or <see langword="null"/> to keep the persisted value.</param>
     /// <param name="quietHoursEnd">The quiet-hours end override, or <see langword="null"/> to keep the persisted value.</param>
+    /// <param name="language">The language selection override, or <see langword="null"/> to keep the persisted value.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public static async Task SaveAsync(
         ISettingsRepository repository,
         bool? notificationsEnabled = null,
         bool? notificationSummaryEnabled = null,
         TimeSpan? quietHoursStart = null,
-        TimeSpan? quietHoursEnd = null)
+        TimeSpan? quietHoursEnd = null,
+        string? language = null)
     {
         var settings = await repository.GetAsync();
         await repository.SaveAsync(new Settings
@@ -42,6 +44,7 @@ public static class TestSettingsHelper
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
             Theme = settings.Theme,
+            Language = language ?? settings.Language,
         });
     }
 }

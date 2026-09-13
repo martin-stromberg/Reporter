@@ -67,6 +67,17 @@
 1. Unter **Erscheinungsbild** → **Farbschema** gezielt *Hell* oder *Dunkel* wählen, um das System zu übersteuern.
 2. Bei *System* die Einstellung des Geräts prüfen.
 
+## Sprache wechselt nicht
+
+**Symptom:** Nach der Auswahl einer anderen **Sprache** erscheinen die Texte weiterhin in der bisherigen Sprache.
+
+**Ursache:** Die Sprachauswahl wird zwar sofort gespeichert, wirkt aber erst nach einem Neustart der App — darauf weist der Hinweis „Die neue Sprache wird nach einem Neustart der App wirksam." unter dem Auswahlfeld hin. Bei der Auswahl *System* folgt die App außerdem der Systemsprache des Geräts.
+
+**Lösung:**
+1. App vollständig schließen und neu starten.
+2. Prüfen, ob die gewünschte Option (*Deutsch* oder *Englisch*) unter **Sprache** ausgewählt ist — bei *System* gilt die Gerätesprache.
+3. Steht die Gerätesprache auf einer anderen Sprache als Deutsch oder Englisch, zeigt die App bei *System* Englisch an; für Deutsch dann *Deutsch* wählen.
+
 ## Wann Hilfe nötig ist
 
 Wenn Einstellungen trotz korrekter Bedienung nicht gespeichert bleiben, Artikel wider Erwarten gelöscht werden oder die App Fehler zeigt, die hier nicht beschrieben sind, wende dich an den Support bzw. die Entwicklung und gib an, welche Einstellung betroffen ist und was du zuletzt geändert hast.

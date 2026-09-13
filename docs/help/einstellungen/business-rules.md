@@ -81,6 +81,18 @@
 
 **Umsetzung:** `AppThemeService.ApplyTheme`, `SettingsViewModel`.
 
+## Language-String und Fallback
+
+**Beschreibung:** `Settings.Language` ist ein `string?` mit den Werten `"system"`/`"de"`/`"en"` (Default `"system"`).
+
+**Verhalten:**
+- `"de"`/`"en"` → `AppCulture.Apply` setzt `CurrentUICulture`, `CurrentCulture`, `DefaultThreadCurrentUICulture` und `DefaultThreadCurrentCulture` auf `new CultureInfo(value)`; wirksam ab dem nächsten App-Start (Anwendung in `MauiProgram.ApplyPersistedLanguage` vor `CreateWindow`).
+- `"system"`, `null`, unbekannt → `AppCulture.ResolveCulture` liefert `null`, `Apply` ist ein No-Op — die App folgt der Systemkultur (Konvention analog `AppThemeService.ApplyTheme`).
+- `SettingsViewModel.LoadAsync` fällt bei unbekanntem gespeicherten Wert auf die `LanguageOption` `"system"` zurück; `PersistAsync` schreibt `SelectedLanguage?.Value ?? LanguageSystem`.
+- Keine Laufzeit-Umschaltung: `PersistAsync` ruft keinen Service für `Language` auf — die UI weist per `SettingsLanguageRestartHint` auf den erforderlichen Neustart hin.
+
+**Umsetzung:** `AppCulture.ResolveCulture`/`Apply` (`Reporter.Core.Localization`), `MauiProgram.ApplyPersistedLanguage`, `SettingsViewModel.SelectedLanguage`, `SettingsValues.LanguageSystem`/`LanguageGerman`/`LanguageEnglish`.
+
 ## Ruhezeiten ohne Start-vor-Ende-Validierung
 
 **Beschreibung:** `QuietHoursStart`/`QuietHoursEnd` werden unvalidiert gespeichert; Bereiche über Mitternacht (z. B. 22:00–07:00) sind zulässig. Die Auswertung (Wrap-around, Unterdrückung von Benachrichtigungen, Grenzfälle) erfolgt im Benachrichtigungs-Service — siehe [Benachrichtigungen — Business Rules](../benachrichtigungen/business-rules.md), Abschnitt „Ruhezeit-Auswertung".

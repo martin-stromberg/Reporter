@@ -113,6 +113,25 @@ public class SettingsViewModelTests_E2E : IDisposable
     }
 
     /// <summary>
+    /// Verifies the end-to-end flow: change the language, persist immediately and reload
+    /// the selection in a new view model instance (simulating the next app start).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task E2E_ChangeLanguage_PersistRoundtrip()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.SelectedLanguage = _viewModel.LanguageOptions.First(o => o.Value == "de");
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).Language == "de");
+
+        var reloaded = CreateViewModel();
+        await reloaded.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal("de", reloaded.SelectedLanguage?.Value);
+    }
+
+    /// <summary>
     /// Verifies the end-to-end flow: add a keyword, reload it from the database and remove it again.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>

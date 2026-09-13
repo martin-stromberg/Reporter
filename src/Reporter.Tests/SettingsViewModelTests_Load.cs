@@ -245,4 +245,44 @@ public class SettingsViewModelTests_Load : IDisposable
             new[] { "system", "light", "dark" },
             _viewModel.ThemeOptions.Select(o => o.Value).ToArray());
     }
+
+    /// <summary>
+    /// Verifies that the language options expose exactly the persisted values "system",
+    /// "de" and "en" defined by <see cref="SettingsValues"/>.
+    /// </summary>
+    [Fact]
+    public void LanguageOptions_ExposePersistedValues()
+    {
+        Assert.Equal(
+            new[] { "system", "de", "en" },
+            _viewModel.LanguageOptions.Select(o => o.Value).ToArray());
+    }
+
+    /// <summary>
+    /// Verifies that an unknown persisted language value falls back to the "system" option.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_InvalidLanguage_UsesSystemFallback()
+    {
+        await TestSettingsHelper.SaveAsync(_settingsRepository, language: "fr");
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal("system", _viewModel.SelectedLanguage?.Value);
+    }
+
+    /// <summary>
+    /// Verifies that the persisted language is loaded into the view model.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_PopulatesSelectedLanguage()
+    {
+        await TestSettingsHelper.SaveAsync(_settingsRepository, language: "de");
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal("de", _viewModel.SelectedLanguage?.Value);
+    }
 }
