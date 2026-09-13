@@ -22,6 +22,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly HttpClient _httpClient;
     private readonly INotificationService _notificationService;
     private readonly INetworkStatusService _networkStatusService;
+    private readonly IKeywordFilter _keywordFilter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -32,13 +33,15 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="httpClient">The HTTP client used to retrieve feeds.</param>
     /// <param name="notificationService">The notification service invoked for newly stored items.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
+    /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
         ISyncLogRepository syncLogRepository,
         HttpClient httpClient,
         INotificationService notificationService,
-        INetworkStatusService networkStatusService)
+        INetworkStatusService networkStatusService,
+        IKeywordFilter keywordFilter)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
@@ -46,6 +49,7 @@ public class FeedSyncService : IFeedSyncService
         _httpClient = httpClient;
         _notificationService = notificationService;
         _networkStatusService = networkStatusService;
+        _keywordFilter = keywordFilter;
     }
 
     /// <inheritdoc />
@@ -141,7 +145,52 @@ public class FeedSyncService : IFeedSyncService
         var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(reader), cancellationToken).ConfigureAwait(false);
 
         var feedItems = syndicationFeed.Items.ToList();
+
+        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
+        var (newItemEntities, filteredCount) = CollectNewItems(feed, feedItems, existingItems, keywordTexts, cancellationToken);
+
+        var newItems = newItemEntities.Count;
+        if (newItems > 0)
+        {
+            await _itemRepository.AddRangeAsync(newItemEntities).ConfigureAwait(false);
+        }
+
+        var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
+        var filteredSuffix = filteredCount > 0 ? $", {filteredCount} filtered" : string.Empty;
+        var message = status == FeedHealth.Warning
+            ? $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}. Health warning triggered."
+            : $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}.";
+
+        var resolvedTitle = ResolveFeedTitle(feed, syndicationFeed);
+
+        await UpdateFeedHealthAsync(feed, status, resolvedTitle).ConfigureAwait(false);
+        await UpdateLogAsync(log, status, message).ConfigureAwait(false);
+
+        if (newItemEntities.Count > 0)
+        {
+            try
+            {
+                await _notificationService.NotifyNewItemsAsync(feed, newItemEntities, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Ein Fehler im Benachrichtigungspfad darf das Sync-Ergebnis nicht verfaelschen.
+                Debug.WriteLine($"FeedSyncService notification failed: {ex}");
+            }
+        }
+
+        return new SyncResult(status, newItems, message);
+    }
+
+    private (List<Item> NewItems, int FilteredCount) CollectNewItems(
+        Feed feed,
+        IReadOnlyList<SyndicationItem> feedItems,
+        IReadOnlyList<Item> existingItems,
+        IReadOnlyList<string> keywordTexts,
+        CancellationToken cancellationToken)
+    {
         var newItemEntities = new List<Item>();
+        var filteredCount = 0;
         var knownKeys = new HashSet<string>(
             existingItems.Select(i => i.GuidOrHash),
             StringComparer.Ordinal);
@@ -161,57 +210,42 @@ public class FeedSyncService : IFeedSyncService
                 continue;
             }
 
+            var title = feedItem.Title?.Text;
+            var contentHtml = GetContentHtml(feedItem);
+
+            if (_keywordFilter.MatchesAny(title, contentHtml, keywordTexts))
+            {
+                filteredCount++;
+                continue;
+            }
+
             newItemEntities.Add(new Item
             {
                 Id = Guid.NewGuid(),
                 FeedId = feed.Id,
-                Title = feedItem.Title?.Text ?? string.Empty,
+                Title = title ?? string.Empty,
                 Link = link,
                 PublishedAt = publishedAt,
                 GuidOrHash = guidOrHash,
                 IsRead = false,
                 IsSavedForLater = false,
-                ContentHtml = GetContentHtml(feedItem),
+                ContentHtml = contentHtml,
             });
         }
 
-        var newItems = newItemEntities.Count;
-        if (newItems > 0)
-        {
-            await _itemRepository.AddRangeAsync(newItemEntities).ConfigureAwait(false);
-        }
+        return (newItemEntities, filteredCount);
+    }
 
-        var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
-        var message = status == FeedHealth.Warning
-            ? $"Synchronized {feedItems.Count} items, {newItems} new. Health warning triggered."
-            : $"Synchronized {feedItems.Count} items, {newItems} new.";
-
+    private static string? ResolveFeedTitle(Feed feed, SyndicationFeed syndicationFeed)
+    {
         var documentTitle = syndicationFeed.Title?.Text;
         var isPlaceholderTitle = string.IsNullOrWhiteSpace(feed.Title) ||
             string.Equals(feed.Title, feed.Url, StringComparison.OrdinalIgnoreCase) ||
             IsHostPlaceholderTitle(feed) ||
             FeedTitleFallback.IsFileNamePlaceholderTitle(feed.Title, feed.Url);
-        var resolvedTitle = isPlaceholderTitle && !string.IsNullOrWhiteSpace(documentTitle)
+        return isPlaceholderTitle && !string.IsNullOrWhiteSpace(documentTitle)
             ? documentTitle
             : null;
-
-        await UpdateFeedHealthAsync(feed, status, resolvedTitle).ConfigureAwait(false);
-        await UpdateLogAsync(log, status, message).ConfigureAwait(false);
-
-        if (newItemEntities.Count > 0)
-        {
-            try
-            {
-                await _notificationService.NotifyNewItemsAsync(feed, newItemEntities, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                // Ein Fehler im Benachrichtigungspfad darf das Sync-Ergebnis nicht verfaelschen.
-                Debug.WriteLine($"FeedSyncService notification failed: {ex}");
-            }
-        }
-
-        return new SyncResult(status, newItems, message);
     }
 
     // Direct-add and search fallback titles (FeedTitleFallback) can equal the

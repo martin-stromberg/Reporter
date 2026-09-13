@@ -26,7 +26,7 @@ public class RetentionCleanupServiceTests : IDisposable
         _itemRepository = new ItemRepository(_factory);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
-        _service = new RetentionCleanupService(_settingsRepository, _itemRepository, _keywordRepository, new KeywordMatcher());
+        _service = new RetentionCleanupService(_settingsRepository, _itemRepository, new KeywordFilter(_keywordRepository, new KeywordMatcher()));
     }
 
     /// <summary>

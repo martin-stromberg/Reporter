@@ -11,7 +11,7 @@
 **Lösung:**
 1. Datenbank prüfen: `settings.notifications_enabled = 1` und `feeds.notifications_enabled = 1` für den betroffenen Feed.
 2. Ruhezeit prüfen: `settings.quiet_hours_start`/`quiet_hours_end` — liegt die lokale Uhrzeit im Intervall (Wrap-around beachten: `Start > End` bedeutet über Mitternacht), wird verworfen.
-3. Keyword-Filter prüfen: Enthält `Title` oder `ContentHtml` des Artikels ein Schlagwort aus `keywords` (Teilwort, `OrdinalIgnoreCase`), wird er nicht benachrichtigt.
+3. Keyword-Filter prüfen: Enthält `Title` oder `ContentHtml` des Artikels ein Schlagwort aus `keywords` (Teilwort, `OrdinalIgnoreCase`), wird er nicht benachrichtigt — regulär wird ein solcher Treffer bereits beim Einspeichern in `FeedSyncService` verworfen und gar nicht erst gespeichert (Ausweisung als `, N filtered` in der `SyncLog.Message`).
 4. iOS-Berechtigungsstatus prüfen: `UNAuthorizationStatus` via `GetNotificationSettingsAsync` — `Denied` unterdrückt den Versand still (`EnsureAuthorizedAsync` bricht ab). In der App sichtbar über `SettingsViewModel.NotificationPermissionDenied` (Hinweiszeile „Einstellungen öffnen"); `NotDetermined` zeigt stattdessen die neutrale Zeile „Benachrichtigungen erlauben" (`NotificationPermissionNotDetermined`).
 5. Debug-Ausgabe prüfen: `FeedSyncService notification failed: …` (Fehler im Benachrichtigungspfad), `Failed to request notification authorization: …`, `Failed to query notification authorization: …`.
 6. Plattform prüfen: Auf Nicht-iOS-Targets ist `LocalNotificationService.IsSupported == false` und `ShowAsync` ein No-Op — die Benachrichtigungs-Schalter in Einstellungen und Feed-Formular sind dort deaktiviert (`NotificationsSupported == false`), mit Hinweis „derzeit nur auf iOS verfügbar".

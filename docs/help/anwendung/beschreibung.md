@@ -20,7 +20,7 @@ Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen — je
 
 Artikelkarten zeigen neben Titel und Teasertext eine geschätzte Lesezeit sowie bei ungelesenen Artikeln einen kleinen Punkt in der Kopfzeile; gemerkte Artikel erkennst du am ausgefüllten Lesezeichen. In der Artikeldetailansicht schwebt die Aktionsleiste (Zurück, Lesezeichen, Schriftgröße, Gelesen-Markierung, Teilen, Im Browser öffnen) als abgerundete Leiste über dem Seitenrand. Die App ist für die Bedienung per Screenreader vorbereitet und folgt der Schriftgrößen-Einstellung des Geräts — siehe [Barrierefreiheit](barrierefreiheit.md).
 
-Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt — ebenso gelesene Artikel, die ein Filter-Schlagwort enthalten. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
+Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt. Neue Artikel, die ein Filter-Schlagwort enthalten, werden bereits beim Abruf verworfen und erscheinen nicht in den Listen; bereits gespeicherte Treffer werden nach dem Lesen fristbasiert entfernt. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 
 Auf iOS benachrichtigt dich die App nach einem Abgleich über neue Artikel — pro Artikel oder gesammelt pro Feed, mit optionaler Ruhezeit und Schlagwort-Filter. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 

@@ -222,7 +222,7 @@
     <value>Immer aktiv</value>
   </data>
   <data name="SettingsKeywordInfo" xml:space="preserve">
-    <value>Gefilterte Artikel werden nach Ablauf der Aufbewahrungsfrist anhand ihres Veröffentlichungsdatums gelöscht.</value>
+    <value>Gefilterte Artikel werden beim Abruf des Feeds verworfen und erscheinen nicht in den Listen.</value>
   </data>
   <data name="SettingsAutoRefreshLabel" xml:space="preserve">
     <value>Automatische Hintergrund-Aktualisierung</value>

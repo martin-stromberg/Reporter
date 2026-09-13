@@ -12,7 +12,7 @@
 - `IsRead == false` → Artikel bleibt erhalten.
 - `IsSavedForLater == true` → Artikel bleibt erhalten.
 
-**Umsetzung:** Beide Prädikate stecken in den Repository-Abfragen `ItemRepository.DeleteExpiredAsync` und `ItemRepository.GetExpiredKeywordCandidatesAsync` — sie können nicht umgangen werden.
+**Umsetzung:** Beide Prädikate stecken in den Repository-Abfragen `ItemRepository.DeleteExpiredAsync` und `ItemRepository.GetExpiredKeywordCandidatesAsync` — sie können nicht umgangen werden. Neu abgerufene Keyword-Treffer werden zusätzlich bereits beim Feed-Abruf in `FeedSyncService.RunSyncAsync` verworfen (Filter beim Einspeichern) und erreichen die Löschregeln gar nicht — die Keyword-Löschregel bereinigt nur noch Artikel, die vor Anlage des Schlagworts gespeichert wurden.
 
 ## Unterschiedliche Fristbasis der beiden Löschregeln
 
@@ -23,20 +23,20 @@
 | Allgemeine Retention | `IsRead && !IsSavedForLater && (ReadAt ?? PublishedAt) < cutoff` | Lesezeitpunkt (`ReadAt`, Fallback `PublishedAt`) |
 | Keyword-Regel | `IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff` **und** Keyword-Match | Veröffentlichungsdatum (`PublishedAt`, Fallback `ReadAt`) |
 
-**Begründung:** Nutzt die Keyword-Regel denselben Zeitstempel wie die allgemeine Regel, wäre sie eine leere Teilmenge davon. Die Filter-Semantik verlangt, dass unerwünschte Artikel nach Ablauf der Frist seit ihrer Veröffentlichung entfernt werden — unabhängig davon, wann sie zuletzt gelesen wurden.
+**Begründung:** Nutzt die Keyword-Regel denselben Zeitstempel wie die allgemeine Regel, wäre sie eine leere Teilmenge davon. Die Filter-Semantik verlangt, dass unerwünschte Artikel nach Ablauf der Frist seit ihrer Veröffentlichung entfernt werden — unabhängig davon, wann sie zuletzt gelesen wurden. Für Neuzugänge ist die Regel gegenstandslos, weil Keyword-Treffer beim Abruf gar nicht erst gespeichert werden; sie bereinigt ausschließlich bereits gespeicherte Bestandstreffer.
 
 **Umsetzung:** `RetentionCleanupService.CleanupAsync` (Orchestrierung), `ItemRepository.GetExpiredKeywordCandidatesAsync` (Kandidaten), `ItemRepository.DeleteRangeAsync` (Löschung per IDs).
 
 ## Keyword-Matching ist fest verdrahtet
 
-**Beschreibung:** Die Match-Semantik ist Teilwort + case-insensitiv und **nicht** konfigurierbar. In der UI ist das als nicht-interaktives Badge „Immer aktiv" (`SettingsKeywordMatchStatus`) neben der Zeile „Teilwort & Case-Insensitive" dargestellt.
+**Beschreibung:** Die Match-Semantik ist Teilwort + case-insensitiv und **nicht** konfigurierbar. In der UI ist das als nicht-interaktives Badge „Immer aktiv" (`SettingsKeywordMatchStatus`) neben der Zeile „Teilwort, Groß-/Kleinschreibung egal" (`SettingsKeywordMatchLabel`) dargestellt.
 
 **Bedingungen:**
 - Match-Felder: `Item.Title` **und** `Item.ContentHtml`; `Item.Link` wird bewusst nicht gematcht (URLs sind opak, Zufallstreffer-Gefahr).
 - Vergleich: `string.Contains(keyword, StringComparison.OrdinalIgnoreCase)`; leere/Whitespace-Keywords werden übersprungen.
-- Matching-Zeitpunkt: zur **Cleanup-Zeit** gegen die gespeicherten Artikelinhalte — es gibt kein persistiertes Filter-Flag am `Item`, sodass Keyword-Änderungen beim nächsten App-Start sofort wirken, ohne Artikel neu bewerten zu müssen.
+- Matching-Zeitpunkt: zweifach — beim **Feed-Abruf** in `FeedSyncService.RunSyncAsync` gegen `SyndicationItem`-Titel und -Inhalt (Treffer werden gar nicht erst gespeichert; die Anzahl verworfener Artikel wird in der `SyncLog.Message` als `, N filtered` ausgewiesen) sowie zur **Cleanup-Zeit** in `RetentionCleanupService` gegen bereits gespeicherte Artikelinhalte. Es gibt kein persistiertes Filter-Flag am `Item`, sodass Keyword-Änderungen ohne Artikel-Neubewertung wirken: Neue Treffer werden ab dem nächsten Abruf verworfen, gespeicherte Bestandstreffer beim nächsten App-Start-Cleanup fristbasiert entfernt.
 
-**Umsetzung:** `KeywordMatcher.MatchesAny`
+**Umsetzung:** `KeywordFilter.MatchesAny` (delegiert an `KeywordMatcher.MatchesAny`)
 
 ## RetentionDays-Schutzregel
 

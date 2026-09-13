@@ -22,7 +22,7 @@
 **Lösung:**
 1. App einmal vollständig schließen und neu starten.
 2. Prüfen, ob der Artikel ungelesen ist oder mit einem Lesezeichen unter **Später** gemerkt wurde.
-3. Beim Keyword-Filter zusätzlich prüfen, ob der Artikel tatsächlich gelesen wurde — gefilterte, aber ungelesene Artikel bleiben erhalten.
+3. Beim Keyword-Filter zusätzlich beachten: Neu abgerufene Treffer werden bereits beim Abruf verworfen und gar nicht erst gespeichert — sie können daher nicht gelöscht werden. Nur bereits gespeicherte Treffer entfernt das Aufräumen, und auch diese nur, wenn sie gelesen wurden.
 
 ## Artikel wird nicht automatisch als gelesen markiert
 

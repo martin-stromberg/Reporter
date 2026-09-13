@@ -13,7 +13,7 @@ Alle Einstellungen findest du auf dem Tab **Einstellungen**. Jede Änderung wird
 | Einstellung | Bedeutung |
 |-------------|-----------|
 | **Gelesene Artikel aufbewahren** | Schieberegler von 1 bis 365 Tagen (Voreinstellung 30 Tage). Bestimmt, wie lange gelesene Artikel erhalten bleiben, bevor sie beim App-Start gelöscht werden. |
-| **Schlagwort eingeben…** / **+ Hinzufügen** | Legt ein Schlagwort für den Keyword-Filter an. Gelesene Artikel mit diesem Schlagwort in Titel oder Inhalt werden nach Ablauf der Aufbewahrungsfrist gelöscht. |
+| **Schlagwort eingeben…** / **+ Hinzufügen** | Legt ein Schlagwort für den Keyword-Filter an. Neue Artikel mit diesem Schlagwort in Titel oder Inhalt werden beim Feed-Abruf verworfen und erscheinen nicht in den Listen. Bereits gespeicherte Treffer bleiben sichtbar, bis sie gelesen wurden und die Aufbewahrungsfrist abgelaufen ist. |
 | **Teilwort, Groß-/Kleinschreibung egal** | Mit dem Badge **Immer aktiv** gekennzeichnet: Der Filter findet das Schlagwort auch als Wortbestandteil und unabhängig von Groß-/Kleinschreibung. Nicht abschaltbar. |
 | **Automatische Hintergrund-Aktualisierung** | Ein/Aus (Voreinstellung ein). Lädt alle Feeds periodisch nach, solange die App geöffnet ist. |
 | **Abruf-Intervall** | *Alle 15 Minuten*, *Alle 30 Minuten* (Voreinstellung), *Stündlich* oder *Alle 4 Stunden*. Nur aktiv, wenn die automatische Aktualisierung eingeschaltet ist. |
