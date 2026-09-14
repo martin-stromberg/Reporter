@@ -8,6 +8,6 @@
 		     Vor Release durch die reale Entwickler-Adresse ersetzen.
 		     Forks muessen diesen Wert an ihre eigene Support-Adresse anpassen,
 		     sonst gehen Debugberichte ihrer Anwender an den Upstream-Maintainer. -->
-		<DebugReportRecipient>debug@example.com</DebugReportRecipient>
+		<DebugReportRecipient>mstromberg84+reporter@gmail.com</DebugReportRecipient>
 	</PropertyGroup>
 </Project>
