@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
@@ -22,7 +24,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto">
                                 <Label Text="{x:Static strings:AppResources.SettingsRetentionLabel}"
@@ -60,7 +62,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8">
@@ -143,7 +145,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8">
@@ -185,6 +187,34 @@
                                             HorizontalTextAlignment="End"/>
                                 </Grid>
                             </Border>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsRefreshOnStartupLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsRefreshOnStartupHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding RefreshOnStartupEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsRefreshOnStartupLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <Label Text="{x:Static strings:AppResources.SettingsSortOrderLabel}"
+                                       VerticalOptions="Center"/>
+                                <Picker Grid.Column="1"
+                                        ItemsSource="{Binding SortOrderOptions}"
+                                        SelectedItem="{Binding SelectedSortOrder}"
+                                        ItemDisplayBinding="{Binding Label}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsSortOrderLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        HorizontalTextAlignment="End"/>
+                            </Grid>
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8">
                                 <VerticalStackLayout VerticalOptions="Center"
@@ -235,7 +265,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto"
                                   ColumnSpacing="8"
@@ -427,7 +457,7 @@
                            Style="{StaticResource UiLabelStyle}"/>
                     <Border Padding="16"
                             StrokeShape="RoundRectangle 12"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}">
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                         <Grid ColumnDefinitions="*,Auto"
                               ColumnSpacing="8">
                             <Label Text="{x:Static strings:AppResources.SettingsThemeLabel}"
@@ -441,6 +471,40 @@
                                     MinimumHeightRequest="44"
                                     HorizontalTextAlignment="End"/>
                         </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Sprache -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionLanguage}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <Label Text="{x:Static strings:AppResources.SettingsLanguageLabel}"
+                                       VerticalOptions="Center"/>
+                                <Picker Grid.Column="1"
+                                        ItemsSource="{Binding LanguageOptions}"
+                                        SelectedItem="{Binding SelectedLanguage}"
+                                        ItemDisplayBinding="{Binding Label}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsLanguageLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        HorizontalTextAlignment="End"/>
+                            </Grid>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="{Binding LanguageRestartHintVisible}"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Label Text="{x:Static strings:AppResources.SettingsLanguageRestartHint}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                        </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>
 

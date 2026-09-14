@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Benachrichtigungen — Technischer Ablauf
@@ -10,14 +12,14 @@ Nach jedem erfolgreichen Feed-Sync ruft `FeedSyncService` den `NotificationServi
 
 ### 1. Benachrichtigungsprüfung nach Feed-Sync
 
-`FeedSyncService.RunSyncAsync` sammelt die neu eingefügten `Item`s in `newItemEntities` (Dublettenerkennung über `IItemRepository.GetByGuidOrHashAsync`, Unique-Index `(feed_id, guid_or_hash)`). Nach `UpdateFeedHealthAsync` und `UpdateLogAsync` wird bei nicht-leerer Liste `INotificationService.NotifyNewItemsAsync(feed, newItemEntities, cancellationToken)` in einem eigenen `try/catch` (alle Exceptions außer `OperationCanceledException` → `Debug.WriteLine`) aufgerufen — ein Fehler im Benachrichtigungspfad verändert `SyncResult` und Feed-Health nicht. Da `SyncFeedAsync` von allen Sync-Pfaden durchlaufen wird (manuell via `FeedsViewModel.RefreshAsync`/`RefreshAllAsync`, gesamt via `SyncAllAsync`, periodisch via `AutoRefreshService`), ist ein einziger Aufrufpunkt ausreichend.
+`FeedSyncService.RunSyncAsync` sammelt die neu eingefügten `Item`s in `newItemEntities` (In-Memory-Dublettenerkennung über ein `HashSet<string>` auf `GuidOrHash` aus den bereits geladenen Feed-Items, Batch-Insert via `IItemRepository.AddRangeAsync`; Unique-Index `(feed_id, guid_or_hash)` bleibt als DB-Schutz). Nach `UpdateFeedHealthAsync` und `UpdateLogAsync` wird bei nicht-leerer Liste `INotificationService.NotifyNewItemsAsync(feed, newItemEntities, cancellationToken)` in einem eigenen `try/catch` (alle Exceptions außer `OperationCanceledException` → `Debug.WriteLine`) aufgerufen — ein Fehler im Benachrichtigungspfad verändert `SyncResult` und Feed-Health nicht. Da `SyncFeedAsync` von allen Sync-Pfaden durchlaufen wird (manuell via `FeedsViewModel.RefreshAsync`/`RefreshAllAsync`, gesamt via `SyncAllAsync`, periodisch via `AutoRefreshService`), ist ein einziger Aufrufpunkt ausreichend.
 
 `NotificationService.NotifyNewItemsAsync` wertet in dieser Reihenfolge aus:
 
 1. `!feed.NotificationsEnabled || newItems.Count == 0` → Abbruch.
 2. `ISettingsRepository.GetAsync` → `!settings.NotificationsEnabled` → Abbruch.
 3. `IsQuietHoursActive(settings)` → aktive Ruhezeit verwirft alle Kandidaten (kein Nachholen).
-4. `IKeywordRepository.GetAllAsync` → `keywordTexts`; pro Item `IKeywordMatcher.MatchesAny(item.Title, item.ContentHtml, keywordTexts)` → Treffer werden entfernt. Leere Restliste → Abbruch.
+4. `IKeywordFilter.GetKeywordTextsAsync` → `keywordTexts`; pro Item `IKeywordFilter.MatchesAny(item.Title, item.ContentHtml, keywordTexts)` → Treffer werden entfernt. Leere Restliste → Abbruch. (Tiefenverteidigung: Keyword-Treffer werden bereits beim Einspeichern in `FeedSyncService.RunSyncAsync` verworfen und erreichen diesen Schritt regulär nicht.)
 5. Modus-Verzweigung anhand `settings.NotificationSummaryEnabled`:
    - `false` (Einzelmodus): pro Item `ILocalNotificationService.ShowAsync(feed.Title, item.Title, item.Id.ToString(), userInfo, ct)` mit `userInfo = { itemId, link? }`.
    - `true` (Sammelmodus): genau ein `ShowAsync(feed.Title, body, identifier, { feedId }, ct)`; `body` = `string.Format(AppResources.NotificationSummaryFormat, count, titles)` (de: „{0} neue Artikel: {1}"), `titles` = kommagetrennte Artikeltitel, auf `MaxSummaryTitlesLength` = 160 Zeichen mit „…" gekürzt; `identifier` = `{feedId}-{SHA256-Hex(sortierte Item-Ids)}` (`BuildSummaryIdentifier`).
@@ -25,7 +27,7 @@ Nach jedem erfolgreichen Feed-Sync ruft `FeedSyncService` den `NotificationServi
 Beteiligte Komponenten:
 - `FeedSyncService.RunSyncAsync` / `SyncFeedAsync` / `SyncAllAsync` — Erweiterungspunkt und Fehlerisolierung
 - `NotificationService.NotifyNewItemsAsync` / `IsQuietHoursActive` / `BuildSummaryIdentifier` / `BuildItemUserInfo` / `Truncate` — Entscheidungslogik
-- `ISettingsRepository`, `IKeywordRepository`, `IKeywordMatcher` — Regel-Eingaben
+- `ISettingsRepository`, `IKeywordFilter` — Regel-Eingaben
 - `TimeProvider` — injizierbar (Standard `TimeProvider.System`), steuert die Ruhezeit-Auswertung (`GetLocalNow().TimeOfDay`, lokale Gerätezeit)
 - `ILocalNotificationService.ShowAsync` — Plattformanzeige
 

@@ -1,3 +1,5 @@
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 name: Release
 
 on:
@@ -227,6 +229,12 @@ jobs:
           RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
         run: npm run release
 
+      - name: Set release notes from docs/RELEASE_NOTES.md
+        if: needs.resolve.outputs.release_action == 'create' && needs.resolve.outputs.release_kind == 'automatic'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${{ needs.resolve.outputs.tag }}" --notes-file docs/RELEASE_NOTES.md
+
       - name: Create manual-tag GitHub release
         if: needs.resolve.outputs.release_action == 'create' && needs.resolve.outputs.release_kind == 'manual'
         env:
@@ -236,7 +244,7 @@ jobs:
           tag="${{ needs.resolve.outputs.tag }}"
           gh release create "$tag" $RELEASE_ASSET_FILES update.json \
             --title "$tag" \
-            --generate-notes
+            --notes-file docs/RELEASE_NOTES.md
 
       - name: Upload assets to existing GitHub release
         if: needs.resolve.outputs.release_action == 'upload-existing'

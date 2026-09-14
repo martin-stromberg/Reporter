@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -15,42 +17,70 @@
     <Style x:Key="DisplayStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="NewsreaderRegular" />
         <Setter Property="FontSize" Value="40" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
     </Style>
 
     <Style x:Key="HeadlineStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="NewsreaderSemiBold" />
         <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
     </Style>
 
     <Style x:Key="HeadlineSmallStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="NewsreaderSemiBold" />
         <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
     </Style>
 
     <Style x:Key="BodyStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="NewsreaderRegular" />
         <Setter Property="FontSize" Value="19" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
     </Style>
 
     <Style x:Key="BodySmallStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="InterRegular" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnSurface}, Dark={StaticResource DarkOnSurface}}" />
     </Style>
 
     <Style x:Key="MetaStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="InterRegular" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
     </Style>
 
     <Style x:Key="UiLabelStyle" TargetType="Label">
         <Setter Property="FontFamily" Value="InterSemiBold" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+    </Style>
+
+    <Style x:Key="LabelMdStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="InterMedium" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+    </Style>
+
+    <Style x:Key="LabelSmStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+    </Style>
+
+    <Style x:Key="LabelMetaStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
     </Style>
 
@@ -210,7 +240,7 @@
 
     <!-- Border -->
     <Style TargetType="Border">
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}" />
         <Setter Property="StrokeShape" Value="Rectangle" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}" />

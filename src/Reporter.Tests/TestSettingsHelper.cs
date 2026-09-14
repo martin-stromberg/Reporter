@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 
@@ -18,13 +20,19 @@ public static class TestSettingsHelper
     /// <param name="notificationSummaryEnabled">The summary-mode switch override, or <see langword="null"/> to keep the persisted value.</param>
     /// <param name="quietHoursStart">The quiet-hours start override, or <see langword="null"/> to keep the persisted value.</param>
     /// <param name="quietHoursEnd">The quiet-hours end override, or <see langword="null"/> to keep the persisted value.</param>
+    /// <param name="language">The language selection override, or <see langword="null"/> to keep the persisted value.</param>
+    /// <param name="refreshOnStartupEnabled">The startup-refresh switch override, or <see langword="null"/> to keep the persisted value.</param>
+    /// <param name="unreadSortOrder">The unread sort order override, or <see langword="null"/> to keep the persisted value.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public static async Task SaveAsync(
         ISettingsRepository repository,
         bool? notificationsEnabled = null,
         bool? notificationSummaryEnabled = null,
         TimeSpan? quietHoursStart = null,
-        TimeSpan? quietHoursEnd = null)
+        TimeSpan? quietHoursEnd = null,
+        string? language = null,
+        bool? refreshOnStartupEnabled = null,
+        string? unreadSortOrder = null)
     {
         var settings = await repository.GetAsync();
         await repository.SaveAsync(new Settings
@@ -39,7 +47,10 @@ public static class TestSettingsHelper
             QuietHoursEnd = quietHoursEnd ?? settings.QuietHoursEnd,
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = refreshOnStartupEnabled ?? settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = unreadSortOrder ?? settings.UnreadSortOrder,
             Theme = settings.Theme,
+            Language = language ?? settings.Language,
         });
     }
 }

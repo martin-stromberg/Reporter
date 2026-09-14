@@ -1,7 +1,10 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Services;
 using Reporter.Data;
 using Reporter.Data.Repositories;
 
@@ -22,13 +25,7 @@ public class ServiceCollectionTests
         var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
 
-        services.AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite(connection))
-            .AddSingleton<IFeedRepository, FeedRepository>()
-            .AddSingleton<ICategoryRepository, CategoryRepository>()
-            .AddSingleton<IItemRepository, ItemRepository>()
-            .AddSingleton<IKeywordRepository, KeywordRepository>()
-            .AddSingleton<ISettingsRepository, SettingsRepository>()
-            .AddSingleton<ISyncLogRepository, SyncLogRepository>();
+        AddTestRepositories(services, connection);
 
         var provider = services.BuildServiceProvider();
 
@@ -40,5 +37,62 @@ public class ServiceCollectionTests
         Assert.NotNull(provider.GetRequiredService<ISyncLogRepository>());
 
         connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the feed search service can be resolved when an <see cref="HttpClient"/>
+    /// is registered, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesFeedSearchService()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            .AddSingleton<IFeedSearchService, FeedSearchService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IFeedSearchService>());
+    }
+
+    /// <summary>
+    /// Verifies that the feed sync service can be resolved with its full constructor
+    /// dependency set, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesFeedSyncService()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            .AddSingleton<IFeedSyncService, FeedSyncService>()
+            .AddSingleton<IFeedIconService, FeedIconService>()
+            .AddSingleton<IKeywordMatcher, KeywordMatcher>()
+            .AddSingleton<IKeywordFilter, KeywordFilter>()
+            .AddSingleton<INotificationService, NotificationService>()
+            .AddSingleton<ILocalNotificationService, FakeLocalNotificationService>()
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IFeedSyncService>());
+        Assert.NotNull(provider.GetRequiredService<IFeedIconService>());
+
+        connection.Dispose();
+    }
+
+    private static void AddTestRepositories(ServiceCollection services, SqliteConnection connection)
+    {
+        services.AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite(connection))
+            .AddSingleton<IFeedRepository, FeedRepository>()
+            .AddSingleton<ICategoryRepository, CategoryRepository>()
+            .AddSingleton<IItemRepository, ItemRepository>()
+            .AddSingleton<IKeywordRepository, KeywordRepository>()
+            .AddSingleton<ISettingsRepository, SettingsRepository>()
+            .AddSingleton<ISyncLogRepository, SyncLogRepository>();
     }
 }

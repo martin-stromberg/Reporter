@@ -1,4 +1,6 @@
-﻿<maui:MauiWinUIApplication
+﻿<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<maui:MauiWinUIApplication
     x:Class="Reporter.WinUI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Einstellungen — Einrichtung
@@ -11,16 +13,19 @@ Alle Einstellungen findest du auf dem Tab **Einstellungen**. Jede Änderung wird
 | Einstellung | Bedeutung |
 |-------------|-----------|
 | **Gelesene Artikel aufbewahren** | Schieberegler von 1 bis 365 Tagen (Voreinstellung 30 Tage). Bestimmt, wie lange gelesene Artikel erhalten bleiben, bevor sie beim App-Start gelöscht werden. |
-| **Schlagwort eingeben…** / **+ Hinzufügen** | Legt ein Schlagwort für den Keyword-Filter an. Gelesene Artikel mit diesem Schlagwort in Titel oder Inhalt werden nach Ablauf der Aufbewahrungsfrist gelöscht. |
+| **Schlagwort eingeben…** / **+ Hinzufügen** | Legt ein Schlagwort für den Keyword-Filter an. Neue Artikel mit diesem Schlagwort in Titel oder Inhalt werden beim Feed-Abruf verworfen und erscheinen nicht in den Listen. Bereits gespeicherte Treffer bleiben sichtbar, bis sie gelesen wurden und die Aufbewahrungsfrist abgelaufen ist. |
 | **Teilwort, Groß-/Kleinschreibung egal** | Mit dem Badge **Immer aktiv** gekennzeichnet: Der Filter findet das Schlagwort auch als Wortbestandteil und unabhängig von Groß-/Kleinschreibung. Nicht abschaltbar. |
 | **Automatische Hintergrund-Aktualisierung** | Ein/Aus (Voreinstellung ein). Lädt alle Feeds periodisch nach, solange die App geöffnet ist. |
 | **Abruf-Intervall** | *Alle 15 Minuten*, *Alle 30 Minuten* (Voreinstellung), *Stündlich* oder *Alle 4 Stunden*. Nur aktiv, wenn die automatische Aktualisierung eingeschaltet ist. |
+| **Beim Programmstart abrufen** | Ein/Aus (Voreinstellung ein). Löst beim Öffnen der App einmalig einen Abruf aller Feeds im Hintergrund aus — unabhängig vom Abruf-Intervall; ohne Internetverbindung wird er übersprungen. |
+| **Sortierung der ungelesenen Artikel** | *Neueste zuerst* (Voreinstellung) oder *Älteste zuerst*. Legt die Reihenfolge der Liste **Ungelesen** fest; die Liste **Später** bleibt immer nach neuestem Datum sortiert. |
 | **Automatisch als gelesen markieren** | Ein/Aus (Voreinstellung ein). Markiert geöffnete Artikel automatisch als gelesen. |
 | **Verzögerung bis Markierung** | *Sofort*, *1 Sekunde*, *3 Sekunden* oder *5 Sekunden* (Voreinstellung). Nur aktiv, wenn die automatische Markierung eingeschaltet ist. |
 | **Benachrichtigungen** | Ein/Aus (Voreinstellung ein). Grundschalter für Benachrichtigungen. Beim ersten Einschalten fragt iOS die Berechtigung ab; wurde sie verweigert, erscheint eine Hinweiszeile mit der Schaltfläche **Einstellungen öffnen** zu den iOS-Einstellungen der App. Nur auf iOS bedienbar — auf anderen Plattformen ist der Schalter deaktiviert, mit Hinweis auf die iOS-Verfügbarkeit. |
 | **Sammel-Benachrichtigung** | Ein/Aus (Voreinstellung aus). Aus = eine Benachrichtigung pro neuem Artikel; Ein = eine gemeinsame Benachrichtigung pro Feed und Abgleich. Nur bei eingeschaltetem Hauptschalter bedienbar. |
 | **Ruhezeit (Nicht stören)** | Ein/Aus-Schalter für einen Zeitraum ohne Benachrichtigungen. Schaltet die Uhrzeitfelder **VON** und **BIS** frei; beim ersten Einschalten sind 22:00 bis 07:00 Uhr voreingestellt. Bereiche über Mitternacht (z. B. 22:00–07:00 Uhr) sind zulässig. In der Ruhezeit anfallende Benachrichtigungen werden verworfen, nicht nachgeholt. Beim Ausschalten gilt keine Ruhezeit mehr; die eingestellten Zeiten bleiben sichtbar und werden beim Wiedereinschalten derselben Sitzung wieder verwendet. |
 | **Farbschema** | *System* (Voreinstellung), *Hell* oder *Dunkel*. Wirkt sofort auf die gesamte App. |
+| **Sprache** | *System* (Voreinstellung), *Deutsch* oder *Englisch*. Bei *System* folgt die App der Gerätesprache (Englisch als Ersatzsprache). Wird sofort gespeichert, wirkt aber erst nach einem Neustart der App — der Hinweis darauf erscheint unter dem Auswahlfeld, sobald die Auswahl geändert wird, und verschwindet bei Rückwahl der bisherigen Sprache. |
 
 ## Vorgehen
 
@@ -49,9 +54,10 @@ Bei ungültiger Eingabe erscheint eine rote Fehlermeldung unter dem Feld:
 
 ## Hinweise
 
-- Alle Einstellungen gelten anwendungsweit, nicht pro Feed — mit einer Ausnahme: Benachrichtigungen lassen sich zusätzlich pro Feed im Feed-Formular auf der Seite **Feeds** steuern (Schalter **Benachrichtigungen**).
+- Alle Einstellungen gelten anwendungsweit, nicht pro Feed — mit einer Ausnahme: Benachrichtigungen lassen sich zusätzlich pro Feed auf der Seite **Feeds** steuern (Feed antippen → **Bearbeiten** → Schalter **Benachrichtigungen**).
 - Benachrichtigungen benötigen auf iOS eine System-Berechtigung; sie wird beim ersten Einschalten des Hauptschalters angefragt (nicht beim App-Start). Bei Verweigerung weist eine Hinweiszeile mit **Einstellungen öffnen** darauf hin; wurde die Berechtigung noch nie angefragt, bietet eine neutrale Zeile **Benachrichtigungen erlauben** den direkten Weg zum System-Dialog.
-- Die automatische Hintergrund-Aktualisierung läuft nur bei geöffneter App.
+- Die automatische Hintergrund-Aktualisierung läuft nur bei geöffneter App; der Start-Abruf über **Beim Programmstart abrufen** läuft einmalig beim Öffnen und verzögert den Start nicht.
 - Ungelesene und für später gemerkte Artikel sind von jeder automatischen Löschung ausgenommen.
 - Optionen unter einem ausgeschalteten Schalter (Abruf-Intervall, Verzögerung, Ruhezeit) sind abgedunkelt und nicht bedienbar.
 - Der **×**-Schalter zum Entfernen eines Schlagworts trägt eine Screenreader-Beschriftung („Schlagwort … entfernen").
+- Die **Sprache** wirkt erst nach einem Neustart der App: App vollständig schließen und wieder öffnen, damit alle Texte in der gewählten Sprache erscheinen.

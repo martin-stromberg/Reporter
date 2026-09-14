@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Anwendung — Datenmodell
@@ -23,6 +25,7 @@
 | `HealthStatus` | `string?` | Aktueller Gesundheitsstatus. |
 | `HealthLastChange` | `DateTime?` | Zeitpunkt der letzten Statusänderung. |
 | `NotificationsEnabled` | `bool` | Pro-Feed-Schalter für Benachrichtigungen (Standard `true`). |
+| `FaviconUrl` | `string?` | URL des Favicons der Feed-Website (optional). |
 
 ### `Item`
 
@@ -60,7 +63,10 @@
 | `AutoRefreshEnabled` | `bool` | Gibt an, ob die automatische Hintergrund-Aktualisierung aktiv ist (Standard `true`). |
 | `RefreshIntervalMinutes` | `int` | Abruf-Intervall in Minuten (Standard `30`; UI-Auswahl 15/30/60/240). |
 | `Theme` | `string?` | Erscheinungsbild (`"system"`/`"light"`/`"dark"`, Standard `"system"`). |
+| `Language` | `string?` | Sprachauswahl (`"system"`/`"de"`/`"en"`, Standard `"system"`). |
 | `NotificationSummaryEnabled` | `bool` | Benachrichtigungsmodus: `false` = eine Benachrichtigung pro Artikel (Standard), `true` = Sammel-Benachrichtigung pro Feed. |
+| `RefreshOnStartupEnabled` | `bool` | Gibt an, ob die Feeds beim Start der App einmalig abgerufen werden (Standard `true`). |
+| `UnreadSortOrder` | `string?` | Sortierrichtung der Ungelesen-Liste (`"desc"` = neueste zuerst, Standard; `"asc"` = älteste zuerst). |
 
 ### `SyncLog`
 
@@ -88,7 +94,8 @@ Die App verwendet eine saubere Schichtung:
 - `Reporter.Data.Repositories` implementiert die Schnittstellen mit Entity Framework Core und SQLite.
 - `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>`, um pro Operation einen neuen `DbContext` zu erzeugen.
 - `Settings` wird als Singleton verwaltet; es existiert immer genau ein Datensatz.
-- `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie, gespeicherte Artikel und `GetByGuidOrHashAsync` für die Dublettenerkennung pro Feed.
+- `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie und gespeicherte Artikel (paged); die Dublettenerkennung pro Feed läuft im Sync über ein In-Memory-`HashSet` auf `GuidOrHash` mit Batch-Insert via `AddRangeAsync`.
 - `IItemRepository.DeleteExpiredAsync` entfernt abgelaufene Artikel für die automatische Aufbewahrungsfrist (`IsRead && !IsSavedForLater && (ReadAt ?? PublishedAt) < cutoff`); `GetExpiredKeywordCandidatesAsync` liefert die Kandidaten der Keyword-Löschregel (`IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff`), `DeleteRangeAsync` löscht Treffer per IDs; Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).
-- Die `settings`-Spalten `auto_refresh_enabled`, `refresh_interval_minutes` und `theme` wurden per Migration `AddSettingsAutoRefreshAndTheme` ergänzt.
+- Die `settings`-Spalten `auto_refresh_enabled`, `refresh_interval_minutes` und `theme` wurden per Migration `AddSettingsAutoRefreshAndTheme` ergänzt; die Spalte `language` (Standard `"system"`, inkl. `UpdateData` des Singletons) per Migration `AddSettingsLanguage`.
 - Für die lokalen Benachrichtigungen wurden per Migration `AddFeedNotificationsEnabled` die Spalte `feeds.notifications_enabled` (Default `true`) und per `AddSettingsNotificationSummary` die Spalte `settings.notification_summary_enabled` (Default `false`, inkl. `UpdateData` des Singletons) ergänzt — Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
+- Für die Feed-Symbole wurde per Migration `AddFeedFaviconUrl` die Spalte `feeds.favicon_url` ergänzt; für Start-Abruf und Ungelesen-Sortierung per `AddSettingsStartupRefreshAndSortOrder` die Spalten `settings.refresh_on_startup_enabled` (Default `true`, inkl. `UpdateData` des Singletons) und `settings.unread_sort_order` (Default `"desc"`, inkl. `UpdateData` des Singletons).

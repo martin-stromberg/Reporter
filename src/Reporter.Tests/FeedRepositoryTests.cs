@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Reporter.Core.Models;
 using Reporter.Data.Repositories;
 
@@ -135,6 +137,54 @@ public class FeedRepositoryTests : IDisposable
 
         Assert.False(result.Single(f => f.Title == "A").NotificationsEnabled);
         Assert.True(result.Single(f => f.Title == "B").NotificationsEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that UpdateAsync persists the favicon URL.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_PersistsFaviconUrl()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://old.com", Title = "Old", NotificationsEnabled = true };
+        await _repository.AddAsync(feed);
+
+        await _repository.UpdateAsync(new Feed
+        {
+            Id = feed.Id,
+            Url = "https://old.com",
+            Title = "Old",
+            NotificationsEnabled = true,
+            FaviconUrl = "https://old.com/favicon.ico",
+        });
+        var result = await _repository.GetByIdAsync(feed.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal("https://old.com/favicon.ico", result.FaviconUrl);
+    }
+
+    /// <summary>
+    /// Verifies that GetAllWithDetailsAsync projects the favicon URL onto the feed list item.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetAllWithDetailsAsync_ProjectsFaviconUrl()
+    {
+        await _repository.AddAsync(new Feed
+        {
+            Id = Guid.NewGuid(),
+            Url = "https://a.com",
+            Title = "A",
+            NotificationsEnabled = true,
+            FaviconUrl = "https://a.com/icon.png",
+        });
+        await _repository.AddAsync(new Feed { Id = Guid.NewGuid(), Url = "https://b.com", Title = "B", NotificationsEnabled = true });
+
+        var result = await _repository.GetAllWithDetailsAsync();
+
+        Assert.Equal("https://a.com/icon.png", result.Single(f => f.Title == "A").FaviconUrl);
+        Assert.Null(result.Single(f => f.Title == "B").FaviconUrl);
+        Assert.Equal("A", result.Single(f => f.Title == "A").FeedInitial);
     }
 
     /// <summary>

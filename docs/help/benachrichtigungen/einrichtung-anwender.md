@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Benachrichtigungen — Einrichtung
@@ -14,7 +16,7 @@ Die Benachrichtigungen werden über drei Schalter gesteuert: einen globalen Scha
 | **Sammel-Benachrichtigung** | Einstellungen, Karte **Benachrichtigungen & Ruhezeiten** | Ein/Aus (Voreinstellung aus). Aus = eine Benachrichtigung pro neuem Artikel; Ein = eine gemeinsame Benachrichtigung pro Feed und Abgleich. Nur bei eingeschaltetem Hauptschalter bedienbar. |
 | **Ruhezeit (Nicht stören)** mit **VON**/**BIS** | Einstellungen, Karte **Benachrichtigungen & Ruhezeiten** | Zeitraum ohne Benachrichtigungen; Bereiche über Mitternacht sind erlaubt. In der Ruhezeit anfallende Benachrichtigungen werden verworfen. |
 | **Benachrichtigungen** | Seite **Feeds**, Formular des Feeds (Anlegen und Bearbeiten) | Ein/Aus (Voreinstellung ein). Schaltet Benachrichtigungen nur für diesen Feed. Wirkt nur, wenn der globale Schalter ebenfalls eingeschaltet ist. Nur auf iOS bedienbar — sonst deaktiviert, mit Hinweis. |
-| **Schlagwort-Filter** | Einstellungen, Karte **Schlagwort-Filter** | Artikel, deren Titel oder Inhalt ein Schlagwort enthält, lösen keine Benachrichtigung aus. |
+| **Schlagwort-Filter** | Einstellungen, Karte **Schlagwort-Filter** | Neue Artikel, deren Titel oder Inhalt ein Schlagwort enthält, werden bereits beim Abruf verworfen — sie erscheinen nicht in den Listen und lösen keine Benachrichtigung aus. |
 | System-Berechtigung | iOS-Einstellungen des Geräts | Wird beim ersten Einschalten des Hauptschalters angefragt. War noch nie eine Anfrage erfolgt, erscheint eine neutrale Hinweiszeile mit **Benachrichtigungen erlauben** (öffnet den System-Dialog); bei Verweigerung eine Hinweiszeile mit **Einstellungen öffnen**. |
 
 ## Vorgehen

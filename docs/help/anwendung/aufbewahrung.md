@@ -1,8 +1,10 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Anwendung — Aufbewahrung und automatisches Aufräumen
 
-Beim App-Start entfernt Reporter gelesene Artikel, deren Aufbewahrungsfrist abgelaufen ist — zusätzlich gelesene Artikel, die ein konfiguriertes Filter-Schlagwort enthalten und deren Veröffentlichungsdatum die Frist überschreitet. Ungelesene und für später gemerkte Artikel sind von dieser automatischen Löschung strukturell ausgenommen.
+Beim App-Start entfernt Reporter gelesene Artikel, deren Aufbewahrungsfrist abgelaufen ist — zusätzlich bereits gespeicherte gelesene Artikel, die ein konfiguriertes Filter-Schlagwort enthalten und deren Veröffentlichungsdatum die Frist überschreitet. Neu abgerufene Artikel mit Schlagwort-Treffer werden dagegen bereits beim Feed-Abruf verworfen und gar nicht erst gespeichert — sie erscheinen in keiner Liste; die Anzahl verworfener Treffer steht im Sync-Verlauf (`, N filtered` in der `SyncLog.Message`). Ungelesene und für später gemerkte Artikel sind von dieser automatischen Löschung strukturell ausgenommen.
 
 ## Technischer Ablauf
 
@@ -29,11 +31,13 @@ Beteiligte Komponenten:
 
 ### 4. Keyword-gefilterte Artikel löschen
 
+Neu abgerufene Artikel mit Keyword-Treffer erreichen diesen Pfad nicht: `FeedSyncService.RunSyncAsync` matcht jedes neue `SyndicationItem` beim Abruf gegen die Keyword-Liste (`IKeywordFilter.MatchesAny` auf Titel und Inhalt) und verwirft Treffer, bevor sie gespeichert werden; die Anzahl wird als `, N filtered` in der `SyncLog.Message` ausgewiesen. Die folgende Löschregel bereinigt daher nur noch Treffer, die vor Anlage des Schlagworts gespeichert wurden.
+
 Anschließend läuft die Keyword-Löschregel:
 
-1. `IKeywordRepository.GetAllAsync` liefert die Filterliste; bei leerer Liste endet der Cleanup mit der bisherigen Löschzahl.
+1. `IKeywordFilter.GetKeywordTextsAsync` liefert die Filterliste; bei leerer Liste endet der Cleanup mit der bisherigen Löschzahl.
 2. `IItemRepository.GetExpiredKeywordCandidatesAsync(cutoff)` lädt Kandidaten: `IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff` — Fristbasis ist hier das Veröffentlichungsdatum (`PublishedAt`, Fallback `ReadAt`).
-3. `IKeywordMatcher.MatchesAny(item.Title, item.ContentHtml, keywordTexts)` filtert Treffer im Speicher: Teilwort-Vergleich per `Contains` mit `StringComparison.OrdinalIgnoreCase` auf Titel und HTML-Inhalt; `Link` wird nicht gematcht.
+3. `IKeywordFilter.MatchesAny(item.Title, item.ContentHtml, keywordTexts)` filtert Treffer im Speicher: Teilwort-Vergleich per `Contains` mit `StringComparison.OrdinalIgnoreCase` auf Titel und HTML-Inhalt; `Link` wird nicht gematcht.
 4. `IItemRepository.DeleteRangeAsync(matchedIds)` löscht die Treffer per `ExecuteDeleteAsync` auf IDs; der Gesamtrückgabewert ist die Summe beider Löschungen.
 
 ```mermaid
@@ -47,7 +51,7 @@ flowchart TD
     G --> K{Keywords vorhanden?}
     K -- Nein --> H[Anzahl gelöschter Artikel]
     K -- Ja --> L[GetExpiredKeywordCandidatesAsync:<br/>PublishedAt ?? ReadAt älter als Stichtag]
-    L --> M[KeywordMatcher: Teilwort-Match<br/>auf Titel + Inhalt]
+    L --> M[KeywordFilter.MatchesAny: Teilwort-Match<br/>auf Titel + Inhalt]
     M --> N[DeleteRangeAsync auf Treffer-IDs]
     N --> H
     E --> H
@@ -79,8 +83,8 @@ flowchart TD
 ### Keyword-Matching
 
 - Match-Felder: `Item.Title` und `Item.ContentHtml`; `Item.Link` wird bewusst nicht gematcht (opake URLs, Zufallstreffer).
-- Semantik: Teilwort + `OrdinalIgnoreCase` — fest verdrahtet, nicht konfigurierbar (in der UI als nicht-interaktives Badge „Immer aktiv" neben „Teilwort & Case-Insensitive" dargestellt).
-- Zeitpunkt: Matching zur Cleanup-Zeit gegen die gespeicherten Inhalte — kein Filter-Flag am `Item`, Keyword-Änderungen wirken beim nächsten App-Start sofort.
+- Semantik: Teilwort + `OrdinalIgnoreCase` — fest verdrahtet, nicht konfigurierbar (in der UI als nicht-interaktives Badge „Immer aktiv" neben „Teilwort, Groß-/Kleinschreibung egal" dargestellt).
+- Zeitpunkt: zweifach — beim Feed-Abruf in `FeedSyncService` gegen die abgerufenen Inhalte (Treffer werden gar nicht erst gespeichert) und zur Cleanup-Zeit gegen die gespeicherten Inhalte. Es gibt kein Filter-Flag am `Item`; Keyword-Änderungen wirken beim nächsten Abruf bzw. App-Start sofort.
 
 ### Ausnahmen von der Invariante
 

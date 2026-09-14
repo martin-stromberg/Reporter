@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 namespace Reporter.Data.Entities;
 
 /// <summary>
@@ -44,6 +46,11 @@ public class Feed
     /// Gets or sets a value indicating whether notifications are enabled for this feed.
     /// </summary>
     public bool NotificationsEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the favicon URL of the feed's website, or <c>null</c> when none was discovered.
+    /// </summary>
+    public string? FaviconUrl { get; set; }
 
     /// <summary>
     /// Gets or sets the optional category of the feed.

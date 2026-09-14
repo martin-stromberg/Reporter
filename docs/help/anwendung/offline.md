@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Offline lesen
@@ -13,9 +15,10 @@ Du kannst Reporter auch unterwegs ohne Empfang nutzen — etwa im Flugmodus, in 
 Sobald das Gerät keine Internetverbindung mehr hat, reagiert die App automatisch — ein Neustart ist nicht nötig:
 
 - **Ungelesen:** Der Aktualisieren-Button oben wird abgedunkelt dargestellt, und in der Statuszeile erscheint der Hinweis **„Keine Internetverbindung."**. Ein Tipp auf den Button oder das Herunterziehen der Liste (Ziehen zum Aktualisieren) startet dann keinen Abruf.
-- **Feeds:** Unterhalb der Eingabekarte erscheint ein Hinweis-Banner **„Keine Internetverbindung."**. **Alle aktualisieren** und das Aktualisieren eines einzelnen Feeds werden übersprungen.
+- **Feeds:** Unterhalb der Schaltfläche **+ Feed per URL hinzufügen** erscheint ein Hinweis-Banner **„Keine Internetverbindung."**. Das Herunterziehen der Liste und das Aktualisieren eines einzelnen Feeds werden übersprungen. Im Hinzufügen-Formular ist die Schaltfläche **Suchen** deaktiviert, und der Hinweis **„Feed-Suche offline nicht verfügbar — URL direkt hinzufügen bleibt möglich."** wird eingeblendet — das direkte Hinzufügen über **URL direkt hinzufügen** bleibt möglich.
 - **Später:** Auch hier erscheint das Hinweis-Banner **„Keine Internetverbindung."**.
-- **Listenbilder:** Die kleinen Vorschaubilder auf den Artikelkarten werden offline ausgeblendet, damit keine leeren Bildrahmen entstehen. Titel, Teasertext und alle Aktionen bleiben sichtbar.
+- **Listenbilder:** Die kleinen Vorschaubilder auf den Artikelkarten werden offline ausgeblendet, damit keine leeren Bildrahmen entstehen — das gilt auch für die Favicons der Feeds. Titel, Teasertext und alle Aktionen bleiben sichtbar. Auf der Seite **Feeds** weicht das Feed-Symbol offline auf den Kreis mit dem Anfangsbuchstaben aus.
+- **Abruf beim Start:** Ist in den **Einstellungen** der Schalter **Beim Programmstart abrufen** eingeschaltet, wird der einmalige Abruf beim Öffnen ohne Internetverbindung still übersprungen — es erscheint keine Fehlermeldung.
 - **Artikeldetailansicht:** Oberhalb des Artikelinhalts erscheint der Hinweis **„Links sind im Offline-Modus deaktiviert."**. Links im Artikeltext sind nicht anklickbar; externe Bilder werden nicht dargestellt — der Text bleibt vollständig lesbar. Tippt man dennoch auf einen Rest-Link, erscheint ein Hinweisdialog. Die Schaltfläche **Im Browser öffnen** zeigt offline ebenfalls den Hinweis **„Keine Internetverbindung."** statt den Browser zu starten.
 - **Automatische Aktualisierung:** Die in den **Einstellungen** wählbare Hintergrund-Aktualisierung pausiert ohne Netzwerk automatisch und setzt nach Netzrückkehr mit dem nächsten Intervall fort.
 
@@ -33,4 +36,5 @@ Kehrt die Verbindung zurück, verschwinden alle Hinweise von selbst, und die ges
 - **Externe Bilder** im Artikelinhalt werden offline vollständig entfernt dargestellt. Artikel, deren Aussagekraft hauptsächlich auf Bildern beruht, erscheinen entsprechend gekürzt.
 - **Links im Artikeltext** führen offline nicht ins Netz; sie werden als normaler Text dargestellt.
 - **Im Browser öffnen** und die Synchronisation benötigen grundsätzlich eine Internetverbindung. **Teilen** bleibt dagegen verfügbar, da dafür kein Netz nötig ist.
+- Die **Feed-Suche** auf der Feeds-Seite ist offline nicht verfügbar; Feeds lassen sich offline nur direkt per URL hinzufügen.
 - Es gibt keine Einstellung zum Offline-Verhalten — es ist immer aktiv und richtet sich allein nach dem Netzwerkzustand des Geräts.

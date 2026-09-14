@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Benachrichtigungen — Beschreibung
@@ -8,12 +10,12 @@ Reporter benachrichtigt dich auf dem iPhone/iPad über neue Artikel in deinen Fe
 
 ## Funktionsweise
 
-Nach jedem Feed-Abgleich — egal ob manuell über **Aktualisieren**/**Alle aktualisieren** auf der Seite **Feeds** oder automatisch im Hintergrund — prüft die App, ob neue Artikel gespeichert wurden. Für jeden neuen Artikel entscheiden vier Bedingungen, ob eine Benachrichtigung erscheint:
+Nach jedem Feed-Abgleich — egal ob manuell über **Aktualisieren** im Feed-Kontextmenü, das Herunterziehen der Feed-Liste oder automatisch im Hintergrund — prüft die App, ob neue Artikel gespeichert wurden. Für jeden neuen Artikel entscheiden vier Bedingungen, ob eine Benachrichtigung erscheint:
 
 1. **Benachrichtigungen** in den **Einstellungen** (Karte **Benachrichtigungen & Ruhezeiten**) müssen eingeschaltet sein.
-2. Der Schalter **Benachrichtigungen** im Formular des betreffenden Feeds auf der Seite **Feeds** muss eingeschaltet sein — so lassen sich einzelne Feeds stummschalten.
+2. Der Schalter **Benachrichtigungen** des betreffenden Feeds (Seite **Feeds** → Feed antippen → **Bearbeiten**) muss eingeschaltet sein — so lassen sich einzelne Feeds stummschalten.
 3. Es darf gerade keine **Ruhezeit (Nicht stören)** laufen. Benachrichtigungen in der Ruhezeit werden verworfen, nicht nachgeholt.
-4. Der Artikel darf kein Filter-Schlagwort in Titel oder Inhalt enthalten — dafür gilt dieselbe Schlagwort-Liste wie beim automatischen Löschen.
+4. Der Artikel darf kein Filter-Schlagwort in Titel oder Inhalt enthalten — solche Treffer werden bereits beim Abruf verworfen und erscheinen nicht in den Listen.
 
 Pro Artikel erscheint höchstens eine Benachrichtigung. Der Titel der Benachrichtigung ist der Feed-Name, der Text der Artikeltitel.
 
@@ -25,7 +27,7 @@ Tippst du eine Benachrichtigung an, öffnet die App direkt den Artikel; bei eine
 
 - Du abonnierst einen News-Feed: Bei jedem neuen Artikel erscheint sofort eine Benachrichtigung mit dem Feed-Namen und dem Artikeltitel.
 - Ein Feed postet sehr häufig: Schalte **Sammel-Benachrichtigung** ein — statt fünf Einzelmeldungen kommt eine Benachrichtigung „5 neue Artikel: …".
-- Ein lauter Feed soll still bleiben: Öffne den Feed auf der Seite **Feeds** zum Bearbeiten und schalte **Benachrichtigungen** aus — andere Feeds benachrichtigen weiterhin.
+- Ein lauter Feed soll still bleiben: Tippe den Feed auf der Seite **Feeds** an, wähle **Bearbeiten** und schalte **Benachrichtigungen** aus — andere Feeds benachrichtigen weiterhin.
 - Nachts willst du Ruhe: Aktiviere **Ruhezeit (Nicht stören)** von 22:00 bis 07:00 Uhr — in diesem Zeitraum erscheinen keine Benachrichtigungen.
 
 ## Einschränkungen

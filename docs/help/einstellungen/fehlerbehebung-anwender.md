@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Einstellungen — Fehlerbehebung
 
 ## Schlagwort lässt sich nicht hinzufügen
@@ -20,7 +22,7 @@
 **Lösung:**
 1. App einmal vollständig schließen und neu starten.
 2. Prüfen, ob der Artikel ungelesen ist oder mit einem Lesezeichen unter **Später** gemerkt wurde.
-3. Beim Keyword-Filter zusätzlich prüfen, ob der Artikel tatsächlich gelesen wurde — gefilterte, aber ungelesene Artikel bleiben erhalten.
+3. Beim Keyword-Filter zusätzlich beachten: Neu abgerufene Treffer werden bereits beim Abruf verworfen und gar nicht erst gespeichert — sie können daher nicht gelöscht werden. Nur bereits gespeicherte Treffer entfernt das Aufräumen, und auch diese nur, wenn sie gelesen wurden.
 
 ## Artikel wird nicht automatisch als gelesen markiert
 
@@ -37,12 +39,22 @@
 
 **Symptom:** Neue Artikel erscheinen erst nach manuellem Aktualisieren.
 
-**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — die automatische Aktualisierung läuft nur bei geöffneter App.
+**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — die automatische Aktualisierung läuft nur bei geöffneter App. Sollen die Feeds bereits beim Öffnen der App abgerufen werden, ist zusätzlich der Schalter **Beim Programmstart abrufen** zuständig; ohne Internetverbindung wird dieser Abruf übersprungen.
 
 **Lösung:**
 1. In den **Einstellungen** den Schalter **Automatische Hintergrund-Aktualisierung** einschalten.
-2. Das gewünschte **Abruf-Intervall** wählen.
-3. Alternativ auf der Seite **Feeds** manuell über **Alle aktualisieren** abrufen.
+2. Das gewünschte **Abruf-Intervall** wählen; für einen Abruf beim App-Start **Beim Programmstart abrufen** einschalten.
+3. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
+
+## Ungelesene Artikel erscheinen in unerwünschter Reihenfolge
+
+**Symptom:** Die Liste **Ungelesen** zeigt ältere Artikel zuerst — oder umgekehrt.
+
+**Ursache:** Die Reihenfolge folgt der Einstellung **Sortierung der ungelesenen Artikel** in den **Einstellungen**.
+
+**Lösung:**
+1. In den **Einstellungen** unter **Synchronisation & Lesefluss** das Auswahlfeld **Sortierung der ungelesenen Artikel** öffnen.
+2. *Neueste zuerst* oder *Älteste zuerst* wählen — die Änderung gilt sofort beim nächsten Laden der Liste.
 
 ## Es kommen keine Benachrichtigungen
 
@@ -52,7 +64,7 @@
 
 **Lösung:**
 1. In den **Einstellungen** unter **Benachrichtigungen & Ruhezeiten** den Schalter **Benachrichtigungen** prüfen; bei sichtbarer Hinweiszeile **Benachrichtigungen erlauben** tippen (öffnet den iOS-Dialog) bzw. **Einstellungen öffnen** tippen und die Berechtigung in iOS freischalten.
-2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed → **Bearbeiten**) prüfen.
+2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed antippen → **Bearbeiten**) prüfen.
 3. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
 
 ## Erscheinungsbild wechselt nicht
@@ -64,6 +76,17 @@
 **Lösung:**
 1. Unter **Erscheinungsbild** → **Farbschema** gezielt *Hell* oder *Dunkel* wählen, um das System zu übersteuern.
 2. Bei *System* die Einstellung des Geräts prüfen.
+
+## Sprache wechselt nicht
+
+**Symptom:** Nach der Auswahl einer anderen **Sprache** erscheinen die Texte weiterhin in der bisherigen Sprache.
+
+**Ursache:** Die Sprachauswahl wird zwar sofort gespeichert, wirkt aber erst nach einem Neustart der App — darauf weist der Hinweis „Die neue Sprache wird nach einem Neustart der App wirksam." unter dem Auswahlfeld hin. Bei der Auswahl *System* folgt die App außerdem der Systemsprache des Geräts.
+
+**Lösung:**
+1. App vollständig schließen und neu starten.
+2. Prüfen, ob die gewünschte Option (*Deutsch* oder *Englisch*) unter **Sprache** ausgewählt ist — bei *System* gilt die Gerätesprache.
+3. Steht die Gerätesprache auf einer anderen Sprache als Deutsch oder Englisch, zeigt die App bei *System* Englisch an; für Deutsch dann *Deutsch* wählen.
 
 ## Wann Hilfe nötig ist
 

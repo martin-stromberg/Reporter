@@ -1,5 +1,8 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -16,6 +19,7 @@ public partial class FeedsViewModel : BaseViewModel
     private readonly IFeedRepository _feedRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IFeedSyncService _feedSyncService;
+    private readonly IFeedIconService _feedIconService;
     private readonly ILocalNotificationService? _localNotificationService;
 
     private string _newUrl = string.Empty;
@@ -25,8 +29,9 @@ public partial class FeedsViewModel : BaseViewModel
     private string _syncErrorMessage = string.Empty;
     private bool _isSyncing;
     private bool _isSyncInProgress;
+    private bool _showAddForm;
+    private bool _isEditMode;
     private FeedListItem? _selectedFeed;
-    private Category? _selectedCategory;
     private ObservableCollection<FeedListItem> _feeds = [];
     private ObservableCollection<Category> _categories = [];
 
@@ -36,18 +41,24 @@ public partial class FeedsViewModel : BaseViewModel
     /// <param name="feedRepository">The feed repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
+    /// <param name="feedSearchService">The feed search service.</param>
+    /// <param name="feedIconService">The service used to discover the favicon of a feed's website.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="localNotificationService">The platform notification service, used to detect whether notifications are supported at all.</param>
     public FeedsViewModel(
         IFeedRepository feedRepository,
         ICategoryRepository categoryRepository,
         IFeedSyncService feedSyncService,
+        IFeedSearchService feedSearchService,
+        IFeedIconService feedIconService,
         INetworkStatusService networkStatusService,
         ILocalNotificationService? localNotificationService = null)
     {
         _feedRepository = feedRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        _feedSearchService = feedSearchService;
+        _feedIconService = feedIconService;
         TrackConnectivity(networkStatusService);
         _localNotificationService = localNotificationService;
         LoadCommand = new AsyncRelayCommand(LoadCommandAsync);
@@ -56,6 +67,12 @@ public partial class FeedsViewModel : BaseViewModel
         DeleteCommand = new AsyncRelayCommand<FeedListItem?>(DeleteAsync);
         RefreshCommand = new AsyncRelayCommand<FeedListItem?>(RefreshAsync, _ => !IsSyncing);
         RefreshAllCommand = new AsyncRelayCommand(RefreshAllAsync, () => !IsSyncing);
+        SearchCommand = new AsyncRelayCommand(SearchAsync, () => IsOnline && !IsSearching && !IsEditMode);
+        DirectAddCommand = new AsyncRelayCommand(DirectAddAsync, () => !IsSearching && !IsEditMode);
+        SubscribeResultCommand = new AsyncRelayCommand<FeedSearchResult?>(SubscribeResultAsync);
+        CloseSearchResultsCommand = new RelayCommand(CloseSearchResults);
+        OpenAddFormCommand = new RelayCommand(OpenAddForm);
+        CloseAddFormCommand = new RelayCommand(ResetForm);
     }
 
     /// <summary>
@@ -64,7 +81,7 @@ public partial class FeedsViewModel : BaseViewModel
     public AsyncRelayCommand LoadCommand { get; }
 
     /// <summary>
-    /// Gets the command that saves a new or existing feed.
+    /// Gets the command that saves the feed currently being edited.
     /// </summary>
     public AsyncRelayCommand SaveCommand { get; }
 
@@ -89,12 +106,30 @@ public partial class FeedsViewModel : BaseViewModel
     public AsyncRelayCommand RefreshAllCommand { get; }
 
     /// <summary>
+    /// Gets the command that opens the add-feed sheet.
+    /// </summary>
+    public RelayCommand OpenAddFormCommand { get; }
+
+    /// <summary>
+    /// Gets the command that closes the add-feed sheet and resets the form.
+    /// </summary>
+    public RelayCommand CloseAddFormCommand { get; }
+
+    /// <summary>
     /// Gets or sets the URL for a new or edited feed.
     /// </summary>
     public string NewUrl
     {
         get => _newUrl;
-        set => SetProperty(ref _newUrl, value);
+        set
+        {
+            if (SetProperty(ref _newUrl, value))
+            {
+                SearchResults.Clear();
+                ShowSearchResults = false;
+                SearchErrorMessage = string.Empty;
+            }
+        }
     }
 
     /// <summary>
@@ -162,6 +197,32 @@ public partial class FeedsViewModel : BaseViewModel
     public bool HasSyncError => _syncErrorMessage.Length > 0;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the add-feed sheet is visible.
+    /// </summary>
+    public bool ShowAddForm
+    {
+        get => _showAddForm;
+        set => SetProperty(ref _showAddForm, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the sheet edits an existing feed
+    /// instead of adding a new one.
+    /// </summary>
+    public bool IsEditMode
+    {
+        get => _isEditMode;
+        set
+        {
+            if (SetProperty(ref _isEditMode, value))
+            {
+                SearchCommand.NotifyCanExecuteChanged();
+                DirectAddCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets a value indicating whether a synchronization is in progress.
     /// </summary>
     public bool IsSyncing
@@ -184,15 +245,6 @@ public partial class FeedsViewModel : BaseViewModel
     {
         get => _selectedFeed;
         set => SetProperty(ref _selectedFeed, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the category selected for a new or edited feed.
-    /// </summary>
-    public Category? SelectedCategory
-    {
-        get => _selectedCategory;
-        set => SetProperty(ref _selectedCategory, value);
     }
 
     /// <summary>
@@ -231,20 +283,21 @@ public partial class FeedsViewModel : BaseViewModel
 
         var feeds = await _feedRepository.GetAllWithDetailsAsync();
         Feeds = new ObservableCollection<FeedListItem>(feeds);
-
-        if (SelectedCategory is null || Categories.All(c => c.Id != SelectedCategory.Id))
-        {
-            SelectedCategory = Categories.FirstOrDefault();
-        }
     }
 
     private async Task SaveAsync()
     {
+        // Adding feeds runs exclusively through the search, subscribe and
+        // direct-add flows; the sheet's save button only exists in edit mode.
+        if (SelectedFeed is null)
+        {
+            return;
+        }
+
         var url = NewUrl.Trim();
         var title = NewTitle.Trim();
 
-        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        if (string.IsNullOrWhiteSpace(url) || !IsValidFeedUrl(url))
         {
             ErrorMessage = AppResources.ErrorFeedUrlInvalid;
             return;
@@ -257,7 +310,7 @@ public partial class FeedsViewModel : BaseViewModel
         }
 
         var existing = await _feedRepository.GetByUrlAsync(url);
-        if (existing is not null && (SelectedFeed is null || existing.Id != SelectedFeed.Id))
+        if (existing is not null && existing.Id != SelectedFeed.Id)
         {
             ErrorMessage = AppResources.ErrorFeedDuplicate;
             return;
@@ -265,36 +318,12 @@ public partial class FeedsViewModel : BaseViewModel
 
         ErrorMessage = string.Empty;
 
-        var categoryId = SelectedCategory?.Id == Guid.Empty ? null : SelectedCategory?.Id;
-
-        if (SelectedFeed is null)
-        {
-            await _feedRepository.AddAsync(new Feed
-            {
-                Id = Guid.NewGuid(),
-                Url = url,
-                Title = title,
-                CategoryId = categoryId,
-                LastCheckedAt = null,
-                HealthStatus = "OK",
-                HealthLastChange = null,
-                NotificationsEnabled = FeedNotificationsEnabled,
-            });
-        }
-        else
-        {
-            await _feedRepository.UpdateAsync(new Feed
-            {
-                Id = SelectedFeed.Id,
-                Url = url,
-                Title = title,
-                CategoryId = categoryId,
-                LastCheckedAt = SelectedFeed.LastCheckedAt,
-                HealthStatus = SelectedFeed.HealthStatus,
-                HealthLastChange = SelectedFeed.HealthLastChange,
-                NotificationsEnabled = FeedNotificationsEnabled,
-            });
-        }
+        await _feedRepository.UpdateAsync(ToFeed(
+            SelectedFeed,
+            url: url,
+            title: title,
+            categoryId: SelectedFeed.CategoryId,
+            notificationsEnabled: FeedNotificationsEnabled));
 
         ResetForm();
         await LoadAsync();
@@ -308,8 +337,9 @@ public partial class FeedsViewModel : BaseViewModel
             NewUrl = feed.Url;
             NewTitle = feed.Title;
             FeedNotificationsEnabled = feed.NotificationsEnabled;
-            SelectedCategory = Categories.FirstOrDefault(c => c.Id == (feed.CategoryId ?? Guid.Empty));
             ErrorMessage = string.Empty;
+            IsEditMode = true;
+            ShowAddForm = true;
         }
 
         return Task.CompletedTask;
@@ -338,7 +368,10 @@ public partial class FeedsViewModel : BaseViewModel
         NewUrl = string.Empty;
         NewTitle = string.Empty;
         FeedNotificationsEnabled = true;
-        SelectedCategory = Categories.FirstOrDefault();
+        ShowAddForm = false;
+        IsEditMode = false;
+        ErrorMessage = string.Empty;
+        SearchErrorMessage = string.Empty;
     }
 
     private async Task RefreshAsync(FeedListItem? feed)
@@ -409,9 +442,122 @@ public partial class FeedsViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    private static bool IsValidFeedUrl(string url)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
     /// <inheritdoc />
     protected override void OnConnectivityChanged(bool isOnline)
     {
         SyncErrorMessage = string.Empty;
+        SearchErrorMessage = string.Empty;
+        SearchCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Renames a feed after confirmation through the rename prompt.
+    /// </summary>
+    /// <param name="feed">The feed to rename.</param>
+    /// <param name="newTitle">The new display title.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task RenameFeedAsync(FeedListItem? feed, string? newTitle)
+    {
+        if (feed is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newTitle))
+        {
+            ErrorMessage = AppResources.ErrorFeedTitleEmpty;
+            return;
+        }
+
+        await _feedRepository.UpdateAsync(ToFeed(
+            feed,
+            url: feed.Url,
+            title: newTitle.Trim(),
+            categoryId: feed.CategoryId,
+            notificationsEnabled: feed.NotificationsEnabled));
+        ErrorMessage = string.Empty;
+        await LoadAsync();
+    }
+
+    /// <summary>
+    /// Assigns a feed to another category; the pseudo-category entry clears the assignment.
+    /// </summary>
+    /// <param name="feed">The feed to update.</param>
+    /// <param name="category">The selected category, or the <see cref="Guid.Empty"/> pseudo-entry for none.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task ChangeFeedCategoryAsync(FeedListItem? feed, Category? category)
+    {
+        if (feed is null || category is null)
+        {
+            return;
+        }
+
+        await _feedRepository.UpdateAsync(ToFeed(
+            feed,
+            url: feed.Url,
+            title: feed.Title,
+            categoryId: category.Id == Guid.Empty ? null : category.Id,
+            notificationsEnabled: feed.NotificationsEnabled));
+        await LoadAsync();
+    }
+
+    // Rebuilds the stored feed from its list item for partial updates so the
+    // untouched fields survive; url, title, category id and the notifications
+    // flag are supplied by the caller.
+    private static Feed ToFeed(FeedListItem feed, string url, string title, Guid? categoryId, bool notificationsEnabled)
+    {
+        return new Feed
+        {
+            Id = feed.Id,
+            Url = url,
+            Title = title,
+            CategoryId = categoryId,
+            LastCheckedAt = feed.LastCheckedAt,
+            HealthStatus = feed.HealthStatus,
+            HealthLastChange = feed.HealthLastChange,
+            NotificationsEnabled = notificationsEnabled,
+            FaviconUrl = feed.FaviconUrl,
+        };
+    }
+
+    /// <summary>
+    /// Builds the action-sheet option labels for the given names, suffixing
+    /// repeated names so every returned label is unique and maps back to
+    /// exactly one entry. Candidates are checked against all already assigned
+    /// labels — a literal name like "News (2)" can collide with a generated
+    /// suffix, so the counter is raised until the label is unused.
+    /// </summary>
+    /// <param name="names">The option names in display order.</param>
+    /// <returns>The labels, aligned by index with <paramref name="names"/>.</returns>
+    public static List<string> MakeUniqueOptionLabels(IReadOnlyList<string> names)
+    {
+        var usedLabels = new HashSet<string>(StringComparer.Ordinal);
+        var labels = new List<string>(names.Count);
+        foreach (var name in names)
+        {
+            var label = name;
+            for (var suffix = 2; !usedLabels.Add(label); suffix++)
+            {
+                label = string.Format(CultureInfo.CurrentCulture, "{0} ({1})", name, suffix);
+            }
+
+            labels.Add(label);
+        }
+
+        return labels;
+    }
+
+    private void OpenAddForm()
+    {
+        // Clear any leftover edit state so add mode always starts from a clean
+        // form — an abandoned edit must not leak its URL or selection into it.
+        ResetForm();
+        ShowAddForm = true;
     }
 }

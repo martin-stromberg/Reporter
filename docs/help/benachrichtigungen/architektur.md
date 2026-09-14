@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Benachrichtigungen — Architektur
 
 ## Beteiligte Komponenten
@@ -18,7 +20,7 @@
 
 ## Abhängigkeiten
 
-- `NotificationService` hängt von `ISettingsRepository`, `IKeywordRepository`, `IKeywordMatcher`, `ILocalNotificationService` und `TimeProvider` ab (Standard `TimeProvider.System`; Tests injizieren `FakeTimeProvider`).
+- `NotificationService` hängt von `ISettingsRepository`, `IKeywordFilter`, `ILocalNotificationService` und `TimeProvider` ab (Standard `TimeProvider.System`; Tests injizieren `FakeTimeProvider`).
 - `FeedSyncService` hat `INotificationService` als fünfte Konstruktor-Abhängigkeit.
 - `SettingsViewModel` und `FeedsViewModel` haben `ILocalNotificationService` als **optionale** Abhängigkeit (nullable Parameter) — ältere Tests und Nicht-iOS-Szenarien funktionieren ohne.
 - Registrierung in `MauiProgram.CreateMauiApp` als Singletons: `INotificationService → NotificationService`, `ILocalNotificationService → LocalNotificationService`.
@@ -31,8 +33,9 @@
 graph TD
     FS[FeedSyncService.RunSyncAsync] --> NS[NotificationService]
     NS --> SR[ISettingsRepository]
-    NS --> KR[IKeywordRepository]
-    NS --> KM[IKeywordMatcher]
+    NS --> KF[IKeywordFilter]
+    KF --> KR[IKeywordRepository]
+    KF --> KM[IKeywordMatcher]
     NS --> TP[TimeProvider]
     NS --> LNS[ILocalNotificationService]
     SVM[SettingsViewModel] --> LNS
@@ -43,7 +46,7 @@ graph TD
     ND --> LAU[Launcher.OpenAsync<br/>Link-Fallback]
 ```
 
-Daten entstehen beim Feed-Abruf (`Item`s), werden in `NotificationService` gefiltert und — je nach Modus — als einzelne oder als Sammel-Benachrichtigung an iOS übergeben; `UserInfo` transportiert `itemId`/`link` bzw. `feedId` für das Tap-Handling zurück in die App.
+Daten entstehen beim Feed-Abruf (`Item`s) — Keyword-Treffer verwirft `FeedSyncService` bereits beim Einspeichern —, werden in `NotificationService` gefiltert (Tiefenverteidigung) und — je nach Modus — als einzelne oder als Sammel-Benachrichtigung an iOS übergeben; `UserInfo` transportiert `itemId`/`link` bzw. `feedId` für das Tap-Handling zurück in die App.
 
 ## Skalierung und Zuverlässigkeit
 

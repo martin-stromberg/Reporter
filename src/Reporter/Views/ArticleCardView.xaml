@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              x:Name="Card"
              x:Class="Reporter.Views.ArticleCardView">
     <Border Padding="16"
             Margin="0,6"
             StrokeShape="RoundRectangle 16"
             Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
-            Stroke="{AppThemeBinding Light={StaticResource LightOutline}, Dark={StaticResource DarkOutline}}">
+            Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto"
               ColumnDefinitions="*,Auto"
               RowSpacing="10"
@@ -16,11 +19,18 @@
                                    Grid.Column="0"
                                    Spacing="8"
                                    VerticalOptions="Center">
-                <BoxView WidthRequest="8"
-                         HeightRequest="8"
-                         CornerRadius="4"
-                         BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
-                         VerticalOptions="Center"/>
+                <BoxView WidthRequest="6"
+                         HeightRequest="6"
+                         CornerRadius="3"
+                         BackgroundColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
+                         IsVisible="False"
+                         VerticalOptions="Center">
+                    <BoxView.Triggers>
+                        <DataTrigger TargetType="BoxView" Binding="{Binding IsRead}" Value="False">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                    </BoxView.Triggers>
+                </BoxView>
                 <Label Text="{Binding FeedTitle}"
                        Style="{StaticResource BodySmallStyle}"
                        VerticalOptions="Center"
@@ -76,10 +86,49 @@
                         <Setter Property="IsVisible" Value="False"/>
                     </DataTrigger>
                 </Border.Triggers>
-                <Image Source="{Binding ImageUrl}"
-                       Aspect="AspectFill"
-                       WidthRequest="80"
-                       HeightRequest="80"/>
+                <Grid>
+                    <Image Source="{Binding ImageUrl}"
+                           Aspect="AspectFill"
+                           WidthRequest="80"
+                           HeightRequest="80"
+                           IsVisible="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+                    <Image Source="{Binding FeedFaviconUrl}"
+                           Aspect="AspectFit"
+                           WidthRequest="48"
+                           HeightRequest="48"
+                           IsVisible="False">
+                        <Image.Triggers>
+                            <MultiTrigger TargetType="Image">
+                                <MultiTrigger.Conditions>
+                                    <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                    <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="IsVisible" Value="True"/>
+                            </MultiTrigger>
+                        </Image.Triggers>
+                    </Image>
+                    <Border StrokeShape="RoundRectangle 40"
+                            WidthRequest="80"
+                            HeightRequest="80"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
+                            IsVisible="False">
+                        <Border.Triggers>
+                            <MultiTrigger TargetType="Border">
+                                <MultiTrigger.Conditions>
+                                    <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                    <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="IsVisible" Value="True"/>
+                            </MultiTrigger>
+                        </Border.Triggers>
+                        <Label Text="{Binding FeedInitial}"
+                               FontSize="28"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
+                </Grid>
             </Border>
 
             <Label Grid.Row="2"
@@ -99,6 +148,7 @@
                   RowDefinitions="Auto">
                 <HorizontalStackLayout Grid.Column="0"
                                        Spacing="4"
+                                       IsVisible="{Binding ReadingTimeText, Converter={StaticResource StringNotEmptyToBoolConverter}}"
                                        VerticalOptions="Center">
                     <Path Data="M24,4 A20,20 0 1,1 24,44 A20,20 0 1,1 24,4 Z M24,14 L24,26 M24,26 L18,20 M24,26 L30,20"
                           Stroke="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
@@ -110,7 +160,7 @@
                           HeightRequest="16"
                           VerticalOptions="Center"
                           Fill="Transparent"/>
-                    <Label Text="—"
+                    <Label Text="{Binding ReadingTimeText}"
                            Style="{StaticResource MetaStyle}"
                            VerticalOptions="Center"/>
                 </HorizontalStackLayout>
@@ -122,7 +172,13 @@
                             HeightRequest="44"
                             StrokeShape="RoundRectangle 22"
                             Background="Transparent"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ArticleBookmarkSet}"
                             VerticalOptions="Center">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSavedForLater}" Value="True">
+                                <Setter Property="SemanticProperties.Description" Value="{x:Static strings:AppResources.ArticleBookmarkRemove}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ToggleSavedCommand, Source={x:Reference Card}}"
                                                   CommandParameter="{Binding .}"/>
@@ -140,7 +196,7 @@
                               Fill="Transparent">
                             <Path.Triggers>
                                 <DataTrigger TargetType="Path" Binding="{Binding IsSavedForLater}" Value="True">
-                                    <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+                                    <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
                                 </DataTrigger>
                             </Path.Triggers>
                         </Path>
@@ -150,6 +206,7 @@
                             HeightRequest="44"
                             StrokeShape="RoundRectangle 22"
                             Background="Transparent"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ArticleMarkAsRead}"
                             VerticalOptions="Center">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding MarkReadCommand, Source={x:Reference Card}}"
@@ -174,7 +231,9 @@
                   Grid.RowSpan="3"
                   Grid.Column="0"
                   Grid.ColumnSpan="2"
-                  Background="Transparent">
+                  Background="Transparent"
+                  SemanticProperties.Description="{Binding Title}"
+                  SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityOpenArticle}">
                 <Grid.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding OpenArticleCommand, Source={x:Reference Card}}"
                                           CommandParameter="{Binding .}"/>

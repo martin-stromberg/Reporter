@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Einstellungen — Business Rules
@@ -10,7 +12,7 @@
 - `IsRead == false` → Artikel bleibt erhalten.
 - `IsSavedForLater == true` → Artikel bleibt erhalten.
 
-**Umsetzung:** Beide Prädikate stecken in den Repository-Abfragen `ItemRepository.DeleteExpiredAsync` und `ItemRepository.GetExpiredKeywordCandidatesAsync` — sie können nicht umgangen werden.
+**Umsetzung:** Beide Prädikate stecken in den Repository-Abfragen `ItemRepository.DeleteExpiredAsync` und `ItemRepository.GetExpiredKeywordCandidatesAsync` — sie können nicht umgangen werden. Neu abgerufene Keyword-Treffer werden zusätzlich bereits beim Feed-Abruf in `FeedSyncService.RunSyncAsync` verworfen (Filter beim Einspeichern) und erreichen die Löschregeln gar nicht — die Keyword-Löschregel bereinigt nur noch Artikel, die vor Anlage des Schlagworts gespeichert wurden.
 
 ## Unterschiedliche Fristbasis der beiden Löschregeln
 
@@ -21,20 +23,20 @@
 | Allgemeine Retention | `IsRead && !IsSavedForLater && (ReadAt ?? PublishedAt) < cutoff` | Lesezeitpunkt (`ReadAt`, Fallback `PublishedAt`) |
 | Keyword-Regel | `IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff` **und** Keyword-Match | Veröffentlichungsdatum (`PublishedAt`, Fallback `ReadAt`) |
 
-**Begründung:** Nutzt die Keyword-Regel denselben Zeitstempel wie die allgemeine Regel, wäre sie eine leere Teilmenge davon. Die Filter-Semantik verlangt, dass unerwünschte Artikel nach Ablauf der Frist seit ihrer Veröffentlichung entfernt werden — unabhängig davon, wann sie zuletzt gelesen wurden.
+**Begründung:** Nutzt die Keyword-Regel denselben Zeitstempel wie die allgemeine Regel, wäre sie eine leere Teilmenge davon. Die Filter-Semantik verlangt, dass unerwünschte Artikel nach Ablauf der Frist seit ihrer Veröffentlichung entfernt werden — unabhängig davon, wann sie zuletzt gelesen wurden. Für Neuzugänge ist die Regel gegenstandslos, weil Keyword-Treffer beim Abruf gar nicht erst gespeichert werden; sie bereinigt ausschließlich bereits gespeicherte Bestandstreffer.
 
 **Umsetzung:** `RetentionCleanupService.CleanupAsync` (Orchestrierung), `ItemRepository.GetExpiredKeywordCandidatesAsync` (Kandidaten), `ItemRepository.DeleteRangeAsync` (Löschung per IDs).
 
 ## Keyword-Matching ist fest verdrahtet
 
-**Beschreibung:** Die Match-Semantik ist Teilwort + case-insensitiv und **nicht** konfigurierbar. In der UI ist das als nicht-interaktives Badge „Immer aktiv" (`SettingsKeywordMatchStatus`) neben der Zeile „Teilwort & Case-Insensitive" dargestellt.
+**Beschreibung:** Die Match-Semantik ist Teilwort + case-insensitiv und **nicht** konfigurierbar. In der UI ist das als nicht-interaktives Badge „Immer aktiv" (`SettingsKeywordMatchStatus`) neben der Zeile „Teilwort, Groß-/Kleinschreibung egal" (`SettingsKeywordMatchLabel`) dargestellt.
 
 **Bedingungen:**
 - Match-Felder: `Item.Title` **und** `Item.ContentHtml`; `Item.Link` wird bewusst nicht gematcht (URLs sind opak, Zufallstreffer-Gefahr).
 - Vergleich: `string.Contains(keyword, StringComparison.OrdinalIgnoreCase)`; leere/Whitespace-Keywords werden übersprungen.
-- Matching-Zeitpunkt: zur **Cleanup-Zeit** gegen die gespeicherten Artikelinhalte — es gibt kein persistiertes Filter-Flag am `Item`, sodass Keyword-Änderungen beim nächsten App-Start sofort wirken, ohne Artikel neu bewerten zu müssen.
+- Matching-Zeitpunkt: zweifach — beim **Feed-Abruf** in `FeedSyncService.RunSyncAsync` gegen `SyndicationItem`-Titel und -Inhalt (Treffer werden gar nicht erst gespeichert; die Anzahl verworfener Artikel wird in der `SyncLog.Message` als `, N filtered` ausgewiesen) sowie zur **Cleanup-Zeit** in `RetentionCleanupService` gegen bereits gespeicherte Artikelinhalte. Es gibt kein persistiertes Filter-Flag am `Item`, sodass Keyword-Änderungen ohne Artikel-Neubewertung wirken: Neue Treffer werden ab dem nächsten Abruf verworfen, gespeicherte Bestandstreffer beim nächsten App-Start-Cleanup fristbasiert entfernt.
 
-**Umsetzung:** `KeywordMatcher.MatchesAny`
+**Umsetzung:** `KeywordFilter.MatchesAny` (delegiert an `KeywordMatcher.MatchesAny`)
 
 ## RetentionDays-Schutzregel
 
@@ -69,6 +71,28 @@
 
 **Umsetzung:** `AutoRefreshService`, `SettingsViewModel.RefreshIntervalOptions`.
 
+## Start-Abruf ist opt-out und fehlerisoliert
+
+**Beschreibung:** `Settings.RefreshOnStartupEnabled` (`bool`, Default `true`, Spalte `settings.refresh_on_startup_enabled`) steuert, ob beim App-Start einmalig alle Feeds abgerufen werden. Die Option ist bewusst unabhängig vom periodischen Intervall-Loop: Auch bei ausgeschalteter `AutoRefreshEnabled` läuft der Start-Abruf, solange der Schalter an ist.
+
+**Verhalten:**
+- `RefreshOnStartupEnabled == true` **und** `INetworkStatusService.IsOnline` → `AutoRefreshService.StartAsync` startet `RunStartupSyncAsync` fire-and-forget (`_ = …`) — der App-Start blockiert nie, ein Sync-Fehler wird per `Debug.WriteLine` protokolliert und geschluckt.
+- `RefreshOnStartupEnabled == false` oder offline → kein Start-Abruf; der Intervall-Loop bleibt davon unberührt.
+- Der Start-Abruf läuft zusätzlich zum Intervall-Loop — ein anschließender Timer-Tick ruft regulär erneut ab.
+
+**Umsetzung:** `AutoRefreshService.StartAsync`/`RunStartupSyncAsync`, `SettingsViewModel.RefreshOnStartupEnabled` (Schalter **Beim Programmstart abrufen**, `SettingsRefreshOnStartupLabel`/`SettingsRefreshOnStartupHint`).
+
+## `UnreadSortOrder`-String-Konvention
+
+**Beschreibung:** `Settings.UnreadSortOrder` ist ein `string?` mit den Werten `"desc"` (Default, *Neueste zuerst*) und `"asc"` (*Älteste zuerst*) — Konstanten `SettingsValues.SortOrderDescending`/`SortOrderAscending`, Spalte `settings.unread_sort_order`. Die Einstellung gilt ausschließlich für die Liste **Ungelesen**; **Später** bleibt fest absteigend sortiert.
+
+**Verhalten:**
+- `UnreadViewModel.LoadPageAsync` mappt den String auf das Bool `ascending` (`== SortOrderAscending`) und reicht es an `IItemRepository.GetUnreadByDateAsync`; jeder andere Wert (inkl. `null` oder unbekannt) fällt auf absteigend zurück — sowohl im `SettingsViewModel.LoadAsync`-Fallback auf die `"desc"`-`SortOrderOption` als auch implizit beim Bool-Vergleich.
+- `ascending == true` → `OrderBy(PublishedAt).ThenByDescending(Id)` (exakte Umkehr inkl. Tiebreaker); `false` → `OrderByDescending(PublishedAt).ThenBy(Id)`.
+- Artikel ohne `PublishedAt` folgen dem SQLite-NULL-Verhalten ohne gesonderten Code (bei `asc` zuerst, bei `desc` zuletzt) — dokumentiert in `ItemRepositoryTests.GetUnreadByDateAsync_Ascending_NullPublishedAt_SortsFirst`.
+
+**Umsetzung:** `SettingsValues` (Konstanten), `SortOrderOption` (Picker-Modell, Labels `SettingsSortOrderNewest`/`SettingsSortOrderOldest`), `SettingsViewModel.SelectedSortOrder`, `UnreadViewModel.LoadPageAsync`, `ItemRepository.GetUnreadByDateAsync`.
+
 ## Theme-String und Fallback
 
 **Beschreibung:** `Settings.Theme` ist ein `string?` mit den Werten `"system"`/`"light"`/`"dark"` (Default `"system"`).
@@ -78,6 +102,19 @@
 - `SettingsViewModel.LoadAsync` fällt bei unbekanntem gespeicherten Wert auf die `ThemeOption` `"system"` zurück.
 
 **Umsetzung:** `AppThemeService.ApplyTheme`, `SettingsViewModel`.
+
+## Language-String und Fallback
+
+**Beschreibung:** `Settings.Language` ist ein `string?` mit den Werten `"system"`/`"de"`/`"en"` (Default `"system"`).
+
+**Verhalten:**
+- `"de"`/`"en"` → `AppCulture.Apply` setzt `CurrentUICulture`, `CurrentCulture`, `DefaultThreadCurrentUICulture` und `DefaultThreadCurrentCulture` auf `new CultureInfo(value)`; wirksam ab dem nächsten App-Start (Anwendung in `MauiProgram.ApplyPersistedLanguage` vor `CreateWindow`).
+- `"system"`, `null`, unbekannt → `AppCulture.ResolveCulture` liefert `null`, `Apply` ist ein No-Op — die App folgt der Systemkultur (Konvention analog `AppThemeService.ApplyTheme`).
+- `SettingsViewModel.LoadAsync` fällt bei unbekanntem gespeicherten Wert auf die `LanguageOption` `"system"` zurück; `PersistAsync` schreibt `SelectedLanguage?.Value ?? LanguageSystem`.
+- Keine Laufzeit-Umschaltung: `PersistAsync` ruft keinen Service für `Language` auf — die UI weist per `SettingsLanguageRestartHint` auf den erforderlichen Neustart hin.
+- Der Hinweis-`Border` ist kein statischer Text: `SettingsViewModel.LanguageRestartHintVisible` steuert die Sichtbarkeit (`IsVisible`-Binding). Das Flag wird im `SelectedLanguage`-Setter auf `value?.Value != _loadedLanguage` gesetzt (außerhalb `_isLoading`) — es erscheint erst nach einer Abweichung vom persistierten Wert und verschwindet bei Rückwahl; `LoadAsync` setzt es zurück.
+
+**Umsetzung:** `AppCulture.ResolveCulture`/`Apply` (`Reporter.Core.Localization`), `MauiProgram.ApplyPersistedLanguage`, `SettingsViewModel.SelectedLanguage`, `SettingsValues.LanguageSystem`/`LanguageGerman`/`LanguageEnglish`.
 
 ## Ruhezeiten ohne Start-vor-Ende-Validierung
 

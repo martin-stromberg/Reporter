@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Microsoft.Extensions.Time.Testing;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
@@ -49,10 +51,11 @@ public class AutoRefreshServiceTests : IDisposable
             NotificationSummaryEnabled = false,
             AutoRefreshEnabled = autoRefreshEnabled,
             RefreshIntervalMinutes = refreshIntervalMinutes,
+            RefreshOnStartupEnabled = false,
         };
     }
 
-    private async Task SaveSettingsAsync(bool autoRefreshEnabled, int refreshIntervalMinutes)
+    private async Task SaveSettingsAsync(bool autoRefreshEnabled, int refreshIntervalMinutes, bool refreshOnStartupEnabled = false)
     {
         var settings = await _settingsRepository.GetAsync();
         await _settingsRepository.SaveAsync(new Settings
@@ -67,6 +70,8 @@ public class AutoRefreshServiceTests : IDisposable
             QuietHoursEnd = settings.QuietHoursEnd,
             AutoRefreshEnabled = autoRefreshEnabled,
             RefreshIntervalMinutes = refreshIntervalMinutes,
+            RefreshOnStartupEnabled = refreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
     }
@@ -262,6 +267,77 @@ public class AutoRefreshServiceTests : IDisposable
         await _service.StopAsync();
 
         Assert.Equal(1, _feedSyncService.SyncAllCallCount);
+    }
+
+    /// <summary>
+    /// Verifies that StartAsync triggers an immediate sync when the startup
+    /// refresh switch is enabled, without waiting for the first timer tick.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task StartAsync_StartupRefreshEnabled_SyncsImmediately()
+    {
+        await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15, refreshOnStartupEnabled: true);
+
+        await _service.StartAsync();
+        await TestWaitHelper.WaitUntilAsync(() => _feedSyncService.SyncAllCallCount == 1);
+        await _service.StopAsync();
+
+        Assert.Equal(1, _feedSyncService.SyncAllCallCount);
+    }
+
+    /// <summary>
+    /// Verifies that StartAsync does not sync before the first timer tick when
+    /// the startup refresh switch is disabled.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task StartAsync_StartupRefreshDisabled_DoesNotSyncImmediately()
+    {
+        await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15, refreshOnStartupEnabled: false);
+
+        await _service.StartAsync();
+        await Task.Delay(100);
+        await _service.StopAsync();
+
+        Assert.Equal(0, _feedSyncService.SyncAllCallCount);
+    }
+
+    /// <summary>
+    /// Verifies that the startup sync is skipped while offline even when the
+    /// startup refresh switch is enabled.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task StartAsync_Offline_SkipsStartupSync()
+    {
+        _networkStatusService.IsOnline = false;
+        await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15, refreshOnStartupEnabled: true);
+
+        await _service.StartAsync();
+        await Task.Delay(100);
+        await _service.StopAsync();
+
+        Assert.Equal(0, _feedSyncService.SyncAllCallCount);
+    }
+
+    /// <summary>
+    /// Verifies that a failing startup sync neither fails nor blocks StartAsync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task StartAsync_StartupSyncThrows_StartStillCompletes()
+    {
+        _feedSyncService.SyncAllException = new InvalidOperationException("sync failed");
+        await SaveSettingsAsync(autoRefreshEnabled: true, refreshIntervalMinutes: 15, refreshOnStartupEnabled: true);
+
+        await _service.StartAsync();
+        await TestWaitHelper.WaitUntilAsync(() => _feedSyncService.SyncAllCallCount == 1);
+        _timeProvider.Advance(TimeSpan.FromMinutes(15));
+        await TestWaitHelper.WaitUntilAsync(() => _feedSyncService.SyncAllCallCount == 2);
+        await _service.StopAsync();
+
+        Assert.Equal(2, _feedSyncService.SyncAllCallCount);
     }
 
     /// <summary>

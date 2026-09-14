@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -19,6 +21,7 @@ public partial class UnreadViewModel : BaseViewModel
     private readonly IItemRepository _itemRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IFeedSyncService _feedSyncService;
+    private readonly ISettingsRepository _settingsRepository;
 
     private string _title = AppResources.PageTitleUnread;
     private ObservableCollection<ItemListItem> _articles = [];
@@ -29,7 +32,6 @@ public partial class UnreadViewModel : BaseViewModel
     private bool _hasMore;
     private string _errorMessage = string.Empty;
     private string _lastSyncText = string.Empty;
-    private string _selectedCategoryText = string.Empty;
     private string _unreadCountText = string.Empty;
     private int _currentPage;
     private string _syncErrorMessage = string.Empty;
@@ -40,12 +42,14 @@ public partial class UnreadViewModel : BaseViewModel
     /// <param name="itemRepository">The item repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
+    /// <param name="settingsRepository">The settings repository used for the unread sort order.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
-    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService)
+    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService, ISettingsRepository settingsRepository, INetworkStatusService networkStatusService)
     {
         _itemRepository = itemRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        _settingsRepository = settingsRepository;
         TrackConnectivity(networkStatusService);
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
@@ -130,18 +134,8 @@ public partial class UnreadViewModel : BaseViewModel
             if (SetProperty(ref _selectedCategory, value))
             {
                 UpdateCategorySelection();
-                SelectedCategoryText = value is not null ? $"{value.Name} ({value.Count})" : string.Empty;
             }
         }
-    }
-
-    /// <summary>
-    /// Gets or sets the text of the selected category filter.
-    /// </summary>
-    public string SelectedCategoryText
-    {
-        get => _selectedCategoryText;
-        set => SetProperty(ref _selectedCategoryText, value);
     }
 
     /// <summary>
@@ -310,7 +304,9 @@ public partial class UnreadViewModel : BaseViewModel
         try
         {
             var categoryId = SelectedCategory?.CategoryId;
-            var items = await _itemRepository.GetUnreadByDateAsync(page, PageSize, categoryId);
+            var settings = await _settingsRepository.GetAsync();
+            var ascending = settings.UnreadSortOrder == SettingsValues.SortOrderAscending;
+            var items = await _itemRepository.GetUnreadByDateAsync(page, PageSize, categoryId, ascending);
 
             if (append)
             {
@@ -331,7 +327,6 @@ public partial class UnreadViewModel : BaseViewModel
                 var updatedCount = await _itemRepository.GetUnreadCountAsync(SelectedCategory.CategoryId);
                 SelectedCategory.Count = updatedCount;
                 UnreadCount = updatedCount;
-                SelectedCategoryText = $"{SelectedCategory.Name} ({SelectedCategory.Count})";
                 UpdateUnreadCountText();
             }
         }
@@ -425,21 +420,7 @@ public partial class UnreadViewModel : BaseViewModel
         if (updated is not null)
         {
             var index = Articles.IndexOf(updated);
-            Articles[index] = new ItemListItem
-            {
-                Id = updated.Id,
-                FeedId = updated.FeedId,
-                Title = updated.Title,
-                Link = updated.Link,
-                PublishedAt = updated.PublishedAt,
-                IsRead = updated.IsRead,
-                IsSavedForLater = !updated.IsSavedForLater,
-                FeedTitle = updated.FeedTitle,
-                CategoryId = updated.CategoryId,
-                CategoryName = updated.CategoryName,
-                ImageUrl = updated.ImageUrl,
-                Summary = updated.Summary,
-            };
+            Articles[index] = updated.CopyWith(isSavedForLater: !updated.IsSavedForLater);
         }
     }
 
@@ -458,6 +439,7 @@ public partial class UnreadViewModel : BaseViewModel
             SelectedCategory.Count--;
         }
 
+        UnreadCount = Math.Max(0, UnreadCount - 1);
         UpdateUnreadCountText();
 
         if (Articles.Count == 0)

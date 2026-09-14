@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -189,6 +191,33 @@
 
     <Color x:Key="LightStatusError">#ef4444</Color>
     <Color x:Key="DarkStatusError">#f43f5e</Color>
+
+    <!-- Status badge tints (10 % alpha) and darker status text colors for badge labels -->
+    <Color x:Key="LightStatusOkTint">#1A10B981</Color>
+    <Color x:Key="DarkStatusOkTint">#1A10B981</Color>
+
+    <Color x:Key="LightStatusWarningTint">#1AF59E0B</Color>
+    <Color x:Key="DarkStatusWarningTint">#1AF59E0B</Color>
+
+    <Color x:Key="LightStatusErrorTint">#1AEF4444</Color>
+    <Color x:Key="DarkStatusErrorTint">#1AF43F5E</Color>
+
+    <Color x:Key="LightStatusOkText">#047857</Color>
+    <Color x:Key="DarkStatusOkText">#10b981</Color>
+
+    <Color x:Key="LightStatusWarningText">#B45309</Color>
+    <Color x:Key="DarkStatusWarningText">#f59e0b</Color>
+
+    <Color x:Key="LightStatusErrorText">#B91C1C</Color>
+    <Color x:Key="DarkStatusErrorText">#f43f5e</Color>
+
+    <!-- Translucent card surface for the floating reader control bar -->
+    <Color x:Key="LightSurfaceCardTranslucent">#E6FFFFFF</Color>
+    <Color x:Key="DarkSurfaceCardTranslucent">#E6182234</Color>
+
+    <!-- Count capsule inside filter chips (active: inverse, inactive: subtle) -->
+    <Color x:Key="LightChipCountCapsule">#33FFFFFF</Color>
+    <Color x:Key="DarkChipCountCapsule">#33000000</Color>
 
     <!-- Bookmark / Accent -->
     <Color x:Key="LightBookmarkGold">#D97706</Color>

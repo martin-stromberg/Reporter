@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Microsoft.EntityFrameworkCore;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -58,8 +60,11 @@ public class SettingsRepository : ISettingsRepository
         entity.QuietHoursEnd = settings.QuietHoursEnd;
         entity.AutoRefreshEnabled = settings.AutoRefreshEnabled;
         entity.RefreshIntervalMinutes = settings.RefreshIntervalMinutes;
+        entity.RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled;
+        entity.UnreadSortOrder = settings.UnreadSortOrder;
         entity.Theme = settings.Theme;
         entity.NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
+        entity.Language = settings.Language;
 
         await context.SaveChangesAsync();
     }
@@ -77,8 +82,11 @@ public class SettingsRepository : ISettingsRepository
             QuietHoursEnd = entity.QuietHoursEnd,
             AutoRefreshEnabled = entity.AutoRefreshEnabled,
             RefreshIntervalMinutes = entity.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = entity.RefreshOnStartupEnabled,
+            UnreadSortOrder = entity.UnreadSortOrder,
             Theme = entity.Theme,
             NotificationSummaryEnabled = entity.NotificationSummaryEnabled,
+            Language = entity.Language,
         };
     }
 }

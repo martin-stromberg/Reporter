@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
 using Reporter.Core.ViewModels;
@@ -58,7 +60,7 @@ public partial class CategoriesPage : ContentPage
         else if (action == AppResources.ButtonDelete)
         {
             var confirmed = await DisplayAlertAsync(
-                AppResources.ConfirmDeleteFeedTitle,
+                AppResources.ConfirmDeleteCategoryTitle,
                 $"{category.Name} ({category.FeedCount} {AppResources.LabelCategoryFeedCount})",
                 AppResources.ButtonYes,
                 AppResources.ButtonNo);

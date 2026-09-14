@@ -1,4 +1,654 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 # Test- und Verifikationsergebnisse
+
+## Issue #77: Verbesserungen der App (Lesezeit, Favicons, Start-Abruf, Sortierung, Sprach-Hinweis, Icon/Splash)
+
+Branch: `task/issue-77-b1023d3d5f804e239e02f48af24b0ac3-verbesserungen-der-app`
+
+Umfang: R1 Lesezeit-Text ab ≤ 1 Min ausblenden; R2 Feed-Favicons mit
+Initial-Fallback; R3 optionaler Abruf beim App-Start (Voreinstellung: ein);
+R4 konfigurierbare Sortierung der Ungelesen-Liste; R5 Neustart-Hinweis nur
+nach Sprachänderung; R6 neue App-Icon- und Splash-Assets. R7/R8 wurden in die
+folgenden eigenen Issues ausgelagert: #81 (Debug-Versand per E-Mail) und
+#82 (Benachrichtigungen nur bei Hintergrundabruf).
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Restore | `dotnet restore Reporter.sln -r win-x64 -p:IncludeIosTarget=false` | Erfolgreich (iOS-Target auf diesem Windows-Arbeitsplatz deaktiviert, da `Microsoft.NETCore.App.Runtime.Mono.win-x64` 10.0.12 nicht im Feed liegt) |
+| Build (Release, Solution) | `dotnet build Reporter.sln -c Release --no-restore -p:IncludeIosTarget=false` | Erfolgreich, 0 Warnungen, 0 Fehler |
+| Tests (Release) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release --no-build` | 400 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Neue/geänderte Tests u. a.: `ReadingTimeEstimatorTests`
+(`EstimateText_OneMinuteContent_ReturnsEmpty`,
+`EstimateText_TwoMinuteContent_ReturnsText`, angepasste Kurzinhalt-/HTML-Fälle),
+`FeedIconServiceTests` (Link-Tags, relative URLs, `/favicon.ico`-Fallback,
+Fehlerfälle, Kandidaten-Durchlauf), `FeedsViewModelTests`
+(`DirectAddCommand_StoresFaviconUrl`, `_IconLookupFails_FeedStillAdded`,
+`_Offline_SkipsIconLookup`, `SubscribeResultCommand_UsesSiteUrlForFaviconLookup`,
+`RenameFeedAsync_PreservesFaviconUrl`), `FeedSyncServiceTests`
+(`SyncFeedAsync_MissingFavicon_BackfillsFromFeedAuthority`,
+`_ExistingFavicon_SkipsLookup`, `_FaviconLookupFails_SyncStillSucceeds`),
+`ItemRepositoryTests` (`GetUnreadByDateAsync_ProjectsFeedFaviconUrl`,
+`_Ascending_OrdersByPublishedAtAscending`,
+`_Ascending_NullPublishedAt_SortsFirst`), `FeedRepositoryTests`
+(`GetAllWithDetailsAsync_ProjectsFaviconUrl`, `UpdateAsync_PersistsFaviconUrl`),
+`AutoRefreshServiceTests` (`StartAsync_StartupRefreshEnabled_SyncsImmediately`,
+`_StartupRefreshDisabled_DoesNotSyncImmediately`, `_Offline_SkipsStartupSync`,
+`_StartupSyncThrows_StartStillCompletes`), `SettingsViewModelTests`
+(`LanguageChange_SetsRestartHint`, `LanguageReverted_ClearsRestartHint`,
+`Load_ResetsRestartHint`, `Load_PopulatesRefreshOnStartup`,
+`Load_PopulatesSelectedSortOrder`, `RefreshOnStartup_Change_Persists`,
+`SelectedSortOrder_Change_Persists`), `SettingsRepositoryTests`
+(`SaveAsync_PersistsStartupRefreshAndSortOrder`),
+`SettingsViewModelTests_E2E` (`E2E_RefreshOnStartup_PersistRoundtrip`,
+`E2E_SortOrder_PersistRoundtrip`), `UnreadViewModelTests`
+(`LoadPage_PassesSortOrderFromSettings`, `LoadPage_InvalidSortOrder_UsesDescending`).
+Neue Fakes: `FakeFeedIconService`.
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per `GetWindowRect`
+verifiziert: **390 × 844 pt**. Interaktion über UI Automation
+(`test-results/issue-59/uia.ps1`), deutsch lokalisierte UI. Screenshots unter
+`test-results/issue-77/manual-*.png`.
+
+- [x] **Start-Abruf (R3):** `settings.refresh_on_startup_enabled=1`
+  (Voreinstellung). Beim App-Start lief die Synchronisation — der bestehende
+  Feed `Golem.de` erhielt dabei live `favicon_url=https://www.golem.de/favicon.ico`
+  per Nachhole-Pfad (`SyncFeedAsync_MissingFavicon`…) — `manual-01`
+- [x] **Einstellungen Synchronisation & Lesefluss:** Schalter
+  „Beim Programmstart abrufen" sichtbar und per UIA `TogglePattern` als **On**
+  verifiziert; darunter der Picker „Sortierung der ungelesenen Artikel"
+  (159 × 52 pt) — `manual-03`, `manual-04`
+- [x] **Sortierung (R4):** Picker-Dropdown listet „Neueste zuerst" /
+  „Älteste zuerst" (`manual-05`); Auswahl „Älteste zuerst" persistiert
+  `unread_sort_order='asc'` und die Liste **Ungelesen** zeigt sofort
+  aufsteigende Daten (11.09. 11:30 → 11:42 → 12:05) — `manual-06`.
+  Anschließend auf „Neueste zuerst" zurückgestellt (`desc`)
+- [x] **Sprach-Hinweis (R5):** Ohne Änderung ist der Neustart-Hinweis in der
+  UIA-Baumstruktur nicht vorhanden (`manual-07`); nach Wechsel auf „Englisch"
+  erscheint „Die neue Sprache wird nach einem Neustart der App wirksam."
+  sichtbar unter dem Picker (`manual-08`, `manual-09`); Rückwahl auf „System"
+  blendet den Hinweis wieder aus (`manual-10`, UIA ohne Treffer)
+- [x] **Favicon auf Feed-Karte (R2):** Feed-Karte „Golem.de" zeigt links das
+  gerenderte Favicon — `manual-11`
+- [x] **Initial-Fallback (R2):** Per „URL direkt hinzufügen" angelegter Feed
+  `https://beispiel.invalid/feed.xml` (Favicon-Ermittlung schlägt fehl,
+  `favicon_url=NULL`, Feed wird trotzdem angelegt) zeigt den Kreis mit dem
+  Anfangsbuchstaben „F" — `manual-14`; Testfeed danach über
+  **Feed-Aktionen → Löschen → Ja** wieder entfernt (DB wieder nur `Golem.de`)
+- [x] **Light Mode:** Einstellungen und Ungelesen-Liste im hellen Schema
+  korrekt gerendert (`AppThemeBinding`) — `manual-15`, `manual-16`; danach
+  Farbschema auf „System" zurückgestellt
+- [x] **Icon/Splash (R6):** Generierte Resizetizer-Assets geprüft —
+  `resizetizer/r/appicon*.png` zeigt das neue Badge (dunkler Hintergrund
+  `#1e293b`, weißer Rahmen, Amber-Punkt `#f59e0b`); `resizetizer/sp/
+  splashSplashScreen.scale-400.png` enthält die Wortmarke „Reporter" als
+  gerenderten Pfad in Weiß (Füllung von `#1e293b` auf `#ffffff` angepasst,
+  damit sie auf dem dunklen Splash-Hintergrund sichtbar ist)
+
+Hinweis zur Artikelkarten-Kaskade: Auf **Ungelesen** zeigen alle vorhandenen
+Artikel ein `ImageUrl` (Golem-Tracking-Pixel `cpx.golem.de/cpx.php`), sodass
+per Spezifikation das Artikelbild Vorrang vor Favicon und Initial hat —
+der Favicon-/Initial-Zweig der Karte ist per XAML-`MultiTrigger` geprüft und
+über die Feed-Karten (Favicon bzw. Initial) live verifiziert.
+
+Bekannte Einschränkung: `favicon.ico`-Dateien ohne PNG-Link-Alternativen
+(z. B. golem.de) werden gespeichert und auf der Feeds-Seite gerendert;
+die Darstellung einzelner ICO-Varianten hängt vom Plattform-Decoder ab.
+
+### iOS-Verifikation
+
+Nicht möglich auf diesem Windows-Arbeitsplatz (`net10.0-ios` benötigt macOS).
+Nachzuholen auf einem Mac: Splash- und Icon-Darstellung, Favicon-Anzeige,
+neue Einstellungen bedienen.
+
+## Issue #62: Manueller Sprachwechsel (EN/DE) in den Einstellungen
+
+Branch: `task/issue-62-c777ec701888411a864e714ceaa8f8b3-manueller-sprachwechsel-ende-i`
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Build (Debug, Solution) | `dotnet build Reporter.sln` | Erfolgreich, 1 Warnung (pre-existing CS8765 in `AppDelegate.FinishedLaunching`), 0 Fehler |
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --no-build` | 331 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 316) |
+| Tests mit Coverage | `dotnet test --collect:"XPlat Code Coverage"` | 331 bestanden, 53,5 % Zeilenabdeckung |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security, Static-Analysis-Release-Build ohne Befund) |
+
+Neue Tests (15): `AppCultureTests` (3), `SettingsRepositoryTests.SaveAsync_PersistsLanguage`,
+`SettingsViewModelTests_Load` (3: `LanguageOptions_ExposePersistedValues`,
+`Load_InvalidLanguage_UsesSystemFallback`, `Load_PopulatesSelectedLanguage`),
+`SettingsViewModelTests_Persist` (`SelectedLanguage_Change_Persists`,
+`OtherChange_DoesNotLoseLanguage`), `SettingsViewModelTests_E2E`
+(`E2E_ChangeLanguage_PersistRoundtrip` — VM → Repository → SQLite → Reload als
+simulierter Neustart). `TestSettingsHelper.SaveAsync` um optionalen
+`language`-Parameter erweitert.
+
+### Mobile-UI-Design-Review „Sprache"-Sektion
+
+Statische XAML-Prüfung von `SettingsPage.xaml` gegen
+`design-draft/stitch_local_rss_feed_reader/einstellungen_filter/` (Light) und
+`..._dark_mode/` sowie die AGENTS.md-Regeln:
+
+- [x] Neue Sektions-Karte „Sprache" (`Border` + `RoundRectangle 12`,
+  `AppThemeBinding` `SurfaceContainer`) im bestehenden `ScrollView` unter
+  `Grid RowDefinitions="Auto,*"` — keine Verschachtelung von
+  `ScrollView`/`CollectionView`, Sektion folgt exakt dem
+  „Erscheinungsbild"-Kartenmuster
+- [x] `Picker` (System/Deutsch/English) als Zeilen-Control wie der
+  „Farbschema"-Picker; Klartext-Labels, keine internen Kennungen
+- [x] Neustart-Hinweis als statischer Info-`Border` unterhalb der Zeile
+  (`SettingsInfoBox`-Muster wie `SettingsRetentionInfo`)
+- [x] Touch-Ziele ≥ 44 pt (Picker-Zeile 52 pt per UIA-Rect gemessen)
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle Texte aus
+  `AppResources.*` (EN + DE), `SemanticProperties.Description` gesetzt
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Die App wurde auf dem Windows-Target im 390 × 844-pt-Fenster gestartet
+(unpackaged `win-x64`-Debug-Build, Fenstergröße via `App.CreateWindow`, per
+UIA-`BoundingRectangle` verifiziert: 390 × 844). Interaktion über UI Automation
++ `mouse_event`. Screenshots unter `test-results/issue-62/manual-*.png`:
+
+- [x] `SettingsPage` Dark Mode (System-Theme dunkel): Sektionen und Karten
+  unverändert, deutsche Texte (`manual-01`)
+- [x] Karte „Sprache": Zeilenlabel „Sprache", Picker „System", Info-Text
+  „Die neue Sprache wird nach einem Neustart der App wirksam." (`manual-02`);
+  Picker-Dropdown listet „System / Deutsch / Englisch" (per
+  `ExpandCollapsePattern` verifiziert)
+- [x] Sprachwechsel „Englisch" → Auswahl sofort persistiert
+  (`settings.language='en'`); App-Neustart → komplette UI englisch: Tabs
+  „Unread/Feeds/Later", „228 unread articles", „Pull down to refresh",
+  US-Datumsformat `9/12/2026 9:49 PM` (`CurrentCulture` mit umgeschaltet);
+  `SettingsPage` zeigt „Language"-Karte mit Picker „English" und
+  englischem Neustart-Hinweis (`manual-03`) — Nachweis, dass `AppCulture.Apply`
+  in `MauiProgram` vor `CreateWindow` wirkt
+- [x] Light Mode: „Color scheme" → „Light" → Sprach-Karte und Hinweis-Box
+  korrekt hell gerendert (`manual-04`)
+- [x] Rückweg: Sprache „System" → App-Neustart → UI wieder Deutsch
+  (Systemsprache); Theme „System" wiederhergestellt
+
+Hinweis: Der Windows-TabBar-Overflow-Button „Mehr" ist ein Plattform-String von
+WinUI/MAUI und wechselt nicht mit der App-Sprache — bekanntes
+Plattformverhalten, nicht Teil des App-Ressourcen-Umfangs.
+
+### iOS-Simulator-Verifikation
+
+Nicht möglich auf diesem Windows-Arbeitsplatz — der iOS-Build
+(`net10.0-ios`) und `scripts/iOS-Deployment.ps1` benötigen macOS.
+Nachzuholen auf einem Mac: Sprach-Picker in den Einstellungen bedienen,
+App-Neustart, Tab-Titel und Einstellungstexte in der gewählten Sprache prüfen.
+
+## Issue #59 (Iteration 5): Review-Nacharbeiten (Offline-Hint im Edit-Modus, Refactorings, ActionSheet-Disambiguierung)
+
+Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+Nacharbeiten aus `review-usability.md` (1 Befund) und `review-code.md`
+(8 Befunde):
+
+- Sheet-`FeedSearchOfflineHint` wird im Edit-Modus per zusätzlichem
+  `DataTrigger` auf `IsEditMode` ausgeblendet — der Hinweis verspricht
+  „Suchen"/„URL direkt hinzufügen", die es in diesem Modus nicht gibt.
+- `FeedsViewModel.Search.cs`: gemeinsame Hilfsmethoden
+  `TryPersistNewFeedAsync` (Dubletten-Prüfung + `Feed`-Initializer +
+  Bereinigung beider Fehlerkanäle) und `FinishAddFlowAsync`
+  (Trefferansicht schließen + `ResetForm` + `LoadAsync`) für
+  `OfferDirectAddAsync`, `DirectAddAsync` und `SubscribeResultAsync`;
+  `catch`-Block von `SearchAsync` in `HandleSearchFailure` ausgelagert;
+  `DirectAddAsync` mit `IsEditMode`-Guard und
+  `DirectAddCommand.CanExecute = !IsSearching && !IsEditMode`
+  (`NotifyCanExecuteChanged` im `IsEditMode`-Setter) — symmetrisch zu
+  `SearchCommand`.
+- `DirectAddAsync` bereinigt jetzt `SearchErrorMessage` zentral im
+  Persist-Schritt — Such- und Dubletten-Fehler stehen nicht mehr
+  gleichzeitig im Sheet.
+- `FeedsViewModel.cs`: `OpenAddForm` verwendet `ResetForm` statt des
+  duplizierten Reset-Blocks; `FeedListItem`→`Feed`-Mapping über die
+  gemeinsame Hilfsmethode `ToFeed` in `RenameFeedAsync`/
+  `ChangeFeedCategoryAsync`; `SaveCommand`-XML-Doc auf „saves the feed
+  currently being edited" korrigiert.
+- `FeedsPage.xaml`: `MinimumHeightRequest="44"` an „Suchen", „URL direkt
+  hinzufügen" und „Speichern" ergänzt; URL-Meta-Zeile der Trefferkarte per
+  `DataTrigger` (`StringNotEmptyToBoolConverter` → `False`) ausgeblendet,
+  wenn `Title` leer ist — die URL erscheint nicht mehr doppelt.
+- `FeedsPage.xaml.cs`: `ChangeCategoryAsync` löst die ActionSheet-Auswahl
+  positionsbasiert auf; gleichnamige Kategorien erhalten einen Zählsuffix
+  („News", „News (2)"), damit jeder angezeigte Eintrag eindeutig einer
+  Kategorie zugeordnet wird.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 311 bestanden, 0 fehlgeschlagen, 0 übersprungen (Vorher: 309) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Teständerungen (netto +2): neu `DirectAddCommand_WhenDuplicate_ClearsStaleSearchError`
+(vor dem Fix rot: `HasSearchError` blieb `true`) und
+`DirectAddCommand_InEditMode_DoesNotAddFeed` (vor dem Fix rot: `CanExecute`
+war `true` und der Direkt-Add legte während eines laufenden Edits einen
+neuen Feed an).
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 5)
+
+Unpackaged `win-x64`-Release-Build, Fenstergröße per `GetWindowRect`
+verifiziert: **390 × 844 pt**. Interaktion über UI Automation
+(`test-results/issue-59/uia.ps1`), Texteingabe über `ValuePattern.SetValue`;
+deutsch lokalisierte UI, Dark Mode. Screenshots unter
+`test-results/issue-59/manual-5-*.png`.
+
+- [x] Add-Sheet: „Suchen" und „URL direkt hinzufügen" je 308 × 44 pt —
+  `manual-5-02`
+- [x] Kategorie-ActionSheet mit DB-seitig geseedeten Namens-Dubletten
+  (`IX_categories_name` temporär entfernt, anschließend vollständig
+  wiederhergestellt): Optionen „News" und „News (2)" getrennt wählbar;
+  Tippen auf „News (2)" weist die **zweite** News-Kategorie zu (SQLite:
+  `category_id` des Feeds = Duplikat-GUID `AAAAAAAA-…`, bestehende
+  „News"-Zuordnung eines anderen Feeds unverändert) — `manual-5-04`
+  (Sheet), `manual-5-05` (Karte zeigt „News")
+- [x] Trefferkarte mit leerem Titel (`https://github.com/dotnet/maui/commits.atom`
+  → `ExactUrl`-Discovery-Ergebnis ohne `Title`): Feed-URL erscheint nur
+  einmal als Headline, die Meta-URL-Zeile ist ausgeblendet (UIA: genau
+  ein `github.com/…`-Text-Element) — `manual-5-06`
+- [x] Edit-Sheet: nur URL-Feld, Benachrichtigungs-Switch, iOS-Hinweis und
+  „Speichern" (308 × 44 pt); kein „Suchen", kein „URL direkt hinzufügen",
+  kein Offline-Hinweis — `manual-5-07`
+- [x] Listenansicht unverändert — `manual-5-01`
+
+Nicht interaktiv verifizierbar in dieser Umgebung:
+
+- Offline-Hinweis im Edit-Modus (`Disable-NetAdapter` ohne Adminrechte
+  nicht möglich): der neue `DataTrigger` auf `IsEditMode` ist deckungsgleich
+  mit dem live verifizierten Trigger der „Suchen"-/„URL direkt
+  hinzufügen"-Buttons (in `manual-5-07` ausgeblendet) und per XAML-Review
+  geprüft; im Edit-Modus ist der Hinweis auch online nicht sichtbar.
+
+## Issue #59 (Iteration 4): Review-Nacharbeiten (Offline-Direkt-Add, Sheet-UX, Lebenszyklus)
+
+Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+Nacharbeiten aus `review-usability.md` (3 Befunde) und `review-code.md`
+(8 Befunde):
+
+- Hinzufügen-Sheet hat jetzt einen zweiten, **offline aktiven** Button
+  „URL direkt hinzufügen" (`ButtonDirectAdd` → `DirectAddCommand`,
+  `CanExecute = !IsSearching`): persistiert die eingegebene URL ohne Suche
+  direkt mit `FeedTitleFallback`-Titel, `CategoryId = null`,
+  `NotificationsEnabled = true`; Domain-Eingaben werden wie bei der Suche zu
+  `https://…` normalisiert; Dubletten/ungültige URLs melden den Fehler im
+  geöffneten Sheet. Damit ist der `FeedSearchOfflineHint` („…bleibt möglich")
+  wieder wahr.
+- „Suchen"- und „URL direkt hinzufügen"-Buttons werden im Edit-Modus per
+  `DataTrigger` auf `IsEditMode` ausgeblendet — eine begonnene Bearbeitung
+  kann nicht mehr lautlos durch „Suchen" verworfen werden; `SearchCommand`
+  ist zusätzlich per `CanExecute`/`SearchAsync`-Guard im Edit-Modus
+  deaktiviert (deckt auch `Entry.ReturnCommand`/Enter-Taste ab).
+- Kategorie-ActionSheet: Pseudo-Eintrag `CategoryNone` jetzt Klartext
+  „Keine Kategorie"/„No category" (statt „—"); Kategorien, die exakt wie der
+  Abbrechen-Button heißen, werden aus den Optionen gefiltert, damit Abbruch
+  und Auswahl unterscheidbar bleiben (gleiches Muster in `UnreadPage`
+  bewusst unverändert gelassen).
+- `FeedsPage.xaml.cs`: `PropertyChanged`-Lambda durch benannten Handler
+  `OnViewModelPropertyChanged` ersetzt — an `OnAppearing` abonniert, in
+  `OnDisappearing` abgemeldet (Singleton-VM × Transient-Page); `OnFeedTapped`
+  in `RenameFeedAsync`/`ChangeCategoryAsync`/`ConfirmDeleteFeedAsync`
+  aufgeteilt.
+- `FeedsViewModel.Search.cs`: Dubletten-Pfad des Direkt-Hinzufügens schließt
+  jetzt die Trefferansicht (`ShowSearchResults = false`), das Sheet öffnet
+  über der Feed-Liste; Persist-Logik in `TryAddFeedDirectlyAsync`
+  zusammengeführt (durch `OfferDirectAddAsync` und `DirectAddAsync` geteilt).
+- `FeedsViewModel.cs`: `OpenAddForm` setzt `SelectedFeed`/`NewUrl`/`NewTitle`/
+  `FeedNotificationsEnabled`/`SelectedCategory` zurück (Invariante „Add-Modus
+  ⇒ kein `SelectedFeed`"); toter Add-Zweig aus `SaveAsync` entfernt —
+  Hinzufügen läuft ausschließlich über Suche/Abonnieren/Direkt-Add, der
+  Speichern-Button existiert nur im Edit-Modus (Entscheidung: bereinigt statt
+  umwidmen, weil `DirectAddAsync` ohne `NewTitle`/`SelectedCategory` mit
+  `FeedTitleFallback` persistiert und den Pfad nicht benötigt).
+- `FeedSyncService.cs`: veralteter Kommentar zur Host-Vorbelegung korrigiert;
+  toter Schlüssel `PlaceholderFeedTitle` aus beiden resx + Designer entfernt;
+  Doku-Wert `RoundRectangle 20,20,0,0` → `12,12,0,0` korrigiert.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 309 bestanden, 0 fehlgeschlagen, 0 übersprungen (Vorher: 303) |
+| MAUI-App-Build (Windows) | `dotnet build src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0 -c Release` | Erfolgreich, 0 Warnungen, 0 Fehler (XAML-SourceGen) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Teständerungen (netto +6): neu `DirectAddCommand_WhenOffline_PersistsFeedWithDefaults`,
+`DirectAddCommand_DomainInput_NormalizesToHttpsUrl`,
+`DirectAddCommand_WhenUrlInvalid_SetsErrorAndKeepsSheetOpen`,
+`DirectAddCommand_WhenDuplicate_SetsErrorAndKeepsSheetOpen`,
+`SaveCommand_WithoutSelectedFeed_DoesNotAddFeed`,
+`SearchCommand_InEditMode_DoesNotDiscardEdit` sowie die Regressionstests
+`SearchCommand_NoResultsAndConfirmedDuplicate_ClosesResultsView` (vor Fix rot:
+`ShowSearchResults` blieb `true`) und `OpenAddFormCommand_AfterEdit_ClearsStaleEditState`
+(vor Fix rot: `SelectedFeed`/`NewUrl` veraltet); entfernt
+`SaveCommand_NewFeed_PersistsNotificationsEnabledFalse` und
+`SaveCommand_NewFeed_PersistsHealthStatusOk` (toter UI-Pfad, Kontrakt jetzt
+über `DirectAddCommand`-Tests abgedeckt); `SaveCommand_ResetsFeedNotificationsEnabled`
+läuft jetzt über den Edit-Pfad.
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 4)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per
+`GetWindowRect` verifiziert: **390 × 844 pt**. Interaktion über UI Automation
++ `mouse_event` (`test-results/issue-59/uia.ps1`), Texteingabe über
+`ValuePattern.SetValue`. Theme-Umschaltung über `settings.theme` in der
+SQLite-DB mit App-Neustart. Screenshots unter
+`test-results/issue-59/manual-4-*.png`; deutsch lokalisierte UI.
+
+Verifizierte Szenarien (Live-Lauf):
+
+- [x] Add-Sheet zeigt neben „Suchen" den neuen Button „URL direkt hinzufügen"
+  (beide 44 pt, vertikal gestapelt) — `manual-4-02` (Dark), `manual-4-06`
+  (Light)
+- [x] „URL direkt hinzufügen" mit `https://example.com/direkt-add.xml` →
+  Sheet schließt ohne Dialog, Feed `direkt-add.xml` (Dateinamen-Fallback) in
+  Liste und SQLite (`category_id=NULL`, `notifications_enabled=1`) —
+  `manual-4-03` (Dark)
+- [x] Dublette über Direkt-Add → „Ein Feed mit dieser URL existiert bereits."
+  im geöffneten Sheet, kein zweiter Feed (SQLite: 1 Zeile) — `manual-4-07`
+  (Light)
+- [x] Kategorie-ActionSheet zeigt Klartext „Keine Kategorie" statt „—" —
+  `manual-4-04` (Dark)
+- [x] Edit-Modus („Feed bearbeiten") zeigt nur noch URL-Feld,
+  Benachrichtigungs-Switch, iOS-Hinweis und „Speichern" — kein „Suchen",
+  kein „URL direkt hinzufügen" — `manual-4-05` (Dark)
+- [x] Listenansicht unverändert — `manual-4-01` (Dark)
+
+Nicht interaktiv verifizierbar in dieser Umgebung (durch Tests abgedeckt):
+
+- Offline-Schaltung (`Disable-NetAdapter` ohne Adminrechte nicht möglich):
+  der Direkt-Add-Button ist online wie offline sichtbar und funktional;
+  `DirectAddCommand_WhenOffline_PersistsFeedWithDefaults` belegt, dass der
+  Pfad bei `IsOnline == false` persistiert, während `SearchCommand` deaktiviert
+  bleibt (`CanExecute = false`).
+
+## Issue #59 (Iteration 3): Listenansicht, Bottom-Sheet, Umbenennen/Kategorie
+
+Branch: `task-issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+Die `FeedsPage` wurde von einer kombinierten Formular-plus-Liste-Seite zu einer
+reinen Listenansicht umgebaut: Ein primärer „+“-Button öffnet das
+Hinzufügen-Formular als Bottom-Sheet-Overlay; Feeds ohne Titel erhalten den
+Dateinamen der Feed-URL als Fallback; das Feed-Kontextmenü bietet neu
+„Umbenennen" und „Kategorie ändern".
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 303 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline der Iteration: 274) |
+| MAUI-App-Build (Windows) | `dotnet build src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0 -c Release` | Erfolgreich, 0 Warnungen, 0 Fehler (XAML-SourceGen) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Neue Tests (29): `FeedTitleFallbackTests` (8 Fälle: letztes Pfadsegment,
+URL-Dekodierung, Host-Fallback, unparsebare URL → Original-String, Trailing
+Slash, Placeholder-Match/-Mismatch, Case-insensitiv), `FeedsViewModelTests`
+(ca. 20 neue/angepasste: `OpenAddFormCommand`/`CloseAddFormCommand`,
+`EditAsync` öffnet Sheet im Edit-Modus, `RenameFeedAsync` Erfolg/leer/null,
+`ChangeFeedCategoryAsync` Setzen/`Guid.Empty`→null/null-Argumente,
+Suche schließt Sheet bei Treffern, Sheet bleibt bei
+`FeedSearchUnavailableException` und Save-Validierungsfehlern offen,
+Direkt-Hinzufügen bestätigt → sofort persistiert mit Dateinamen-Titel +
+`CategoryId = null` + `NotificationsEnabled = true`, Dublette →
+`ErrorFeedDuplicate` im offenen Sheet, Abbruch bewahrt Formularzustand,
+Treffer-Abonnieren nutzt `FeedTitleFallback` bei leerem Titel),
+`FeedSyncServiceTests` (1 neu: Dateinamen-Platzhalter-Titel wird beim Sync
+durch den Dokumenttitel ersetzt; explizite Titel bleiben unverändert).
+
+Zusätzlich: `scripts/add-license-headers.mjs` überspringt jetzt `.vs` und
+`TestResults` (git-ignorierte, maschinenlokale VS-/Test-Artefakte — analog zu
+`bin`/`obj`), weil VS die Datei `.vs\...\testlog.manifest` im laufenden Betrieb
+sperrt und der Check sonst falsch-negativ anschlägt.
+
+### Mobile-UI-Design-Review „Feeds" (Listenansicht + Bottom-Sheet)
+
+Statische XAML-Prüfung der Änderungen an `FeedsPage.xaml` gegen die
+AGENTS.md-Regeln und den Design-Entwurf:
+
+- [x] Seite ist list-first: permanente Formularkarte entfernt, Row 0 enthält
+  nur den vollflächigen Primär-Button „+ Feed per URL hinzufügen"
+  (`ActionAddFeed`, `MinimumHeightRequest="44"`), die Feed-Liste liegt in
+  `Grid`-Row `*`
+- [x] Bottom-Sheet als `Grid`-Overlay über beide Rows: halbtransparenter
+  Backdrop (`AppThemeBinding`) mit `TapGestureRecognizer` →
+  `CloseAddFormCommand`, bottom-alignierter `Border` mit oberen Rundungen
+  (`RoundRectangle 12,12,0,0`), Sichtbarkeit per `DataTrigger` auf
+  `ShowAddForm`
+- [x] Sheet-Titel lokalisiert je nach Modus (`FeedAddSheetTitle` /
+  `FeedEditSheetTitle` per `DataTrigger` auf `IsEditMode`), Schließen-Button
+  ≥ 44 pt
+- [x] Sheet enthält `ErrorMessage` + `SearchErrorMessage`, Offline-Hint,
+  `NewUrl`-Entry (`ReturnCommand` = `SearchCommand`), `ActivityIndicator`,
+  Suchen-Button; Edit-Modus zusätzlich Benachrichtigungs-Switch + iOS-Hinweis
+  + Speichern-Button — alles vertikal gestapelt, keine Button-Reihen
+- [x] Seiten-Fehler (`ErrorMessage`) liegt außerhalb des Sheets und bleibt
+  sichtbar, wenn das Sheet schließt
+- [x] Keine `ScrollView`/`CollectionView`-Verschachtelung; Trefferliste,
+  Attribution, RefreshView und Offline-Banner unverändert
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle neuen Texte aus
+  `AppResources.*` (EN + DE, 7 neue Schlüssel: `ActionAddFeed`,
+  `FeedAddSheetTitle`, `FeedEditSheetTitle`, `ButtonRename`,
+  `ButtonChangeCategory`, `PromptRenameFeedTitle`, `PromptRenameFeedMessage`)
+- [x] `FeedsPage.xaml.cs`: `PropertyChanged` → `NewUrlEntry.Focus()` via
+  `Dispatcher.Dispatch`; Kontextmenü erweitert um „Umbenennen"
+  (`DisplayPromptAsync` mit Titel-Vorbelegung → `RenameFeedAsync`) und
+  „Kategorie ändern" (`DisplayActionSheetAsync` mit `CategoryNone` +
+  Kategorien → `ChangeFeedCategoryAsync`); `OnBackButtonPressed` schließt
+  offenes Sheet
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 3)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per
+`GetWindowRect` verifiziert: **390 × 844 pt**. Interaktion über UI Automation
++ `mouse_event` (`test-results/issue-59/uia.ps1`, um `sysback` für
+XButton1/System-Zurück erweitert), Texteingabe über `ValuePattern.SetValue`.
+Theme-Umschaltung über `settings.theme` in der SQLite-DB mit App-Neustart.
+Screenshots unter `test-results/issue-59/manual-2-*.png` (Dark) und
+`manual-3-*.png` (Light); deutsch lokalisierte UI.
+
+Verifizierte Szenarien (Live-Lauf):
+
+- [x] Listenansicht: Feed-Liste + Primär-Button „+ Feed per URL hinzufügen",
+  kein permanentes Formular — `manual-2-01` (Dark), `manual-3-01` (Light)
+- [x] Sheet öffnet sich als Bottom-Overlay, URL-Feld erhält Fokus —
+  `manual-2-02` (Dark), `manual-3-02` (Light)
+- [x] Schließen-Button und Backdrop-Tap schließen das Sheet; System-Zurück
+  (XButton1 via `uia.ps1 -Action sysback`) schließt das Sheet, App bleibt auf
+  der Feeds-Seite
+- [x] Suche → Trefferliste ersetzt die Liste → Treffer-Tap →
+  „Feed abonnieren?"-Dialog → „Ja" → Feed in Liste, SQLite-persistiert —
+  `manual-2-03` … `manual-2-06` (Dark)
+- [x] Kontextmenü: „Aktualisieren", „Umbenennen", „Kategorie ändern",
+  „Bearbeiten", „Löschen" — `manual-2-07` (Dark)
+- [x] Umbenennen: Prompt mit vorbefülltem Titel → persistiert + Liste zeigt
+  neuen Titel (`Heise umbenannt`) — `manual-2-08` (Dark)
+- [x] Kategorie ändern: ActionSheet mit „—" (`CategoryNone`), „News",
+  „Sport", „Unterhaltung" → Auswahl persistiert (`category_id` in SQLite
+  geprüft) — `manual-2-09` (Dark)
+- [x] Bearbeiten: Sheet im Edit-Modus (Titel „Feed bearbeiten", URL + Switch
+  „Benachrichtigungen" + iOS-Hinweis + Speichern) — `manual-2-10` (Dark)
+- [x] Ungültige URL im Edit-Modus → `ErrorMessage` im geöffneten Sheet —
+  `manual-2-11` (Dark); doppelte URL → `ErrorFeedDuplicate` im Sheet —
+  `manual-2-12` (Dark)
+- [x] Direkt-Hinzufügen: `https://example.com/mein-feed.xml` → „Kein Feed
+  gefunden"-Dialog → „Ja" → Sheet schließt, Liste zeigt `mein-feed.xml`
+  (Dateinamen-Fallback), SQLite: `title='mein-feed.xml'`,
+  `category_id=NULL`, `notifications_enabled=1` — `manual-2-13`,
+  `manual-2-14` (Dark)
+- [x] Sync-Platzhalter-Auflösung: per SQL eingefügter Feed mit Titel
+  `heise-Rubrik-IT-atom.xml` → Kontextmenü „Aktualisieren" → Titel wird zu
+  „heise online IT" — `manual-2-15` (Dark)
+- [x] Suche nicht erreichbar (`nonexistent.invalid`) →
+  `FeedSearchUnavailableRetry` im geöffneten Sheet, Suchen-Button bleibt —
+  `manual-2-16` (Dark)
+
+Nicht interaktiv verifizierbar in dieser Umgebung (durch Tests abgedeckt):
+
+- Offline-Hint im Sheet (`FeedSearchOfflineHint` + deaktivierter
+  Suchen-Button): `Disable-NetAdapter` ohne Adminrechte nicht möglich.
+  Abgedeckt durch `SearchCommand_WhenOffline_SkipsSearchWithoutError` und
+  `ConnectivityChanged_UpdatesSearchCommandCanExecute`.
+- iOS-Simulator: nicht möglich auf Windows (siehe `scripts/iOS-Deployment.ps1`).
+
+## Issue #59: Feed-Suche über feedsearch.dev und clientseitige Autodiscovery
+
+Branch: `task/issue-59-efbace56737047f4b10610b83d0e137c-erweiterung-der-hinzufuegenfun`
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 274 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 239) |
+| MAUI-App-Build (Windows) | `dotnet build src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0 -c Release` | Erfolgreich, 0 Warnungen, 0 Fehler (XAML-SourceGen) |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+
+Neue Tests (35): `FeedSearchServiceTests` (15 Fälle: Directory-Mapping inkl.
+`bozo`-Filter, Sortierung `MatchKind`→`Score`→`FeedUrl`, `ExactUrl`-Erkennung,
+Autodiscovery via Link-Tags/Standardpfade/Feed-Dokument, Fast-Path ohne
+Site-Request, Dedupe nach `FeedUrl` getrennt für Directory und Discovery,
+Fehler beider Quellen/Timeout/Parsefehler → `FeedSearchUnavailableException`,
+Aufrufer-Abbruch → `OperationCanceledException`, leere Liste),
+`FeedSyncServiceTests` (2: Platzhalter-Titel `Title == Url` wird durch
+`SyndicationFeed.Title` ersetzt, gesetzter Titel bleibt unverändert),
+`FeedsViewModelTests` (17: Suche befüllt Trefferliste, Domain-Normalisierung
+`https://…`, Freitext ohne Service-Aufruf, leere Eingabe, Offline-Hint,
+`FeedSearchUnavailable`-Fehlerkanal, Retry-Hinweis bei Domain-Eingabe,
+`ConfirmDirectAddAsync`-Fallback bestätigt/abgelehnt (getrennte Tests),
+Dialog-Fehler löst keinen Doppel-Dialog aus, Domain ohne Treffer ohne Dialog,
+`NewUrl`-Reset, `CloseSearchResultsCommand`, Abonnieren inkl.
+Kategorie/Notifications/Platzhalter-Titel, Dublette, Connectivity-CanExecute),
+`ServiceCollectionTests` (`AddReporterServices_ResolvesFeedSearchService`).
+Neue Hilfsklassen: `FakeFeedSearchService`, `StubHttpMessageHandler` (privat in
+`FeedSearchServiceTests`).
+
+### Mobile-UI-Design-Review „Feeds"
+
+Statische XAML-Prüfung der Änderungen an `FeedsPage.xaml` gegen die
+AGENTS.md-Regeln und den Design-Entwurf
+`design-draft/stitch_local_rss_feed_reader/feeds_health_status/screen.png`:
+
+- [x] Kein horizontales Datentabellen-Layout; Trefferliste als kartenbasierte
+  `CollectionView` (`Border` + `RoundRectangle 12`, `AppThemeBinding`
+  `SurfaceContainer`) mit `TapGestureRecognizer` → `OnSearchResultTapped` +
+  `DisplayAlertAsync`-Bestätigung
+- [x] Keine mehreren Text-Buttons in einer Zeile — „Suchen" und „Speichern"
+  vertikal gestapelt im Formular
+- [x] Treffer-`CollectionView` in `Grid`-Row `*` (Row 1, Wrapper `*,Auto` mit
+  Attribution-Footer), keine `ScrollView`-/`CollectionView`-Verschachtelung;
+  Sichtbarkeit per `DataTrigger` auf `ShowSearchResults`, Feed-Liste invers
+- [x] Touch-Ziele ≥ 44 pt: Trefferkarte `MinimumHeightRequest="44"`, Buttons über
+  globalen Style (`MinimumHeightRequest="44"`)
+- [x] Dark Mode ausschließlich über `AppThemeBinding`; alle neuen Texte aus
+  `AppResources.*` (EN + DE, 12 neue Schlüssel inkl. `FeedSearchUnavailableRetry`
+  und `ButtonCloseSearchResults` aus Iteration 2; `PlaceholderFeedUrl`
+  entfernt, Designer-Properties ergänzt)
+- [x] `EmptyView` „Keine Feeds gefunden." bei leerem Ergebnis;
+  `FeedSearchAttribution` („powered by feedsearch.dev") sichtbar unter der
+  Trefferliste (Nutzungsbedingung der API)
+- [x] Offline: Suchen-Button per `SearchCommand.CanExecute` deaktiviert,
+  `FeedSearchOfflineHint`-Label per `DataTrigger` (`IsOnline == false`)
+- [x] Sichtbarer Rückweg aus der Trefferansicht: Button „Zurück zu meinen
+  Feeds" (`CloseSearchResultsCommand`, `MinimumHeightRequest="44"`) unterhalb
+  der Attribution (Iteration 2, Usability-Befund)
+- [x] Fehlerhinweis differenziert: `FeedSearchUnavailable` (Direkt-Hinzufügen-
+  Angebot) nur bei gültiger URL, sonst `FeedSearchUnavailableRetry`
+  (Iteration 2, Usability-Befund)
+
+### Manuelle UI-Verifikation (durchgeführt, Iteration 2)
+
+Unpackaged `win-x64`-Release-Build gestartet; Fenstergröße per
+`GetWindowRect` verifiziert: **390 × 844 pt** (Größe wird in
+`App.xaml.cs` `CreateWindow` gesetzt). Interaktion über UI Automation +
+`mouse_event` (`test-results/issue-59/uia.ps1`), Texteingabe über
+`ValuePattern.SetValue`. Theme-Umschaltung über `settings.theme` in der
+SQLite-Datenbank (`system`/`dark`/`light`) mit App-Neustart; OS-Default ist
+Dark. Screenshots unter `test-results/issue-59/manual-*.png`.
+
+Verifizierte Szenarien (Live-Lauf, deutsch lokalisierte UI):
+
+- [x] Domain-Suche `tagesschau.de`/`heise.de` → Trefferliste als Karten
+  (Titel, Site-Name + Site-URL, Feed-URL) mit Attribution „Suche powered by
+  feedsearch.dev" und Button „Zurück zu meinen Feeds" (44 pt) —
+  `manual-04`/`manual-09` (Dark), `manual-11` (Light)
+- [x] Treffer-Tap → Bestätigungsdialog „Feed abonnieren?" mit Titel in der
+  Nachricht → „Ja" → Feed erscheint in der Feed-Liste; Persistenz per SQLite-
+  Abfrage verifiziert (`Kommentare zu: Der Tötungsfall in Offenburg`,
+  Health `OK`) — `manual-05`, `manual-06` (Dark)
+- [x] URL ohne Treffer (`https://example.com/`, `https://iana.org/`) →
+  Direkt-Hinzufügen-Dialog nennt die eingegebene Adresse (`{0}`-Platzhalter)
+  → „Ja" → `NewTitle` mit Host vorbefüllt (`example.com`, per UIA
+  `ValuePattern` ausgelesen) → „Speichern" persistiert den Feed —
+  `manual-12` (Light); derselbe Dialog im Dark-Lauf `manual-03`
+- [x] Suche nicht erreichbar: beide Quellen schlugen fehl (feedsearch.dev
+  lehnt localhost-Anfragen mit 400 ab; Discovery gegen `127.0.0.1:8099`
+  schlug im App-Prozess fehl) → Hinweis „Die Feed-Suche ist nicht
+  erreichbar. Du kannst die URL direkt hinzufügen." + Direkt-Hinzufügen-
+  Dialog bleibt nutzbar — `manual-03` (Dark)
+- [x] Dubletten-Treffer abonnieren → „Ein Feed mit dieser URL existiert
+  bereits.", kein zweiter Feed (SQLite-Abfrage: 1 Zeile) — `manual-07` (Dark)
+- [x] „Zurück zu meinen Feeds" verlässt die Trefferansicht und zeigt die
+  Feed-Liste wieder (per UIA-Elementliste verifiziert)
+- [x] Layout: Karten ≥ 44 pt, `AppThemeBinding` Light/Dark (Hintergrund
+  hell 236,238,240 / dunkel 28,32,40 per Pixelprobe), keine
+  Scroll-Verschachtelung, `EmptyView`, Attribution sichtbar;
+  `FeedsPage`-Formular `manual-02`/`manual-08` (Dark), `manual-10` (Light)
+
+Nicht interaktiv verifizierbar in dieser Umgebung (durch Tests abgedeckt):
+
+- Offline-Szenario (Suchen-Button deaktiviert + `FeedSearchOfflineHint`):
+  `Disable-NetAdapter` scheitert ohne Adminrechte („Zugriff verweigert").
+  Abgedeckt durch `SearchCommand_WhenOffline_DoesNotCallService_AndSetsHint`
+  und `ConnectivityChanged_UpdatesSearchCommandCanExecute`.
+- Treffer ohne Titel → Titel-Befüllung nach erstem Sync: lokaler
+  Stub-Feed-Server (`test-results/issue-59/stubserver.py`) ist vom
+  App-Prozess aus nicht erreichbar (Anfragen kommen nicht am Stub an,
+  während `dotnet fsi` denselben `FeedSearchService` erfolgreich in 135 ms
+  mit 1 `Discovered`-Treffer beantwortet — siehe `probe.fsx`). Abgedeckt
+  durch `SubscribeResultCommand_WhenTitleEmpty_StoresFeedUrlAsPlaceholder`
+  und `SyncFeedAsync_WhenTitleIsPlaceholder_UpdatesTitleFromFeedDocument`.
+- iOS-Simulator: nicht möglich auf Windows (siehe `scripts/iOS-Deployment.ps1`).
+
+Hinweis zu den Screenshots: `manual-01` bis `manual-09` wurden bei
+OS-Dark-Mode aufgenommen (`theme=system`/`dark`), `manual-10` bis
+`manual-12` bei `theme=light`.
+
+## Issue #57: PolyForm Noncommercial License 1.0.0
+
+Branch: `task/issue-57-08ef43ab80c44d8cabda37af9d9cb29a-polyform-noncommercial-license`
+
+### Verifikation
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Security-Scan, Release-Build mit `TreatWarningsAsErrors` — 0 Warnungen, 0 Fehler) |
+| Node-Tests | `npm test` | 36 bestanden, 0 fehlgeschlagen |
+| .NET-Tests | `dotnet test Reporter.sln` | 239 bestanden, 0 fehlgeschlagen |
+| Lizenzheader-Abdeckung | `node scripts/add-license-headers.mjs --check` | 0 Dateien ohne Lizenzheader |
+| Lizenzheader-Staged-Modus | `node scripts/add-license-headers.mjs --staged` | neue Datei ohne Header → Exit 1; nach Fix → Exit 0 |
+
+Automatisierung für neue Dateien: `pre-commit`-Hook (`--staged`), CI-Step „License header check" im `static checks`-Job (`pr-staging-ci.yml`, `staging-ci.yml`) und `Run-StaticChecks.ps1 -Check LicenseHeaders`.
+
+### Konsistenzprüfung (gemäß Anforderung 10)
+
+- [x] `LICENSE` im Root vorhanden, unveränderter Volltext der PolyForm Noncommercial License 1.0.0 (plus `Required Notice:`-Zeile und klar abgetrenntem Hinweis auf kommerzielle Lizenzanfragen — keine zusätzlichen Bedingungen)
+- [x] README enthält Lizenzangabe, Erlaubnis für private/nicht-kommerzielle Nutzung, Verbot kommerzieller Nutzung, Kontaktadresse und Lizenz-FAQ (private vs. kommerzielle Nutzung, kommerzielle Lizenzierung, erlaubt/verboten)
+- [x] Quellcode enthält Lizenzheader (alle kommentierfähigen Dateien: `.cs`, `.xaml`, `.csproj`, `.resx`, `.xml`, `.plist`, `.yml`, `.ps1`, `.py`, `.mjs`, `.md` u. a.; Binärdateien, `.sln` und JSON-Dateien ohne Kommentarsyntax ausgenommen — `package.json` trägt das `license`-Feld)
+- [x] Keine widersprüchlichen Lizenzangaben: `package.json`/`package-lock.json` = `PolyForm-Noncommercial-1.0.0`, `Directory.Build.props` = `PackageLicenseExpression` `PolyForm-Noncommercial-1.0.0`
+- [x] Contributions: `CONTRIBUTING.md` + `.github/pull_request_template.md` mit Bestätigungs-Checkbox
+- [x] Kommerzielle Lizenzierung: `COMMERCIAL-LICENSE.md` + README-Hinweis; gilt nicht automatisch, individuell vereinbart
+- [x] Repository-Metadaten: GitHub-Topics `polyform-noncommercial`, `noncommercial-license` gesetzt; Lizenz-Anzeige im About-Bereich ergibt sich automatisch aus der `LICENSE`-Datei
+- [x] Abhängigkeiten: NuGet-/npm-Pakete permissiv lizenziert (MIT/Apache-2.0 o. ä.), keine restriktiven/inkompatiblen Lizenzen; Security-Scan ohne Befund
+
+Keine UI-Änderung — Mobile-UI-Design-Review nicht erforderlich.
 
 ## Issue #28: Offline-Fähigkeit und Mehrsprachigkeit (EN/DE)
 

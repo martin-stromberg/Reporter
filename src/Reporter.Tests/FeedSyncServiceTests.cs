@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using System.Net;
 using System.Text;
 using Reporter.Core.Interfaces;
@@ -19,6 +21,8 @@ public class FeedSyncServiceTests : IDisposable
     private readonly SyncLogRepository _syncLogRepository;
     private readonly SettingsRepository _settingsRepository;
     private readonly KeywordRepository _keywordRepository;
+    private readonly KeywordFilter _keywordFilter;
+    private readonly FakeFeedIconService _feedIconService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncServiceTests"/> class.
@@ -31,6 +35,8 @@ public class FeedSyncServiceTests : IDisposable
         _syncLogRepository = new SyncLogRepository(_factory);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
+        _keywordFilter = new KeywordFilter(_keywordRepository, new KeywordMatcher());
+        _feedIconService = new FakeFeedIconService();
     }
 
     /// <summary>
@@ -41,22 +47,9 @@ public class FeedSyncServiceTests : IDisposable
         _factory.Dispose();
     }
 
-    private async Task<Guid> SeedFeedAsync(string url = "https://example.com/rss", bool notificationsEnabled = true)
-    {
-        var feedId = Guid.NewGuid();
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = feedId,
-            Url = url,
-            Title = "Test Feed",
-            NotificationsEnabled = notificationsEnabled,
-        });
-        return feedId;
-    }
-
     private FeedSyncService CreateService(string content, HttpStatusCode statusCode = HttpStatusCode.OK, INotificationService? notificationService = null, INetworkStatusService? networkStatusService = null)
     {
-        var handler = new FakeHttpMessageHandler((request) =>
+        var handler = new FakeHttpMessageHandler(_ =>
         {
             if (statusCode != HttpStatusCode.OK)
             {
@@ -69,47 +62,19 @@ public class FeedSyncServiceTests : IDisposable
             };
         });
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService());
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
     }
 
     private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler(_ => throw exception);
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService());
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
     }
 
     private NotificationService CreateNotificationService(FakeLocalNotificationService localNotificationService)
     {
-        return new NotificationService(_settingsRepository, _keywordRepository, new KeywordMatcher(), localNotificationService);
-    }
-
-    private static string RssXml(IEnumerable<(string Title, string Link, string Guid, DateTime? PubDate, string? Description)> items)
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        builder.AppendLine("<rss version=\"2.0\">");
-        builder.AppendLine("  <channel>");
-        builder.AppendLine("    <title>Test Feed</title>");
-        foreach (var item in items)
-        {
-            builder.AppendLine("    <item>");
-            builder.AppendLine($"      <title>{item.Title}</title>");
-            builder.AppendLine($"      <link>{item.Link}</link>");
-            builder.AppendLine($"      <guid>{item.Guid}</guid>");
-            if (item.PubDate.HasValue)
-            {
-                builder.AppendLine($"      <pubDate>{item.PubDate.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)}</pubDate>");
-            }
-            if (item.Description is not null)
-            {
-                builder.AppendLine($"      <description>{item.Description}</description>");
-            }
-            builder.AppendLine("    </item>");
-        }
-        builder.AppendLine("  </channel>");
-        builder.AppendLine("</rss>");
-        return builder.ToString();
+        return new NotificationService(_settingsRepository, _keywordFilter, localNotificationService);
     }
 
     /// <summary>
@@ -119,9 +84,9 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_ValidRss_CreatesItems_AndSetsHealthOk()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var now = DateTime.UtcNow;
-        var xml = RssXml(
+        var xml = TestFeedXml.Rss(
         [
             ("Item One", "https://example.com/1", "guid-1", now.AddHours(-1), "Description one"),
             ("Item Two", "https://example.com/2", "guid-2", now, "Description two"),
@@ -156,8 +121,8 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_Duplicates_SkipsExistingItems()
     {
-        var feedId = await SeedFeedAsync();
-        var xml = RssXml(
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.Rss(
         [
             ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
         ]);
@@ -174,13 +139,77 @@ public class FeedSyncServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that items duplicated within the same feed document are inserted only once.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_DuplicatesWithinSameDocument_InsertsOnce()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var now = DateTime.UtcNow;
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", now, "Description one"),
+            ("Item One Copy", "https://example.com/1", "guid-1", now, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+    }
+
+    /// <summary>
+    /// Verifies that a sync with mixed new and existing items batch-inserts only the new ones.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MixedNewAndExisting_BatchInsertsOnlyNew()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var now = DateTime.UtcNow;
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Existing",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = now,
+        });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Existing", "https://example.com/1", "guid-1", now, "Description one"),
+            ("New One", "https://example.com/2", "guid-2", now, "Description two"),
+            ("New Two", "https://example.com/3", "guid-3", now, "Description three"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(2, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Equal(3, items.Count);
+        Assert.Single(items, i => i.GuidOrHash == "guid-1");
+        Assert.Contains(items, i => i.GuidOrHash == "guid-2");
+        Assert.Contains(items, i => i.GuidOrHash == "guid-3");
+    }
+
+    /// <summary>
     /// Verifies that an unreachable feed sets health to Error and preserves existing items.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task SyncFeedAsync_Unreachable_KeepsItemsAndLogsError()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var itemId = Guid.NewGuid();
         await _itemRepository.AddAsync(new Item
         {
@@ -214,7 +243,7 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_InvalidXml_SetsError()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var service = CreateService("this is not xml");
 
         var result = await service.SyncFeedAsync(feedId);
@@ -237,16 +266,16 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_FewerItems_SetsWarning()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var pubDate = DateTime.UtcNow;
-        var fourItems = RssXml(
+        var fourItems = TestFeedXml.Rss(
         [
             ("A", "https://example.com/a", "guid-a", pubDate, "A"),
             ("B", "https://example.com/b", "guid-b", pubDate, "B"),
             ("C", "https://example.com/c", "guid-c", pubDate, "C"),
             ("D", "https://example.com/d", "guid-d", pubDate, "D"),
         ]);
-        var oneItem = RssXml([
+        var oneItem = TestFeedXml.Rss([
             ("A", "https://example.com/a", "guid-a", pubDate, "A"),
         ]);
 
@@ -269,9 +298,9 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_NoNewItemsForThirtyDays_SetsWarning()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var pubDate = DateTime.UtcNow.AddDays(-40);
-        var xml = RssXml([
+        var xml = TestFeedXml.Rss([
             ("Old Item", "https://example.com/old", "guid-old", pubDate, "Old"),
         ]);
         var service = CreateService(xml);
@@ -289,9 +318,9 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncAllAsync_WithTwoFeeds_CreatesItemsForBoth()
     {
-        var feedA = await SeedFeedAsync("https://example.com/a");
-        var feedB = await SeedFeedAsync("https://example.com/b");
-        var xml = RssXml([
+        var feedA = await TestDataSeeder.SeedFeedAsync(_feedRepository, "https://example.com/a");
+        var feedB = await TestDataSeeder.SeedFeedAsync(_feedRepository, "https://example.com/b");
+        var xml = TestFeedXml.Rss([
             ("Item", "https://example.com/item", "guid-item", DateTime.UtcNow, "Desc"),
         ]);
         var service = CreateService(xml);
@@ -310,10 +339,10 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncAllAsync_WhenOffline_ReturnsErrorWithoutSyncLog()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var feedBefore = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(feedBefore);
-        var service = CreateService(RssXml([
+        var service = CreateService(TestFeedXml.Rss([
             ("Item", "https://example.com/item", "guid-item", DateTime.UtcNow, "Desc"),
         ]), networkStatusService: new FakeNetworkStatusService { IsOnline = false });
 
@@ -339,7 +368,7 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_WhenOffline_ReturnsErrorWithoutHealthChange()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var feedBefore = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(feedBefore);
         var service = CreateFailingService(
@@ -368,9 +397,9 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_NewItems_NotifiesWithFeedAndItems()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var localNotifications = new FakeLocalNotificationService();
-        var service = CreateService(RssXml(
+        var service = CreateService(TestFeedXml.Rss(
         [
             ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
             ("Item Two", "https://example.com/2", "guid-2", DateTime.UtcNow, "Description two"),
@@ -396,10 +425,10 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_SummaryMode_SendsSingleSummaryNotification()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         await TestSettingsHelper.SaveAsync(_settingsRepository, notificationSummaryEnabled: true);
         var localNotifications = new FakeLocalNotificationService();
-        var service = CreateService(RssXml(
+        var service = CreateService(TestFeedXml.Rss(
         [
             ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
             ("Item Two", "https://example.com/2", "guid-2", DateTime.UtcNow, "Description two"),
@@ -422,10 +451,10 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_NoNewItems_DoesNotNotify()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var localNotifications = new FakeLocalNotificationService();
         var notificationService = CreateNotificationService(localNotifications);
-        var xml = RssXml([
+        var xml = TestFeedXml.Rss([
             ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
         ]);
         var service = CreateService(xml, notificationService: notificationService);
@@ -446,9 +475,9 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_FeedDisabled_NoNotifications()
     {
-        var feedId = await SeedFeedAsync(notificationsEnabled: false);
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository, notificationsEnabled: false);
         var localNotifications = new FakeLocalNotificationService();
-        var service = CreateService(RssXml([
+        var service = CreateService(TestFeedXml.Rss([
             ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
         ]), notificationService: CreateNotificationService(localNotifications));
 
@@ -466,9 +495,9 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_NotificationThrows_SyncStillSucceeds()
     {
-        var feedId = await SeedFeedAsync();
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var notificationService = new FakeNotificationService { Exception = new InvalidOperationException("notification failed") };
-        var service = CreateService(RssXml([
+        var service = CreateService(TestFeedXml.Rss([
             ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
         ]), notificationService: notificationService);
 
@@ -484,23 +513,437 @@ public class FeedSyncServiceTests : IDisposable
         Assert.Single(items);
     }
 
-    private sealed class FakeHttpMessageHandler : HttpMessageHandler
+    /// <summary>
+    /// Verifies that a placeholder title (the feed URL stored as title) is replaced
+    /// by the feed document title on the first sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsPlaceholder_UpdatesTitleFromFeedDocument()
     {
-        private readonly Func<HttpRequestMessage, HttpResponseMessage> _responseFactory;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FakeHttpMessageHandler"/> class.
-        /// </summary>
-        /// <param name="responseFactory">The factory used to create responses.</param>
-        public FakeHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
+        const string url = "https://example.com/rss";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
         {
-            _responseFactory = responseFactory;
-        }
+            Id = feedId,
+            Url = url,
+            Title = url,
+            NotificationsEnabled = true,
+        });
+        var xml = TestFeedXml.Rss([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Resolved Feed Title");
+        var service = CreateService(xml);
 
-        /// <inheritdoc />
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Feed Title", feed.Title);
+    }
+
+    /// <summary>
+    /// Verifies that a placeholder title in the form the direct-add flow produces
+    /// (the host name stored as title) is replaced by the feed document title on
+    /// the first sync — same as the URL-as-title placeholder.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsHostPlaceholder_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://example.com/rss";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
         {
-            return Task.FromResult(_responseFactory(request));
-        }
+            Id = feedId,
+            Url = url,
+            Title = "example.com",
+            NotificationsEnabled = true,
+        });
+        var xml = TestFeedXml.Rss([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Resolved Feed Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Feed Title", feed.Title);
+    }
+
+    /// <summary>
+    /// Verifies that a placeholder title in the form the file-name fallback
+    /// produces (the last URL path segment stored as title) is replaced by the
+    /// feed document title on the first sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsFileNamePlaceholder_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://heise.de/rss/heise-atom.xml";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = url,
+            Title = "heise-atom.xml",
+            NotificationsEnabled = true,
+        });
+        var xml = TestFeedXml.Rss([
+            ("Item One", "https://heise.de/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Resolved Feed Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Feed Title", feed.Title);
+    }
+
+    /// <summary>
+    /// Verifies that an explicitly set feed title is never overwritten by the
+    /// feed document title.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_WhenTitleIsSet_DoesNotOverwriteTitle()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.Rss([
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ], channelTitle: "Different Document Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Test Feed", feed.Title);
+    }
+
+    /// <summary>
+    /// Verifies that an item whose title matches a configured keyword is not stored
+    /// and does not appear in the unread list.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordTitleMatch_NotSaved()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater mit bis zu 2.600 MBit/s", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+        Assert.Equal("guid-1", items[0].GuidOrHash);
+
+        var unread = await _itemRepository.GetUnreadByDateAsync();
+        Assert.DoesNotContain(unread, i => i.Title.Contains("Anzeige"));
+    }
+
+    /// <summary>
+    /// Verifies that an item matching a keyword via its HTML content is not stored.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordContentHtmlMatch_NotSaved()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Gewinnspiel" });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Regular Title", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Jetzt am Gewinnspiel teilnehmen"),
+            ("Other Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+        Assert.Equal("guid-1", items[0].GuidOrHash);
+    }
+
+    /// <summary>
+    /// Verifies that a non-matching item is stored normally when keywords are configured.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordNoMatch_SavesNormally()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+    }
+
+    /// <summary>
+    /// Verifies that an empty keyword list does not change the previous sync behavior.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_EmptyKeywords_SavesAll()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: Something", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(2, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Equal(2, items.Count);
+    }
+
+    /// <summary>
+    /// Verifies that a keyword-filtered item does not trigger a notification through
+    /// the real <see cref="NotificationService"/> decision chain.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordFiltered_NotNotified()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        var localNotifications = new FakeLocalNotificationService();
+        var service = CreateService(TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]), notificationService: CreateNotificationService(localNotifications));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+        var notification = Assert.Single(localNotifications.ShownNotifications);
+        Assert.Equal("Regular Article", notification.Body);
+    }
+
+    /// <summary>
+    /// Verifies that a filtered item stays filtered on a follow-up sync and is not
+    /// stored as a duplicate.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordFiltered_ResyncStaysFiltered()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+        await service.SyncFeedAsync(feedId);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(0, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+        Assert.Equal("guid-1", items[0].GuidOrHash);
+    }
+
+    /// <summary>
+    /// Verifies that the sync log message reports the number of filtered items and
+    /// that the <see cref="SyncResult"/> carries the same text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordFiltered_LogCountsFiltered()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+            ("Another Article", "https://example.com/2", "guid-2", DateTime.UtcNow, "Description two"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(2, result.NewItems);
+        Assert.NotNull(result.Message);
+        Assert.Contains(", 1 filtered", result.Message);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        var log = Assert.Single(logs);
+        Assert.Equal(result.Message, log.Message);
+    }
+
+    /// <summary>
+    /// Verifies that a keyword match in an Atom 1.0 document is not stored, covering
+    /// the parsing path of the reported example feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeywordTitleMatch_AtomFeed_NotSaved()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        var xml = TestFeedXml.Atom(
+        [
+            ("Anzeige: WLAN-Repeater mit bis zu 2.600 MBit/s", "https://example.com/ad", "atom-ad", DateTime.UtcNow, "Sponsored content"),
+            ("Regular Article", "https://example.com/1", "atom-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+        Assert.Equal("atom-1", items[0].GuidOrHash);
+    }
+
+    /// <summary>
+    /// Verifies that a successful sync backfills the favicon URL of a feed that
+    /// has none, using the feed URL's authority when the document declares no
+    /// alternate site link.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MissingFavicon_BackfillsFromFeedAuthority()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        _feedIconService.NextResult = "https://example.com/favicon.ico";
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("https://example.com/favicon.ico", feed.FaviconUrl);
+        Assert.Equal("https://example.com", Assert.Single(_feedIconService.RequestedSiteUrls));
+    }
+
+    /// <summary>
+    /// Verifies that a successful sync does not touch an already stored favicon
+    /// and skips the lookup entirely.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ExistingFavicon_SkipsLookup()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Test Feed",
+            NotificationsEnabled = true,
+            FaviconUrl = "https://example.com/stored.ico",
+        });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("https://example.com/stored.ico", feed.FaviconUrl);
+        Assert.Empty(_feedIconService.RequestedSiteUrls);
+    }
+
+    /// <summary>
+    /// Verifies that a failing favicon lookup does not affect the sync result.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FaviconLookupFails_SyncStillSucceeds()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        _feedIconService.NextException = new InvalidOperationException("lookup failed");
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Null(feed.FaviconUrl);
+    }
+
+    /// <summary>
+    /// Verifies that the cancellation token passed to
+    /// <see cref="FeedSyncService.SyncFeedAsync"/> is forwarded to the favicon
+    /// lookup, so an aborted synchronization does not wait for the icon HTTP
+    /// roundtrips.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MissingFavicon_ForwardsCancellationTokenToIconLookup()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+        using var cts = new CancellationTokenSource();
+
+        var result = await service.SyncFeedAsync(feedId, cts.Token);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var receivedToken = Assert.Single(_feedIconService.ReceivedCancellationTokens);
+        Assert.Equal(cts.Token, receivedToken);
     }
 }

@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Reporter.Core.Models;
 
 namespace Reporter.Core.Interfaces;
@@ -50,13 +52,14 @@ public interface IItemRepository
     Task<IReadOnlyList<Item>> GetUnreadByDateAsync();
 
     /// <summary>
-    /// Gets a paged list of unread items sorted by publication date descending asynchronously.
+    /// Gets a paged list of unread items sorted by publication date asynchronously.
     /// </summary>
     /// <param name="page">The zero-based page index.</param>
     /// <param name="pageSize">The number of items per page.</param>
     /// <param name="categoryId">The optional category to filter by.</param>
+    /// <param name="ascending"><c>true</c> to sort oldest first; <c>false</c> (the default) for newest first.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the unread items for the page.</returns>
-    Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null);
+    Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false);
 
     /// <summary>
     /// Gets the total count of unread items for the optional category filter.
@@ -101,18 +104,19 @@ public interface IItemRepository
     Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId);
 
     /// <summary>
-    /// Gets all items saved for later asynchronously.
+    /// Gets a paged list of items saved for later sorted by publication date descending asynchronously.
     /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the saved items.</returns>
-    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync();
+    /// <param name="page">The zero-based page index.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the saved items for the page.</returns>
+    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize);
 
     /// <summary>
-    /// Gets the item with the specified GUID or hash for the specified feed asynchronously.
+    /// Adds the specified items asynchronously in a single batch.
     /// </summary>
-    /// <param name="feedId">The feed identifier.</param>
-    /// <param name="guidOrHash">The original GUID or hash.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the item, or <c>null</c> if not found.</returns>
-    Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash);
+    /// <param name="items">The items to add.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    Task AddRangeAsync(IReadOnlyList<Item> items);
 
     /// <summary>
     /// Deletes all expired items asynchronously.

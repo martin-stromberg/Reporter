@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Microsoft.Extensions.Time.Testing;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
@@ -13,6 +15,7 @@ public class NotificationServiceTests : IDisposable
     private readonly TestDbContextFactory _factory;
     private readonly SettingsRepository _settingsRepository;
     private readonly KeywordRepository _keywordRepository;
+    private readonly KeywordFilter _keywordFilter;
     private readonly FakeLocalNotificationService _localNotifications;
 
     /// <summary>
@@ -23,6 +26,7 @@ public class NotificationServiceTests : IDisposable
         _factory = new TestDbContextFactory();
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
+        _keywordFilter = new KeywordFilter(_keywordRepository, new KeywordMatcher());
         _localNotifications = new FakeLocalNotificationService();
     }
 
@@ -289,7 +293,7 @@ public class NotificationServiceTests : IDisposable
 
     private NotificationService CreateService(TimeProvider? timeProvider = null)
     {
-        return new NotificationService(_settingsRepository, _keywordRepository, new KeywordMatcher(), _localNotifications, timeProvider);
+        return new NotificationService(_settingsRepository, _keywordFilter, _localNotifications, timeProvider);
     }
 
     private static FakeTimeProvider CreateTimeProviderAt(int hour)

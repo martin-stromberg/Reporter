@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.ServiceModel.Syndication;
@@ -20,6 +22,8 @@ public class FeedSyncService : IFeedSyncService
     private readonly HttpClient _httpClient;
     private readonly INotificationService _notificationService;
     private readonly INetworkStatusService _networkStatusService;
+    private readonly IKeywordFilter _keywordFilter;
+    private readonly IFeedIconService _feedIconService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -30,13 +34,17 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="httpClient">The HTTP client used to retrieve feeds.</param>
     /// <param name="notificationService">The notification service invoked for newly stored items.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
+    /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
+    /// <param name="feedIconService">The service used to backfill the favicon of feeds that have none.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
         ISyncLogRepository syncLogRepository,
         HttpClient httpClient,
         INotificationService notificationService,
-        INetworkStatusService networkStatusService)
+        INetworkStatusService networkStatusService,
+        IKeywordFilter keywordFilter,
+        IFeedIconService feedIconService)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
@@ -44,6 +52,8 @@ public class FeedSyncService : IFeedSyncService
         _httpClient = httpClient;
         _notificationService = notificationService;
         _networkStatusService = networkStatusService;
+        _keywordFilter = keywordFilter;
+        _feedIconService = feedIconService;
     }
 
     /// <inheritdoc />
@@ -139,49 +149,30 @@ public class FeedSyncService : IFeedSyncService
         var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(reader), cancellationToken).ConfigureAwait(false);
 
         var feedItems = syndicationFeed.Items.ToList();
-        var newItems = 0;
-        var newItemEntities = new List<Item>();
 
-        foreach (var feedItem in feedItems)
+        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
+        var (newItemEntities, filteredCount) = CollectNewItems(feed, feedItems, existingItems, keywordTexts, cancellationToken);
+
+        var newItems = newItemEntities.Count;
+        if (newItems > 0)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var link = feedItem.Links.FirstOrDefault()?.Uri?.ToString();
-            var publishedAt = feedItem.PublishDate == DateTimeOffset.MinValue
-                ? (DateTime?)null
-                : feedItem.PublishDate.UtcDateTime;
-            var guidOrHash = NormalizeGuidOrHash(feedItem, link, publishedAt);
-
-            var existing = await _itemRepository.GetByGuidOrHashAsync(feed.Id, guidOrHash).ConfigureAwait(false);
-            if (existing is not null)
-            {
-                continue;
-            }
-
-            var item = new Item
-            {
-                Id = Guid.NewGuid(),
-                FeedId = feed.Id,
-                Title = feedItem.Title?.Text ?? string.Empty,
-                Link = link,
-                PublishedAt = publishedAt,
-                GuidOrHash = guidOrHash,
-                IsRead = false,
-                IsSavedForLater = false,
-                ContentHtml = GetContentHtml(feedItem),
-            };
-
-            await _itemRepository.AddAsync(item).ConfigureAwait(false);
-            newItems++;
-            newItemEntities.Add(item);
+            await _itemRepository.AddRangeAsync(newItemEntities).ConfigureAwait(false);
         }
 
         var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
+        var filteredSuffix = filteredCount > 0 ? $", {filteredCount} filtered" : string.Empty;
         var message = status == FeedHealth.Warning
-            ? $"Synchronized {feedItems.Count} items, {newItems} new. Health warning triggered."
-            : $"Synchronized {feedItems.Count} items, {newItems} new.";
+            ? $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}. Health warning triggered."
+            : $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}.";
 
-        await UpdateFeedHealthAsync(feed, status).ConfigureAwait(false);
+        var resolvedTitle = ResolveFeedTitle(feed, syndicationFeed);
+
+        // Feeds stored before favicon discovery existed (or added while offline)
+        // get their icon backfilled on the first successful sync; the lookup is
+        // strictly isolated inside the icon service.
+        var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed, cancellationToken).ConfigureAwait(false);
+
+        await UpdateFeedHealthAsync(feed, status, resolvedTitle, faviconUrl).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
 
         if (newItemEntities.Count > 0)
@@ -200,6 +191,81 @@ public class FeedSyncService : IFeedSyncService
         return new SyncResult(status, newItems, message);
     }
 
+    private (List<Item> NewItems, int FilteredCount) CollectNewItems(
+        Feed feed,
+        IReadOnlyList<SyndicationItem> feedItems,
+        IReadOnlyList<Item> existingItems,
+        IReadOnlyList<string> keywordTexts,
+        CancellationToken cancellationToken)
+    {
+        var newItemEntities = new List<Item>();
+        var filteredCount = 0;
+        var knownKeys = new HashSet<string>(
+            existingItems.Select(i => i.GuidOrHash),
+            StringComparer.Ordinal);
+
+        foreach (var feedItem in feedItems)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var link = feedItem.Links.FirstOrDefault()?.Uri?.ToString();
+            var publishedAt = feedItem.PublishDate == DateTimeOffset.MinValue
+                ? (DateTime?)null
+                : feedItem.PublishDate.UtcDateTime;
+            var guidOrHash = NormalizeGuidOrHash(feedItem, link, publishedAt);
+
+            if (!knownKeys.Add(guidOrHash))
+            {
+                continue;
+            }
+
+            var title = feedItem.Title?.Text;
+            var contentHtml = GetContentHtml(feedItem);
+
+            if (_keywordFilter.MatchesAny(title, contentHtml, keywordTexts))
+            {
+                filteredCount++;
+                continue;
+            }
+
+            newItemEntities.Add(new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feed.Id,
+                Title = title ?? string.Empty,
+                Link = link,
+                PublishedAt = publishedAt,
+                GuidOrHash = guidOrHash,
+                IsRead = false,
+                IsSavedForLater = false,
+                ContentHtml = contentHtml,
+            });
+        }
+
+        return (newItemEntities, filteredCount);
+    }
+
+    private static string? ResolveFeedTitle(Feed feed, SyndicationFeed syndicationFeed)
+    {
+        var documentTitle = syndicationFeed.Title?.Text;
+        var isPlaceholderTitle = string.IsNullOrWhiteSpace(feed.Title) ||
+            string.Equals(feed.Title, feed.Url, StringComparison.OrdinalIgnoreCase) ||
+            IsHostPlaceholderTitle(feed) ||
+            FeedTitleFallback.IsFileNamePlaceholderTitle(feed.Title, feed.Url);
+        return isPlaceholderTitle && !string.IsNullOrWhiteSpace(documentTitle)
+            ? documentTitle
+            : null;
+    }
+
+    // Direct-add and search fallback titles (FeedTitleFallback) can equal the
+    // URL host or file name, so a title equal to the feed URL's host counts as
+    // an auto-generated placeholder as well.
+    private static bool IsHostPlaceholderTitle(Feed feed)
+    {
+        return Uri.TryCreate(feed.Url, UriKind.Absolute, out var feedUri) &&
+            string.Equals(feed.Title, feedUri.Host, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string DetermineStatus(int newItems, int fetchedCount, int existingCount, DateTime lastPublishedAt)
     {
         if (fetchedCount < existingCount * 0.5 && existingCount > 0)
@@ -216,7 +282,7 @@ public class FeedSyncService : IFeedSyncService
         return FeedHealth.Ok;
     }
 
-    private async Task UpdateFeedHealthAsync(Feed feed, string status)
+    private async Task UpdateFeedHealthAsync(Feed feed, string status, string? resolvedTitle = null, string? faviconUrl = null)
     {
         var healthLastChange = feed.HealthLastChange;
         if (FeedHealth.Changed(feed.HealthStatus, status))
@@ -228,13 +294,27 @@ public class FeedSyncService : IFeedSyncService
         {
             Id = feed.Id,
             Url = feed.Url,
-            Title = feed.Title,
+            Title = resolvedTitle ?? feed.Title,
             CategoryId = feed.CategoryId,
             LastCheckedAt = DateTime.UtcNow,
             HealthStatus = status,
             HealthLastChange = healthLastChange,
             NotificationsEnabled = feed.NotificationsEnabled,
+            FaviconUrl = faviconUrl ?? feed.FaviconUrl,
         }).ConfigureAwait(false);
+    }
+
+    // Resolves the feed's website from the document's "alternate" site link and
+    // looks up its favicon; the icon service falls back to the feed URL's
+    // authority and is strictly isolated, so a failure never affects the sync
+    // result.
+    private async Task<string?> TryFindFaviconUrlAsync(string feedUrl, SyndicationFeed syndicationFeed, CancellationToken cancellationToken)
+    {
+        var siteUrl = syndicationFeed.Links
+            .FirstOrDefault(l => string.Equals(l.RelationshipType, "alternate", StringComparison.OrdinalIgnoreCase))
+            ?.Uri?.AbsoluteUri;
+
+        return await _feedIconService.TryFindFaviconUrlAsync(feedUrl, siteUrl, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task UpdateLogAsync(SyncLog log, string status, string? message)

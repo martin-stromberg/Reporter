@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
@@ -16,6 +18,7 @@ public class UnreadViewModelTests : IDisposable
     private readonly TestDbContextFactory _factory;
     private readonly ItemRepository _itemRepository;
     private readonly CategoryRepository _categoryRepository;
+    private readonly SettingsRepository _settingsRepository;
     private readonly FakeFeedSyncService _feedSyncService;
     private readonly FakeNetworkStatusService _networkStatusService;
     private readonly UnreadViewModel _viewModel;
@@ -28,9 +31,10 @@ public class UnreadViewModelTests : IDisposable
         _factory = new TestDbContextFactory();
         _itemRepository = new ItemRepository(_factory);
         _categoryRepository = new CategoryRepository(_factory);
+        _settingsRepository = new SettingsRepository(_factory);
         _feedSyncService = new FakeFeedSyncService();
         _networkStatusService = new FakeNetworkStatusService();
-        _viewModel = new UnreadViewModel(_itemRepository, _categoryRepository, _feedSyncService, _networkStatusService);
+        _viewModel = new UnreadViewModel(_itemRepository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
     }
 
     /// <summary>
@@ -120,6 +124,46 @@ public class UnreadViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that selecting a category filter chip updates the IsSelected
+    /// state on the chip collection for the chip bar rendering.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SelectCategoryCommand_UpdatesChipSelectionState()
+    {
+        var (feedId, categoryId) = await SeedFeedAndCategoryAsync();
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Sample",
+            GuidOrHash = "sample",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        });
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.Categories.First().IsSelected);
+        Assert.Null(_viewModel.Categories.First().CategoryId);
+
+        var category = _viewModel.Categories.FirstOrDefault(c => c.CategoryId == categoryId);
+        Assert.NotNull(category);
+        Assert.False(category.IsSelected);
+
+        await _viewModel.SelectCategoryCommand.ExecuteAsync(category);
+
+        Assert.True(category.IsSelected);
+        Assert.False(_viewModel.Categories.First().IsSelected);
+        Assert.Single(_viewModel.Categories, c => c.IsSelected);
+
+        await _viewModel.SelectCategoryCommand.ExecuteAsync(_viewModel.Categories.First());
+
+        Assert.True(_viewModel.Categories.First().IsSelected);
+        Assert.False(category.IsSelected);
+    }
+
+    /// <summary>
     /// Verifies that MarkReadCommand removes the article from the list.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -146,6 +190,51 @@ public class UnreadViewModelTests : IDisposable
         await _viewModel.MarkReadCommand.ExecuteAsync(article);
 
         Assert.DoesNotContain(_viewModel.Articles, a => a.Id == item.Id);
+    }
+
+    /// <summary>
+    /// Verifies that MarkReadCommand decrements the UnreadCount and refreshes the
+    /// UnreadCountText shown in the header, so the counter does not stay stale.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task MarkReadCommand_DecrementsUnreadCount()
+    {
+        var (feedId, _) = await SeedFeedAndCategoryAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "First",
+            GuidOrHash = "first",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        };
+        await _itemRepository.AddAsync(item);
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Second",
+            GuidOrHash = "second",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 2),
+        });
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(2, _viewModel.UnreadCount);
+        Assert.StartsWith("2 ", _viewModel.UnreadCountText);
+
+        var article = _viewModel.Articles.FirstOrDefault(a => a.Id == item.Id);
+        Assert.NotNull(article);
+
+        await _viewModel.MarkReadCommand.ExecuteAsync(article);
+
+        Assert.Equal(1, _viewModel.UnreadCount);
+        Assert.StartsWith("1 ", _viewModel.UnreadCountText);
+        Assert.Equal(1, _viewModel.SelectedCategory!.Count);
     }
 
     /// <summary>
@@ -272,6 +361,7 @@ public class UnreadViewModelTests : IDisposable
             new FailingItemRepository(_itemRepository),
             _categoryRepository,
             _feedSyncService,
+            _settingsRepository,
             _networkStatusService);
 
         await viewModel.RefreshCommand.ExecuteAsync(null);
@@ -312,6 +402,7 @@ public class UnreadViewModelTests : IDisposable
             new FailingItemRepository(_itemRepository),
             _categoryRepository,
             _feedSyncService,
+            _settingsRepository,
             _networkStatusService);
         await viewModel.LoadCommand.ExecuteAsync(null);
         Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
@@ -396,6 +487,70 @@ public class UnreadViewModelTests : IDisposable
         Assert.True(persisted.IsSavedForLater);
     }
 
+    /// <summary>
+    /// Verifies that the unread list requests ascending order from the repository
+    /// when the persisted sort order is "asc".
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadPage_PassesSortOrderFromSettings()
+    {
+        var repository = new RecordingItemRepository(_itemRepository);
+        var viewModel = new UnreadViewModel(repository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
+
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: SettingsValues.SortOrderAscending);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(repository.LastAscending);
+
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: SettingsValues.SortOrderDescending);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.False(repository.LastAscending);
+    }
+
+    /// <summary>
+    /// Verifies that an unknown persisted sort order falls back to descending order.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadPage_InvalidSortOrder_UsesDescending()
+    {
+        var repository = new RecordingItemRepository(_itemRepository);
+        var viewModel = new UnreadViewModel(repository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
+
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: "bogus");
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(repository.LastAscending);
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingItemRepository"/> that records the ascending flag of
+    /// the last paged unread query.
+    /// </summary>
+    private sealed class RecordingItemRepository : DelegatingItemRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RecordingItemRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public RecordingItemRepository(IItemRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <summary>
+        /// Gets the ascending flag passed to the last <see cref="GetUnreadByDateAsync"/> call.
+        /// </summary>
+        public bool LastAscending { get; private set; }
+
+        /// <inheritdoc />
+        public override async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
+        {
+            LastAscending = ascending;
+            return await base.GetUnreadByDateAsync(page, pageSize, categoryId, ascending);
+        }
+    }
+
     private sealed class FakeFeedSyncService : IFeedSyncService
     {
         public bool SyncAllCalled { get; private set; }
@@ -428,77 +583,24 @@ public class UnreadViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// An <see cref="IItemRepository"/> decorator that delegates every call to an inner
-    /// repository but fails the paged unread query to simulate a load failure.
+    /// A <see cref="DelegatingItemRepository"/> that fails the paged unread query
+    /// to simulate a load failure.
     /// </summary>
-    private sealed class FailingItemRepository : IItemRepository
+    private sealed class FailingItemRepository : DelegatingItemRepository
     {
-        private readonly IItemRepository _inner;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="FailingItemRepository"/> class.
         /// </summary>
         /// <param name="inner">The repository to delegate to.</param>
         public FailingItemRepository(IItemRepository inner)
+            : base(inner)
         {
-            _inner = inner;
         }
 
         /// <inheritdoc />
-        public Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+        public override Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
         {
             return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
         }
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetAllAsync() => _inner.GetAllAsync();
-
-        /// <inheritdoc />
-        public Task<Item?> GetByIdAsync(Guid id) => _inner.GetByIdAsync(id);
-
-        /// <inheritdoc />
-        public Task AddAsync(Item item) => _inner.AddAsync(item);
-
-        /// <inheritdoc />
-        public Task UpdateAsync(Item item) => _inner.UpdateAsync(item);
-
-        /// <inheritdoc />
-        public Task DeleteAsync(Guid id) => _inner.DeleteAsync(id);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetUnreadByDateAsync() => _inner.GetUnreadByDateAsync();
-
-        /// <inheritdoc />
-        public Task<int> GetUnreadCountAsync(Guid? categoryId = null) => _inner.GetUnreadCountAsync(categoryId);
-
-        /// <inheritdoc />
-        public Task MarkAllAsReadAsync(Guid? categoryId = null) => _inner.MarkAllAsReadAsync(categoryId);
-
-        /// <inheritdoc />
-        public Task ToggleSavedForLaterAsync(Guid id) => _inner.ToggleSavedForLaterAsync(id);
-
-        /// <inheritdoc />
-        public Task MarkAsReadAsync(Guid id) => _inner.MarkAsReadAsync(id);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId) => _inner.GetByFeedAsync(feedId);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId) => _inner.GetByCategoryAsync(categoryId);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync() => _inner.GetSavedForLaterAsync();
-
-        /// <inheritdoc />
-        public Task<Item?> GetByGuidOrHashAsync(Guid feedId, string guidOrHash) => _inner.GetByGuidOrHashAsync(feedId, guidOrHash);
-
-        /// <inheritdoc />
-        public Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.DeleteExpiredAsync(cutoff, cancellationToken);
-
-        /// <inheritdoc />
-        public Task<IReadOnlyList<Item>> GetExpiredKeywordCandidatesAsync(DateTime cutoff, CancellationToken cancellationToken = default) => _inner.GetExpiredKeywordCandidatesAsync(cutoff, cancellationToken);
-
-        /// <inheritdoc />
-        public Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default) => _inner.DeleteRangeAsync(ids, cancellationToken);
     }
 }

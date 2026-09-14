@@ -1,3 +1,5 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Benachrichtigungen — Business Rules
@@ -10,7 +12,7 @@
 - `feed.NotificationsEnabled` (Pro-Feed-Schalter) — wird zuerst geprüft, noch vor dem Settings-Ladevorgang.
 - `settings.NotificationsEnabled` (globaler Hauptschalter).
 - Ruhezeit aktiv (s. nächste Regel).
-- Keyword-Filter pro Artikel (`Title` und `ContentHtml`, Teilwort + `OrdinalIgnoreCase` — identische Semantik wie die Löschregel; `Item.Link` wird nicht gematcht).
+- Keyword-Filter pro Artikel (`Title` und `ContentHtml`, Teilwort + `OrdinalIgnoreCase` — identische Semantik wie der Ingest-Filter beim Feed-Abruf; `Item.Link` wird nicht gematcht). Keyword-Treffer erreichen den Dienst regulär gar nicht, da `FeedSyncService` sie bereits beim Einspeichern verwirft — der Check bleibt als Tiefenverteidigung bestehen.
 
 **Verhalten:**
 - Feed-Schalter aus oder keine neuen Artikel → sofortiger Abbruch ohne Settings-Zugriff.

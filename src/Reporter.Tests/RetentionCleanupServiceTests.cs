@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Data.Repositories;
@@ -24,7 +26,7 @@ public class RetentionCleanupServiceTests : IDisposable
         _itemRepository = new ItemRepository(_factory);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
-        _service = new RetentionCleanupService(_settingsRepository, _itemRepository, _keywordRepository, new KeywordMatcher());
+        _service = new RetentionCleanupService(_settingsRepository, _itemRepository, new KeywordFilter(_keywordRepository, new KeywordMatcher()));
     }
 
     /// <summary>
@@ -50,6 +52,8 @@ public class RetentionCleanupServiceTests : IDisposable
             QuietHoursEnd = settings.QuietHoursEnd,
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
     }

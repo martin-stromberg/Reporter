@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Reporter.Data.Entities;
@@ -85,6 +87,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.HealthStatus).HasColumnName("health_status").HasMaxLength(50);
         entity.Property(e => e.HealthLastChange).HasColumnName("health_last_change");
         entity.Property(e => e.NotificationsEnabled).HasColumnName("notifications_enabled").IsRequired().HasDefaultValue(true);
+        entity.Property(e => e.FaviconUrl).HasColumnName("favicon_url").HasMaxLength(2048);
 
         entity.HasIndex(e => e.Url).IsUnique();
         entity.HasOne(e => e.Category).WithMany().HasForeignKey(e => e.CategoryId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
@@ -131,8 +134,11 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.QuietHoursEnd).HasColumnName("quiet_hours_end");
         entity.Property(e => e.AutoRefreshEnabled).HasColumnName("auto_refresh_enabled").IsRequired().HasDefaultValue(true);
         entity.Property(e => e.RefreshIntervalMinutes).HasColumnName("refresh_interval_minutes").IsRequired().HasDefaultValue(30);
+        entity.Property(e => e.RefreshOnStartupEnabled).HasColumnName("refresh_on_startup_enabled").IsRequired().HasDefaultValue(true);
+        entity.Property(e => e.UnreadSortOrder).HasColumnName("unread_sort_order").HasMaxLength(50);
         entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
         entity.Property(e => e.NotificationSummaryEnabled).HasColumnName("notification_summary_enabled").IsRequired().HasDefaultValue(false);
+        entity.Property(e => e.Language).HasColumnName("language").HasMaxLength(50);
 
         entity.HasData(new Settings());
     }

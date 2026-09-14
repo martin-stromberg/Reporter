@@ -1,22 +1,26 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
 ← [Zurück zur Übersicht](index.md)
 
 # Anwendung — Beschreibung
 
 ## Zweck
 
-Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch entsprechend der Systemsprache (siehe [Sprache](sprache.md)). Bereits synchronisierte Artikel bleiben ohne Internetverbindung vollständig lesbar (siehe [Offline lesen](offline.md)).
+Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch — wahlweise entsprechend der Systemsprache oder über eine manuelle Sprachauswahl in den Einstellungen (siehe [Sprache](sprache.md)). Bereits synchronisierte Artikel bleiben ohne Internetverbindung vollständig lesbar (siehe [Offline lesen](offline.md)).
 
 ## Funktionsweise
 
-Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen:
+Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen — jeder Tab wird mit einem eigenen Symbol und seinem Namen dargestellt:
 
-- **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden.
-- **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus.
-- **Später** — Zeigt Artikel, die du dir für später merkst.
+- **Ungelesen** — Zeigt neue Artikel, die noch nicht gelesen wurden; die Sortierrichtung (*Neueste zuerst* oder *Älteste zuerst*) wählst du in den Einstellungen. Eine horizontal scrollbare Filterleiste mit Chips (Kategoriename plus Anzahl ungelesener Artikel) grenzt die Liste auf eine Kategorie ein.
+- **Feeds** — Zeigt die abonnierten Feeds und deren Gesundheitsstatus als kompaktes Status-Badge (**In Ordnung**, **Warnung**, **Fehler**) auf jeder Feed-Karte; links trägt jede Karte das Feed-Symbol (Favicon der Website oder ein Kreis mit dem Anfangsbuchstaben). Über **+ Feed per URL hinzufügen** fügst du neue Feeds per Suche hinzu — eine Website-Adresse genügt — oder direkt per URL; ein Tipp auf eine Feed-Karte öffnet Aktionen wie **Aktualisieren**, **Umbenennen**, **Kategorie ändern**, **Bearbeiten** und **Löschen** (Details siehe [Feeds suchen und hinzufügen](feed-suche.md)).
+- **Später** — Zeigt Artikel, die du dir für später merkst; weitere Einträge laden beim Scrollen automatisch nach.
 - **Kategorien** — Verwaltet Kategorien für Feeds.
-- **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten und das Farbschema. Details siehe [Einstellungen](../einstellungen/index.md).
+- **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, den Abruf beim Programmstart, die Sortierung der Ungelesen-Liste, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten, das Farbschema und die Sprache. Details siehe [Einstellungen](../einstellungen/index.md).
 
-Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt — ebenso gelesene Artikel, die ein Filter-Schlagwort enthalten. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
+Artikelkarten zeigen neben Titel und Teasertext ein Bild — das Artikelbild, ersatzweise das Favicon des Feeds oder einen Kreis mit dem Anfangsbuchstaben des Feeds — sowie eine geschätzte Lesezeit (bei höchstens einer Minute entfällt die Angabe) und bei ungelesenen Artikeln einen kleinen Punkt in der Kopfzeile; gemerkte Artikel erkennst du am ausgefüllten Lesezeichen. In der Artikeldetailansicht schwebt die Aktionsleiste (Zurück, Lesezeichen, Schriftgröße, Gelesen-Markierung, Teilen, Im Browser öffnen) als abgerundete Leiste über dem Seitenrand. Die App ist für die Bedienung per Screenreader vorbereitet und folgt der Schriftgrößen-Einstellung des Geräts — siehe [Barrierefreiheit](barrierefreiheit.md).
+
+Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt. Neue Artikel, die ein Filter-Schlagwort enthalten, werden bereits beim Abruf verworfen und erscheinen nicht in den Listen; bereits gespeicherte Treffer werden nach dem Lesen fristbasiert entfernt. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 
 Auf iOS benachrichtigt dich die App nach einem Abgleich über neue Artikel — pro Artikel oder gesammelt pro Feed, mit optionaler Ruhezeit und Schlagwort-Filter. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 

@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
 namespace Reporter.Core.Models;
 
 /// <summary>
@@ -57,6 +59,16 @@ public class Settings
     public required int RefreshIntervalMinutes { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether feeds are refreshed when the application starts.
+    /// </summary>
+    public required bool RefreshOnStartupEnabled { get; init; }
+
+    /// <summary>
+    /// Gets the sort order of the unread articles list ("desc" or "asc").
+    /// </summary>
+    public string? UnreadSortOrder { get; init; } = SettingsValues.SortOrderDescending;
+
+    /// <summary>
     /// Gets the appearance theme ("system", "light" or "dark").
     /// </summary>
     public string? Theme { get; init; } = SettingsValues.ThemeSystem;
@@ -66,4 +78,9 @@ public class Settings
     /// per feed (<c>true</c>) or one notification per item (<c>false</c>, the default).
     /// </summary>
     public required bool NotificationSummaryEnabled { get; init; }
+
+    /// <summary>
+    /// Gets the language selection ("system", "de" or "en").
+    /// </summary>
+    public string? Language { get; init; } = SettingsValues.LanguageSystem;
 }
