@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
+using Reporter.Core.Services;
 
 namespace Reporter.Core.ViewModels;
 
@@ -31,6 +32,8 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IAutoRefreshService _autoRefreshService;
     private readonly IAppThemeService _appThemeService;
     private readonly ILocalNotificationService? _localNotificationService;
+    private readonly IDebugReportService? _debugReportService;
+    private readonly IDebugLogService? _debugLogService;
     private readonly TimeProvider _timeProvider;
 
     private string _title = AppResources.PageTitleSettings;
@@ -48,6 +51,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool _notificationPermissionDenied;
     private bool _notificationPermissionNotDetermined;
     private bool _notificationSummaryEnabled;
+    private bool _debugCollectionEnabled;
     private bool _quietHoursEnabled;
     private TimeSpan? _quietHoursStart;
     private TimeSpan? _quietHoursEnd;
@@ -70,19 +74,25 @@ public partial class SettingsViewModel : ObservableObject
     /// <param name="appThemeService">The app theme service.</param>
     /// <param name="timeProvider">The time provider used for the retention-days persist debounce.</param>
     /// <param name="localNotificationService">The platform notification service used to request authorization when notifications are turned on.</param>
+    /// <param name="debugReportService">The debug report service used to send the collected debug report.</param>
+    /// <param name="debugLogService">The session debug log service switched by the debug collection toggle.</param>
     public SettingsViewModel(
         ISettingsRepository settingsRepository,
         IKeywordRepository keywordRepository,
         IAutoRefreshService autoRefreshService,
         IAppThemeService appThemeService,
         TimeProvider? timeProvider = null,
-        ILocalNotificationService? localNotificationService = null)
+        ILocalNotificationService? localNotificationService = null,
+        IDebugReportService? debugReportService = null,
+        IDebugLogService? debugLogService = null)
     {
         _settingsRepository = settingsRepository;
         _keywordRepository = keywordRepository;
         _autoRefreshService = autoRefreshService;
         _appThemeService = appThemeService;
         _localNotificationService = localNotificationService;
+        _debugReportService = debugReportService;
+        _debugLogService = debugLogService;
         _timeProvider = timeProvider ?? TimeProvider.System;
 
         _retentionDaysText = FormatRetentionDays(_retentionDays);
@@ -124,6 +134,7 @@ public partial class SettingsViewModel : ObservableObject
         RemoveKeywordCommand = new AsyncRelayCommand<Keyword>(RemoveKeywordAsync);
         SaveRetentionCommand = new RelayCommand(SaveRetention);
         RequestNotificationPermissionCommand = new AsyncRelayCommand(RequestNotificationAuthorizationAsync);
+        SendDebugReportCommand = new AsyncRelayCommand(SendDebugReportAsync);
     }
 
     /// <summary>
@@ -151,6 +162,11 @@ public partial class SettingsViewModel : ObservableObject
     /// invoked from the not-yet-allowed hint row on the settings page.
     /// </summary>
     public AsyncRelayCommand RequestNotificationPermissionCommand { get; }
+
+    /// <summary>
+    /// Gets the command that collects the debug report and hands it to the system mail client.
+    /// </summary>
+    public AsyncRelayCommand SendDebugReportCommand { get; }
 
     /// <summary>
     /// Gets the configured keyword filters.
@@ -423,6 +439,47 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Occurs when sending the debug report is not possible or failed. Subscribers
+    /// (the page) can inform the user.
+    /// </summary>
+    public event Func<Task>? DebugReportFailed;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the collection of debug information
+    /// (session debug log) is enabled. Toggling the switch persists the value and
+    /// switches the session debug log immediately.
+    /// </summary>
+    public bool DebugCollectionEnabled
+    {
+        get => _debugCollectionEnabled;
+        set
+        {
+            if (SetProperty(ref _debugCollectionEnabled, value))
+            {
+                if (!_isLoading)
+                {
+                    _debugLogService?.SetEnabled(value);
+                }
+
+                OnPropertyChanged(nameof(DebugSendEnabled));
+                PersistOnChange();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the current platform supports composing e-mail.
+    /// When <c>false</c>, the settings page disables the send action and shows a hint.
+    /// </summary>
+    public bool DebugEmailSupported => _debugReportService?.IsSupported == true;
+
+    /// <summary>
+    /// Gets a value indicating whether the send-debug-report action is enabled:
+    /// the platform supports e-mail compose and debug collection is switched on.
+    /// </summary>
+    public bool DebugSendEnabled => DebugEmailSupported && DebugCollectionEnabled;
+
+    /// <summary>
     /// Gets or sets a value indicating whether quiet hours are active.
     /// Turning this off persists <c>null</c> for the quiet-hours times while the displayed
     /// <see cref="QuietHoursStart"/> and <see cref="QuietHoursEnd"/> values are kept for the
@@ -570,6 +627,7 @@ public partial class SettingsViewModel : ObservableObject
                 ?? AutoMarkReadDelayOptions.First(o => o.Seconds == DefaultAutoMarkReadDelaySeconds);
             NotificationsEnabled = settings.NotificationsEnabled;
             NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
+            DebugCollectionEnabled = settings.DebugCollectionEnabled;
             QuietHoursStart = settings.QuietHoursStart ?? _quietHoursStart;
             QuietHoursEnd = settings.QuietHoursEnd ?? _quietHoursEnd;
             QuietHoursEnabled = settings.QuietHoursStart is not null || settings.QuietHoursEnd is not null;
@@ -753,6 +811,7 @@ public partial class SettingsViewModel : ObservableObject
                 UnreadSortOrder = SelectedSortOrder?.Value ?? SettingsValues.SortOrderDescending,
                 Theme = SelectedTheme?.Value ?? SettingsValues.ThemeSystem,
                 Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem,
+                DebugCollectionEnabled = DebugCollectionEnabled,
             };
 
             await _settingsRepository.SaveAsync(updated);
@@ -831,6 +890,42 @@ public partial class SettingsViewModel : ObservableObject
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to remove keyword: {ex}");
+        }
+    }
+
+    private async Task SendDebugReportAsync()
+    {
+        // The guard lives in the method instead of CanExecute because
+        // IAsyncRelayCommand.ExecuteAsync does not evaluate CanExecute.
+        if (_debugReportService is null || !DebugCollectionEnabled)
+        {
+            return;
+        }
+
+        try
+        {
+            var sent = await _debugReportService.SendReportAsync();
+            if (!sent && DebugReportFailed is not null)
+            {
+                await DebugReportFailed.Invoke();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to send debug report: {ex}");
+            if (_debugLogService is not null)
+            {
+                await _debugLogService.LogAsync(
+                    DebugLogCategory.Report,
+                    "Failed to send debug report",
+                    ex.ToString(),
+                    DebugLogLevel.Error);
+            }
+
+            if (DebugReportFailed is not null)
+            {
+                await DebugReportFailed.Invoke();
+            }
         }
     }
 }

@@ -62,6 +62,7 @@ public class SettingsViewModelTests_Load : IDisposable
             RefreshOnStartupEnabled = false,
             UnreadSortOrder = SettingsValues.SortOrderAscending,
             Theme = "dark",
+            DebugCollectionEnabled = false,
         });
         await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Werbung" });
 
@@ -106,6 +107,7 @@ public class SettingsViewModelTests_Load : IDisposable
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
             UnreadSortOrder = "bogus",
             Theme = "sepia",
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
 
         await _viewModel.LoadCommand.ExecuteAsync(null);

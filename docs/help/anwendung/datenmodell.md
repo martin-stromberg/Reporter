@@ -67,6 +67,7 @@
 | `NotificationSummaryEnabled` | `bool` | Benachrichtigungsmodus: `false` = eine Benachrichtigung pro Artikel (Standard), `true` = Sammel-Benachrichtigung pro Feed. |
 | `RefreshOnStartupEnabled` | `bool` | Gibt an, ob die Feeds beim Start der App einmalig abgerufen werden (Standard `true`). |
 | `UnreadSortOrder` | `string?` | Sortierrichtung der Ungelesen-Liste (`"desc"` = neueste zuerst, Standard; `"asc"` = älteste zuerst). |
+| `DebugCollectionEnabled` | `bool` | Opt-in-Schalter für die Sammlung von Debuginformationen / das Session-Debug-Log (Standard `false`). |
 
 ### `SyncLog`
 
@@ -79,11 +80,23 @@
 | `Status` | `string?` | Status der Synchronisation. |
 | `Message` | `string?` | Nachricht oder Fehlerdetails. |
 
+### `DebugLogEntry`
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `Id` | `Guid` | Eindeutige Kennung des Eintrags. |
+| `Timestamp` | `DateTime` | UTC-Zeitpunkt des Eintrags (indiziert). |
+| `Level` | `string?` | Schweregrad (`DebugLogLevel`: `Info`/`Warning`/`Error`). |
+| `Category` | `string?` | Kategorie (`DebugLogCategory`: `Lifecycle`/`Sync`/`Exception`/`Settings`/`Report`). |
+| `Message` | `string?` | Logmeldung. |
+| `Details` | `string?` | Optionale Details, z. B. `exception.ToString()`. |
+
 ## Beziehungen
 
 - Ein `Feed` gehört optional zu einer `Category` (`CategoryId`).
 - Ein `Item` gehört immer zu einem `Feed` (`FeedId`).
 - Ein `SyncLog` gehört optional zu einem `Feed` (`FeedId`).
+- `DebugLogEntry` hat keine Beziehungen — die Einträge sind sitzungsbezogen und werden beim App-Start bis auf `Error`-Einträge zurückgesetzt.
 
 ## Datenzugriff
 
@@ -99,3 +112,4 @@ Die App verwendet eine saubere Schichtung:
 - Die `settings`-Spalten `auto_refresh_enabled`, `refresh_interval_minutes` und `theme` wurden per Migration `AddSettingsAutoRefreshAndTheme` ergänzt; die Spalte `language` (Standard `"system"`, inkl. `UpdateData` des Singletons) per Migration `AddSettingsLanguage`.
 - Für die lokalen Benachrichtigungen wurden per Migration `AddFeedNotificationsEnabled` die Spalte `feeds.notifications_enabled` (Default `true`) und per `AddSettingsNotificationSummary` die Spalte `settings.notification_summary_enabled` (Default `false`, inkl. `UpdateData` des Singletons) ergänzt — Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 - Für die Feed-Symbole wurde per Migration `AddFeedFaviconUrl` die Spalte `feeds.favicon_url` ergänzt; für Start-Abruf und Ungelesen-Sortierung per `AddSettingsStartupRefreshAndSortOrder` die Spalten `settings.refresh_on_startup_enabled` (Default `true`, inkl. `UpdateData` des Singletons) und `settings.unread_sort_order` (Default `"desc"`, inkl. `UpdateData` des Singletons).
+- Für die Diagnose-Funktion wurden per Migration `AddSettingsDebugCollection` die Spalte `settings.debug_collection_enabled` (Default `false`) und per `AddDebugLogEntries` die Tabelle `debug_log_entries` (`id`, `timestamp` mit Index `IX_debug_log_entries_timestamp`, `level` max. 20, `category` max. 50, `message`, `details`) ergänzt — Details zum Session-Log siehe [Einstellungen](../einstellungen/index.md).

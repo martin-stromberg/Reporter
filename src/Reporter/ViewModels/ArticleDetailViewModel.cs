@@ -268,6 +268,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
                     AutoMarkReadDelaySeconds = DefaultAutoMarkDelaySeconds,
                     NotificationsEnabled = true,
                     NotificationSummaryEnabled = false,
+                    DebugCollectionEnabled = false,
                     AutoRefreshEnabled = true,
                     RefreshIntervalMinutes = 30,
                     RefreshOnStartupEnabled = true,

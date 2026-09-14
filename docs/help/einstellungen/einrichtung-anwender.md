@@ -26,6 +26,8 @@ Alle Einstellungen findest du auf dem Tab **Einstellungen**. Jede Änderung wird
 | **Ruhezeit (Nicht stören)** | Ein/Aus-Schalter für einen Zeitraum ohne Benachrichtigungen. Schaltet die Uhrzeitfelder **VON** und **BIS** frei; beim ersten Einschalten sind 22:00 bis 07:00 Uhr voreingestellt. Bereiche über Mitternacht (z. B. 22:00–07:00 Uhr) sind zulässig. In der Ruhezeit anfallende Benachrichtigungen werden verworfen, nicht nachgeholt. Beim Ausschalten gilt keine Ruhezeit mehr; die eingestellten Zeiten bleiben sichtbar und werden beim Wiedereinschalten derselben Sitzung wieder verwendet. |
 | **Farbschema** | *System* (Voreinstellung), *Hell* oder *Dunkel*. Wirkt sofort auf die gesamte App. |
 | **Sprache** | *System* (Voreinstellung), *Deutsch* oder *Englisch*. Bei *System* folgt die App der Gerätesprache (Englisch als Ersatzsprache). Wird sofort gespeichert, wirkt aber erst nach einem Neustart der App — der Hinweis darauf erscheint unter dem Auswahlfeld, sobald die Auswahl geändert wird, und verschwindet bei Rückwahl der bisherigen Sprache. |
+| **Debuginformationen sammeln** | Ein/Aus (Voreinstellung aus). Schaltet ein Protokoll ein, das Fehler und App-Ereignisse der aktuellen Sitzung aufzeichnet (z. B. Sync-Fehler, Abstürze, Wechsel in den Hintergrund). Beim App-Start wird das Protokoll zurückgesetzt; nur Fehler- und Absturzeinträge der vorherigen Sitzung bleiben erhalten. |
+| **Debugbericht senden** / **Senden** | Öffnet die E-Mail-App des Geräts mit einem vorbefüllten Entwurf (App-/Geräteinformationen, Online-Status, Einstellungen, Feed-Status, letzte Sync- und Protokolleinträge). Du prüfst den Entwurf und sendest ihn selbst ab. Nur aktiv, wenn **Debuginformationen sammeln** eingeschaltet ist und eine E-Mail-App verfügbar ist. |
 
 ## Vorgehen
 
@@ -52,6 +54,15 @@ Bei ungültiger Eingabe erscheint eine rote Fehlermeldung unter dem Feld:
 1. Tippe auf das **×** im Chip des Schlagworts.
 2. Der Chip verschwindet sofort; der Filter greift nicht mehr für diesen Begriff.
 
+### Debugbericht senden
+
+1. Schalte unter **Diagnose & Support** den Schalter **Debuginformationen sammeln** ein — ab jetzt zeichnet die App Fehler und Ereignisse dieser Sitzung auf.
+2. Reproduziere bei Bedarf das Problem, das du melden möchtest (z. B. Feed aktualisieren).
+3. Tippe auf **Senden**. Die E-Mail-App des Geräts öffnet sich mit dem vorbefüllten Bericht.
+4. Prüfe den Entwurf und sende ihn aus der E-Mail-App ab.
+
+> **Hinweis:** Kann die E-Mail-App nicht geöffnet werden, erscheint der Dialog **Senden fehlgeschlagen**. Prüfe dann, ob auf dem Gerät eine E-Mail-App eingerichtet ist, und versuche es erneut.
+
 ## Hinweise
 
 - Alle Einstellungen gelten anwendungsweit, nicht pro Feed — mit einer Ausnahme: Benachrichtigungen lassen sich zusätzlich pro Feed auf der Seite **Feeds** steuern (Feed antippen → **Bearbeiten** → Schalter **Benachrichtigungen**).
@@ -61,3 +72,5 @@ Bei ungültiger Eingabe erscheint eine rote Fehlermeldung unter dem Feld:
 - Optionen unter einem ausgeschalteten Schalter (Abruf-Intervall, Verzögerung, Ruhezeit) sind abgedunkelt und nicht bedienbar.
 - Der **×**-Schalter zum Entfernen eines Schlagworts trägt eine Screenreader-Beschriftung („Schlagwort … entfernen").
 - Die **Sprache** wirkt erst nach einem Neustart der App: App vollständig schließen und wieder öffnen, damit alle Texte in der gewählten Sprache erscheinen.
+- Der Debugbericht verlässt die App nur als E-Mail-Entwurf, den du selbst absendest — es gibt keinen automatischen Versand. Der Entwurf enthält technische Angaben (u. a. Feed-Adressen und Einstellungswerte), aber keine Artikelinhalte.
+- Das Protokoll der Fehlersuche ist sitzungsbezogen: Beim App-Start wird es geleert, Fehler- und Absturzeinträge der vorherigen Sitzung bleiben jedoch erhalten und kommen in den nächsten Bericht. Ein Problem, das vor dem Einschalten der Sammlung passiert ist, muss für den Bericht in der laufenden Sitzung erneut auftreten.

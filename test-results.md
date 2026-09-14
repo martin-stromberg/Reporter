@@ -2,6 +2,86 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #81: Debuginformationen sammeln und per E-Mail versenden
+
+Umfang: Opt-in-Schalter `settings.debug_collection_enabled`, session-scoped
+Tabelle `debug_log_entries` (Reset bei jedem App-Start, Maximum 500 Einträge),
+`DebugLogService`/`DebugReportService` in `Reporter.Core`, Gateways
+`IEmailService`/`IDeviceInfoProvider` in `Reporter`, Instrumentierung in
+`FeedSyncService`/`AutoRefreshService`/`App.xaml.cs` (Lifecycle, Sync-Fehler,
+unbehandelte Exceptions), neuer Abschnitt „Diagnose & Support" auf der
+Einstellungsseite mit Senden-Aktion über den System-Mail-Client.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests (Release) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release` | 454 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+| Migrationen | `dotnet ef migrations script` + `MigrateAsync` gegen Kopie der echten `reporter.db` | `debug_collection_enabled` (Default 0) und `debug_log_entries` + Index `IX_debug_log_entries_timestamp` angelegt |
+
+Befund während der Verifikation: die generierte Migration `AddSettingsDebugCollection`
+enthielt ein leeres `UpdateData` auf die Seed-Zeile `settings`, das SQLite mit
+„near \"WHERE\": syntax error" ablehnte — `MigrateAsync` scheiterte dadurch beim
+App-Start. Der leere `UpdateData`-Aufruf wurde entfernt (die `AddColumn`-Defaults
+decken Bestandszeilen ab); anschließend lief die Migration gegen eine Kopie der
+echten Datenbank fehlerfrei.
+
+Neue Tests u. a.: `DebugLogRepositoryTests` (Reihenfolge, `DeleteAll`, `TrimToLatest`),
+`DebugLogServiceTests` (Session-Reset, Enabled-State, Disabled-No-op, Schreiben,
+Trim auf 500, Repository-Fehler werfen nicht, Übergangseintrag),
+`DebugReportServiceTests` (Unsupported/Compose-false → `false`, Empfänger +
+lokalisierter Betreff, App-/Device-/Netzwerk-/Settings-/Feed-Health-/Sync-Log-/
+Session-Log-Inhalte, Limits 50/200, leere Logs),
+`FeedSyncServiceTests_DebugLog` + `AutoRefreshServiceTests_DebugLog`
+(Error-Level-Einträge bei Sync-Fehlern), `SettingsViewModelTests_Debug`
+(Laden, Persistieren, `SetEnabled`-Aufruf, `DebugSendEnabled`-Matrix,
+Senden über echten `DebugReportService` + `FakeEmailService`,
+`DebugReportFailed`-Event), `DebugReportTests_E2E` (Persistenz-Roundtrip,
+Report-Komposition über echte SQLite-Repositories, Session-Log Write/Reset),
+`ReporterDbContextTests_Persistence`/`_Schema` (Roundtrips + Tabellen-Mapping),
+`ServiceCollectionTests` (DI-Auflösung der neuen Services).
+Neue Fakes: `FakeEmailService`, `FakeDeviceInfoProvider`, `FakeDebugLogService`;
+`TestSettingsHelper.SaveAsync` um `debugCollectionEnabled` erweitert.
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Unpackaged `win-x64`-Debug-Build gestartet; Fenstergröße per `GetWindowRect`
+verifiziert: **390 × 844 pt**. Interaktion über UI Automation
+(`test-results/issue-59/uia.ps1`), deutsch lokalisierte UI. Screenshots unter
+`test-results/issue-81/manual-*.png`.
+
+- [x] **Migration beim App-Start:** `__EFMigrationsHistory` enthält nach dem
+  Start `20260914060413_AddSettingsDebugCollection` +
+  `20260914060416_AddDebugLogEntries`; `settings.debug_collection_enabled=0`,
+  `debug_log_entries` leer (Sammlung aus → kein Start-Eintrag)
+- [x] **Abschnitt „Diagnose & Support":** Section-Header, Switch-Zeile
+  „Debuginformationen sammeln" + Hint, „Debugbericht senden" + Hint,
+  Button **Senden** (286 × 44 pt) — `manual-02`
+- [x] **Opt-in-Schalter:** Toggle per UIA → `settings.debug_collection_enabled=1`
+  persistiert und `debug_log_entries` erhält sofort den Übergangseintrag
+  `Info | Lifecycle | Debug collection enabled` — `manual-03`
+- [x] **Senden:** Button **Senden** öffnet auf diesem Arbeitsplatz den
+  Windows-Systemdialog „kein E-Mail-Programm zugeordnet" (`mailto:` ohne
+  registrierten Client); danach ist im Session-Log `Info | Report | Debug
+  report composed` sowie `Info | Lifecycle | App resumed` (Resume-Logging)
+  sichtbar — `manual-04` (Systemdialog), `manual-05`
+- [x] **Session-Reset:** App-Neustart → `debug_log_entries` enthält nur noch
+  `Info | Lifecycle | Debug session started`; `debug_collection_enabled`
+  bleibt `1`
+- [x] **Dark Mode:** Abschnitt mit `AppThemeBinding`-Kartenfarben geprüft —
+  `manual-06`
+- [ ] **Mail-Entwurf mit echtem Client:** auf diesem Arbeitsplatz ist kein
+  Mail-Client registriert; der vorbefüllte Entwurf (Empfänger-Platzhalter,
+  lokalisierter Betreff, Plain-Text-Body mit allen sieben Sektionen) muss auf
+  einem Gerät mit eingerichtetem Mail-Client bzw. iOS-Simulator nachgeholt
+  werden. Body-Inhalt und Empfänger/Betreff sind durch
+  `DebugReportServiceTests`/`DebugReportTests_E2E` abgedeckt.
+
+### iOS-Verifikation
+
+Steht aus — nur auf macOS möglich (`net10.0-ios`, `scripts/iOS-Deployment.ps1`).
+
 ## Issue #77: Verbesserungen der App (Lesezeit, Favicons, Start-Abruf, Sortierung, Sprach-Hinweis, Icon/Splash)
 
 Branch: `task/issue-77-b1023d3d5f804e239e02f48af24b0ac3-verbesserungen-der-app`

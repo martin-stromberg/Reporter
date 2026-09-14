@@ -52,6 +52,7 @@ public class AutoRefreshServiceTests : IDisposable
             AutoRefreshEnabled = autoRefreshEnabled,
             RefreshIntervalMinutes = refreshIntervalMinutes,
             RefreshOnStartupEnabled = false,
+            DebugCollectionEnabled = false,
         };
     }
 
@@ -73,6 +74,7 @@ public class AutoRefreshServiceTests : IDisposable
             RefreshOnStartupEnabled = refreshOnStartupEnabled,
             UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
     }
 

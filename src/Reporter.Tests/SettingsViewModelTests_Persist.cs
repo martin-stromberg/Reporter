@@ -463,6 +463,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
             UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
         Assert.True(_viewModel.QuietHoursEnabled);
@@ -506,6 +507,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
             UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
 
@@ -547,6 +549,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
             UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
 
@@ -609,6 +612,7 @@ public class SettingsViewModelTests_Persist : IDisposable
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
             UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
 

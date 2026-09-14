@@ -83,4 +83,10 @@ public class Settings
     /// Gets the language selection ("system", "de" or "en").
     /// </summary>
     public string? Language { get; init; } = SettingsValues.LanguageSystem;
+
+    /// <summary>
+    /// Gets a value indicating whether the collection of debug information
+    /// (session debug log) is enabled.
+    /// </summary>
+    public required bool DebugCollectionEnabled { get; init; }
 }

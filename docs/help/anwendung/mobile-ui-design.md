@@ -131,3 +131,13 @@ Design-Entwurf folgen.
 - Icon/Splash: Generierte Resizetizer-Assets gesichtet — App-Icon mit Badge-Optik (Hintergrund `#1e293b`), SplashScreen mit „Reporter"-Wortmarke als Pfad in Weiß.
 - Screenshots: `test-results/issue-77/manual-*.png` (16 Dateien, Light + Dark); Details in `test-results.md` (Abschnitt „Issue #77") und `docs/features/task-issue-77-b1023d3d5f804e239e02f48af24b0ac3-verbesserungen-der-app/test-results.md`.
 - **Offen:** iOS-Verifikation (`net10.0-ios` benötigt macOS) — Splash-/Icon-Darstellung, Favicon-Anzeige und neue Einstellungen sind auf einem Mac nachzuholen.
+
+### Diagnose & Support (issue-81)
+- **Laufzeit-Verifikation durchgeführt** am Windows-Handy-Fenster 390 × 844 pt (`GetWindowRect`-verifiziert, unpackaged `win-x64`-Debug-Build), Light + Dark, deutsch lokalisierte UI; Interaktion via UI Automation (`test-results/issue-59/uia.ps1`).
+- `SettingsPage` Abschnitt **„Diagnose & Support"**: Section-Header, Switch-Zeile „Debuginformationen sammeln" + erklärender Hint, Aktionszeile „Debugbericht senden" + Hint, Button **Senden** (286 × 44 pt, ≥ 44 pt Touch-Target) — Layout: Karten statt Tabelle, kein horizontales Scrollen.
+- **Opt-in-Schalter:** Toggle per UIA `TogglePattern` → `settings.debug_collection_enabled=1` persistiert; `debug_log_entries` erhielt sofort den Übergangseintrag `Info | Lifecycle | Debug collection enabled`.
+- **Senden:** Button öffnete den System-Mail-Client — auf dem Prüf-PC ohne registriertem Mail-Client erschien der Windows-Dialog „kein E-Mail-Programm zugeordnet" (Mailto-Unsupported-Pfad). `Email.ComposeAsync` wird nur aufgerufen, wenn `Email.Default.IsComposeSupported` true ist; sonst erscheint der lokalisierte Hinweis.
+- **Session-Reset:** Nach App-Neustart enthielt `debug_log_entries` nur `Info | Lifecycle | Debug session started` — der Log wird pro Session zurückgesetzt, die Einstellung bleibt gespeichert.
+- **Dark Mode:** Abschnitt mit `AppThemeBinding`-Kartenfarben (`BackgroundDark`/`TextSecondaryDark`/`BorderDark`) geprüft — `manual-06`.
+- Screenshots: `test-results/issue-81/manual-*.png`; Details in `test-results.md` (Abschnitt „Issue #81").
+- **Offen:** Mail-Entwurf mit echtem Mail-Client (Betreff/Empfänger/Plain-Text-Body sind per `DebugReportServiceTests`/`DebugReportTests_E2E` abgedeckt) sowie iOS-Verifikation (`net10.0-ios` benötigt macOS).

@@ -104,3 +104,30 @@
 2. `settings.language` in der Datenbank prüfen (`system`/`de`/`en`); unbekannte Werte fallen in `AppCulture.ResolveCulture` auf `null` → No-Op → Systemkultur.
 3. Debug-Ausgabe auf `MauiProgram.ApplyPersistedLanguage failed` prüfen — dort werden Fehler beim synchronen `Database.Migrate()` oder `GetAsync` sichtbar (z. B. fehlende `language`-Spalte bei abgelaufener Migration `AddSettingsLanguage`).
 4. Beachten: `AppCulture.Apply` setzt auch `CurrentCulture` und die `DefaultThreadCurrent*`-Defaults — bei teilweise falscher Formatierung (z. B. Datumsformat) ist der persistierte Wert zu prüfen.
+
+## Debugbericht lässt sich nicht senden
+
+**Symptom:** Die Schaltfläche **Senden** im Abschnitt „Diagnose & Support" ist abgedunkelt, oder nach dem Tippen erscheint der Dialog „Senden fehlgeschlagen".
+
+**Ursache:** `DebugSendEnabled = DebugEmailSupported && DebugCollectionEnabled` — der Senden-Bereich ist deaktiviert, wenn die Sammlung aus ist (Hinweis `SettingsDebugCollectionRequiredHint`) oder `IEmailService.IsSupported == false` (`Email.Default.IsComposeSupported`, Hinweis `SettingsDebugEmailUnsupportedHint`). Beim Versand selbst kapselt `EmailService.ComposeAsync` Plattformfehler (z. B. kein eingerichteter Mail-Account, `FeatureNotSupportedException`) auf `false` → `DebugReportFailed`-Event → `DisplayAlertAsync`. Unerwartete Exceptions im Sammelpfad propagieren zu `SendDebugReportAsync` und lösen denselben Alert aus.
+
+**Lösung:**
+1. `settings.debug_collection_enabled` in der Datenbank prüfen (Migration `AddSettingsDebugCollection`, Default `0`).
+2. Debug-Ausgabe auf `EmailService.ComposeAsync failed` und `Failed to send debug report` prüfen.
+3. In `debug_log_entries` nach `Report`-Einträgen suchen — `DebugReportService` protokolliert „Debug report not sent: e-mail compose is not supported", „Debug report compose failed" bzw. „Debug report composed".
+4. Prüfen, ob das Gerät/die Plattform `mailto:`-Compose unterstützt (z. B. Windows ohne registriertem Mail-Client meldet `IsComposeSupported == false`).
+
+> **Hinweis:** Der Versand-Guard sitzt bewusst in `SendDebugReportAsync` (nicht `CanExecute` — `IAsyncRelayCommand.ExecuteAsync` wertet `CanExecute` nicht aus). Ein `ComposeAsync == false` bei eingeschalteter Sammlung ist der gewünschte sichtbare Fehlerpfad, kein Bug.
+
+## Session-Debug-Log bleibt leer
+
+**Symptom:** Die Tabelle `debug_log_entries` enthält keine Einträge, obwohl Fehler aufgetreten sind.
+
+**Ursache:** `DebugLogService.LogAsync` ist ein No-op, solange `IsEnabled == false` — die Sammlung war zum Zeitpunkt des Fehlers nicht aktiv. Außerdem setzt `BeginSessionAsync` bei jedem App-Start alle Einträge außer `Error`-Einträgen zurück: `Info`/`Warning`-Einträge der Vor-Session (z. B. `Lifecycle`, `Warning`-Sync-Fehler) sind nach einem Neustart bewusst weg.
+
+**Lösung:**
+1. `settings.debug_collection_enabled = 1` verifizieren — der Schalter ist Opt-in (Default `0`).
+2. Das Problem in der laufenden Sitzung reproduzieren, damit es ins Log geschrieben wird.
+3. Debug-Ausgabe auf `DebugLogService.BeginSessionAsync failed` / `DebugLogService.LogAsync failed` prüfen — eigene Fehler des Loggers werden nur dort sichtbar (er wirft nie).
+4. Sicherstellen, dass `BeginSessionAsync` nach der Migration lief (`App.OnStart` → `MigrateAsync()` vor `BeginSessionAsync`; die Migration läuft zusätzlich früher in `MauiProgram.ApplyPersistedLanguage`). Einträge, die vor `BeginSessionAsync` entstehen (z. B. in `MauiProgram.CreateMauiApp`), können nicht persistiert werden.
+5. Bei Absturz-Untersuchung beachten: Die `UnhandledException`/`UnobservedTaskException`-Handler loggen fire-and-forget — bei einem harten Absturz kann der letzte Eintrag verloren gehen.

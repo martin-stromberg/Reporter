@@ -11,7 +11,7 @@
 
 ## Konfiguration
 
-- [Einstellungen](einstellungen/index.md) — Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung, Abruf beim Programmstart, Sortierung der Ungelesen-Liste und Lesefluss, Benachrichtigungen mit Ruhezeiten, das Erscheinungsbild sowie die Sprache.
+- [Einstellungen](einstellungen/index.md) — Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung, Abruf beim Programmstart, Sortierung der Ungelesen-Liste und Lesefluss, Benachrichtigungen mit Ruhezeiten, das Erscheinungsbild, die Sprache sowie Diagnose & Support (Debug-Sammlung und Debugbericht per E-Mail).
 
 ## Systemverwaltung
 

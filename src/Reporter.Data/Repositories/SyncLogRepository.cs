@@ -35,6 +35,18 @@ public class SyncLogRepository : ISyncLogRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<SyncLog>> GetLatestAsync(int maxEntries)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.SyncLogs
+            .AsNoTracking()
+            .OrderByDescending(s => s.StartedAt)
+            .Take(maxEntries)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<SyncLog?> GetByIdAsync(Guid id)
     {
         await using var context = await _factory.CreateDbContextAsync();

@@ -518,4 +518,58 @@
   <data name="PromptRenameFeedMessage" xml:space="preserve">
     <value>Neuer Anzeigetitel</value>
   </data>
+  <data name="SettingsSectionDebug" xml:space="preserve">
+    <value>Diagnose &amp; Support</value>
+  </data>
+  <data name="SettingsDebugCollectionLabel" xml:space="preserve">
+    <value>Debuginformationen sammeln</value>
+  </data>
+  <data name="SettingsDebugCollectionHint" xml:space="preserve">
+    <value>Protokolliert Fehler und App-Ereignisse der aktuellen Sitzung (Absturz-Einträge der vorherigen Sitzung bleiben erhalten)</value>
+  </data>
+  <data name="SettingsDebugSendLabel" xml:space="preserve">
+    <value>Debugbericht senden</value>
+  </data>
+  <data name="SettingsDebugSendHint" xml:space="preserve">
+    <value>Öffnet einen E-Mail-Entwurf mit den Diagnosedaten der aktuellen Sitzung zur Prüfung</value>
+  </data>
+  <data name="SettingsDebugSendButton" xml:space="preserve">
+    <value>Senden</value>
+  </data>
+  <data name="SettingsDebugCollectionRequiredHint" xml:space="preserve">
+    <value>Aktiviere zuerst „Debuginformationen sammeln", um einen Debugbericht senden zu können. Das Protokoll umfasst die aktuelle Sitzung und übernommene Absturzinformationen der vorherigen Sitzung — ein zu meldendes Problem muss daher gegebenenfalls in dieser Sitzung erneut auftreten.</value>
+  </data>
+  <data name="SettingsDebugEmailUnsupportedHint" xml:space="preserve">
+    <value>Auf diesem Gerät ist keine E-Mail-App verfügbar, daher kann kein Debugbericht gesendet werden.</value>
+  </data>
+  <data name="DebugReportFailedTitle" xml:space="preserve">
+    <value>Senden fehlgeschlagen</value>
+  </data>
+  <data name="DebugReportFailedMessage" xml:space="preserve">
+    <value>Der Debugbericht konnte nicht gesendet werden. Stelle sicher, dass auf diesem Gerät eine E-Mail-App eingerichtet ist, und versuche es erneut.</value>
+  </data>
+  <data name="DebugReportEmailSubject" xml:space="preserve">
+    <value>{0} Debugbericht</value>
+  </data>
+  <data name="DebugReportSectionAppInfo" xml:space="preserve">
+    <value>Anwendung</value>
+  </data>
+  <data name="DebugReportSectionDevice" xml:space="preserve">
+    <value>Gerät</value>
+  </data>
+  <data name="DebugReportSectionNetwork" xml:space="preserve">
+    <value>Netzwerk</value>
+  </data>
+  <data name="DebugReportSectionSettings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="DebugReportSectionFeedHealth" xml:space="preserve">
+    <value>Feed-Status</value>
+  </data>
+  <data name="DebugReportSectionSyncLog" xml:space="preserve">
+    <value>Sync-Verlauf</value>
+  </data>
+  <data name="DebugReportSectionSessionLog" xml:space="preserve">
+    <value>Session-Debug-Log</value>
+  </data>
 </root>
