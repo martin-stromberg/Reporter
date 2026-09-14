@@ -18,6 +18,7 @@ public class UnreadViewModelTests : IDisposable
     private readonly TestDbContextFactory _factory;
     private readonly ItemRepository _itemRepository;
     private readonly CategoryRepository _categoryRepository;
+    private readonly SettingsRepository _settingsRepository;
     private readonly FakeFeedSyncService _feedSyncService;
     private readonly FakeNetworkStatusService _networkStatusService;
     private readonly UnreadViewModel _viewModel;
@@ -30,9 +31,10 @@ public class UnreadViewModelTests : IDisposable
         _factory = new TestDbContextFactory();
         _itemRepository = new ItemRepository(_factory);
         _categoryRepository = new CategoryRepository(_factory);
+        _settingsRepository = new SettingsRepository(_factory);
         _feedSyncService = new FakeFeedSyncService();
         _networkStatusService = new FakeNetworkStatusService();
-        _viewModel = new UnreadViewModel(_itemRepository, _categoryRepository, _feedSyncService, _networkStatusService);
+        _viewModel = new UnreadViewModel(_itemRepository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
     }
 
     /// <summary>
@@ -359,6 +361,7 @@ public class UnreadViewModelTests : IDisposable
             new FailingItemRepository(_itemRepository),
             _categoryRepository,
             _feedSyncService,
+            _settingsRepository,
             _networkStatusService);
 
         await viewModel.RefreshCommand.ExecuteAsync(null);
@@ -399,6 +402,7 @@ public class UnreadViewModelTests : IDisposable
             new FailingItemRepository(_itemRepository),
             _categoryRepository,
             _feedSyncService,
+            _settingsRepository,
             _networkStatusService);
         await viewModel.LoadCommand.ExecuteAsync(null);
         Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
@@ -483,6 +487,70 @@ public class UnreadViewModelTests : IDisposable
         Assert.True(persisted.IsSavedForLater);
     }
 
+    /// <summary>
+    /// Verifies that the unread list requests ascending order from the repository
+    /// when the persisted sort order is "asc".
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadPage_PassesSortOrderFromSettings()
+    {
+        var repository = new RecordingItemRepository(_itemRepository);
+        var viewModel = new UnreadViewModel(repository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
+
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: SettingsValues.SortOrderAscending);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.True(repository.LastAscending);
+
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: SettingsValues.SortOrderDescending);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.False(repository.LastAscending);
+    }
+
+    /// <summary>
+    /// Verifies that an unknown persisted sort order falls back to descending order.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadPage_InvalidSortOrder_UsesDescending()
+    {
+        var repository = new RecordingItemRepository(_itemRepository);
+        var viewModel = new UnreadViewModel(repository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
+
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: "bogus");
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(repository.LastAscending);
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingItemRepository"/> that records the ascending flag of
+    /// the last paged unread query.
+    /// </summary>
+    private sealed class RecordingItemRepository : DelegatingItemRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RecordingItemRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public RecordingItemRepository(IItemRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <summary>
+        /// Gets the ascending flag passed to the last <see cref="GetUnreadByDateAsync"/> call.
+        /// </summary>
+        public bool LastAscending { get; private set; }
+
+        /// <inheritdoc />
+        public override async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
+        {
+            LastAscending = ascending;
+            return await base.GetUnreadByDateAsync(page, pageSize, categoryId, ascending);
+        }
+    }
+
     private sealed class FakeFeedSyncService : IFeedSyncService
     {
         public bool SyncAllCalled { get; private set; }
@@ -530,7 +598,7 @@ public class UnreadViewModelTests : IDisposable
         }
 
         /// <inheritdoc />
-        public override Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null)
+        public override Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
         {
             return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
         }

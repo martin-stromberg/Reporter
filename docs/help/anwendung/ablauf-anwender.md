@@ -42,6 +42,7 @@ Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 
 - Öffne **Feeds**.
 - Ziehe die Feed-Liste nach unten (Ziehen zum Aktualisieren), um alle Feeds abzurufen.
+- Ist in den **Einstellungen** der Schalter **Beim Programmstart abrufen** eingeschaltet (Voreinstellung), hat die App die Feeds bereits beim Öffnen im Hintergrund abgerufen — ein manuelles Aktualisieren ist dann meist nicht nötig.
 - Oder tippe eine Feed-Karte an und wähle **Aktualisieren**, um nur diesen Feed abzurufen.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
 - Auf iOS kann dabei eine Benachrichtigung erscheinen — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).

@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
 using Reporter.Core.ViewModels;
 using Reporter.Data.Repositories;
@@ -129,6 +130,44 @@ public class SettingsViewModelTests_E2E : IDisposable
         await reloaded.LoadCommand.ExecuteAsync(null);
 
         Assert.Equal("de", reloaded.SelectedLanguage?.Value);
+    }
+
+    /// <summary>
+    /// Verifies the end-to-end flow: toggle the startup-refresh switch, persist it
+    /// and reload the value in a new view model instance.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task E2E_RefreshOnStartup_PersistRoundtrip()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.RefreshOnStartupEnabled = false;
+        await TestWaitHelper.WaitUntilAsync(async () => !(await _settingsRepository.GetAsync()).RefreshOnStartupEnabled);
+
+        var reloaded = CreateViewModel();
+        await reloaded.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(reloaded.RefreshOnStartupEnabled);
+    }
+
+    /// <summary>
+    /// Verifies the end-to-end flow: change the unread sort order, persist it and
+    /// reload the selection in a new view model instance.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task E2E_SortOrder_PersistRoundtrip()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        _viewModel.SelectedSortOrder = _viewModel.SortOrderOptions.First(o => o.Value == SettingsValues.SortOrderAscending);
+        await TestWaitHelper.WaitUntilAsync(async () => (await _settingsRepository.GetAsync()).UnreadSortOrder == SettingsValues.SortOrderAscending);
+
+        var reloaded = CreateViewModel();
+        await reloaded.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(SettingsValues.SortOrderAscending, reloaded.SelectedSortOrder?.Value);
     }
 
     /// <summary>

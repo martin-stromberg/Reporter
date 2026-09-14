@@ -70,6 +70,7 @@ public class ServiceCollectionTests
         services
             .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
             .AddSingleton<IFeedSyncService, FeedSyncService>()
+            .AddSingleton<IFeedIconService, FeedIconService>()
             .AddSingleton<IKeywordMatcher, KeywordMatcher>()
             .AddSingleton<IKeywordFilter, KeywordFilter>()
             .AddSingleton<INotificationService, NotificationService>()
@@ -79,6 +80,7 @@ public class ServiceCollectionTests
         var provider = services.BuildServiceProvider();
 
         Assert.NotNull(provider.GetRequiredService<IFeedSyncService>());
+        Assert.NotNull(provider.GetRequiredService<IFeedIconService>());
 
         connection.Dispose();
     }

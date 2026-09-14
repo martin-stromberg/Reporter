@@ -53,6 +53,16 @@ public static class SettingsValues
     public const string LanguageEnglish = "en";
 
     /// <summary>
+    /// The sort order value that lists the newest articles first.
+    /// </summary>
+    public const string SortOrderDescending = "desc";
+
+    /// <summary>
+    /// The sort order value that lists the oldest articles first.
+    /// </summary>
+    public const string SortOrderAscending = "asc";
+
+    /// <summary>
     /// Determines whether the automatic mark-as-read feature is active for the given persisted mode.
     /// </summary>
     /// <param name="autoMarkReadMode">The persisted auto-mark-as-read mode, or <c>null</c>.</param>

@@ -42,6 +42,25 @@ public class AutoRefreshService : IAutoRefreshService
     {
         var settings = await _settingsRepository.GetAsync(cancellationToken);
         await ApplySettingsAsync(settings);
+
+        if (settings.RefreshOnStartupEnabled && _networkStatusService.IsOnline)
+        {
+            _ = RunStartupSyncAsync();
+        }
+    }
+
+    // The startup sync is fire-and-forget: it must neither block nor fail the
+    // app start, so errors are logged and swallowed.
+    private async Task RunStartupSyncAsync()
+    {
+        try
+        {
+            await _feedSyncService.SyncAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"AutoRefreshService startup sync failed: {ex}");
+        }
     }
 
     /// <inheritdoc />

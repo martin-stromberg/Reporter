@@ -21,6 +21,7 @@ public partial class UnreadViewModel : BaseViewModel
     private readonly IItemRepository _itemRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IFeedSyncService _feedSyncService;
+    private readonly ISettingsRepository _settingsRepository;
 
     private string _title = AppResources.PageTitleUnread;
     private ObservableCollection<ItemListItem> _articles = [];
@@ -41,12 +42,14 @@ public partial class UnreadViewModel : BaseViewModel
     /// <param name="itemRepository">The item repository.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="feedSyncService">The feed synchronization service.</param>
+    /// <param name="settingsRepository">The settings repository used for the unread sort order.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
-    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService)
+    public UnreadViewModel(IItemRepository itemRepository, ICategoryRepository categoryRepository, IFeedSyncService feedSyncService, ISettingsRepository settingsRepository, INetworkStatusService networkStatusService)
     {
         _itemRepository = itemRepository;
         _categoryRepository = categoryRepository;
         _feedSyncService = feedSyncService;
+        _settingsRepository = settingsRepository;
         TrackConnectivity(networkStatusService);
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
@@ -301,7 +304,9 @@ public partial class UnreadViewModel : BaseViewModel
         try
         {
             var categoryId = SelectedCategory?.CategoryId;
-            var items = await _itemRepository.GetUnreadByDateAsync(page, PageSize, categoryId);
+            var settings = await _settingsRepository.GetAsync();
+            var ascending = settings.UnreadSortOrder == SettingsValues.SortOrderAscending;
+            var items = await _itemRepository.GetUnreadByDateAsync(page, PageSize, categoryId, ascending);
 
             if (append)
             {

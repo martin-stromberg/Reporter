@@ -57,7 +57,7 @@ public class KeywordFilterTests_E2E : IDisposable
         });
         var httpClient = new HttpClient(handler);
         var notificationService = new NotificationService(_settingsRepository, _keywordFilter, _localNotificationService);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService, new FakeNetworkStatusService(), _keywordFilter);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService, new FakeNetworkStatusService(), _keywordFilter, new FakeFeedIconService());
     }
 
     private async Task AddKeywordViaSettingsAsync(string keywordText)

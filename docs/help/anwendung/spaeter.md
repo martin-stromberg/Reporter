@@ -16,7 +16,7 @@ Artikel, die du dir merken möchtest, markierst du mit einem Lesezeichen. Alle g
 - Öffne den Tab **Später** in der unteren Navigationsleiste.
 - Die Liste zeigt ausschließlich gemerkte Artikel, absteigend nach Veröffentlichungsdatum sortiert.
 - Beim Scrollen ans Ende werden weitere gemerkte Artikel automatisch nachgeladen — währenddessen erscheint ein Ladeindikator unter der Liste.
-- Jede Karte zeigt Feed-Titel, Datum, Titel, Bild, einen kurzen Teasertext und die geschätzte Lesezeit — wie auf der Seite **Ungelesen**. Ein kleiner Punkt in der Kopfzeile markiert Artikel, die du noch nicht gelesen hast.
+- Jede Karte zeigt Feed-Titel, Datum, Titel, Bild, einen kurzen Teasertext und die geschätzte Lesezeit — wie auf der Seite **Ungelesen** (fehlt das Artikelbild, erscheint das Favicon des Feeds oder ein Kreis mit dessen Anfangsbuchstaben; bei höchstens einer Minute Lesezeit entfällt die Angabe). Ein kleiner Punkt in der Kopfzeile markiert Artikel, die du noch nicht gelesen hast.
 - Ist kein Artikel gemerkt, erscheint der Hinweis „Hier erscheinen Artikel, die du dir für später merkst."
 - Ohne Internetverbindung erscheint oberhalb der Liste das Hinweis-Banner **„Keine Internetverbindung."**, und die Vorschaubilder auf den Karten werden ausgeblendet (siehe [Offline lesen](offline.md)).
 - Konnte die Liste nicht geladen werden, erscheint unter dem Seitentitel die Fehlermeldung **„Die Artikel konnten nicht geladen werden."** — beim nächsten Öffnen der Seite wird der Ladevorgang erneut versucht.

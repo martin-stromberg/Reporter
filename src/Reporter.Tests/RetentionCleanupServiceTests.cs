@@ -52,6 +52,8 @@ public class RetentionCleanupServiceTests : IDisposable
             QuietHoursEnd = settings.QuietHoursEnd,
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
         });
     }

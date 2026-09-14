@@ -59,6 +59,8 @@ public class SettingsViewModelTests_Load : IDisposable
             QuietHoursEnd = new TimeSpan(7, 0, 0),
             AutoRefreshEnabled = true,
             RefreshIntervalMinutes = 60,
+            RefreshOnStartupEnabled = false,
+            UnreadSortOrder = SettingsValues.SortOrderAscending,
             Theme = "dark",
         });
         await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Werbung" });
@@ -76,6 +78,8 @@ public class SettingsViewModelTests_Load : IDisposable
         Assert.Equal(new TimeSpan(22, 0, 0), _viewModel.QuietHoursStart);
         Assert.Equal(new TimeSpan(7, 0, 0), _viewModel.QuietHoursEnd);
         Assert.Equal("dark", _viewModel.SelectedTheme?.Value);
+        Assert.False(_viewModel.RefreshOnStartupEnabled);
+        Assert.Equal(SettingsValues.SortOrderAscending, _viewModel.SelectedSortOrder?.Value);
         Assert.Single(_viewModel.Keywords);
         Assert.Equal("Werbung", _viewModel.Keywords[0].KeywordText);
         Assert.False(_viewModel.HasError);
@@ -99,6 +103,8 @@ public class SettingsViewModelTests_Load : IDisposable
             NotificationSummaryEnabled = settings.NotificationSummaryEnabled,
             AutoRefreshEnabled = settings.AutoRefreshEnabled,
             RefreshIntervalMinutes = 45,
+            RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
+            UnreadSortOrder = "bogus",
             Theme = "sepia",
         });
 
@@ -107,6 +113,7 @@ public class SettingsViewModelTests_Load : IDisposable
         Assert.Equal(30, _viewModel.SelectedRefreshInterval?.Minutes);
         Assert.Equal(5, _viewModel.SelectedAutoMarkReadDelay?.Seconds);
         Assert.Equal("system", _viewModel.SelectedTheme?.Value);
+        Assert.Equal(SettingsValues.SortOrderDescending, _viewModel.SelectedSortOrder?.Value);
     }
 
     /// <summary>
@@ -284,5 +291,50 @@ public class SettingsViewModelTests_Load : IDisposable
         await _viewModel.LoadCommand.ExecuteAsync(null);
 
         Assert.Equal("de", _viewModel.SelectedLanguage?.Value);
+    }
+
+    /// <summary>
+    /// Verifies that the persisted startup-refresh switch is loaded into the view model.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_PopulatesRefreshOnStartup()
+    {
+        await TestSettingsHelper.SaveAsync(_settingsRepository, refreshOnStartupEnabled: false);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.RefreshOnStartupEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that the persisted unread sort order is loaded into the view model.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_PopulatesSelectedSortOrder()
+    {
+        await TestSettingsHelper.SaveAsync(_settingsRepository, unreadSortOrder: SettingsValues.SortOrderAscending);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(SettingsValues.SortOrderAscending, _viewModel.SelectedSortOrder?.Value);
+    }
+
+    /// <summary>
+    /// Verifies that reloading after a language change hides the restart hint again —
+    /// the reloaded selection matches the persisted language.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Load_ResetsRestartHint()
+    {
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        _viewModel.SelectedLanguage = _viewModel.LanguageOptions.First(o => o.Value == "en");
+        Assert.True(_viewModel.LanguageRestartHintVisible);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.LanguageRestartHintVisible);
     }
 }

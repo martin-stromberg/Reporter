@@ -6,7 +6,7 @@
 
 ## Übersicht
 
-`SettingsPage` lädt beim Erscheinen den Singleton-`Settings`-Datensatz und die Keyword-Liste; `SettingsViewModel` persistiert jede Änderung sofort über `ISettingsRepository.SaveAsync`. Bei Theme- oder Auto-Refresh-Änderungen werden `IAppThemeService` bzw. `IAutoRefreshService` nachgeschaltet; die Sprachauswahl wird dagegen nur persistiert — die wirksame Kultur setzt `AppCulture` beim nächsten App-Start in `MauiProgram.ApplyPersistedLanguage` (vor `CreateWindow`). Beim Einschalten des Benachrichtigungs-Hauptschalters fragt `ILocalNotificationService` die iOS-Berechtigung an; der Status (`NotificationAuthorizationStatus`) steuert die Hinweiszeilen `NotificationPermissionDenied`/`NotificationPermissionNotDetermined`. Beim App-Start laufen drei fehlerisolierte Blöcke in `App.OnStart`: Retention-Cleanup (inkl. Keyword-Regel für Bestandstreffer), Theme-Anwendung und Start der Hintergrund-Aktualisierung. Der Keyword-Filter selbst greift bereits beim Feed-Abruf in `FeedSyncService.RunSyncAsync` (Abschnitt 4).
+`SettingsPage` lädt beim Erscheinen den Singleton-`Settings`-Datensatz und die Keyword-Liste; `SettingsViewModel` persistiert jede Änderung sofort über `ISettingsRepository.SaveAsync`. Bei Theme- oder Auto-Refresh-Änderungen werden `IAppThemeService` bzw. `IAutoRefreshService` nachgeschaltet; die Sprachauswahl wird dagegen nur persistiert — die wirksame Kultur setzt `AppCulture` beim nächsten App-Start in `MauiProgram.ApplyPersistedLanguage` (vor `CreateWindow`). Beim Einschalten des Benachrichtigungs-Hauptschalters fragt `ILocalNotificationService` die iOS-Berechtigung an; der Status (`NotificationAuthorizationStatus`) steuert die Hinweiszeilen `NotificationPermissionDenied`/`NotificationPermissionNotDetermined`. Beim App-Start laufen drei fehlerisolierte Blöcke in `App.OnStart`: Retention-Cleanup (inkl. Keyword-Regel für Bestandstreffer), Theme-Anwendung und Start der Hintergrund-Aktualisierung — letztere löst bei eingeschalteter Option `RefreshOnStartupEnabled` zusätzlich einen einmaligen, nicht blockierenden Start-Abruf aus (Abschnitt 5). Der Keyword-Filter selbst greift bereits beim Feed-Abruf in `FeedSyncService.RunSyncAsync` (Abschnitt 4).
 
 ## Ablauf
 
@@ -16,6 +16,9 @@
 
 - `RetentionDays` wird auf `[1, 365]` geclamppt (`MinRetentionDays`/`MaxRetentionDays`).
 - `SelectedRefreshInterval` fällt auf die Option mit 30 Minuten zurück (`DefaultRefreshIntervalMinutes`), wenn der gespeicherte Wert keiner `RefreshIntervalOption` entspricht.
+- `RefreshOnStartupEnabled` wird direkt aus `settings.RefreshOnStartupEnabled` befüllt (DB-Default `true`).
+- `SelectedSortOrder` fällt auf die `SortOrderOption` mit `SettingsValues.SortOrderDescending` (`"desc"`) zurück, wenn `settings.UnreadSortOrder` keiner Option entspricht.
+- `LanguageRestartHintVisible` wird nach dem Befüllen von `SelectedLanguage` auf `false` zurückgesetzt; der zuletzt persistierte Sprachwert wird in `_loadedLanguage` gehalten.
 - `AutoMarkReadEnabled` ergibt sich aus `SettingsValues.IsAutoMarkReadEnabled(settings.AutoMarkReadMode)` (alle Werte außer `"off"` gelten als aktiv).
 - `SelectedAutoMarkReadDelay` fällt auf 5 Sekunden zurück (`DefaultAutoMarkReadDelaySeconds`).
 - `QuietHoursEnabled` ergibt sich aus `settings.QuietHoursStart is not null || settings.QuietHoursEnd is not null`; `QuietHoursStart`/`QuietHoursEnd` fallen auf die im ViewModel gehaltenen Sitzungswerte (`_quietHoursStart`/`_quietHoursEnd`) zurück, wenn die persistierten Werte `null` sind.
@@ -35,7 +38,11 @@ Beteiligte Komponenten:
 
 ### 2. Einstellung ändern (Sofort-Persistierung)
 
-Die Setter der Optionseigenschaften (`AutoRefreshEnabled`, `SelectedRefreshInterval`, `AutoMarkReadEnabled`, `SelectedAutoMarkReadDelay`, `NotificationsEnabled`, `NotificationSummaryEnabled`, `QuietHoursEnabled`, `QuietHoursStart`, `QuietHoursEnd`, `SelectedTheme`, `SelectedLanguage`) rufen `PersistOnChange()` auf; während `_isLoading` wird abgebrochen.
+Die Setter der Optionseigenschaften (`AutoRefreshEnabled`, `SelectedRefreshInterval`, `RefreshOnStartupEnabled`, `SelectedSortOrder`, `AutoMarkReadEnabled`, `SelectedAutoMarkReadDelay`, `NotificationsEnabled`, `NotificationSummaryEnabled`, `QuietHoursEnabled`, `QuietHoursStart`, `QuietHoursEnd`, `SelectedTheme`, `SelectedLanguage`) rufen `PersistOnChange()` auf; während `_isLoading` wird abgebrochen.
+
+Der `SelectedLanguage`-Setter hat eine Nebenwirkung auf den Neustart-Hinweis: Außerhalb von `_isLoading` setzt er `LanguageRestartHintVisible = value?.Value != _loadedLanguage` — der Hinweis-`Border` unter dem Sprach-`Picker` in `SettingsPage.xaml` ist per `IsVisible="{Binding LanguageRestartHintVisible}"` gebunden und erscheint daher erst nach einer Abweichung vom persistierten Wert und verschwindet bei Rückwahl wieder.
+
+Die Sortierrichtung wird nicht in `PersistAsync` nachgeschaltet, sondern erst beim Lesen ausgewertet: `UnreadViewModel` hält eine `ISettingsRepository`-Abhängigkeit; `LoadPageAsync` lädt die Settings pro Seite, mappt `settings.UnreadSortOrder == SettingsValues.SortOrderAscending` auf das Bool `ascending` und ruft `IItemRepository.GetUnreadByDateAsync(page, pageSize, categoryId, ascending)` — aufsteigend `OrderBy(PublishedAt).ThenByDescending(Id)` (exakte Umkehr inkl. Tiebreaker), sonst unverändert `OrderByDescending(PublishedAt).ThenBy(Id)`. Artikel ohne `PublishedAt` folgen dem SQLite-NULL-Verhalten ohne gesonderten Handling-Code; `GetSavedForLaterAsync` (**Später**) bleibt fest absteigend.
 
 `QuietHoursEnabled` ist ein reiner UI-Schalter ohne eigene Persistenzspalte: Beim Einschalten werden `_quietHoursStart`/`_quietHoursEnd` mit den gehaltenen Sitzungswerten oder den Defaults 22:00/07:00 (`DefaultQuietHoursStart`/`DefaultQuietHoursEnd`) befüllt. Beim Ausschalten bleiben die Werte im ViewModel erhalten — `PersistAsync` schreibt dann `QuietHoursStart = QuietHoursEnabled ? QuietHoursStart : null` (analog `QuietHoursEnd`), sodass eine ausgeschaltete Ruhezeit als `null` persistiert wird, ein Wiedereinschalten in derselben Sitzung aber die eigenen Zeiten restauriert. Die `TimePicker` in `SettingsPage.xaml` sind über `IsEnabled="{Binding QuietHoursEnabled}"` an den Schalter gekoppelt und werden per `DataTrigger` auf `Opacity` 0,4 abgedunkelt.
 
@@ -46,7 +53,7 @@ Der `NotificationsEnabled`-Setter hat eine Sonderrolle: Beim Wechsel auf `true` 
 - `previous is null || previous.Theme != updated.Theme` → `IAppThemeService.ApplyTheme(updated.Theme)`
 - `previous is null` oder Änderung an `AutoRefreshEnabled`/`RefreshIntervalMinutes` → `IAutoRefreshService.ApplySettingsAsync(updated)`
 
-Für `Language` gibt es bewusst keinen nachgeschalteten Service-Aufruf: `PersistAsync` schreibt `Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem` nur in den Datensatz — eine Laufzeit-Umschaltung ist nicht vorgesehen, die Kultur wird beim nächsten App-Start angewendet (siehe Abschnitt 7). Der statische Info-`Border` in der Sektion **Sprache** (`AppResources.SettingsLanguageRestartHint`) weist den Anwender auf den erforderlichen Neustart hin.
+Für `Language` gibt es bewusst keinen nachgeschalteten Service-Aufruf: `PersistAsync` schreibt `Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem` nur in den Datensatz — eine Laufzeit-Umschaltung ist nicht vorgesehen, die Kultur wird beim nächsten App-Start angewendet (siehe Abschnitt 7). Der Hinweis-`Border` in der Sektion **Sprache** (`AppResources.SettingsLanguageRestartHint`) weist den Anwender auf den erforderlichen Neustart hin — gesteuert über `LanguageRestartHintVisible` (siehe oben).
 
 Die Aufbewahrungsdauer wird nicht bei jedem Slider-Schritt, sondern über `Slider.DragCompletedCommand` → `SaveRetentionCommand` → `SaveRetention()` (Rundung + Clamp + `PersistAsync`) persistiert.
 
@@ -118,6 +125,8 @@ Beteiligte Komponenten:
 
 `App.OnStart` ruft `IAutoRefreshService.StartAsync()` fehlerisoliert auf. `StartAsync` lädt `Settings` und delegiert an `ApplySettingsAsync`.
 
+Zusätzlich startet `StartAsync` bei `settings.RefreshOnStartupEnabled && _networkStatusService.IsOnline` einen einmaligen Start-Abruf: `RunStartupSyncAsync` ruft `IFeedSyncService.SyncAllAsync` fire-and-forget auf (`_ = …`, eigener `try/catch` mit `Debug.WriteLine` `"AutoRefreshService startup sync failed"`) — der App-Start wird weder blockiert noch kann ein Sync-Fehler ihn beeinträchtigen; offline wird der Start-Abruf übersprungen.
+
 `AutoRefreshService.ApplySettingsAsync` läuft unter `_stateLock` (`SemaphoreSlim`), stoppt einen laufenden Loop (`CancellationTokenSource` kancellieren, Task awaiten, `OperationCanceledException` erwartet) und startet bei `AutoRefreshEnabled` einen neuen Loop `RunLoopAsync` mit `PeriodicTimer(TimeSpan.FromMinutes(clamp(RefreshIntervalMinutes, 1, 1440)), _timeProvider)`.
 
 `RunLoopAsync` wartet pro Tick auf `timer.WaitForNextTickAsync` und ruft anschließend `IFeedSyncService.SyncAllAsync(cancellationToken)` auf. Da jeder Tick den Sync sequenziell awaitet, können sich Abrufe nicht überlappen; während eines laufenden Syncs verstrichene Perioden fasst der `PeriodicTimer` zusammen. Exceptions pro Tick werden abgefangen und per `Debug.WriteLine` protokolliert — der Timer läuft weiter.
@@ -126,7 +135,8 @@ Beteiligte Komponenten:
 
 Beteiligte Komponenten:
 - `App.OnStart` — Startpunkt
-- `AutoRefreshService` (`StartAsync`, `ApplySettingsAsync`, `StopAsync`, `RunLoopAsync`) — Timer-Steuerung
+- `AutoRefreshService` (`StartAsync`, `RunStartupSyncAsync`, `ApplySettingsAsync`, `StopAsync`, `RunLoopAsync`) — Timer-Steuerung und einmaliger Start-Abruf
+- `INetworkStatusService.IsOnline` — Guard für den Start-Abruf (und die Timer-Ticks)
 - `TimeProvider` — injizierbar (Standard `TimeProvider.System`; Tests nutzen `FakeTimeProvider`)
 - `IFeedSyncService.SyncAllAsync` — eigentlicher Abruf
 

@@ -46,4 +46,9 @@ public class Feed
     /// Gets a value indicating whether notifications are enabled for this feed.
     /// </summary>
     public required bool NotificationsEnabled { get; init; }
+
+    /// <summary>
+    /// Gets the favicon URL of the feed's website, or <c>null</c> when none was discovered.
+    /// </summary>
+    public string? FaviconUrl { get; init; }
 }

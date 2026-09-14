@@ -2,7 +2,7 @@
 
 # Einstellungen
 
-Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung und Lesefluss, Benachrichtigungen mit Ruhezeiten, das Erscheinungsbild sowie die Sprache. Änderungen werden sofort gespeichert und wirken unmittelbar — ein separater Speichern-Button ist nicht nötig. Eine Ausnahme ist die Sprachauswahl: Sie wird zwar sofort gespeichert, wirkt aber erst nach einem Neustart der App.
+Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung, Abruf beim Programmstart, Sortierung der Ungelesen-Liste und Lesefluss, Benachrichtigungen mit Ruhezeiten, das Erscheinungsbild sowie die Sprache. Änderungen werden sofort gespeichert und wirken unmittelbar — ein separater Speichern-Button ist nicht nötig. Eine Ausnahme ist die Sprachauswahl: Sie wird zwar sofort gespeichert, wirkt aber erst nach einem Neustart der App.
 
 ## Inhalt
 

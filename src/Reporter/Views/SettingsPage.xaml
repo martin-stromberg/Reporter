@@ -191,6 +191,34 @@
                                   ColumnSpacing="8">
                                 <VerticalStackLayout VerticalOptions="Center"
                                                      Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsRefreshOnStartupLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsRefreshOnStartupHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding RefreshOnStartupEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsRefreshOnStartupLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <Label Text="{x:Static strings:AppResources.SettingsSortOrderLabel}"
+                                       VerticalOptions="Center"/>
+                                <Picker Grid.Column="1"
+                                        ItemsSource="{Binding SortOrderOptions}"
+                                        SelectedItem="{Binding SelectedSortOrder}"
+                                        ItemDisplayBinding="{Binding Label}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsSortOrderLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        HorizontalTextAlignment="End"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
                                     <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadLabel}"/>
                                     <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadHint}"
                                            Style="{StaticResource MetaStyle}"/>
@@ -470,6 +498,7 @@
                             <Border Padding="10"
                                     StrokeShape="RoundRectangle 8"
                                     Stroke="Transparent"
+                                    IsVisible="{Binding LanguageRestartHintVisible}"
                                     Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
                                 <Label Text="{x:Static strings:AppResources.SettingsLanguageRestartHint}"
                                        Style="{StaticResource BodySmallStyle}"

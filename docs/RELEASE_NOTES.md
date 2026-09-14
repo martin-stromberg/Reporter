@@ -9,6 +9,13 @@
 
 ## What's New
 
+- Reading time is no longer shown for articles with an estimated reading time of one minute or less — in the article lists and the article detail view.
+- Placeholder image cascade on article cards: article image → feed favicon → a circle with the feed's initial letter; the feeds page also shows each feed's favicon with the initial circle as fallback.
+- Favicon discovery: a feed's website favicon is detected when the feed is added and is backfilled automatically for existing feeds during sync.
+- Settings: new "Refresh on app start" switch (default: on) — feeds are loaded when the app starts while online.
+- Settings: new "Sort order of unread articles" picker with "Newest first" (default) and "Oldest first".
+- The restart hint below the language picker now only appears after the language has actually been changed and disappears again when the saved language is reselected.
+- Redesigned app icon and splash screen: a rounded badge with RSS signal arcs and an amber accent dot; the splash screen additionally shows the "Reporter" wordmark.
 - Fixed keyword filter: articles matching a filter keyword are now discarded while the feed is being retrieved and no longer appear in the article lists — the filtered count is noted in the internal sync log.
 - Unified design across all pages: cards with subtle borders and consistent rounding, refined typography (Newsreader headlines, Inter UI text) and harmonized colors in light and dark mode.
 - Unread page: the category filter is now a horizontally scrolling chip bar that shows each category's unread count — the previous funnel button and action sheet are replaced.
@@ -17,7 +24,6 @@
 - Article cards now mark unread articles with a small dot, show the estimated reading time, and highlight saved articles with a gold bookmark.
 - "Saved for later" loads articles in pages while scrolling (infinite scroll) with a loading indicator and an error message if loading fails.
 - New icons for all five tabs in the bottom tab bar.
-- New app icon and splash screen in the app's slate-blue design color, replacing the default .NET icon.
 - Accessibility: screen reader descriptions for all icon-only buttons and cards (including selected state and bookmark set/remove), texts scale with the device's font size setting, improved color contrast.
 - Faster feed sync: new articles are inserted in a single batch with in-memory duplicate detection instead of one database write per article.
 - Settings: new "Language" section with a "Language" picker offering "System" (default, follows the device language), "German" and "English" — the selection is saved immediately and takes effect after restarting the app (a hint is shown below the picker).
@@ -37,6 +43,13 @@
 
 ## Neuerungen
 
+- Die Lesezeit wird bei Artikeln mit einer geschätzten Lesezeit von einer Minute oder weniger nicht mehr angezeigt — in den Artikellisten und in der Artikeldetailansicht.
+- Platzhalterbild-Kaskade auf Artikelkarten: Artikelbild → Feed-Favicon → Kreis mit dem Anfangsbuchstaben des Feeds; die Feeds-Seite zeigt ebenfalls das Favicon jedes Feeds mit dem Initialen-Kreis als Ersatz.
+- Favicon-Ermittlung: Das Website-Favicon eines Feeds wird beim Hinzufügen erkannt und bei bestehenden Feeds beim Abgleich automatisch nachgerüstet.
+- Einstellungen: neuer Schalter „Beim Programmstart abrufen" (Voreinstellung: an) — bei bestehender Verbindung werden die Feeds beim Start der App geladen.
+- Einstellungen: neues Auswahlfeld „Sortierung der ungelesenen Artikel" mit „Neueste zuerst" (Voreinstellung) und „Älteste zuerst".
+- Der Neustart-Hinweis unter der Sprachauswahl erscheint jetzt erst nach tatsächlicher Änderung der Sprache und verschwindet wieder, sobald die gespeicherte Sprache erneut gewählt wird.
+- Neu gestaltetes App-Symbol und Splash-Screen: ein abgerundetes Badge mit RSS-Signalbögen und bernsteinfarbenem Akzentpunkt; der Splash-Screen zeigt zusätzlich den Schriftzug „Reporter".
 - Schlagwortfilter korrigiert: Artikel, die auf ein Filter-Schlagwort passen, werden jetzt bereits beim Abruf des Feeds verworfen und erscheinen nicht mehr in den Artikellisten — die Anzahl der verworfenen Artikel wird im internen Sync-Protokoll vermerkt.
 - Einheitliches Design auf allen Seiten: Karten mit feinen Rahmen und konsistenten Rundungen, verfeinerte Typografie (Newsreader für Überschriften, Inter für UI-Texte) und abgestimmte Farben im hellen und dunklen Modus.
 - Ungelesen-Seite: Der Kategoriefilter ist jetzt eine horizontal scrollbare Chip-Leiste, die die Ungelesen-Anzahl je Kategorie anzeigt — der bisherige Trichter-Button mit Aktionsmenü entfällt.
@@ -45,7 +58,6 @@
 - Artikelkarten markieren ungelesene Artikel mit einem kleinen Punkt, zeigen die geschätzte Lesezeit und heben gespeicherte Artikel mit einem goldenen Lesezeichen hervor.
 - „Später lesen" lädt Artikel seitenweise beim Scrollen nach (Infinite Scroll) — mit Ladeanzeige und Fehlermeldung, falls das Laden scheitert.
 - Neue Symbole für alle fünf Tabs in der unteren Tab-Leiste.
-- Neues App-Symbol und Splash-Screen in der schieferblauen Designfarbe der App statt des Standard-.NET-Symbols.
 - Barrierefreiheit: Screenreader-Beschreibungen für alle Schaltflächen und Karten ohne sichtbaren Text (inkl. Auswahlzustand und Lesezeichen setzen/entfernen), Texte skalieren mit der Schriftgröße des Geräts, verbesserte Farbkontraste.
 - Schnellerer Abgleich: Neue Artikel werden gesammelt in einem Schreibvorgang gespeichert — mit Duplikaterkennung im Speicher statt eines Datenbankzugriffs pro Artikel.
 - Einstellungen: neue Sektion „Sprache" mit Auswahlfeld „Sprache" — Optionen „System" (Voreinstellung, folgt der Gerätesprache), „Deutsch" und „Englisch"; die Auswahl wird sofort gespeichert und wirkt nach einem Neustart der App (Hinweis unter dem Auswahlfeld).

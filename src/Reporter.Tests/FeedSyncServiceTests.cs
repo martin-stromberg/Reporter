@@ -22,6 +22,7 @@ public class FeedSyncServiceTests : IDisposable
     private readonly SettingsRepository _settingsRepository;
     private readonly KeywordRepository _keywordRepository;
     private readonly KeywordFilter _keywordFilter;
+    private readonly FakeFeedIconService _feedIconService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncServiceTests"/> class.
@@ -35,6 +36,7 @@ public class FeedSyncServiceTests : IDisposable
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
         _keywordFilter = new KeywordFilter(_keywordRepository, new KeywordMatcher());
+        _feedIconService = new FakeFeedIconService();
     }
 
     /// <summary>
@@ -60,14 +62,14 @@ public class FeedSyncServiceTests : IDisposable
             };
         });
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
     }
 
     private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler(_ => throw exception);
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
     }
 
     private NotificationService CreateNotificationService(FakeLocalNotificationService localNotificationService)
@@ -837,5 +839,111 @@ public class FeedSyncServiceTests : IDisposable
         var items = await _itemRepository.GetByFeedAsync(feedId);
         Assert.Single(items);
         Assert.Equal("atom-1", items[0].GuidOrHash);
+    }
+
+    /// <summary>
+    /// Verifies that a successful sync backfills the favicon URL of a feed that
+    /// has none, using the feed URL's authority when the document declares no
+    /// alternate site link.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MissingFavicon_BackfillsFromFeedAuthority()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        _feedIconService.NextResult = "https://example.com/favicon.ico";
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("https://example.com/favicon.ico", feed.FaviconUrl);
+        Assert.Equal("https://example.com", Assert.Single(_feedIconService.RequestedSiteUrls));
+    }
+
+    /// <summary>
+    /// Verifies that a successful sync does not touch an already stored favicon
+    /// and skips the lookup entirely.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ExistingFavicon_SkipsLookup()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Test Feed",
+            NotificationsEnabled = true,
+            FaviconUrl = "https://example.com/stored.ico",
+        });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("https://example.com/stored.ico", feed.FaviconUrl);
+        Assert.Empty(_feedIconService.RequestedSiteUrls);
+    }
+
+    /// <summary>
+    /// Verifies that a failing favicon lookup does not affect the sync result.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FaviconLookupFails_SyncStillSucceeds()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        _feedIconService.NextException = new InvalidOperationException("lookup failed");
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Null(feed.FaviconUrl);
+    }
+
+    /// <summary>
+    /// Verifies that the cancellation token passed to
+    /// <see cref="FeedSyncService.SyncFeedAsync"/> is forwarded to the favicon
+    /// lookup, so an aborted synchronization does not wait for the icon HTTP
+    /// roundtrips.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_MissingFavicon_ForwardsCancellationTokenToIconLookup()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+        using var cts = new CancellationTokenSource();
+
+        var result = await service.SyncFeedAsync(feedId, cts.Token);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var receivedToken = Assert.Single(_feedIconService.ReceivedCancellationTokens);
+        Assert.Equal(cts.Token, receivedToken);
     }
 }

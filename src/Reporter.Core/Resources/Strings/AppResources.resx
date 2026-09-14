@@ -233,6 +233,21 @@
   <data name="SettingsRefreshIntervalLabel" xml:space="preserve">
     <value>Fetch interval</value>
   </data>
+  <data name="SettingsRefreshOnStartupLabel" xml:space="preserve">
+    <value>Refresh on app start</value>
+  </data>
+  <data name="SettingsRefreshOnStartupHint" xml:space="preserve">
+    <value>Load feeds when the app starts</value>
+  </data>
+  <data name="SettingsSortOrderLabel" xml:space="preserve">
+    <value>Sort order of unread articles</value>
+  </data>
+  <data name="SettingsSortOrderNewest" xml:space="preserve">
+    <value>Newest first</value>
+  </data>
+  <data name="SettingsSortOrderOldest" xml:space="preserve">
+    <value>Oldest first</value>
+  </data>
   <data name="SettingsInterval15Min" xml:space="preserve">
     <value>Every 15 minutes</value>
   </data>

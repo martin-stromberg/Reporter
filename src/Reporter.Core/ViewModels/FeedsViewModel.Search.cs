@@ -258,7 +258,7 @@ public partial class FeedsViewModel
             return;
         }
 
-        if (!await TryPersistNewFeedAsync(input, FeedTitleFallback.GetFallbackTitle(input)))
+        if (!await TryPersistNewFeedAsync(input, FeedTitleFallback.GetFallbackTitle(input), siteUrl: null))
         {
             // The sheet stays open so the duplicate error is the only visible
             // message in its hint block and the user can correct the URL; the
@@ -289,7 +289,7 @@ public partial class FeedsViewModel
             return;
         }
 
-        if (await TryPersistNewFeedAsync(url, FeedTitleFallback.GetFallbackTitle(url)))
+        if (await TryPersistNewFeedAsync(url, FeedTitleFallback.GetFallbackTitle(url), siteUrl: null))
         {
             await FinishAddFlowAsync();
         }
@@ -298,7 +298,7 @@ public partial class FeedsViewModel
     // Shared persist step of the add flows: rejects duplicates and stores the
     // feed with the fixed defaults. Both error channels are cleared so a stale
     // search error never stays next to the duplicate message in the sheet.
-    private async Task<bool> TryPersistNewFeedAsync(string url, string title)
+    private async Task<bool> TryPersistNewFeedAsync(string url, string title, string? siteUrl)
     {
         var existing = await _feedRepository.GetByUrlAsync(url);
         if (existing is not null)
@@ -311,6 +311,8 @@ public partial class FeedsViewModel
         ErrorMessage = string.Empty;
         SearchErrorMessage = string.Empty;
 
+        var faviconUrl = await TryFindFaviconUrlAsync(url, siteUrl);
+
         await _feedRepository.AddAsync(new Feed
         {
             Id = Guid.NewGuid(),
@@ -321,8 +323,20 @@ public partial class FeedsViewModel
             HealthStatus = FeedHealth.Ok,
             HealthLastChange = null,
             NotificationsEnabled = true,
+            FaviconUrl = faviconUrl,
         });
         return true;
+    }
+
+    // Determines the favicon of the feed's website (the site URL from the
+    // search result, or the feed URL's authority for direct adds). The lookup
+    // is skipped while offline and is isolated inside the icon service, so it
+    // never blocks or fails the add.
+    private async Task<string?> TryFindFaviconUrlAsync(string feedUrl, string? siteUrl)
+    {
+        return IsOnline
+            ? await _feedIconService.TryFindFaviconUrlAsync(feedUrl, siteUrl)
+            : null;
     }
 
     // Shared completion of every successful add flow: leaves the search results
@@ -352,7 +366,7 @@ public partial class FeedsViewModel
             ? result.Title.Trim()
             : FeedTitleFallback.GetFallbackTitle(result.FeedUrl);
 
-        if (!await TryPersistNewFeedAsync(result.FeedUrl, title))
+        if (!await TryPersistNewFeedAsync(result.FeedUrl, title, result.SiteUrl))
         {
             return;
         }

@@ -17,7 +17,8 @@ public static class ReadingTimeEstimator
 
     /// <summary>
     /// Returns the localized reading time text for the given HTML content,
-    /// or an empty string when the content is empty.
+    /// or an empty string when the content is empty or the estimated reading
+    /// time is one minute or less.
     /// </summary>
     /// <param name="contentHtml">The article content as HTML.</param>
     /// <returns>The formatted reading time, or an empty string.</returns>
@@ -30,7 +31,12 @@ public static class ReadingTimeEstimator
 
         var text = HtmlTagRegex.Replace(contentHtml, string.Empty);
         var wordCount = text.Split(new[] { ' ', '\t', '\n', '\r', ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
-        var minutes = Math.Max(1, (int)Math.Round(wordCount / WordsPerMinute));
+        var minutes = (int)Math.Round(wordCount / WordsPerMinute);
+        if (minutes <= 1)
+        {
+            return string.Empty;
+        }
+
         return string.Format(CultureInfo.CurrentCulture, AppResources.ArticleReadingTimeFormat, minutes);
     }
 }
