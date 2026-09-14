@@ -27,4 +27,4 @@ Branch: `task/issue-81-32b9db201d684b57a7bb5e21150b1563-debuginformationen-samme
 | [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
 | [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | – | Commit durchführen | – |

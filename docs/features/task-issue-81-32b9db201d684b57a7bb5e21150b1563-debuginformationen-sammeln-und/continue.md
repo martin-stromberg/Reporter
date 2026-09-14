@@ -3,7 +3,7 @@
 # Offene Aufgaben
 
 Erstellt am: 2026-09-14
-Abbruchgrund: Maximale Iterationsanzahl erreicht
+Abbruchgrund: Kein Fortschritt zwischen den letzten zwei Iterationen
 
 Die folgenden Aufgaben konnten im automatisierten Zyklus nicht abgeschlossen werden
 und müssen manuell oder in einem erneuten Lauf bearbeitet werden.
@@ -12,6 +12,14 @@ Alle verbleibenden Punkte sind Umgebungslimitationen (kein registrierter
 Mail-Client auf dem Prüf-PC, kein macOS für iOS) — keine Code-Mängel.
 Alle automatisierten Tests sind grün (461/461), Code-Review und
 Usability-Review tragen „Keine Befunde".
+
+Fortsetzungslauf am 2026-09-14: Die offenen Punkte wurden erneut geprüft und sind
+in dieser Umgebung weiterhin nicht lösbar. Verifikation der Umgebung:
+`HKCR\mailto\shell\open\command` ist nicht gesetzt (kein funktionaler
+`mailto:`-Handler registriert; der einzige `HKLM\SOFTWARE\Clients\Mail`-Eintrag
+ist ein verwaistes Legacy-„Hotmail"/IE-hmmapi ohne nutzbaren Handler) und das
+System ist Windows ohne macOS-Zugang. Es wurden bewusst keine Code-Änderungen
+vorgenommen — die Punkte erfordern manuelle Verifikation auf geeigneter Hardware.
 
 ## Offene Planelemente
 
@@ -34,3 +42,4 @@ Keine.
 ## Hinweise für die Nachbearbeitung
 
 - `DebugReportRecipient = "debug@example.com"` in `src/Reporter.Core/Services/DebugReportService.cs` ist ein bewusster Platzhalter (Anwender-Entscheidung) — die reale Entwickler-Adresse muss vor dem Release eingetragen werden.
+- Nach erfolgreicher manueller Verifikation beider Punkte kann `continue.md` in `continue-done.md` umbenannt und das Feature-Verzeichnis gemäß Lifecycle abgeschlossen werden.
