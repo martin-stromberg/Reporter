@@ -346,7 +346,7 @@ public class DebugReportServiceTests : IDisposable
     [Fact]
     public void DebugReportRecipient_ReadsAssemblyMetadata()
     {
-        Assert.Equal("debug@example.com", DebugReportService.DebugReportRecipient);
+        Assert.Equal("mstromberg84+reporter@gmail.com", DebugReportService.DebugReportRecipient);
     }
 
     /// <summary>
