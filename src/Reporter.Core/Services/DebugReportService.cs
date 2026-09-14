@@ -1,6 +1,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
 using System.Globalization;
+using System.Reflection;
 using System.Text;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
@@ -17,14 +18,29 @@ namespace Reporter.Core.Services;
 public class DebugReportService : IDebugReportService
 {
     /// <summary>
-    /// The recipient address of the debug report e-mail.
+    /// The fallback recipient address used when the build does not define the
+    /// <c>DebugReportRecipient</c> MSBuild property.
+    /// </summary>
+    public const string DefaultDebugReportRecipient = "debug@example.com";
+
+    /// <summary>
+    /// The recipient address of the debug report e-mail, read from the
+    /// <c>DebugReportRecipient</c> MSBuild property (default defined in
+    /// <c>Directory.Build.props</c>, embedded as assembly metadata).
     /// </summary>
     /// <remarks>
-    /// PLACEHOLDER — <c>debug@example.com</c> is not a real mailbox. The maintainer
-    /// must replace it with the actual support address before release (product
-    /// decision: fixed constant, not user-configurable).
+    /// PLACEHOLDER — the default <c>debug@example.com</c> is not a real mailbox.
+    /// The maintainer must set the actual support address in
+    /// <c>Directory.Build.props</c> before release. Forks must point the
+    /// property at their own support address so their users' reports do not
+    /// reach the upstream maintainer.
     /// </remarks>
-    public const string DebugReportRecipient = "debug@example.com";
+    public static string DebugReportRecipient { get; } =
+        typeof(DebugReportService).Assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == nameof(DebugReportRecipient))
+            ?.Value
+        ?? DefaultDebugReportRecipient;
 
     /// <summary>
     /// The maximum number of sync log entries included in the report body.

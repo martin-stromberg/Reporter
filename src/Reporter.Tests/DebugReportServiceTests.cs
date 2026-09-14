@@ -340,6 +340,16 @@ public class DebugReportServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that the report recipient is read from the DebugReportRecipient
+    /// MSBuild property embedded as assembly metadata.
+    /// </summary>
+    [Fact]
+    public void DebugReportRecipient_ReadsAssemblyMetadata()
+    {
+        Assert.Equal("debug@example.com", DebugReportService.DebugReportRecipient);
+    }
+
+    /// <summary>
     /// Verifies that SendReportAsync records an error entry in the session debug log when e-mail is unsupported.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>

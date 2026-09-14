@@ -159,7 +159,7 @@
 **Bedingungen:**
 - Sektionen (lokalisierte Header aus `AppResources.DebugReportSection*`): Anwendung (`AppDeviceInfo` + Report-Zeitstempel), Gerät, Netzwerk (`IsOnline`), Einstellungen (vollständiger `Settings`-Snapshot inkl. `DebugCollectionEnabled`), Feed-Status (`Title`, `Url`, `HealthStatus`, `LastCheckedAt`, `HealthLastChange` je Feed), Sync-Verlauf (jüngste `MaxSyncLogEntries = 50` `SyncLog`-Einträge), Session-Debug-Log (jüngste `MaxDebugLogEntries = 200` Einträge inkl. übernommener `Error`-Einträge der Vor-Session).
 - Artikelinhalte (`Item.Title`, `ContentHtml`) sind ausdrücklich nicht Teil des Berichts; es gibt kein `EmailAttachment`.
-- Empfänger ist die Konstante `DebugReportService.DebugReportRecipient = "debug@example.com"` — dokumentierter Platzhalter, den der Maintainer vor der Auslieferung durch die tatsächliche Support-Adresse ersetzt; nicht benutzerkonfigurierbar.
+- Empfänger ist die MSBuild-Property `DebugReportRecipient` (Default `"debug@example.com"` in `Directory.Build.props`, als `AssemblyMetadata` eingebettet und von `DebugReportService.DebugReportRecipient` gelesen) — dokumentierter Platzhalter, den der Maintainer vor der Auslieferung in `Directory.Build.props` durch die tatsächliche Support-Adresse ersetzt; Forks müssen die Property auf ihre eigene Adresse setzen; nicht benutzerkonfigurierbar.
 - Die App versendet nichts selbst: `Email.ComposeAsync` öffnet nur den vorbefüllten Entwurf; der Anwender prüft und sendet aus dem Mail-Client.
 
 **Umsetzung:** `DebugReportService.SendReportAsync`/`BuildBody`, `EmailService.ComposeAsync` (`EmailBodyFormat.PlainText`).

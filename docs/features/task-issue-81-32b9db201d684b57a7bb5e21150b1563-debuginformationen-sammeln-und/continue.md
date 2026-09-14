@@ -41,5 +41,5 @@ Keine.
 
 ## Hinweise für die Nachbearbeitung
 
-- `DebugReportRecipient = "debug@example.com"` in `src/Reporter.Core/Services/DebugReportService.cs` ist ein bewusster Platzhalter (Anwender-Entscheidung) — die reale Entwickler-Adresse muss vor dem Release eingetragen werden.
+- `DebugReportRecipient` ist eine MSBuild-Property mit Default `"debug@example.com"` in `Directory.Build.props` (als `AssemblyMetadata` eingebettet, gelesen von `DebugReportService.DebugReportRecipient`) — die reale Entwickler-Adresse muss vor dem Release dort eingetragen werden; Forks setzen die Property auf ihre eigene Support-Adresse.
 - Nach erfolgreicher manueller Verifikation beider Punkte kann `continue.md` in `continue-done.md` umbenannt und das Feature-Verzeichnis gemäß Lifecycle abgeschlossen werden.
