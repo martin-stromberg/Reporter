@@ -51,6 +51,11 @@ public class ReporterDbContext : DbContext
     public DbSet<SyncLog> SyncLogs { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the set of <see cref="DebugLogEntry"/> entities.
+    /// </summary>
+    public DbSet<DebugLogEntry> DebugLogEntries { get; set; } = null!;
+
+    /// <summary>
     /// Configures the model and relationships for the SQLite database.
     /// </summary>
     /// <param name="modelBuilder">The builder being used to construct the model.</param>
@@ -64,6 +69,7 @@ public class ReporterDbContext : DbContext
         ConfigureKeyword(modelBuilder.Entity<Keyword>());
         ConfigureSettings(modelBuilder.Entity<Settings>());
         ConfigureSyncLog(modelBuilder.Entity<SyncLog>());
+        ConfigureDebugLogEntry(modelBuilder.Entity<DebugLogEntry>());
     }
 
     private static void ConfigureCategory(EntityTypeBuilder<Category> entity)
@@ -139,6 +145,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
         entity.Property(e => e.NotificationSummaryEnabled).HasColumnName("notification_summary_enabled").IsRequired().HasDefaultValue(false);
         entity.Property(e => e.Language).HasColumnName("language").HasMaxLength(50);
+        entity.Property(e => e.DebugCollectionEnabled).HasColumnName("debug_collection_enabled").IsRequired().HasDefaultValue(false);
 
         entity.HasData(new Settings());
     }
@@ -155,5 +162,19 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.Message).HasColumnName("message");
 
         entity.HasOne(e => e.Feed).WithMany().HasForeignKey(e => e.FeedId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+    }
+
+    private static void ConfigureDebugLogEntry(EntityTypeBuilder<DebugLogEntry> entity)
+    {
+        entity.ToTable("debug_log_entries");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Id).HasColumnName("id");
+        entity.Property(e => e.Timestamp).HasColumnName("timestamp").IsRequired();
+        entity.Property(e => e.Level).HasColumnName("level").HasMaxLength(20);
+        entity.Property(e => e.Category).HasColumnName("category").HasMaxLength(50);
+        entity.Property(e => e.Message).HasColumnName("message");
+        entity.Property(e => e.Details).HasColumnName("details");
+
+        entity.HasIndex(e => e.Timestamp);
     }
 }

@@ -508,6 +508,84 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <!-- Diagnose & Support -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static strings:AppResources.SettingsSectionDebug}"
+                           Style="{StaticResource UiLabelStyle}"/>
+                    <Border Padding="16"
+                            StrokeShape="RoundRectangle 12"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsDebugCollectionLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsDebugCollectionHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding DebugCollectionEnabled}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsDebugCollectionLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsEnabled="{Binding DebugSendEnabled}"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding DebugSendEnabled}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <VerticalStackLayout Spacing="8">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{x:Static strings:AppResources.SettingsDebugSendLabel}"/>
+                                        <Label Text="{x:Static strings:AppResources.SettingsDebugSendHint}"
+                                               Style="{StaticResource MetaStyle}"
+                                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                                    </VerticalStackLayout>
+                                    <Button Text="{x:Static strings:AppResources.SettingsDebugSendButton}"
+                                            Command="{Binding SendDebugReportCommand}"
+                                            SemanticProperties.Description="{x:Static strings:AppResources.SettingsDebugSendButton}"
+                                            MinimumHeightRequest="44"/>
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding DebugCollectionEnabled}" Value="False">
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{x:Static strings:AppResources.SettingsDebugCollectionRequiredHint}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                            <Border Padding="10"
+                                    StrokeShape="RoundRectangle 8"
+                                    Stroke="Transparent"
+                                    IsVisible="False"
+                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding DebugEmailSupported}" Value="False">
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{x:Static strings:AppResources.SettingsDebugEmailUnsupportedHint}"
+                                       Style="{StaticResource BodySmallStyle}"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

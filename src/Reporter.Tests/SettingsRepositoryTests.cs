@@ -81,6 +81,7 @@ public class SettingsRepositoryTests : IDisposable
             RefreshIntervalMinutes = 15,
             RefreshOnStartupEnabled = false,
             Theme = "dark",
+            DebugCollectionEnabled = false,
         });
 
         var result = await _repository.GetAsync();
@@ -109,6 +110,7 @@ public class SettingsRepositoryTests : IDisposable
             RefreshIntervalMinutes = 60,
             RefreshOnStartupEnabled = true,
             Theme = "light",
+            DebugCollectionEnabled = true,
         });
 
         var result = await _repository.GetAsync();
@@ -117,6 +119,7 @@ public class SettingsRepositoryTests : IDisposable
         Assert.Equal(14, result.RetentionDays);
         Assert.Equal(20, result.AutoMarkReadDelaySeconds);
         Assert.True(result.NotificationsEnabled);
+        Assert.True(result.DebugCollectionEnabled);
     }
 
     /// <summary>
@@ -153,6 +156,7 @@ public class SettingsRepositoryTests : IDisposable
             RefreshIntervalMinutes = 240,
             RefreshOnStartupEnabled = false,
             Theme = "dark",
+            DebugCollectionEnabled = false,
         });
 
         var result = await _repository.GetAsync();
@@ -183,6 +187,7 @@ public class SettingsRepositoryTests : IDisposable
             RefreshOnStartupEnabled = false,
             UnreadSortOrder = SettingsValues.SortOrderAscending,
             Theme = "system",
+            DebugCollectionEnabled = false,
         });
 
         var result = await _repository.GetAsync();
@@ -210,6 +215,7 @@ public class SettingsRepositoryTests : IDisposable
             RefreshOnStartupEnabled = true,
             Theme = "system",
             Language = "de",
+            DebugCollectionEnabled = false,
         });
 
         var result = await _repository.GetAsync();

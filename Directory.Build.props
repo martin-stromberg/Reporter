@@ -4,5 +4,10 @@
 	<PropertyGroup>
 		<PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<!-- Support-Empfaenger fuer den Debugbericht-Versand (Issue #81).
+		     Vor Release durch die reale Entwickler-Adresse ersetzen.
+		     Forks muessen diesen Wert an ihre eigene Support-Adresse anpassen,
+		     sonst gehen Debugberichte ihrer Anwender an den Upstream-Maintainer. -->
+		<DebugReportRecipient>mstromberg84+reporter@gmail.com</DebugReportRecipient>
 	</PropertyGroup>
 </Project>

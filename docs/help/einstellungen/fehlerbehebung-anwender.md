@@ -88,6 +88,28 @@
 2. Prüfen, ob die gewünschte Option (*Deutsch* oder *Englisch*) unter **Sprache** ausgewählt ist — bei *System* gilt die Gerätesprache.
 3. Steht die Gerätesprache auf einer anderen Sprache als Deutsch oder Englisch, zeigt die App bei *System* Englisch an; für Deutsch dann *Deutsch* wählen.
 
+## Schaltfläche „Senden“ für den Debugbericht ist abgedunkelt
+
+**Symptom:** Unter **Diagnose & Support** lässt sich die Schaltfläche **Senden** nicht antippen; darunter steht ein Hinweistext.
+
+**Ursache:** Der Versand ist nur möglich, wenn **Debuginformationen sammeln** eingeschaltet ist — der Hinweis „Aktiviere zuerst …" erklärt das. Steht stattdessen „Auf diesem Gerät ist keine E-Mail-App verfügbar …", ist auf dem Gerät keine E-Mail-App eingerichtet.
+
+**Lösung:**
+1. Den Schalter **Debuginformationen sammeln** einschalten — danach wird **Senden** aktiv.
+2. Beachten: Das Protokoll umfasst die aktuelle Sitzung (plus übernommene Absturzinformationen der vorherigen). Ein Problem, das vor dem Einschalten passiert ist, muss für den Bericht erneut auftreten.
+3. Fehlt eine E-Mail-App, richte auf dem Gerät eine E-Mail-App mit einem Konto ein.
+
+## Dialog „Senden fehlgeschlagen“ beim Debugbericht
+
+**Symptom:** Nach dem Tippen auf **Senden** erscheint der Dialog **Senden fehlgeschlagen** statt des E-Mail-Entwurfs.
+
+**Ursache:** Die E-Mail-App des Geräts konnte nicht geöffnet werden — typischerweise ist keine E-Mail-App eingerichtet oder dem System ist kein Mail-Programm zugeordnet.
+
+**Lösung:**
+1. Prüfen, ob auf dem Gerät eine E-Mail-App mit eingerichtetem Konto vorhanden ist.
+2. E-Mail-App einmal manuell öffnen und erneut **Senden** tippen.
+3. Funktioniert es weiterhin nicht, den Vorgang notieren und den Support informieren (siehe unten).
+
 ## Wann Hilfe nötig ist
 
 Wenn Einstellungen trotz korrekter Bedienung nicht gespeichert bleiben, Artikel wider Erwarten gelöscht werden oder die App Fehler zeigt, die hier nicht beschrieben sind, wende dich an den Support bzw. die Entwicklung und gib an, welche Einstellung betroffen ist und was du zuletzt geändert hast.

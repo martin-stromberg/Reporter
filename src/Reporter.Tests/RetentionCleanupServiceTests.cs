@@ -55,6 +55,7 @@ public class RetentionCleanupServiceTests : IDisposable
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled,
             UnreadSortOrder = settings.UnreadSortOrder,
             Theme = settings.Theme,
+            DebugCollectionEnabled = settings.DebugCollectionEnabled,
         });
     }
 

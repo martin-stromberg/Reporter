@@ -9,6 +9,8 @@
 
 ## What's New
 
+- Settings: new "Diagnostics & support" section with an opt-in switch "Collect debug information" — the setting is persisted, the session log is cleared on every app start, and crash entries from the previous session are kept so they can still be sent after a restart.
+- "Send debug report" in the same section opens a prefilled e-mail draft in the device's mail app containing app, device and OS information, the current settings, feed health, the sync log and the session debug log.
 - Reading time is no longer shown for articles with an estimated reading time of one minute or less — in the article lists and the article detail view.
 - Placeholder image cascade on article cards: article image → feed favicon → a circle with the feed's initial letter; the feeds page also shows each feed's favicon with the initial circle as fallback.
 - Favicon discovery: a feed's website favicon is detected when the feed is added and is backfilled automatically for existing feeds during sync.
@@ -43,6 +45,8 @@
 
 ## Neuerungen
 
+- Einstellungen: neue Sektion „Diagnose & Support" mit Opt-in-Schalter „Debuginformationen sammeln" — die Einstellung wird gespeichert, das Sitzungsprotokoll bei jedem App-Start zurückgesetzt; Absturz-Einträge der vorherigen Sitzung bleiben erhalten, damit sie nach einem Neustart noch versendet werden können.
+- „Debugbericht senden" in derselben Sektion öffnet einen vorbefüllten E-Mail-Entwurf in der Mail-App des Geräts — mit App-, Geräte- und OS-Informationen, den aktuellen Einstellungen, dem Feed-Status, dem Sync-Protokoll und dem Sitzungsprotokoll.
 - Die Lesezeit wird bei Artikeln mit einer geschätzten Lesezeit von einer Minute oder weniger nicht mehr angezeigt — in den Artikellisten und in der Artikeldetailansicht.
 - Platzhalterbild-Kaskade auf Artikelkarten: Artikelbild → Feed-Favicon → Kreis mit dem Anfangsbuchstaben des Feeds; die Feeds-Seite zeigt ebenfalls das Favicon jedes Feeds mit dem Initialen-Kreis als Ersatz.
 - Favicon-Ermittlung: Das Website-Favicon eines Feeds wird beim Hinzufügen erkannt und bei bestehenden Feeds beim Abgleich automatisch nachgerüstet.

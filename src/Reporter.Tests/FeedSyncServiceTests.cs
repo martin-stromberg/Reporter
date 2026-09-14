@@ -67,7 +67,7 @@ public class FeedSyncServiceTests : IDisposable
 
     private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
-        var handler = new FakeHttpMessageHandler(_ => throw exception);
+        var handler = new FakeHttpMessageHandler(_ => Task.FromException<HttpResponseMessage>(exception));
         var httpClient = new HttpClient(handler);
         return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
     }

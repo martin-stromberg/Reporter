@@ -101,4 +101,72 @@ public class ReporterDbContextTests_Persistence
         Assert.NotNull(savedItem.Feed.Category);
         Assert.Equal("News", savedItem.Feed.Category.Name);
     }
+
+    /// <summary>
+    /// Verifies that the debug collection switch on the singleton settings record
+    /// survives a persist roundtrip.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Settings_DebugCollectionEnabled_PersistRoundtrip()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ReporterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var context = new ReporterDbContext(options);
+        await context.Database.EnsureCreatedAsync();
+
+        var settings = await context.Settings.FirstAsync();
+        Assert.False(settings.DebugCollectionEnabled);
+
+        settings.DebugCollectionEnabled = true;
+        await context.SaveChangesAsync();
+
+        var reloaded = await context.Settings.AsNoTracking().FirstAsync();
+        Assert.True(reloaded.DebugCollectionEnabled);
+    }
+
+    /// <summary>
+    /// Verifies that a debug log entry survives a persist roundtrip with all fields.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DebugLogEntry_PersistRoundtrip()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ReporterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var context = new ReporterDbContext(options);
+        await context.Database.EnsureCreatedAsync();
+
+        var timestamp = new DateTime(2026, 9, 14, 10, 0, 0, DateTimeKind.Utc);
+        var entry = new DebugLogEntry
+        {
+            Id = Guid.NewGuid(),
+            Timestamp = timestamp,
+            Level = "Error",
+            Category = "Exception",
+            Message = "unhandled exception",
+            Details = "stacktrace",
+        };
+        context.DebugLogEntries.Add(entry);
+        await context.SaveChangesAsync();
+
+        var reloaded = await context.DebugLogEntries.AsNoTracking().FirstAsync();
+
+        Assert.Equal(entry.Id, reloaded.Id);
+        Assert.Equal(timestamp, reloaded.Timestamp);
+        Assert.Equal("Error", reloaded.Level);
+        Assert.Equal("Exception", reloaded.Category);
+        Assert.Equal("unhandled exception", reloaded.Message);
+        Assert.Equal("stacktrace", reloaded.Details);
+    }
 }

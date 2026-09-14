@@ -16,6 +16,13 @@ public interface ISyncLogRepository
     Task<IReadOnlyList<SyncLog>> GetAllAsync();
 
     /// <summary>
+    /// Gets the newest <paramref name="maxEntries"/> sync log entries asynchronously, ordered by descending <c>StartedAt</c>.
+    /// </summary>
+    /// <param name="maxEntries">The maximum number of entries to return.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the newest sync logs.</returns>
+    Task<IReadOnlyList<SyncLog>> GetLatestAsync(int maxEntries);
+
+    /// <summary>
     /// Gets the sync log with the specified identifier asynchronously.
     /// </summary>
     /// <param name="id">The sync log identifier.</param>

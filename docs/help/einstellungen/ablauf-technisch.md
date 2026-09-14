@@ -6,7 +6,7 @@
 
 ## Übersicht
 
-`SettingsPage` lädt beim Erscheinen den Singleton-`Settings`-Datensatz und die Keyword-Liste; `SettingsViewModel` persistiert jede Änderung sofort über `ISettingsRepository.SaveAsync`. Bei Theme- oder Auto-Refresh-Änderungen werden `IAppThemeService` bzw. `IAutoRefreshService` nachgeschaltet; die Sprachauswahl wird dagegen nur persistiert — die wirksame Kultur setzt `AppCulture` beim nächsten App-Start in `MauiProgram.ApplyPersistedLanguage` (vor `CreateWindow`). Beim Einschalten des Benachrichtigungs-Hauptschalters fragt `ILocalNotificationService` die iOS-Berechtigung an; der Status (`NotificationAuthorizationStatus`) steuert die Hinweiszeilen `NotificationPermissionDenied`/`NotificationPermissionNotDetermined`. Beim App-Start laufen drei fehlerisolierte Blöcke in `App.OnStart`: Retention-Cleanup (inkl. Keyword-Regel für Bestandstreffer), Theme-Anwendung und Start der Hintergrund-Aktualisierung — letztere löst bei eingeschalteter Option `RefreshOnStartupEnabled` zusätzlich einen einmaligen, nicht blockierenden Start-Abruf aus (Abschnitt 5). Der Keyword-Filter selbst greift bereits beim Feed-Abruf in `FeedSyncService.RunSyncAsync` (Abschnitt 4).
+`SettingsPage` lädt beim Erscheinen den Singleton-`Settings`-Datensatz und die Keyword-Liste; `SettingsViewModel` persistiert jede Änderung sofort über `ISettingsRepository.SaveAsync`. Bei Theme- oder Auto-Refresh-Änderungen werden `IAppThemeService` bzw. `IAutoRefreshService` nachgeschaltet; die Sprachauswahl wird dagegen nur persistiert — die wirksame Kultur setzt `AppCulture` beim nächsten App-Start in `MauiProgram.ApplyPersistedLanguage` (vor `CreateWindow`). Beim Einschalten des Benachrichtigungs-Hauptschalters fragt `ILocalNotificationService` die iOS-Berechtigung an; der Status (`NotificationAuthorizationStatus`) steuert die Hinweiszeilen `NotificationPermissionDenied`/`NotificationPermissionNotDetermined`. Beim App-Start laufen drei fehlerisolierte Blöcke in `App.OnStart`: Retention-Cleanup (inkl. Keyword-Regel für Bestandstreffer), Theme-Anwendung und Start der Hintergrund-Aktualisierung — letztere löst bei eingeschalteter Option `RefreshOnStartupEnabled` zusätzlich einen einmaligen, nicht blockierenden Start-Abruf aus (Abschnitt 5). Der Keyword-Filter selbst greift bereits beim Feed-Abruf in `FeedSyncService.RunSyncAsync` (Abschnitt 4). Zusätzlich beginnt `App.OnStart` direkt nach der Migration eine Debug-Session (`IDebugLogService.BeginSessionAsync` — Abschnitt 9), und der Abschnitt **Diagnose & Support** versendet auf Anwenderaktion einen Debugbericht über den System-Mail-Client (Abschnitt 10).
 
 ## Ablauf
 
@@ -25,11 +25,12 @@
 - `NotificationSummaryEnabled` wird aus `settings.NotificationSummaryEnabled` befüllt.
 - `SelectedTheme` fällt auf `"system"` zurück, wenn der gespeicherte Wert keiner `ThemeOption` entspricht.
 - `SelectedLanguage` fällt auf die `LanguageOption` mit `SettingsValues.LanguageSystem` zurück, wenn `settings.Language` keiner Option entspricht (`LanguageOptions.FirstOrDefault(o => o.Value == settings.Language) ?? …LanguageSystem`).
+- `DebugCollectionEnabled` wird aus `settings.DebugCollectionEnabled` befüllt; der Setter ruft unter `_isLoading` kein `SetEnabled` auf — der Laufzeit-Zustand des Session-Logs bleibt beim Laden unverändert.
 
 Nach dem Befüllen ruft `LoadAsync` `RefreshNotificationPermissionAsync` auf: nur wenn `ILocalNotificationService.IsSupported` und `NotificationsEnabled` aktiv sind, wird `GetAuthorizationStatusAsync` abgefragt und über `ApplyAuthorizationStatus` in die Flags `NotificationPermissionDenied` (Status `Denied`) bzw. `NotificationPermissionNotDetermined` (Status `NotDetermined`) übersetzt — die Hinweiszeilen bleiben so auch nach einem System-seitigen Widerruf der Berechtigung aktuell. Exceptions werden per `Debug.WriteLine` protokolliert und setzen beide Flags auf `false`.
 
 Beteiligte Komponenten:
-- `SettingsPage.OnAppearing` — Aufrufpunkt (subscribed außerdem `NotificationAuthorizationDenied`)
+- `SettingsPage.OnAppearing` — Aufrufpunkt (subscribed außerdem `NotificationAuthorizationDenied` und `DebugReportFailed`)
 - `SettingsViewModel.LoadAsync` — Laden und Befüllen unter `_isLoading`-Guard
 - `SettingsViewModel.RefreshNotificationPermissionAsync` — Berechtigungsstatus ohne Dialog abfragen
 - `ISettingsRepository.GetAsync` — liest/legt den Singleton-Datensatz an
@@ -38,7 +39,9 @@ Beteiligte Komponenten:
 
 ### 2. Einstellung ändern (Sofort-Persistierung)
 
-Die Setter der Optionseigenschaften (`AutoRefreshEnabled`, `SelectedRefreshInterval`, `RefreshOnStartupEnabled`, `SelectedSortOrder`, `AutoMarkReadEnabled`, `SelectedAutoMarkReadDelay`, `NotificationsEnabled`, `NotificationSummaryEnabled`, `QuietHoursEnabled`, `QuietHoursStart`, `QuietHoursEnd`, `SelectedTheme`, `SelectedLanguage`) rufen `PersistOnChange()` auf; während `_isLoading` wird abgebrochen.
+Die Setter der Optionseigenschaften (`AutoRefreshEnabled`, `SelectedRefreshInterval`, `RefreshOnStartupEnabled`, `SelectedSortOrder`, `AutoMarkReadEnabled`, `SelectedAutoMarkReadDelay`, `NotificationsEnabled`, `NotificationSummaryEnabled`, `QuietHoursEnabled`, `QuietHoursStart`, `QuietHoursEnd`, `SelectedTheme`, `SelectedLanguage`, `DebugCollectionEnabled`) rufen `PersistOnChange()` auf; während `_isLoading` wird abgebrochen.
+
+Der `DebugCollectionEnabled`-Setter hat zwei Nebenwirkungen: Außerhalb von `_isLoading` ruft er `_debugLogService?.SetEnabled(value)` auf — die Session-Protokollierung schaltet damit ohne Neustart um (bei der Aktivierung schreibt der Service einen `Lifecycle`-Übergangseintrag „Debug collection enabled"). Zusätzlich meldet er `OnPropertyChanged(nameof(DebugSendEnabled))`, sodass der Senden-Bereich sofort aktiviert bzw. deaktiviert wird. `DebugSendEnabled` ist `DebugEmailSupported && DebugCollectionEnabled`; `DebugEmailSupported` delegiert an `_debugReportService?.IsSupported` (d. h. `IEmailService.IsSupported` → `Email.Default.IsComposeSupported`).
 
 Der `SelectedLanguage`-Setter hat eine Nebenwirkung auf den Neustart-Hinweis: Außerhalb von `_isLoading` setzt er `LanguageRestartHintVisible = value?.Value != _loadedLanguage` — der Hinweis-`Border` unter dem Sprach-`Picker` in `SettingsPage.xaml` ist per `IsVisible="{Binding LanguageRestartHintVisible}"` gebunden und erscheint daher erst nach einer Abweichung vom persistierten Wert und verschwindet bei Rückwahl wieder.
 
@@ -48,7 +51,7 @@ Die Sortierrichtung wird nicht in `PersistAsync` nachgeschaltet, sondern erst be
 
 Der `NotificationsEnabled`-Setter hat eine Sonderrolle: Beim Wechsel auf `true` (außerhalb `LoadAsync`, `_isLoading`-Guard) startet er `_ = RequestNotificationAuthorizationAsync()` — bei `IsSupported` fragt das `ILocalNotificationService.RequestAuthorizationAsync` die iOS-Berechtigung ab. Bei `!granted` wird der Status via `GetAuthorizationStatusAsync` nachgelesen: `Denied` setzt `NotificationPermissionDenied` und feuert das Ereignis `NotificationAuthorizationDenied` — `SettingsPage.xaml.cs` zeigt daraufhin einen Dialog (`NotificationDeniedTitle`/`NotificationDeniedMessage`) mit den Schaltflächen **Einstellungen öffnen** (`AppInfo.Current.ShowSettingsUI()`) und **Abbrechen**. Beim Ausschalten werden `NotificationPermissionDenied` und `NotificationPermissionNotDetermined` zurückgesetzt. `SettingsPage.xaml` blendet die `Denied`-Hinweiszeile (`NotificationDeniedMessage` + Button `OnOpenNotificationSettingsClicked` → `AppInfo.ShowSettingsUI`) per `MultiTrigger` nur bei `NotificationsEnabled && NotificationPermissionDenied` ein; bei `NotificationsEnabled && NotificationPermissionNotDetermined` erscheint stattdessen eine neutrale Zeile (`NotificationNotDeterminedMessage`) mit dem Button **Benachrichtigungen erlauben** (`NotificationNotDeterminedAllow` → `RequestNotificationPermissionCommand`), weil iOS den Mitteilungen-Eintrag in den Systemeinstellungen erst nach einer ersten Anfrage zeigt. Auf Plattformen ohne Benachrichtigungs-Unterstützung (`NotificationsSupported == false`) sind die Schalterzeile und der Detail-`Border` (`NotificationControlsEnabled`) deaktiviert und die Zeile `NotificationsIosOnlyHint` eingeblendet.
 
-`PersistAsync()` läuft unter einem `SemaphoreSlim` (`_persistLock`), baut eine `init`-Kopie des `Settings`-Objekts aus den ViewModel-Eigenschaften (mit Clamp von `RetentionDays` auf 1–365 und Defaults für nicht ausgewählte Optionen; die `AutoMarkReadMode`-/`Theme`-/`Language`-Strings stammen aus `SettingsValues`; `NotificationSummaryEnabled` wird direkt übernommen) und ruft `ISettingsRepository.SaveAsync`. Danach:
+`PersistAsync()` läuft unter einem `SemaphoreSlim` (`_persistLock`), baut eine `init`-Kopie des `Settings`-Objekts aus den ViewModel-Eigenschaften (mit Clamp von `RetentionDays` auf 1–365 und Defaults für nicht ausgewählte Optionen; die `AutoMarkReadMode`-/`Theme`-/`Language`-Strings stammen aus `SettingsValues`; `NotificationSummaryEnabled` und `DebugCollectionEnabled` werden direkt übernommen) und ruft `ISettingsRepository.SaveAsync`. Danach:
 
 - `previous is null || previous.Theme != updated.Theme` → `IAppThemeService.ApplyTheme(updated.Theme)`
 - `previous is null` oder Änderung an `AutoRefreshEnabled`/`RefreshIntervalMinutes` → `IAutoRefreshService.ApplySettingsAsync(updated)`
@@ -178,6 +181,68 @@ Beteiligte Komponenten:
 - `ISettingsRepository.GetAsync`
 - `IItemRepository.MarkAsReadAsync`
 
+### 9. Session-Debug-Log (Beginn, Ereignisse, Reset)
+
+`App.OnStart` löst direkt nach `context.Database.MigrateAsync()` das `IDebugLogService`-Singleton aus dem DI-Scope auf und ruft `await BeginSessionAsync()`:
+
+1. `IDebugLogRepository.DeleteAllExceptErrorsAsync()` löscht per `ExecuteDeleteAsync` alle Einträge der Vor-Session außer `DebugLogLevel.Error`-Einträgen — Absturz- und Fehlerberichte bleiben nach einem Neustart versendbar.
+2. `ISettingsRepository.GetAsync()` lädt den Singleton-`Settings`-Datensatz; `_enabled = settings.DebugCollectionEnabled` wird als `volatile`-Flag im Speicher gehalten (kein DB-Zugriff pro Log-Ereignis).
+3. Bei `_enabled == true` schreibt der Service einen `Lifecycle`-Eintrag „Debug session started" (`DebugLogLevel.Info`).
+
+Eigene Fehler (DB nicht bereit o. ä.) werden in `BeginSessionAsync`/`LogAsync` intern auf `Debug.WriteLine` abgefangen — der Logger sitzt in Fehlerpfaden und darf nie selbst eine Ausnahmequelle sein; ein Logging-Fehler verhindert den App-Start nicht.
+
+Anschließend abonniert `App.OnStart` die globalen Hooks `AppDomain.CurrentDomain.UnhandledException` → `OnUnhandledException` und `TaskScheduler.UnobservedTaskException` → `OnUnobservedTaskException`; beide rufen fire-and-forget `_ = debugLogService.LogAsync(DebugLogCategory.Exception, …, DebugLogLevel.Error)` (Details = `exception.ToString()`). Die Overrides `App.OnSleep`/`OnResume` schreiben `Lifecycle`-Einträge („App suspended" / „App resumed"), und die vier `OnStart`-Catch-Blöcke (Retention-Cleanup, Theme, Netzwerk-Status, Auto-Refresh) loggen neben `Debug.WriteLine` zusätzlich `Error`-Einträge der Kategorie `Lifecycle`.
+
+Pro Ereignis ruft `IDebugLogService.LogAsync(category, message, details, level)`:
+
+- `IsEnabled == false` oder Abbruch-Token gesetzt → sofortige Rückkehr (No-op, kein Schreibzugriff).
+- Sonst `DebugLogEntry { Id = Guid.NewGuid(), Timestamp = _timeProvider.GetUtcNow().UtcDateTime, Level, Category, Message, Details }` → `IDebugLogRepository.AddAsync` → `IDebugLogRepository.TrimToLatestAsync(MaxStoredEntries = 500)`. Der Trim ist per `CountAsync`-Vorprüfung ein No-op unterhalb des Limits; oberhalb löscht er alle Einträge außer den jüngsten `maxEntries` (Sortierung `Timestamp` desc, Tiebreaker `Id` desc) per `ExecuteDeleteAsync`.
+
+Schreibstellen: `FeedSyncService.SyncFeedAsync`-Catch (`DebugLogCategory.Sync`, `Error`) und der Notification-Catch (`Sync`, `Warning`) sowie `AutoRefreshService.RunStartupSyncAsync`/`RunLoopAsync`-Catches (`Sync`, `Error`) — jeweils über den optionalen Konstruktorparameter `IDebugLogService?` (letzter Parameter, `= null`). `SettingsViewModel` protokolliert Fehlversand unter `DebugLogCategory.Report`, `DebugReportService` das Compose-Ergebnis ebenfalls (`Info` bei Erfolg, `Error` bei `IsSupported == false`/`ComposeAsync == false`).
+
+```mermaid
+flowchart TD
+    A[App.OnStart] --> B[Database.MigrateAsync]
+    B --> C[IDebugLogService.BeginSessionAsync]
+    C --> D[DeleteAllExceptErrorsAsync:<br/>Vor-Session bis auf Error-Einträge löschen]
+    D --> E[Settings.DebugCollectionEnabled laden]
+    E --> F{_enabled?}
+    F -- Ja --> G[Lifecycle-Eintrag<br/>Debug session started]
+    F -- Nein --> H[LogAsync-Aufrufe sind No-ops]
+    G --> I[Ereignisse: Lifecycle / Sync / Exception / Settings / Report]
+    I --> J[AddAsync + TrimToLatestAsync 500]
+    H --> I
+```
+
+Beteiligte Komponenten:
+- `App.OnStart` / `OnSleep` / `OnResume` / `OnUnhandledException` / `OnUnobservedTaskException` — Session-Beginn und Instrumentierung
+- `IDebugLogService` / `DebugLogService` (`BeginSessionAsync`, `SetEnabled`, `LogAsync`, `IsEnabled`, `MaxStoredEntries = 500`) — Schreibseite des Session-Logs
+- `IDebugLogRepository` / `DebugLogRepository` (`GetAllAsync`, `GetLatestAsync`, `AddAsync`, `DeleteAllExceptErrorsAsync`, `TrimToLatestAsync`) — Datenzugriff auf `debug_log_entries`
+- `DebugLogEntry` (Core-Modell + Entity), `DebugLogLevel`, `DebugLogCategory`, `TimeProvider`
+- `FeedSyncService` / `AutoRefreshService` — optionale `IDebugLogService?`-Abhängigkeit
+
+### 10. Debugbericht versenden
+
+1. Der Anwender tippt **Senden** (`SendDebugReportCommand` → `SettingsViewModel.SendDebugReportAsync`). Der Senden-`Border` ist an `DebugSendEnabled` gebunden (`IsEnabled` + `Opacity = 0.4` per `DataTrigger`); `DebugSendEnabled == DebugEmailSupported && DebugCollectionEnabled`.
+2. `SendDebugReportAsync` guardet in der Methode selbst (nicht per `CanExecute` — `IAsyncRelayCommand.ExecuteAsync` wertet `CanExecute` nicht aus): `_debugReportService is null` oder `!DebugCollectionEnabled` → Rückkehr ohne Versand und ohne Event.
+3. `DebugReportService.SendReportAsync` prüft `IEmailService.IsSupported` (`Email.Default.IsComposeSupported`); bei `false` → `Error`-`Report`-Logeintrag, Rückgabe `false`.
+4. Der Service sammelt: `IDeviceInfoProvider.GetSnapshot()` (`AppDeviceInfo`: `AppName`, `AppVersion`, `AppBuild`, `DeviceModel`, `DeviceManufacturer`, `Platform`, `OsVersion` aus `AppInfo.Current`/`DeviceInfo.Current`), `INetworkStatusService.IsOnline`, `ISettingsRepository.GetAsync()` (vollständiger Settings-Snapshot), `IFeedRepository.GetAllAsync()` (`Title`, `Url`, `HealthStatus`, `LastCheckedAt`, `HealthLastChange` je Feed), `ISyncLogRepository.GetLatestAsync(MaxSyncLogEntries = 50)` (absteigend nach `StartedAt`, `Take` in der Abfrage) und `IDebugLogRepository.GetLatestAsync(MaxDebugLogEntries = 200)` (absteigend nach `Timestamp`).
+5. `BuildBody` formatiert den Plain-Text-Body mit sieben lokalisierten Abschnitts-Headern (`AppResources.DebugReportSectionAppInfo`/`Device`/`Network`/`Settings`/`FeedHealth`/`SyncLog`/`SessionLog`) plus Report-Zeitstempel aus `TimeProvider`; der Betreff ist `DebugReportEmailSubject` mit `{0}` = `"{AppName} {AppVersion}"`. Es gibt keinen `EmailAttachment` und keine Artikeldaten (`Item.Title`, `ContentHtml` sind nicht Teil des Reports).
+6. `IEmailService.ComposeAsync(DebugReportRecipient, subject, body, ct)` → `EmailService` baut `EmailMessage { To = { "debug@example.com" }, Subject, Body, BodyFormat = PlainText }` und ruft `Email.Default.ComposeAsync`; der System-Mail-Client öffnet den Entwurf, der Anwender sendet selbst. Plattformfehler (`FeatureNotSupportedException` u. ä., z. B. kein eingerichteter Mail-Account) werden im Gateway abgefangen → `false`. `DebugReportRecipient` wird aus der gleichnamigen MSBuild-Property gelesen (Default `"debug@example.com"` in `Directory.Build.props`, als `AssemblyMetadata`-Attribut eingebettet) — ein dokumentierter Platzhalter, den der Maintainer vor der Auslieferung durch die tatsächliche Support-Adresse ersetzt; Forks setzen die Property auf ihre eigene Adresse.
+7. Nach dem Compose-Aufruf schreibt der Service einen `Report`-Logeintrag (`Info` „Debug report composed" / `Error` „Debug report compose failed"). Unerwartete Exceptions (Repository-Zugriff, `ComposeAsync`) propagieren zum Aufrufer.
+8. Rückgabe `false` oder Exception → `SettingsViewModel` löst `DebugReportFailed` aus → `SettingsPage.OnDebugReportFailed` zeigt `DisplayAlertAsync` (`DebugReportFailedTitle`/`DebugReportFailedMessage`/`ButtonOk`); Exceptions werden zusätzlich per `Debug.WriteLine` und als `Report`-`Error`-Eintrag protokolliert.
+
+Permanente Hinweise in der Sektion: `DataTrigger` auf `DebugCollectionEnabled == False` blendet `SettingsDebugCollectionRequiredHint` ein (Sammlung vor dem Versand aktivieren; Protokoll = aktuelle Sitzung + übernommene Absturzinformationen), `DataTrigger` auf `DebugEmailSupported == False` blendet `SettingsDebugEmailUnsupportedHint` ein (keine E-Mail-App verfügbar).
+
+Beteiligte Komponenten:
+- `SettingsPage.xaml` (Sektion **Diagnose & Support**) / `SettingsPage.xaml.cs` (`OnDebugReportFailed`)
+- `SettingsViewModel` (`SendDebugReportCommand`, `SendDebugReportAsync`, `DebugCollectionEnabled`, `DebugEmailSupported`, `DebugSendEnabled`, Event `DebugReportFailed`)
+- `IDebugReportService` / `DebugReportService` (`SendReportAsync`, `BuildBody`, `IsSupported`, `DebugReportRecipient`, `MaxSyncLogEntries`, `MaxDebugLogEntries`)
+- `IEmailService` / `EmailService` (`IsSupported`, `ComposeAsync`)
+- `IDeviceInfoProvider` / `DeviceInfoProvider` (`GetSnapshot` → `AppDeviceInfo`)
+- `INetworkStatusService`, `ISettingsRepository`, `IFeedRepository`, `ISyncLogRepository.GetLatestAsync`, `IDebugLogRepository.GetLatestAsync`, `IDebugLogService`
+- `AppResources` (Betreff, Abschnitts-Header, Hinweis-/Fehlertexte)
+
 ## Fehlerbehandlung
 
 - Alle `App.OnStart`-Blöcke (Cleanup, Theme, Auto-Refresh) sind einzeln `try/catch`-isoliert und protokollieren per `Debug.WriteLine` — kein Block darf den App-Start verhindern. Gleiches gilt für `MauiProgram.ApplyPersistedLanguage` (Meldung `MauiProgram.ApplyPersistedLanguage failed`): Bei einem Fehler bleibt es beim bisherigen Systemverhalten.
@@ -185,3 +250,6 @@ Beteiligte Komponenten:
 - `AutoRefreshService.RunLoopAsync` fängt Exceptions pro Tick ab (Timer läuft weiter); `OperationCanceledException` beim regulären Stoppen wird erwartet und geschluckt.
 - `ArticleDetailViewModel` fällt bei nicht ladbaren Settings auf Standardwerte zurück, statt den Artikel nicht zu öffnen.
 - `RequestNotificationAuthorizationAsync`/`RefreshNotificationPermissionAsync` fangen Exceptions per `Debug.WriteLine` ab; ein Fehler setzt `NotificationPermissionDenied` und `NotificationPermissionNotDetermined` auf `false` — die Hinweiszeilen erscheinen nie aufgrund eines Auslesefehlers.
+- `DebugLogService.LogAsync`/`BeginSessionAsync`/`SetEnabled` werfen niemals — eigene Fehler gehen ausschließlich an `Debug.WriteLine` (der Logger sitzt selbst in Fehlerpfaden). Der Session-Reset in `BeginSessionAsync` läuft auch bei ausgeschalteter Sammlung; `SetEnabled` schreibt den Übergangseintrag fire-and-forget.
+- Die `UnhandledException`/`UnobservedTaskException`-Handler rufen `LogAsync` bewusst ohne `await` — bei einem harten Absturz kann der letzte Eintrag verloren gehen (blockierendes Warten im Absturzpfad wäre riskanter).
+- `EmailService.ComposeAsync` kapselt alle Plattformfehler (`FeatureNotSupportedException` u. ä.) auf `false`; `DebugReportService.SendReportAsync` bildet nur `IsSupported == false`/`ComposeAsync == false` auf `false` ab — unerwartete Exceptions propagieren zu `SettingsViewModel.SendDebugReportAsync`, werden dort per `Debug.WriteLine` + `Report`-`Error`-Logeintrag protokolliert und über das `DebugReportFailed`-Event als `DisplayAlertAsync` (`DebugReportFailedTitle`/`DebugReportFailedMessage`) sichtbar gemacht.

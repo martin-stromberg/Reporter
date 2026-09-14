@@ -35,6 +35,7 @@ public class ServiceCollectionTests
         Assert.NotNull(provider.GetRequiredService<IKeywordRepository>());
         Assert.NotNull(provider.GetRequiredService<ISettingsRepository>());
         Assert.NotNull(provider.GetRequiredService<ISyncLogRepository>());
+        Assert.NotNull(provider.GetRequiredService<IDebugLogRepository>());
 
         connection.Dispose();
     }
@@ -75,12 +76,40 @@ public class ServiceCollectionTests
             .AddSingleton<IKeywordFilter, KeywordFilter>()
             .AddSingleton<INotificationService, NotificationService>()
             .AddSingleton<ILocalNotificationService, FakeLocalNotificationService>()
-            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>();
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>()
+            .AddSingleton<IDebugLogService, FakeDebugLogService>();
 
         var provider = services.BuildServiceProvider();
 
         Assert.NotNull(provider.GetRequiredService<IFeedSyncService>());
         Assert.NotNull(provider.GetRequiredService<IFeedIconService>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the debug log and debug report services can be resolved with their
+    /// full constructor dependency set, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesDebugServices()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<IDebugLogService, DebugLogService>()
+            .AddSingleton<IEmailService, FakeEmailService>()
+            .AddSingleton<IDeviceInfoProvider, FakeDeviceInfoProvider>()
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>()
+            .AddSingleton<IDebugReportService, DebugReportService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IDebugLogService>());
+        Assert.NotNull(provider.GetRequiredService<IDebugReportService>());
 
         connection.Dispose();
     }
@@ -93,6 +122,7 @@ public class ServiceCollectionTests
             .AddSingleton<IItemRepository, ItemRepository>()
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
-            .AddSingleton<ISyncLogRepository, SyncLogRepository>();
+            .AddSingleton<ISyncLogRepository, SyncLogRepository>()
+            .AddSingleton<IDebugLogRepository, DebugLogRepository>();
     }
 }

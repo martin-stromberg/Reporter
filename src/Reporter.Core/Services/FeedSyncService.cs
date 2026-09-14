@@ -24,6 +24,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly INetworkStatusService _networkStatusService;
     private readonly IKeywordFilter _keywordFilter;
     private readonly IFeedIconService _feedIconService;
+    private readonly IDebugLogService? _debugLogService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -36,6 +37,7 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
     /// <param name="feedIconService">The service used to backfill the favicon of feeds that have none.</param>
+    /// <param name="debugLogService">The optional session debug log service used to record sync failures.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
@@ -44,7 +46,8 @@ public class FeedSyncService : IFeedSyncService
         INotificationService notificationService,
         INetworkStatusService networkStatusService,
         IKeywordFilter keywordFilter,
-        IFeedIconService feedIconService)
+        IFeedIconService feedIconService,
+        IDebugLogService? debugLogService = null)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
@@ -54,6 +57,7 @@ public class FeedSyncService : IFeedSyncService
         _networkStatusService = networkStatusService;
         _keywordFilter = keywordFilter;
         _feedIconService = feedIconService;
+        _debugLogService = debugLogService;
     }
 
     /// <inheritdoc />
@@ -90,6 +94,11 @@ public class FeedSyncService : IFeedSyncService
             var message = $"Synchronization failed: {ex.Message}";
             await UpdateFeedHealthAsync(feed, FeedHealth.Error).ConfigureAwait(false);
             await UpdateLogAsync(log, FeedHealth.Error, message).ConfigureAwait(false);
+            _ = _debugLogService?.LogAsync(
+                DebugLogCategory.Sync,
+                $"Synchronization failed for feed '{feed.Title}'",
+                ex.ToString(),
+                DebugLogLevel.Error);
             return new SyncResult(FeedHealth.Error, 0, message);
         }
     }
@@ -185,6 +194,11 @@ public class FeedSyncService : IFeedSyncService
             {
                 // Ein Fehler im Benachrichtigungspfad darf das Sync-Ergebnis nicht verfaelschen.
                 Debug.WriteLine($"FeedSyncService notification failed: {ex}");
+                _ = _debugLogService?.LogAsync(
+                    DebugLogCategory.Sync,
+                    $"Notification failed for feed '{feed.Title}'",
+                    ex.ToString(),
+                    DebugLogLevel.Warning);
             }
         }
 

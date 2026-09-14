@@ -81,6 +81,39 @@ public class SyncLogRepositoryTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that GetLatestAsync returns only the newest sync logs, ordered by StartedAt descending.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetLatestAsync_ReturnsNewestSyncLogsLimited()
+    {
+        await _repository.AddAsync(new SyncLog
+        {
+            Id = Guid.NewGuid(),
+            StartedAt = new DateTime(2026, 1, 1),
+            Status = "oldest",
+        });
+        await _repository.AddAsync(new SyncLog
+        {
+            Id = Guid.NewGuid(),
+            StartedAt = new DateTime(2026, 1, 3),
+            Status = "newest",
+        });
+        await _repository.AddAsync(new SyncLog
+        {
+            Id = Guid.NewGuid(),
+            StartedAt = new DateTime(2026, 1, 2),
+            Status = "middle",
+        });
+
+        var result = await _repository.GetLatestAsync(2);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("newest", result[0].Status);
+        Assert.Equal("middle", result[1].Status);
+    }
+
+    /// <summary>
     /// Verifies that UpdateAsync persists changes.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>

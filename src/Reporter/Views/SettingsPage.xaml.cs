@@ -28,6 +28,7 @@ public partial class SettingsPage : ContentPage
         if (BindingContext is SettingsViewModel viewModel)
         {
             viewModel.NotificationAuthorizationDenied += OnNotificationAuthorizationDenied;
+            viewModel.DebugReportFailed += OnDebugReportFailed;
             viewModel.LoadCommand.Execute(null);
         }
     }
@@ -38,6 +39,7 @@ public partial class SettingsPage : ContentPage
         if (BindingContext is SettingsViewModel viewModel)
         {
             viewModel.NotificationAuthorizationDenied -= OnNotificationAuthorizationDenied;
+            viewModel.DebugReportFailed -= OnDebugReportFailed;
         }
 
         base.OnDisappearing();
@@ -54,6 +56,14 @@ public partial class SettingsPage : ContentPage
         {
             AppInfo.Current.ShowSettingsUI();
         }
+    }
+
+    private async Task OnDebugReportFailed()
+    {
+        await DisplayAlertAsync(
+            AppResources.DebugReportFailedTitle,
+            AppResources.DebugReportFailedMessage,
+            AppResources.ButtonOk);
     }
 
     private void OnOpenNotificationSettingsClicked(object? sender, EventArgs e)

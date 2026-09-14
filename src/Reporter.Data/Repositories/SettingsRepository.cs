@@ -65,6 +65,7 @@ public class SettingsRepository : ISettingsRepository
         entity.Theme = settings.Theme;
         entity.NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
         entity.Language = settings.Language;
+        entity.DebugCollectionEnabled = settings.DebugCollectionEnabled;
 
         await context.SaveChangesAsync();
     }
@@ -87,6 +88,7 @@ public class SettingsRepository : ISettingsRepository
             Theme = entity.Theme,
             NotificationSummaryEnabled = entity.NotificationSummaryEnabled,
             Language = entity.Language,
+            DebugCollectionEnabled = entity.DebugCollectionEnabled,
         };
     }
 }
