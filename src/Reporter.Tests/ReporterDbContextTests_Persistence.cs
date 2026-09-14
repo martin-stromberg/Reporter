@@ -2,6 +2,7 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Reporter.Core.Services;
 using Reporter.Data;
 using Reporter.Data.Entities;
 
@@ -168,5 +169,39 @@ public class ReporterDbContextTests_Persistence
         Assert.Equal("Exception", reloaded.Category);
         Assert.Equal("unhandled exception", reloaded.Message);
         Assert.Equal("stacktrace", reloaded.Details);
+    }
+
+    /// <summary>
+    /// Verifies that the last sync error columns of a feed survive a persist
+    /// roundtrip.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Feed_PersistRoundtrip_LastError()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ReporterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var context = new ReporterDbContext(options);
+        await context.Database.EnsureCreatedAsync();
+
+        var feed = new Feed
+        {
+            Url = "https://example.com/feed",
+            Title = "Example Feed",
+            LastErrorKind = FeedSyncErrorKind.Network,
+            LastErrorMessage = "Synchronization failed: No connection",
+        };
+        context.Feeds.Add(feed);
+        await context.SaveChangesAsync();
+
+        var reloaded = await context.Feeds.AsNoTracking().FirstAsync(f => f.Id == feed.Id);
+
+        Assert.Equal(FeedSyncErrorKind.Network, reloaded.LastErrorKind);
+        Assert.Equal("Synchronization failed: No connection", reloaded.LastErrorMessage);
     }
 }

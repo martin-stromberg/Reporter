@@ -572,4 +572,25 @@
   <data name="DebugReportSectionSessionLog" xml:space="preserve">
     <value>Session-Debug-Log</value>
   </data>
+  <data name="FeedErrorDetailsTitle" xml:space="preserve">
+    <value>Synchronisierungsfehler</value>
+  </data>
+  <data name="ButtonShowErrorDetails" xml:space="preserve">
+    <value>Fehlerdetails anzeigen</value>
+  </data>
+  <data name="FeedErrorKindInsecureHttpBlocked" xml:space="preserve">
+    <value>Die Feed-Adresse verwendet unverschlüsseltes HTTP — die unsichere Verbindung wurde blockiert oder der Server verweigert Klartext. Stelle den Feed wenn möglich auf HTTPS um.</value>
+  </data>
+  <data name="FeedErrorKindHttpStatus" xml:space="preserve">
+    <value>Der Feed-Server hat einen HTTP-Fehler gemeldet.</value>
+  </data>
+  <data name="FeedErrorKindNetwork" xml:space="preserve">
+    <value>Der Feed konnte nicht erreicht werden. Prüfe die Netzwerkverbindung und die Feed-Adresse.</value>
+  </data>
+  <data name="FeedErrorKindParse" xml:space="preserve">
+    <value>Das Feed-Format konnte nicht gelesen werden.</value>
+  </data>
+  <data name="FeedErrorKindUnknown" xml:space="preserve">
+    <value>Die Synchronisation ist mit einem unerwarteten Fehler fehlgeschlagen.</value>
+  </data>
 </root>

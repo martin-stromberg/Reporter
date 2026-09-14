@@ -70,6 +70,8 @@ public class FeedRepository : IFeedRepository
         entity.HealthLastChange = feed.HealthLastChange;
         entity.NotificationsEnabled = feed.NotificationsEnabled;
         entity.FaviconUrl = feed.FaviconUrl;
+        entity.LastErrorKind = feed.LastErrorKind;
+        entity.LastErrorMessage = feed.LastErrorMessage;
         await context.SaveChangesAsync();
     }
 
@@ -108,6 +110,8 @@ public class FeedRepository : IFeedRepository
                 HealthLastChange = f.HealthLastChange,
                 NotificationsEnabled = f.NotificationsEnabled,
                 FaviconUrl = f.FaviconUrl,
+                LastErrorKind = f.LastErrorKind,
+                LastErrorMessage = f.LastErrorMessage,
                 UnreadCount = items.Count(i => i.FeedId == f.Id && !i.IsRead),
             })
             .ToListAsync();
@@ -138,6 +142,8 @@ public class FeedRepository : IFeedRepository
             HealthLastChange = entity.HealthLastChange,
             NotificationsEnabled = entity.NotificationsEnabled,
             FaviconUrl = entity.FaviconUrl,
+            LastErrorKind = entity.LastErrorKind,
+            LastErrorMessage = entity.LastErrorMessage,
         };
     }
 
@@ -154,6 +160,8 @@ public class FeedRepository : IFeedRepository
             HealthLastChange = model.HealthLastChange,
             NotificationsEnabled = model.NotificationsEnabled,
             FaviconUrl = model.FaviconUrl,
+            LastErrorKind = model.LastErrorKind,
+            LastErrorMessage = model.LastErrorMessage,
         };
     }
 }

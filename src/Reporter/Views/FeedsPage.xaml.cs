@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
+using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
@@ -60,15 +61,26 @@ public partial class FeedsPage : ContentPage
             return;
         }
 
-        var action = await DisplayActionSheetAsync(
-            AppResources.ActionSheetTitleFeed,
-            AppResources.ButtonCancel,
-            null,
+        var actions = new List<string>
+        {
             AppResources.ButtonRefresh,
             AppResources.ButtonRename,
             AppResources.ButtonChangeCategory,
             AppResources.ButtonEdit,
-            AppResources.ButtonDelete);
+        };
+
+        if (feed.HealthStatus == FeedHealth.Error)
+        {
+            actions.Add(AppResources.ButtonShowErrorDetails);
+        }
+
+        actions.Add(AppResources.ButtonDelete);
+
+        var action = await DisplayActionSheetAsync(
+            AppResources.ActionSheetTitleFeed,
+            AppResources.ButtonCancel,
+            null,
+            [.. actions]);
 
         if (action == AppResources.ButtonRefresh)
         {
@@ -85,6 +97,10 @@ public partial class FeedsPage : ContentPage
         else if (action == AppResources.ButtonEdit)
         {
             await viewModel.EditCommand.ExecuteAsync(feed);
+        }
+        else if (action == AppResources.ButtonShowErrorDetails)
+        {
+            await ShowFeedErrorDetailsAsync(viewModel, feed);
         }
         else if (action == AppResources.ButtonDelete)
         {
@@ -166,6 +182,21 @@ public partial class FeedsPage : ContentPage
         {
             await viewModel.DeleteCommand.ExecuteAsync(feed);
         }
+    }
+
+    /// <summary>
+    /// Shows the last sync error of the feed: a localized category text plus
+    /// the stored technical message when present.
+    /// </summary>
+    /// <param name="viewModel">The feeds view model.</param>
+    /// <param name="feed">The feed whose error details are shown.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    private async Task ShowFeedErrorDetailsAsync(FeedsViewModel viewModel, FeedListItem feed)
+    {
+        await DisplayAlertAsync(
+            AppResources.FeedErrorDetailsTitle,
+            viewModel.GetFeedErrorMessage(feed),
+            AppResources.ButtonOk);
     }
 
     /// <summary>

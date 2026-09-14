@@ -92,7 +92,8 @@ public class FeedSyncService : IFeedSyncService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             var message = $"Synchronization failed: {ex.Message}";
-            await UpdateFeedHealthAsync(feed, FeedHealth.Error).ConfigureAwait(false);
+            var errorKind = FeedSyncErrorKind.Classify(ex, feed.Url);
+            await UpdateFeedHealthAsync(feed, FeedHealth.Error, new FeedHealthUpdate(ErrorKind: errorKind, ErrorMessage: message)).ConfigureAwait(false);
             await UpdateLogAsync(log, FeedHealth.Error, message).ConfigureAwait(false);
             _ = _debugLogService?.LogAsync(
                 DebugLogCategory.Sync,
@@ -181,7 +182,7 @@ public class FeedSyncService : IFeedSyncService
         // strictly isolated inside the icon service.
         var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed, cancellationToken).ConfigureAwait(false);
 
-        await UpdateFeedHealthAsync(feed, status, resolvedTitle, faviconUrl).ConfigureAwait(false);
+        await UpdateFeedHealthAsync(feed, status, new FeedHealthUpdate(resolvedTitle, faviconUrl)).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
 
         if (newItemEntities.Count > 0)
@@ -296,7 +297,7 @@ public class FeedSyncService : IFeedSyncService
         return FeedHealth.Ok;
     }
 
-    private async Task UpdateFeedHealthAsync(Feed feed, string status, string? resolvedTitle = null, string? faviconUrl = null)
+    private async Task UpdateFeedHealthAsync(Feed feed, string status, FeedHealthUpdate update)
     {
         var healthLastChange = feed.HealthLastChange;
         if (FeedHealth.Changed(feed.HealthStatus, status))
@@ -308,13 +309,15 @@ public class FeedSyncService : IFeedSyncService
         {
             Id = feed.Id,
             Url = feed.Url,
-            Title = resolvedTitle ?? feed.Title,
+            Title = update.ResolvedTitle ?? feed.Title,
             CategoryId = feed.CategoryId,
             LastCheckedAt = DateTime.UtcNow,
             HealthStatus = status,
             HealthLastChange = healthLastChange,
             NotificationsEnabled = feed.NotificationsEnabled,
-            FaviconUrl = faviconUrl ?? feed.FaviconUrl,
+            FaviconUrl = update.FaviconUrl ?? feed.FaviconUrl,
+            LastErrorKind = update.ErrorKind,
+            LastErrorMessage = update.ErrorMessage,
         }).ConfigureAwait(false);
     }
 

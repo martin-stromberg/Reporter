@@ -53,6 +53,16 @@ public class Feed
     public string? FaviconUrl { get; set; }
 
     /// <summary>
+    /// Gets or sets the category of the last sync error, or <c>null</c> when the last sync succeeded.
+    /// </summary>
+    public string? LastErrorKind { get; set; }
+
+    /// <summary>
+    /// Gets or sets the technical message of the last sync error, or <c>null</c> when the last sync succeeded.
+    /// </summary>
+    public string? LastErrorMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets the optional category of the feed.
     /// </summary>
     public Category? Category { get; set; }
