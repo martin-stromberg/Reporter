@@ -52,7 +52,7 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
     public async Task SyncFeedAsync_Failure_LogsErrorEntry()
     {
         var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
-        var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("connection refused"));
+        var handler = new FakeHttpMessageHandler(_ => Task.FromException<HttpResponseMessage>(new HttpRequestException("connection refused")));
         var httpClient = new HttpClient(handler);
         var service = new FeedSyncService(
             _feedRepository,
@@ -82,7 +82,7 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
     public async Task SyncFeedAsync_Failure_WithoutDebugLogService_StillReportsError()
     {
         var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
-        var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("connection refused"));
+        var handler = new FakeHttpMessageHandler(_ => Task.FromException<HttpResponseMessage>(new HttpRequestException("connection refused")));
         var httpClient = new HttpClient(handler);
         var service = new FeedSyncService(
             _feedRepository,

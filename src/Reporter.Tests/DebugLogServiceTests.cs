@@ -237,29 +237,19 @@ public class DebugLogServiceTests : IDisposable
 
     private sealed class ThrowingDebugLogRepository : IDebugLogRepository
     {
-        public Task<IReadOnlyList<DebugLogEntry>> GetAllAsync()
-        {
-            throw new InvalidOperationException("database unavailable");
-        }
+        public Task<IReadOnlyList<DebugLogEntry>> GetAllAsync() =>
+            Task.FromException<IReadOnlyList<DebugLogEntry>>(new InvalidOperationException("database unavailable"));
 
-        public Task<IReadOnlyList<DebugLogEntry>> GetLatestAsync(int maxEntries)
-        {
-            throw new InvalidOperationException("database unavailable");
-        }
+        public Task<IReadOnlyList<DebugLogEntry>> GetLatestAsync(int maxEntries) =>
+            Task.FromException<IReadOnlyList<DebugLogEntry>>(new InvalidOperationException("database unavailable"));
 
-        public Task AddAsync(DebugLogEntry entry)
-        {
-            throw new InvalidOperationException("database unavailable");
-        }
+        public Task AddAsync(DebugLogEntry entry) =>
+            Task.FromException(new InvalidOperationException("database unavailable"));
 
-        public Task DeleteAllExceptErrorsAsync()
-        {
-            throw new InvalidOperationException("database unavailable");
-        }
+        public Task DeleteAllExceptErrorsAsync() =>
+            Task.FromException(new InvalidOperationException("database unavailable"));
 
-        public Task TrimToLatestAsync(int maxEntries)
-        {
-            throw new InvalidOperationException("database unavailable");
-        }
+        public Task TrimToLatestAsync(int maxEntries) =>
+            Task.FromException(new InvalidOperationException("database unavailable"));
     }
 }
