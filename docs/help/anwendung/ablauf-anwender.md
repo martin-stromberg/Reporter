@@ -47,6 +47,8 @@ Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**.
 - Auf iOS kann dabei eine Benachrichtigung erscheinen — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
 
+> **Hinweis:** Trägt ein Feed das Badge **Fehler**, findest du den Grund über den Menüeintrag **Fehlerdetails anzeigen** der Feed-Karte (Details siehe [Feeds synchronisieren](synchronisation.md)).
+
 ### 5. Artikel für später merken
 
 - Tippe auf einer Artikelkarte auf das Lesezeichen-Symbol, um den Artikel zu merken.

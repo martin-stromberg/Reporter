@@ -572,4 +572,25 @@
   <data name="DebugReportSectionSessionLog" xml:space="preserve">
     <value>Session debug log</value>
   </data>
+  <data name="FeedErrorDetailsTitle" xml:space="preserve">
+    <value>Sync error</value>
+  </data>
+  <data name="ButtonShowErrorDetails" xml:space="preserve">
+    <value>Show error details</value>
+  </data>
+  <data name="FeedErrorKindInsecureHttpBlocked" xml:space="preserve">
+    <value>The feed address uses unencrypted HTTP — the insecure connection was blocked or the server refused plaintext. Update the feed to HTTPS if possible.</value>
+  </data>
+  <data name="FeedErrorKindHttpStatus" xml:space="preserve">
+    <value>The feed server reported an HTTP error.</value>
+  </data>
+  <data name="FeedErrorKindNetwork" xml:space="preserve">
+    <value>The feed could not be reached. Check the network connection and the feed address.</value>
+  </data>
+  <data name="FeedErrorKindParse" xml:space="preserve">
+    <value>The feed format could not be read.</value>
+  </data>
+  <data name="FeedErrorKindUnknown" xml:space="preserve">
+    <value>The synchronization failed with an unexpected error.</value>
+  </data>
 </root>

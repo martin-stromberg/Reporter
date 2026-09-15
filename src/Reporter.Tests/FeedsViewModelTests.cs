@@ -1641,6 +1641,120 @@ public class FeedsViewModelTests : IDisposable
         Assert.Equal("https://example.com/favicon.ico", saved.FaviconUrl);
     }
 
+    /// <summary>
+    /// Verifies that GetFeedErrorMessage maps a stored error kind to the
+    /// matching localized <c>FeedErrorKind*</c> text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetFeedErrorMessage_MapsKindToLocalizedText()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Broken",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Error,
+            LastErrorKind = FeedSyncErrorKind.Network,
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+
+        var message = viewModel.GetFeedErrorMessage(feed);
+
+        Assert.Equal(AppResources.FeedErrorKindNetwork, message);
+    }
+
+    /// <summary>
+    /// Verifies that an empty or unknown error kind falls back to the generic
+    /// unknown-error text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetFeedErrorMessage_FallsBackToUnknown()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Broken",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Error,
+            LastErrorKind = "NotARealKind",
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+
+        var message = viewModel.GetFeedErrorMessage(feed);
+
+        Assert.Equal(AppResources.FeedErrorKindUnknown, message);
+    }
+
+    /// <summary>
+    /// Verifies that the stored technical message is appended to the localized
+    /// category text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetFeedErrorMessage_AppendsTechnicalMessage()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Broken",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Error,
+            LastErrorKind = FeedSyncErrorKind.Parse,
+            LastErrorMessage = "Synchronization failed: invalid xml",
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+
+        var message = viewModel.GetFeedErrorMessage(feed);
+
+        Assert.StartsWith(AppResources.FeedErrorKindParse, message);
+        Assert.Contains("Synchronization failed: invalid xml", message);
+    }
+
+    /// <summary>
+    /// Verifies that renaming a feed keeps the stored sync error fields.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RenameFeedAsync_PreservesLastError()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Old Title",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Error,
+            LastErrorKind = FeedSyncErrorKind.HttpStatus,
+            LastErrorMessage = "Synchronization failed: 404",
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        var feed = viewModel.Feeds.First(f => f.Id == feedId);
+
+        await viewModel.RenameFeedAsync(feed, "New Title");
+
+        var saved = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(saved);
+        Assert.Equal("New Title", saved.Title);
+        Assert.Equal(FeedSyncErrorKind.HttpStatus, saved.LastErrorKind);
+        Assert.Equal("Synchronization failed: 404", saved.LastErrorMessage);
+    }
+
     private sealed class FakeFeedSyncService : IFeedSyncService
     {
         /// <summary>

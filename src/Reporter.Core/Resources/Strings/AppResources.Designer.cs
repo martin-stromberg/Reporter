@@ -1735,5 +1735,68 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("DebugReportSectionSessionLog", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Sync error ähnelt.
+        /// </summary>
+        public static string FeedErrorDetailsTitle {
+            get {
+                return ResourceManager.GetString("FeedErrorDetailsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Show error details ähnelt.
+        /// </summary>
+        public static string ButtonShowErrorDetails {
+            get {
+                return ResourceManager.GetString("ButtonShowErrorDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed address uses unencrypted HTTP — the insecure connection was blocked or the server refused plaintext. Update the feed to HTTPS if possible. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindInsecureHttpBlocked {
+            get {
+                return ResourceManager.GetString("FeedErrorKindInsecureHttpBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed server reported an HTTP error. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindHttpStatus {
+            get {
+                return ResourceManager.GetString("FeedErrorKindHttpStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed could not be reached. Check the network connection and the feed address. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindNetwork {
+            get {
+                return ResourceManager.GetString("FeedErrorKindNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed format could not be read. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindParse {
+            get {
+                return ResourceManager.GetString("FeedErrorKindParse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The synchronization failed with an unexpected error. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindUnknown {
+            get {
+                return ResourceManager.GetString("FeedErrorKindUnknown", resourceCulture);
+            }
+        }
     }
 }

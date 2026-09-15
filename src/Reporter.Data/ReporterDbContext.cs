@@ -94,6 +94,8 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.HealthLastChange).HasColumnName("health_last_change");
         entity.Property(e => e.NotificationsEnabled).HasColumnName("notifications_enabled").IsRequired().HasDefaultValue(true);
         entity.Property(e => e.FaviconUrl).HasColumnName("favicon_url").HasMaxLength(2048);
+        entity.Property(e => e.LastErrorKind).HasColumnName("last_error_kind").HasMaxLength(50);
+        entity.Property(e => e.LastErrorMessage).HasColumnName("last_error_message");
 
         entity.HasIndex(e => e.Url).IsUnique();
         entity.HasOne(e => e.Category).WithMany().HasForeignKey(e => e.CategoryId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);

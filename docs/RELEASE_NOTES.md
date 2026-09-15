@@ -9,6 +9,8 @@
 
 ## What's New
 
+- HTTP feeds (`http://` URLs) now also sync on iOS and Mac Catalyst — cleartext connections are permitted via App Transport Security.
+- Feeds page: for a feed with a sync error the action menu now offers "Show error details" — an alert names the cause (unencrypted connection blocked, HTTP error, network problem, invalid feed format or unknown) and shows the technical detail message; previously only "Error" was displayed.
 - Settings: new "Diagnostics & support" section with an opt-in switch "Collect debug information" — the setting is persisted, the session log is cleared on every app start, and crash entries from the previous session are kept so they can still be sent after a restart.
 - "Send debug report" in the same section opens a prefilled e-mail draft in the device's mail app containing app, device and OS information, the current settings, feed health, the sync log and the session debug log.
 - Reading time is no longer shown for articles with an estimated reading time of one minute or less — in the article lists and the article detail view.
@@ -45,6 +47,8 @@
 
 ## Neuerungen
 
+- HTTP-Feeds (`http://`-URLs) werden jetzt auch unter iOS und Mac Catalyst abgeglichen — unverschlüsselte Verbindungen sind per App Transport Security freigegeben.
+- Feeds-Seite: Bei einem Feed mit Sync-Fehler bietet das Aktionsmenü jetzt „Fehlerdetails anzeigen" — ein Dialog nennt die Ursache (unverschlüsselte Verbindung blockiert, HTTP-Fehler, Netzwerkproblem, ungültiges Feed-Format oder unbekannt) und zeigt die technische Detailmeldung; bisher stand dort nur „Fehler".
 - Einstellungen: neue Sektion „Diagnose & Support" mit Opt-in-Schalter „Debuginformationen sammeln" — die Einstellung wird gespeichert, das Sitzungsprotokoll bei jedem App-Start zurückgesetzt; Absturz-Einträge der vorherigen Sitzung bleiben erhalten, damit sie nach einem Neustart noch versendet werden können.
 - „Debugbericht senden" in derselben Sektion öffnet einen vorbefüllten E-Mail-Entwurf in der Mail-App des Geräts — mit App-, Geräte- und OS-Informationen, den aktuellen Einstellungen, dem Feed-Status, dem Sync-Protokoll und dem Sitzungsprotokoll.
 - Die Lesezeit wird bei Artikeln mit einer geschätzten Lesezeit von einer Minute oder weniger nicht mehr angezeigt — in den Artikellisten und in der Artikeldetailansicht.

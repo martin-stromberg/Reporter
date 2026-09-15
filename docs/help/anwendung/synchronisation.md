@@ -53,6 +53,10 @@ Hat das Gerät keine Internetverbindung, wird kein Abruf gestartet:
 
 Details zum Offline-Verhalten siehe [Offline lesen](offline.md).
 
+## Verschlüsselte und unverschlüsselte Feed-Adressen
+
+Feeds lassen sich sowohl über verschlüsselte `https://`- als auch über unverschlüsselte `http://`-Adressen abrufen — etwa für Quellen im eigenen Netzwerk oder Anbieter ohne verschlüsselte Anbindung. Das gilt auf allen Plattformen, also auch auf iPhone, iPad und Mac. Da `http://` die Daten ungeschützt überträgt, verwende wo immer möglich die verschlüsselte `https://`-Adresse des Feeds.
+
 ## Gesundheitsstatus
 
 Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt und Text — so bleibt er auch unabhängig von der Farbe erkennbar:
@@ -61,10 +65,22 @@ Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt
 |--------|-----------|
 | In Ordnung | Abruf erfolgreich, Feed-Daten gültig. |
 | Warnung | Abruf erfolgreich, aber auffällig wenige Artikel oder seit längerer Zeit keine neuen Artikel (über 30 Tage). |
-| Fehler | Feed nicht erreichbar oder Feed-Daten nicht verarbeitbar. |
+| Fehler | Feed nicht erreichbar oder Feed-Daten nicht verarbeitbar — die Fehlerursache ist über **Fehlerdetails anzeigen** einsehbar (siehe unten). |
 
 ## Verhalten bei Fehlern
 
 - Schlägt eine manuelle Aktualisierung fehl, erscheint oberhalb der Liste eine lokalisierte Fehlermeldung (auf **Ungelesen** und **Feeds**); sie verschwindet beim nächsten Ladevorgang oder bei einem Wechsel der Netzwerkverbindung.
 - Bestehende Artikel werden bei einem Fehler **nicht** gelöscht.
 - Für jeden Abruf wird ein Protokolleintrag mit Status, Zeitstempel und ggf. Fehlermeldung gespeichert.
+
+### Fehlerdetails eines Feeds anzeigen
+
+Zeigt ein Feed den Status **Fehler**, enthält das Menü **Feed-Aktionen** seiner Karte den zusätzlichen Eintrag **Fehlerdetails anzeigen**. Er öffnet den Dialog **Synchronisierungsfehler** mit dem Grund des letzten fehlgeschlagenen Abrufs:
+
+- **Unverschlüsselte Verbindung blockiert** — die `http://`-Adresse wurde blockiert oder der Server verweigert Klartext; der Dialog empfiehlt die Umstellung auf HTTPS.
+- **HTTP-Fehler des Servers** — der Feed-Server hat geantwortet, aber einen Fehler gemeldet.
+- **Verbindungsfehler** — der Feed war nicht erreichbar; Netzwerkverbindung und Feed-Adresse prüfen.
+- **Unlesbares Feed-Format** — die abgerufenen Daten ließen sich nicht als Feed verarbeiten.
+- **Unerwarteter Fehler** — keiner der genannten Gründe trifft zu.
+
+Unter dem verständlichen Grund zeigt der Dialog in einem zweiten Absatz die technische Meldung des letzten Abrufs. Bei Feeds ohne Fehler erscheint der Menüeintrag nicht; sobald der nächste Abruf erfolgreich ist, verschwindet er wieder zusammen mit dem Fehler-Badge.
