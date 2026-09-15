@@ -45,6 +45,7 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App für Windows und iOS.
 | `Reporter.Core` | Domänenmodelle, Schnittstellen, ViewModels, mehrsprachige RESX-Ressourcen und Anwendungs-Services |
 | `Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | Unit- und Integrationstests |
+| `Reporter.E2ETests` | FlaUI-UIA3-End-to-End-Smoke-Tests der Windows-App (nur Windows, interaktive Desktop-Session) |
 
 ## Voraussetzungen
 
@@ -166,7 +167,7 @@ Plattformseitig erlauben die `Info.plist`-Dateien unter `src/Reporter/Platforms/
 ## Tests
 
 ```bash
-dotnet test Reporter.sln
+dotnet test Reporter.sln --filter "Category!=E2E"   # Unit-/Integrationstests (E2E-Suite ausgenommen)
 npm test   # node:test-Suite für die Release-Skripte unter scripts/ (*.test.mjs)
 ```
 
@@ -178,6 +179,8 @@ npm test   # node:test-Suite für die Release-Skripte unter scripts/ (*.test.mjs
 - `NotificationServiceTests` decken die Benachrichtigungs-Entscheidungslogik ab (Ruhezeiten inkl. Mitternachts-Wrap-around via `FakeTimeProvider`, Keyword-Filter, Einzel-/Sammel-Modus, Dedup-Identifier); `FakeLocalNotificationService`/`FakeNotificationService` kapseln den nicht unit-testbaren Plattformdienst, und `FeedSyncServiceTests` prüft die Integration Ende-zu-Ende auf Service-Ebene (inkl. Ersetzen von URL-/Host-/Dateinamen-Platzhaltertiteln durch den echten Feed-Titel sowie den Ingest-Keyword-Filter mit `, N filtered`-Ausweis im `SyncLog`) und die Fehlerklassifikation (`SyncFeedAsync_*_ClassifiedAs*`: `InsecureHttpBlocked` bei `http`-Netzwerkfehler, `HttpStatus` bei Nicht-2xx, `Parse` bei ungültigem XML, `Network` bei `https`-Netzwerkfehler) samt Setzen/Zurücksetzen von `Feed.LastErrorKind`/`LastErrorMessage`; `KeywordFilterTests_E2E` deckt den Benutzerfluss „Schlagwort anlegen → Feed synchronisieren → Treffer verworfen, nicht benachrichtigt, im Protokoll ausgewiesen" ab.
 - `FakeNetworkStatusService` simuliert Online-/Offline-Wechsel; `ArticleHtmlSanitizerTests` prüft Link-Neutralisierung und `<img>`-Entfernung, `WebViewNavigationGuardTests` die externe-URL-Klassifizierung und `BaseViewModelConnectivityTests` das `IsOnline`-Tracking; die ViewModel-Tests (`UnreadViewModelTests`, `FeedsViewModelTests`, `LaterViewModelTests`) decken die Offline-Frühabbrüche der Refresh-Commands ab. `LaterViewModelTests` und `ItemRepositoryTests` prüfen zudem das seitenweise Laden der Später-Liste und den Batch-Insert (`AddRangeAsync`), `ReadingTimeEstimatorTests` die Lesezeit-Berechnung.
 - `DebugLogServiceTests` und `DebugLogRepositoryTests` (In-Memory-SQLite) prüfen den Session-Reset mit Erhalt der `Error`-Einträge, das `IsEnabled`-Flag, den No-op bei ausgeschalteter Sammlung und `TrimToLatestAsync`; `DebugReportServiceTests` und `DebugReportTests_E2E` decken Report-Aufbau (alle sieben Abschnitte, Begrenzungen, `IsSupported == false`) und den Versandpfad über die Fakes `FakeEmailService`/`FakeDeviceInfoProvider`/`FakeDebugLogService` ab; `SettingsViewModelTests_Debug` prüft Laden/Persistieren von `DebugCollectionEnabled`, `DebugSendEnabled` und den `SendDebugReportCommand`-Guard inkl. `DebugReportFailed`, `FeedSyncServiceTests_DebugLog` und `AutoRefreshServiceTests_DebugLog` die Instrumentierung der Fehlerpfade. `ScheduledSyncRunnerTests` prüft den Hintergrundabruf-Runner (Erfolgs-, Fehler- und Kancellierungspfad inkl. Neuplanung des Folgeabrufs) und `AutoRefreshServiceTests` die fehlerisolierte Weiterleitung an `IBackgroundRefreshService` über `FakeBackgroundRefreshService`.
+- `Reporter.E2ETests` (Issue #73) enthält eine FlaUI-UIA3-Smoke-Suite mit sieben Tests, die die echte Windows-App gegen einen in-process Kestrel-Test-Webserver (`StubFeedServer`, dynamischer Port) fährt — App-Start/Feed-Liste, Add-Sheet-Fokus, Direkt-Add mit SQLite-Verifikation, Umbenennen und Kategorie ändern per ActionSheet sowie Suche/Abo inkl. Autodiscovery-Fallback. Die Suite ist nur unter Windows in einer interaktiven Desktop-Session lauffähig (kein CI-Job); alle Tests tragen `[Trait("Category", "E2E")]` und laufen daher im obigen `dotnet test`-Befehl nicht mit. Ausführung inkl. App-Build über `.\scripts\Run-E2ETests.ps1`; die App wird dabei über die Prozess-Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT` (Stub statt feedsearch.dev) und `REPORTER_DB_PATH` (Temp-Datenbank) isoliert — Details siehe [docs/help/tests/](docs/help/tests/index.md).
+- Alle XAML-Views verwenden Compiled Bindings (`x:DataType` auf Seiten- und `DataTemplate`-Ebene), sodass Binding-Fehler bereits zur Compile-Zeit als Build-Fehler sichtbar werden (Issue #73); die wenigen verbleibenden `BindingContext.*`-`x:Reference`-Hops bleiben bewusst Runtime-Bindings.
 
 ## CI/CD
 
@@ -210,6 +213,7 @@ Siehe [changes.log](changes.log).
 - [Sprache (Deutsch / Englisch)](docs/help/anwendung/sprache.md) — UI-Sprache nach Systemsprache, Englisch als Fallback
 - [Barrierefreiheit](docs/help/anwendung/barrierefreiheit.md) — Screenreader-Beschriftungen, dynamische Schriftgrößen, Tippflächen und Kontraste
 - [Release-Management](docs/help/release-management/index.md) — Release-Pipeline: RC-Pre-Releases auf `staging`, Promotion nach `main`, stabile Releases mit Plattform-Artefakten, Backmerge
+- [Tests](docs/help/tests/index.md) — Testinfrastruktur: FlaUI-UIA3-E2E-Smoke-Suite (`Run-E2ETests.ps1`, Kestrel-Stub-Server, Env-Overrides `REPORTER_FEEDSEARCH_ENDPOINT`/`REPORTER_DB_PATH`) und Compiled Bindings
 
 ## Lizenz
 

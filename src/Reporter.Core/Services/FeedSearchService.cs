@@ -48,14 +48,17 @@ public class FeedSearchService : IFeedSearchService
     private static readonly Regex AttributePattern = new("(\\w+)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))", RegexOptions.IgnoreCase, RegexTimeout);
 
     private readonly HttpClient _httpClient;
+    private readonly string _directoryEndpoint;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSearchService"/> class.
     /// </summary>
     /// <param name="httpClient">The HTTP client used for the directory and website requests.</param>
-    public FeedSearchService(HttpClient httpClient)
+    /// <param name="directoryEndpoint">An optional feed directory endpoint override; defaults to the feedsearch.dev endpoint.</param>
+    public FeedSearchService(HttpClient httpClient, string? directoryEndpoint = null)
     {
         _httpClient = httpClient;
+        _directoryEndpoint = string.IsNullOrWhiteSpace(directoryEndpoint) ? DirectoryEndpoint : directoryEndpoint;
     }
 
     /// <inheritdoc />
@@ -109,7 +112,7 @@ public class FeedSearchService : IFeedSearchService
 
     private async Task<List<FeedSearchResult>> SearchDirectoryAsync(string query, CancellationToken cancellationToken)
     {
-        var requestUri = $"{DirectoryEndpoint}?url={Uri.EscapeDataString(query)}&info=true&favicon=false&opml=false&skip_crawl=true";
+        var requestUri = $"{_directoryEndpoint}?url={Uri.EscapeDataString(query)}&info=true&favicon=false&opml=false&skip_crawl=true";
         using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 

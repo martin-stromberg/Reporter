@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<rss version="2.0">
+  <channel>
+    <title>Stub Site Feed</title>
+    <link>http://127.0.0.1/site</link>
+    <description>Static feed advertised by the stub site via autodiscovery.</description>
+    <item>
+      <title>site article</title>
+      <link>http://127.0.0.1/articles/site-1</link>
+    </item>
+  </channel>
+</rss>
