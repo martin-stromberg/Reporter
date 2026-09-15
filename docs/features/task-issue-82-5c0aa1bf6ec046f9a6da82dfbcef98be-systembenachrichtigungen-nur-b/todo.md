@@ -22,9 +22,9 @@ Branch: `task-issue-82-5c0aa1bf6ec046f9a6da82dfbcef98be-systembenachrichtigungen
 | [x] | 10 | Tests ausführen (Unteragent) | `test-results.md` |
 | [x] | – | Iteration oder Abschluss entscheiden | – |
 | [x] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
-| [ ] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
-| [ ] | 12b | README aktualisieren (Unteragent) | `README.md` |
-| [ ] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
-| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) | `continue-done.md` |
+| [x] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
+| [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
+| [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
+| [~] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) — Fortsetzungslauf 2026-09-15: Remote-iOS-Verifikation auf iPhone-17-Simulator (iOS 26.5); echter Start-Crash gefunden + behoben (`AppDelegate.cs` Deferred-Registrierung); 1/7 E2E-Szenarien verifiziert, 3 teilweise, 3 bleiben offen (physisches iOS-Gerät erforderlich, Simulator lehnt `BGTaskScheduler.Submit` mit Code 1 ab) | `continue.md` (aktualisiert), `review-code.md` (Iteration 4), `test-results.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | – | Commit durchführen | – |

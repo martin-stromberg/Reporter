@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using BackgroundTasks;
+using CoreFoundation;
 using Foundation;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
@@ -29,11 +30,14 @@ public class AppDelegate : MauiUIApplicationDelegate
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 
     /// <inheritdoc />
-    public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
+    public override bool FinishedLaunching(UIApplication application, NSDictionary? launchOptions)
     {
         UNUserNotificationCenter.Current.Delegate = _notificationDelegate;
         var result = base.FinishedLaunching(application, launchOptions);
-        RegisterBackgroundFetchTask();
+        // Die Registrierung wird auf den naechsten Main-Queue-Durchlauf verlagert:
+        // Ein synchroner Aufruf waehrend FinishedLaunching kollidiert mit dem
+        // internen Launch-Handling von BGTaskScheduler (_os_unfair_lock_recursive_abort).
+        DispatchQueue.MainQueue.DispatchAsync(RegisterBackgroundFetchTask);
         return result;
     }
 
