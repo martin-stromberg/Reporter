@@ -8,6 +8,7 @@
 
 - Reporter ist auf einem iOS-Gerät installiert.
 - Mindestens ein Feed ist auf der Seite **Feeds** angelegt.
+- Die **Automatische Hintergrund-Aktualisierung** ist in den **Einstellungen** eingeschaltet — nur dieser Abgleich erzeugt sichtbare Benachrichtigungen, weil iOS ihn auch bei geschlossener App ausführen kann.
 
 ## Schritt-für-Schritt-Anleitung
 
@@ -37,12 +38,13 @@
 
 ### 5. Benachrichtigung empfangen und öffnen
 
-- Sobald ein Abgleich neue Artikel findet, erscheint eine Benachrichtigung — auch wenn die App gerade geöffnet ist.
+- Erscheint eine Benachrichtigung, hat der automatische Hintergrund-Abgleich neue Artikel gefunden — also während die App nicht geöffnet war. Wann iOS den Abgleich tatsächlich ausführt, bestimmt das System; das **Abruf-Intervall** ist dabei nur eine Mindestpause.
+- Solange du die App verwendest, erscheint bei neuen Artikeln bewusst keine Mitteilung — weder beim manuellen Aktualisieren noch beim Timer- oder Start-Abgleich. Die Artikel stehen dann direkt in der Ansicht **Ungelesen** bereit.
 - Tippe die Benachrichtigung an: Bei einer Einzel-Benachrichtigung öffnet sich der Artikel in der App; bei einer Sammel-Benachrichtigung die Ansicht **Ungelesen**.
 
 ## Ergebnis
 
-Du erhältst bei neuen Artikeln eine Benachrichtigung mit Feed-Name und Artikeltitel (oder eine Sammel-Meldung pro Feed) und gelangst per Antippen direkt zum Artikel bzw. zur Ungelesen-Liste.
+Du erhältst bei neuen Artikeln eine Benachrichtigung mit Feed-Name und Artikeltitel (oder eine Sammel-Meldung pro Feed), sobald der Hintergrund-Abgleich neue Artikel findet, und gelangst per Antippen direkt zum Artikel bzw. zur Ungelesen-Liste. Bei geöffneter App bleibt die App still — neue Artikel erkennst du dort an der Ungelesen-Liste.
 
 ## Barrierefreiheit
 

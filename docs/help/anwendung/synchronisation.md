@@ -17,7 +17,7 @@
 2. Tippe die Karte des gewünschten Feeds an und wähle im Menü **Feed-Aktionen** den Eintrag **Aktualisieren**.
 3. Die App ruft den Feed ab, parst die RSS-/Atom-Daten und speichert neue Artikel in der Datenbank. Artikel, die ein eingerichtetes Filter-Schlagwort in Titel oder Inhalt enthalten, werden dabei verworfen und erscheinen nicht in den Listen — intern vermerkt der Protokolleintrag des Abrufs, wie viele Artikel gefiltert wurden.
 4. Der Gesundheitsstatus des Feeds wird aktualisiert (**In Ordnung**, **Warnung** oder **Fehler**).
-5. Auf iOS löst die App für berechtigte neue Artikel eine lokale Benachrichtigung aus — abhängig von den Schaltern in den **Einstellungen** und am Feed, der Ruhezeit und den Schlagwort-Filtern. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
+5. Auf iOS wertet die App für berechtigte neue Artikel die Benachrichtigungsregeln aus — abhängig von den Schaltern in den **Einstellungen** und am Feed, der Ruhezeit und den Schlagwort-Filtern. Eine sichtbare Mitteilung erscheint dabei bei geöffneter App bewusst nicht; sie kommt nur aus dem automatischen Hintergrund-Abgleich bei geschlossener App. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 
 ### Alle Feeds aktualisieren
 
@@ -29,7 +29,7 @@ Der Abruf läuft im Hintergrund — die App bleibt währenddessen bedienbar, und
 
 ### Automatische Aktualisierung
 
-Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie das Herunterziehen der Liste, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Die automatische Aktualisierung läuft nur, solange die App geöffnet ist; dauert ein Abruf länger als das eingestellte Intervall, startet der nächste erst nach seinem Abschluss — Abrufe laufen nie parallel. Details siehe [Einstellungen](../einstellungen/index.md).
+Ist auf der Seite **Einstellungen** der Schalter **Automatische Hintergrund-Aktualisierung** eingeschaltet, ruft die App alle Feeds periodisch im Hintergrund ab — dasselbe wie das Herunterziehen der Liste, nur zeitgesteuert. Das **Abruf-Intervall** lässt sich zwischen *Alle 15 Minuten*, *Alle 30 Minuten*, *Stündlich* und *Alle 4 Stunden* wählen. Der periodische Abgleich innerhalb der App läuft nur, solange sie geöffnet ist; dauert ein Abruf länger als das eingestellte Intervall, startet der nächste erst nach seinem Abschluss — Abrufe laufen nie parallel. Auf iOS kann zusätzlich das System bei geschlossener App abgleichen — derselbe Schalter und dasselbe Intervall gelten, aber iOS bestimmt den Zeitpunkt selbst (das Intervall ist nur eine Mindestpause) und benötigt die System-Freigabe **Hintergrundaktualisierung**; nur dieser Abgleich erzeugt sichtbare Benachrichtigungen. Details siehe [Einstellungen](../einstellungen/index.md).
 
 ### Aktualisierung beim App-Start
 

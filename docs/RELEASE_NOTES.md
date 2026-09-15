@@ -9,6 +9,8 @@
 
 ## What's New
 
+- iOS: feeds are now also refreshed while the app is closed, via an OS-scheduled background refresh task — the schedule follows the "Automatic background refresh" switch and the "Fetch interval" setting, and the task is cancelled when automatic refresh is disabled.
+- iOS: system notifications for new articles now only appear when the app is not in the foreground (the OS background refresh) — while the app is open (manual sync, refresh timer, refresh on start) no banner or sound is shown; Windows and Android are unchanged.
 - HTTP feeds (`http://` URLs) now also sync on iOS and Mac Catalyst — cleartext connections are permitted via App Transport Security.
 - Feeds page: for a feed with a sync error the action menu now offers "Show error details" — an alert names the cause (unencrypted connection blocked, HTTP error, network problem, invalid feed format or unknown) and shows the technical detail message; previously only "Error" was displayed.
 - Settings: new "Diagnostics & support" section with an opt-in switch "Collect debug information" — the setting is persisted, the session log is cleared on every app start, and crash entries from the previous session are kept so they can still be sent after a restart.
@@ -47,6 +49,8 @@
 
 ## Neuerungen
 
+- iOS: Feeds werden jetzt auch bei geschlossener App aktualisiert — über einen vom System eingeplanten Hintergrundabruf, der den Einstellungen „Automatische Hintergrund-Aktualisierung" und „Abruf-Intervall" folgt und bei deaktiviertem automatischem Abruf abgemeldet wird.
+- iOS: Systembenachrichtigungen über neue Artikel erscheinen nur noch, wenn die App nicht im Vordergrund läuft (OS-Hintergrundabruf) — bei geöffneter App (manueller Abgleich, Abruf-Timer, Abruf beim Start) werden Banner und Ton unterdrückt; Windows und Android bleiben unverändert.
 - HTTP-Feeds (`http://`-URLs) werden jetzt auch unter iOS und Mac Catalyst abgeglichen — unverschlüsselte Verbindungen sind per App Transport Security freigegeben.
 - Feeds-Seite: Bei einem Feed mit Sync-Fehler bietet das Aktionsmenü jetzt „Fehlerdetails anzeigen" — ein Dialog nennt die Ursache (unverschlüsselte Verbindung blockiert, HTTP-Fehler, Netzwerkproblem, ungültiges Feed-Format oder unbekannt) und zeigt die technische Detailmeldung; bisher stand dort nur „Fehler".
 - Einstellungen: neue Sektion „Diagnose & Support" mit Opt-in-Schalter „Debuginformationen sammeln" — die Einstellung wird gespeichert, das Sitzungsprotokoll bei jedem App-Start zurückgesetzt; Absturz-Einträge der vorherigen Sitzung bleiben erhalten, damit sie nach einem Neustart noch versendet werden können.

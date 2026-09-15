@@ -22,7 +22,7 @@ Artikelkarten zeigen neben Titel und Teasertext ein Bild — das Artikelbild, er
 
 Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt. Neue Artikel, die ein Filter-Schlagwort enthalten, werden bereits beim Abruf verworfen und erscheinen nicht in den Listen; bereits gespeicherte Treffer werden nach dem Lesen fristbasiert entfernt. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
 
-Auf iOS benachrichtigt dich die App nach einem Abgleich über neue Artikel — pro Artikel oder gesammelt pro Feed, mit optionaler Ruhezeit und Schlagwort-Filter. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
+Auf iOS benachrichtigt dich die App über neue Artikel, sobald der automatische Hintergrund-Abgleich bei geschlossener App neue Artikel findet — pro Artikel oder gesammelt pro Feed, mit optionaler Ruhezeit und Schlagwort-Filter; bei geöffneter App erscheint bewusst keine Mitteilung. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 
 ## Beispiele
 

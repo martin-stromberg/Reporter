@@ -7,7 +7,7 @@
 ## Anwendung
 
 - [Anwendung](anwendung/index.md) — Übersicht, Bedienung, Feed-Suche und Hinzufügen-Flow inkl. Feed-Symbolen (Favicon/Initialen), Offline-Verhalten, Sprache (System/Deutsch/Englisch), Barrierefreiheit, Architektur und Datenmodell der Reporter-App.
-- [Benachrichtigungen](benachrichtigungen/index.md) — Reporter informiert auf iOS-Geräten per lokaler Benachrichtigung über neue Artikel: Nach jedem Feed-Abgleich wird geprüft, ob neue Artikel eingetroffen sind, und — abhängig von Schaltern, Ruhezeit und Schlagwort-Filtern — eine Benachrichtigung angezeigt.
+- [Benachrichtigungen](benachrichtigungen/index.md) — Reporter informiert auf iOS-Geräten per lokaler Benachrichtigung über neue Artikel: Nach jedem Feed-Abgleich wird geprüft, ob neue Artikel eingetroffen sind, und — abhängig von Schaltern, Ruhezeit und Schlagwort-Filtern — eine Benachrichtigung erzeugt; sichtbar wird sie nur aus dem automatischen Hintergrund-Abgleich bei geschlossener App.
 
 ## Konfiguration
 

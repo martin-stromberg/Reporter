@@ -30,7 +30,7 @@ public class AutoRefreshServiceTests_DebugLog : IDisposable
         _networkStatusService = new FakeNetworkStatusService();
         _timeProvider = new FakeTimeProvider();
         _debugLogService = new FakeDebugLogService { IsEnabled = true };
-        _service = new AutoRefreshService(_settingsRepository, _feedSyncService, _networkStatusService, _timeProvider, _debugLogService);
+        _service = new AutoRefreshService(_settingsRepository, _feedSyncService, _networkStatusService, new FakeBackgroundRefreshService(), _timeProvider, _debugLogService);
     }
 
     /// <summary>

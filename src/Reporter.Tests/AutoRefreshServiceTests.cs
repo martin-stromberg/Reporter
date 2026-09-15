@@ -16,6 +16,7 @@ public class AutoRefreshServiceTests : IDisposable
     private readonly SettingsRepository _settingsRepository;
     private readonly FakeFeedSyncService _feedSyncService;
     private readonly FakeNetworkStatusService _networkStatusService;
+    private readonly FakeBackgroundRefreshService _backgroundRefreshService;
     private readonly FakeTimeProvider _timeProvider;
     private readonly AutoRefreshService _service;
 
@@ -28,8 +29,9 @@ public class AutoRefreshServiceTests : IDisposable
         _settingsRepository = new SettingsRepository(_factory);
         _feedSyncService = new FakeFeedSyncService();
         _networkStatusService = new FakeNetworkStatusService();
+        _backgroundRefreshService = new FakeBackgroundRefreshService();
         _timeProvider = new FakeTimeProvider();
-        _service = new AutoRefreshService(_settingsRepository, _feedSyncService, _networkStatusService, _timeProvider);
+        _service = new AutoRefreshService(_settingsRepository, _feedSyncService, _networkStatusService, _backgroundRefreshService, _timeProvider);
     }
 
     /// <summary>
@@ -372,5 +374,76 @@ public class AutoRefreshServiceTests : IDisposable
         await _service.StopAsync();
 
         Assert.Equal(2, _feedSyncService.SyncAllCallCount);
+    }
+
+    /// <summary>
+    /// Verifies that ApplySettingsAsync forwards the same settings object to the
+    /// background refresh gateway so the OS task stays in sync with the timer.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ApplySettings_ForwardsToBackgroundRefresh()
+    {
+        var settings = BuildSettings(autoRefreshEnabled: true, refreshIntervalMinutes: 15);
+
+        await _service.ApplySettingsAsync(settings);
+        await _service.StopAsync();
+
+        var applied = Assert.Single(_backgroundRefreshService.AppliedSettings);
+        Assert.Same(settings, applied);
+    }
+
+    /// <summary>
+    /// Verifies that the settings are still forwarded to the background refresh
+    /// gateway when automatic refresh is disabled, so the OS task gets cancelled.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ApplySettings_WhenAutoRefreshDisabled_StillForwardsToBackgroundRefresh()
+    {
+        var settings = BuildSettings(autoRefreshEnabled: false, refreshIntervalMinutes: 15);
+
+        await _service.ApplySettingsAsync(settings);
+
+        var applied = Assert.Single(_backgroundRefreshService.AppliedSettings);
+        Assert.Same(settings, applied);
+    }
+
+    /// <summary>
+    /// Verifies that the settings are not forwarded to the background refresh
+    /// gateway on platforms that do not support OS-scheduled background refresh.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ApplySettings_BackgroundRefreshUnsupported_DoesNotForward()
+    {
+        _backgroundRefreshService.IsSupported = false;
+        var settings = BuildSettings(autoRefreshEnabled: true, refreshIntervalMinutes: 15);
+
+        await _service.ApplySettingsAsync(settings);
+        await _service.StopAsync();
+
+        Assert.Empty(_backgroundRefreshService.AppliedSettings);
+    }
+
+    /// <summary>
+    /// Verifies that a throwing background refresh gateway is isolated: the
+    /// exception is swallowed and the timer loop still gets configured.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ApplySettings_BackgroundRefreshThrows_TimerStillConfigured()
+    {
+        _backgroundRefreshService.ApplySettingsException = new InvalidOperationException("scheduling failed");
+        var settings = BuildSettings(autoRefreshEnabled: true, refreshIntervalMinutes: 15);
+
+        await _service.ApplySettingsAsync(settings);
+        _timeProvider.Advance(TimeSpan.FromMinutes(15));
+        await TestWaitHelper.WaitUntilAsync(() => _feedSyncService.SyncAllCallCount == 1);
+        await _service.StopAsync();
+
+        var applied = Assert.Single(_backgroundRefreshService.AppliedSettings);
+        Assert.Same(settings, applied);
+        Assert.Equal(1, _feedSyncService.SyncAllCallCount);
     }
 }

@@ -11,12 +11,10 @@ namespace Reporter.Core.Services;
 /// </summary>
 public class AutoRefreshService : IAutoRefreshService
 {
-    private const int MinRefreshIntervalMinutes = 1;
-    private const int MaxRefreshIntervalMinutes = 1440;
-
     private readonly ISettingsRepository _settingsRepository;
     private readonly IFeedSyncService _feedSyncService;
     private readonly INetworkStatusService _networkStatusService;
+    private readonly IBackgroundRefreshService _backgroundRefreshService;
     private readonly IDebugLogService? _debugLogService;
     private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _stateLock = new(1, 1);
@@ -29,13 +27,15 @@ public class AutoRefreshService : IAutoRefreshService
     /// <param name="settingsRepository">The settings repository.</param>
     /// <param name="feedSyncService">The feed sync service.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
+    /// <param name="backgroundRefreshService">The OS background refresh gateway that mirrors the auto-refresh settings.</param>
     /// <param name="timeProvider">The time provider used for the refresh timer.</param>
     /// <param name="debugLogService">The optional session debug log service used to record sync failures.</param>
-    public AutoRefreshService(ISettingsRepository settingsRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService, TimeProvider? timeProvider = null, IDebugLogService? debugLogService = null)
+    public AutoRefreshService(ISettingsRepository settingsRepository, IFeedSyncService feedSyncService, INetworkStatusService networkStatusService, IBackgroundRefreshService backgroundRefreshService, TimeProvider? timeProvider = null, IDebugLogService? debugLogService = null)
     {
         _settingsRepository = settingsRepository;
         _feedSyncService = feedSyncService;
         _networkStatusService = networkStatusService;
+        _backgroundRefreshService = backgroundRefreshService;
         _debugLogService = debugLogService;
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
@@ -75,12 +75,29 @@ public class AutoRefreshService : IAutoRefreshService
         {
             await StopLoopAsync();
 
+            // Weiterleitung an das OS-Hintergrundabruf-Gateway: fehlerisoliert,
+            // damit ein Gateway-Fehler den Timer-Loop nicht beeintraechtigt, und
+            // vor dem AutoRefreshEnabled-Early-Return, damit ein deaktivierter
+            // Auto-Refresh den OS-Task abmeldet.
+            try
+            {
+                if (_backgroundRefreshService.IsSupported)
+                {
+                    await _backgroundRefreshService.ApplySettingsAsync(settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"AutoRefreshService background refresh apply failed: {ex}");
+                _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh apply failed", ex.ToString(), DebugLogLevel.Warning);
+            }
+
             if (!settings.AutoRefreshEnabled)
             {
                 return;
             }
 
-            var interval = TimeSpan.FromMinutes(Math.Clamp(settings.RefreshIntervalMinutes, MinRefreshIntervalMinutes, MaxRefreshIntervalMinutes));
+            var interval = TimeSpan.FromMinutes(SettingsValues.ClampRefreshIntervalMinutes(settings.RefreshIntervalMinutes));
             var cts = new CancellationTokenSource();
             _loopCts = cts;
             _loopTask = RunLoopAsync(interval, cts.Token);

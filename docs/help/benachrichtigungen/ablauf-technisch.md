@@ -6,7 +6,7 @@
 
 ## Übersicht
 
-Nach jedem erfolgreichen Feed-Sync ruft `FeedSyncService` den `NotificationService` (`Reporter.Core`) mit dem Feed und den neu gespeicherten `Item`s auf. Der Service wertet die Benachrichtigungsregeln aus (Feed-Schalter, globaler Schalter, Ruhezeit, Keyword-Filter) und delegiert die Anzeige an `ILocalNotificationService`, das unter iOS das `UserNotifications`-Framework nutzt. Die iOS-Berechtigung wird beim erstmaligen Einschalten des globalen Schalters in den Einstellungen angefragt sowie lazy vor jedem Versand; `App.OnStart` enthält bewusst **keine** Berechtigungsanfrage. Das Antippen einer Benachrichtigung behandelt der `NotificationDelegate` (iOS) mit In-App-Navigation.
+Nach jedem erfolgreichen Feed-Sync ruft `FeedSyncService` den `NotificationService` (`Reporter.Core`) mit dem Feed und den neu gespeicherten `Item`s auf. Der Service wertet die Benachrichtigungsregeln aus (Feed-Schalter, globaler Schalter, Ruhezeit, Keyword-Filter) und delegiert die Anzeige an `ILocalNotificationService`, das unter iOS das `UserNotifications`-Framework nutzt. Sichtbar wird eine Mitteilung nur bei einem Abruf im OS-Hintergrund: `NotificationDelegate.WillPresentNotification` unterdrückt die Darstellung bei laufender Vordergrund-App vollständig (`UNNotificationPresentationOptions.None`), und der eigentliche Hintergrundabruf läuft über einen iOS-`BGAppRefreshTask`, der an die Auto-Refresh-Einstellungen gekoppelt ist (Abschnitt 5). Die iOS-Berechtigung wird beim erstmaligen Einschalten des globalen Schalters in den Einstellungen angefragt sowie lazy vor jedem Versand; `App.OnStart` enthält bewusst **keine** Berechtigungsanfrage. Das Antippen einer Benachrichtigung behandelt der `NotificationDelegate` (iOS) mit In-App-Navigation.
 
 ## Ablauf
 
@@ -65,7 +65,7 @@ Beteiligte Komponenten:
 
 `AppDelegate.FinishedLaunching` setzt `UNUserNotificationCenter.Current.Delegate = _notificationDelegate`; die `NotificationDelegate`-Instanz wird in einem Feld gehalten, weil die `Delegate`-Property schwach referenziert.
 
-- `WillPresentNotification` → `Banner | List | Sound`: Benachrichtigungen sind auch sichtbar, während die App geöffnet ist (funktional nötig, da `AutoRefreshService` nur bei laufender App synct).
+- `WillPresentNotification` → `UNNotificationPresentationOptions.None`: Mitteilungen von Syncs bei laufender App (manuell, `AutoRefreshService`-Timer, `RefreshOnStartupEnabled`-Start-Abruf) werden vollständig unterdrückt — kein Banner, kein Sound, kein Eintrag im Mitteilungszentrum. iOS ruft die Methode nur im Vordergrund auf; Mitteilungen, die im Hintergrund-/Suspend-Zustand zugestellt werden (OS-Hintergrundabruf, Abschnitt 5), zeigt iOS automatisch als Banner/List/Sound an.
 - `DidReceiveNotificationResponse`: reagiert nur auf die Default-Aktion — bei `!response.IsDefaultAction` (Wegwischen/Dismiss, Custom-Actions) wird sofort `completionHandler()` ohne Navigation aufgerufen. Andernfalls liest er `itemId`, `feedId` und `link` aus `Content.UserInfo`. Route: `itemId` vorhanden → `articledetail?itemId={itemId}` (wie `ArticleCardView`); sonst `feedId` vorhanden → `//unread` (`ShellContent.Route = "unread"` in `AppShell`). Navigation via `MainThread.InvokeOnMainThreadAsync` + `Shell.Current.GoToAsync` mit Null-Check; wenn die Shell beim Kaltstart noch nicht bereit ist und ein `link` existiert, Fallback `Launcher.Default.OpenAsync(link)` (Artikel im Browser) — ebenfalls über `MainThread.InvokeOnMainThreadAsync` gemarshaled. Alle Exceptions werden geschluckt — ein Antippen darf die App nicht abstürzen lassen; `completionHandler()` läuft im `finally`.
 
 Beteiligte Komponenten:
@@ -74,7 +74,26 @@ Beteiligte Komponenten:
 - `AppShell` — Routen `articledetail` (`Routing.RegisterRoute`) und `unread` (`ShellContent.Route`)
 - `ArticleDetailPage.ApplyQueryAttributes` — verarbeitet `itemId`
 
-### 5. Pro-Feed-Schalter und Modus-Einstellung pflegen
+### 5. Hintergrundabruf (iOS `BGAppRefreshTask`)
+
+Damit überhaupt noch Mitteilungen erscheinen können, läuft der eigentliche Abruf im OS-Hintergrund über das iOS-`BackgroundTasks`-Framework — gekoppelt an die Auto-Refresh-Einstellungen (kein eigener Schalter).
+
+- **Registrierung:** `AppDelegate.FinishedLaunching` ruft nach `base.FinishedLaunching` `RegisterBackgroundFetchTask` auf: `BGTaskScheduler.Shared.Register(BackgroundRefreshService.RefreshTaskIdentifier, null, launchHandler)` — die Registrierung erfolgt vor Rückkehr aus `FinishedLaunching`. Voraussetzung sind die `Info.plist`-Einträge `UIBackgroundModes` = `fetch` und `BGTaskSchedulerPermittedIdentifiers` = `de.martinstromberg.reporter.feedrefresh` (identisch zur Konstante `RefreshTaskIdentifier`).
+- **Einplanung:** `AutoRefreshService.ApplySettingsAsync` leitet die Settings fehlerisoliert an `IBackgroundRefreshService.ApplySettingsAsync` weiter — nur wenn `IBackgroundRefreshService.IsSupported` greift (nur iOS), und sowohl aus `StartAsync` (App-Start) als auch aus `SettingsViewModel.PersistAsync` (Änderung an `AutoRefreshEnabled`/`RefreshIntervalMinutes`). `BackgroundRefreshService` (`#if IOS`) submit bei `AutoRefreshEnabled` eine `BGAppRefreshTaskRequest` mit `EarliestBeginDate = now + SettingsValues.ClampRefreshIntervalMinutes(RefreshIntervalMinutes)` (Grenzen 1–1440, zentral in `SettingsValues`); bei deaktiviertem Schalter `BGTaskScheduler.Shared.Cancel(RefreshTaskIdentifier)`. iOS behandelt `EarliestBeginDate` nur als Untergrenze — die tatsächliche Ausführungshäufigkeit bestimmt das System (Nutzungsverhalten/Energiestatus); bei deaktivierter System-Option „Hintergrundaktualisierung" läuft der Task nie. Ein `Submit`-Fehler wird per `IDebugLogService` (`Sync`, `Warning`) protokolliert.
+- **Ausführung:** Der Launch-Handler `HandleRefreshTaskAsync` im `AppDelegate` erzeugt eine `CancellationTokenSource`, setzt `task.ExpirationHandler = cts.Cancel`, löst `IScheduledSyncRunner` lazy über `IPlatformApplication.Current.Services` auf und ruft `RunAsync` auf. `ScheduledSyncRunner` (`Reporter.Core`) führt `IFeedSyncService.SyncAllAsync` fehlerisoliert aus (Fehler → `IDebugLogService`, `Sync`, `Error`, Ergebnis `false`), lädt anschließend die `Settings` und plant den Folgeabruf über `IBackgroundRefreshService.ApplySettingsAsync` neu — auch im Fehler- und Kancellierungsfall, damit sich der Abruf nicht „totläuft". Der Handler schließt mit `task.SetTaskCompleted(success)` im `finally` ab; Fehler bei der Service-Auflösung werden per `Debug.WriteLine` und — sofern auflösbar — als `IDebugLogService`-`Warning` protokolliert.
+- **Benachrichtigung:** Neue Items des Hintergrund-Syncs durchlaufen den regulären Pfad (`NotificationService` → `ShowAsync`). Da die App nicht im Vordergrund ist, wird `WillPresentNotification` nicht aufgerufen — iOS zeigt die Mitteilung automatisch an.
+
+Auf Windows/Android/MacCatalyst ist `BackgroundRefreshService` ein No-Op (`IsSupported == false`); `AutoRefreshService` leitet dann gar nicht erst weiter.
+
+Beteiligte Komponenten:
+- `AppDelegate` (`RegisterBackgroundFetchTask`, `HandleRefreshTaskAsync`) — Registrierung und Task-Lebenszyklus
+- `IBackgroundRefreshService` / `BackgroundRefreshService` (`IsSupported`, `ApplySettingsAsync`, `RefreshTaskIdentifier`) — OS-Task-Scheduling
+- `IScheduledSyncRunner` / `ScheduledSyncRunner` (`RunAsync`) — Sync-Ausführung und Neuplanung des Folgeabrufs (plattformneutral in `Reporter.Core`)
+- `BGTaskScheduler` / `BGAppRefreshTask` / `BGAppRefreshTaskRequest` (`BackgroundTasks`-Framework)
+- `AutoRefreshService.ApplySettingsAsync` / `SettingsViewModel.PersistAsync` — Settings-Kopplung
+- `IFeedSyncService.SyncAllAsync`, `ISettingsRepository`, `IDebugLogService`
+
+### 6. Pro-Feed-Schalter und Modus-Einstellung pflegen
 
 - `FeedsPage.xaml`: `Switch` (`IsToggled="{Binding FeedNotificationsEnabled}"`) mit `FeedNotificationsLabel`/`FeedNotificationsHint` in der Feed-Bearbeitungskarte; die Zeile ist an `FeedsViewModel.NotificationsSupported` (`IsEnabled` + Opazität-0,4-Trigger) gebunden, bei `!IsSupported` erscheint darunter die Zeile `NotificationsIosOnlyHint`. `FeedsViewModel.EditAsync` befüllt aus `FeedListItem.NotificationsEnabled`, `SaveAsync` schreibt `NotificationsEnabled = FeedNotificationsEnabled` im Add- und Update-Pfad, `ResetForm` setzt auf `true` zurück.
 - `SettingsPage.xaml`: `Switch` (`IsToggled="{Binding NotificationSummaryEnabled}"`) mit `SettingsNotificationSummaryLabel`/`SettingsNotificationSummaryHint` innerhalb des von `NotificationControlsEnabled` gesteuerten `Border` (erbt Deaktivierung + Opazität 0,4). `SettingsViewModel.NotificationSummaryEnabled` persistiert über `PersistOnChange` → `PersistAsync`; `LoadAsync` befüllt aus `settings.NotificationSummaryEnabled`.
@@ -89,7 +108,7 @@ Beteiligte Komponenten:
 
 ```mermaid
 flowchart TD
-    A[Sync: manuell / AutoRefreshService] --> B[FeedSyncService.RunSyncAsync]
+    A[Sync: manuell / AutoRefreshService / BGAppRefreshTask] --> B[FeedSyncService.RunSyncAsync]
     B --> C{neue Items?}
     C -- Nein --> Z[Ende]
     C -- Ja --> D[NotificationService.NotifyNewItemsAsync]
@@ -110,8 +129,12 @@ flowchart TD
     M --> N{iOS autorisiert?}
     N -- Nein --> Z
     N -- Ja --> O[UNNotificationRequest anzeigen]
-    O --> P[Tap: NotificationDelegate]
-    P --> Q{itemId?}
+    O --> O2{App im Vordergrund?}
+    O2 -- Ja --> O3[WillPresentNotification:<br/>None — unterdrückt]
+    O3 --> Z
+    O2 -- Nein --> P[iOS zeigt Mitteilung<br/>Banner/List/Sound]
+    P --> P2[Tap: NotificationDelegate]
+    P2 --> Q{itemId?}
     Q -- Ja --> R[articledetail?itemId=…]
     Q -- Nein --> S[//unread]
 ```

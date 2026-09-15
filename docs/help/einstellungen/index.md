@@ -16,4 +16,4 @@ Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App
 
 ## Verwandte Bereiche
 
-- [Benachrichtigungen](../benachrichtigungen/index.md) — Lokale iOS-Benachrichtigungen über neue Artikel: Entscheidungslogik, Ruhezeit-Auswertung, Berechtigungsfluss und Tap-Navigation.
+- [Benachrichtigungen](../benachrichtigungen/index.md) — Lokale iOS-Benachrichtigungen über neue Artikel: Entscheidungslogik, Ruhezeit-Auswertung, Berechtigungsfluss, Tap-Navigation, Vordergrund-Unterdrückung und der OS-Hintergrundabruf (an **Automatische Hintergrund-Aktualisierung** gekoppelt).
