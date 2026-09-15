@@ -1,0 +1,35 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+# Plan-Gegenprüfung
+
+## Ergebnis
+
+**Status:** Plan vollständig
+
+## Abgleich Akzeptanzkriterien
+
+| Akzeptanzkriterium | Umsetzung im Plan | Testnachweis im Plan | Status |
+|--------------------|-------------------|----------------------|--------|
+| Atom-0.3-Dokumente (Namespace `http://purl.org/atom/ns#`) werden akzeptiert und der Feed synchronisiert | `Atom03NormalizingXmlReader` (neu, `src/Reporter.Core/Services/`) + `MoveToContent`-Peek/Root-Prüfung in `FeedSyncService.RunSyncAsync` (Parse-Stelle Zeilen 156–159, im Code verifiziert); `SyndicationFeed.Load` bleibt einzige Parse-Stelle | `SyncFeedAsync_Atom03_CreatesItems_AndSetsHealthOk` (Integrationstest, `FeedHealth.Ok`, `SyncLog` abgeschlossen); Roundtrip-Test `Load_WrappedAtom03_ProducesFeedWithItemsAndDates` | Abgedeckt |
+| Items werden wie bei RSS/Atom 1.0 gespeichert (`Title`/`Link`/`PublishedAt`/`GuidOrHash`) | Nachgelagerte Pipeline (`CollectNewItems`, `NormalizeGuidOrHash`, `GetContentHtml`, Dedup) unverändert — im Code verifiziert (`FeedSyncService.cs:209-261`, `:365-377`) | `SyncFeedAsync_Atom03_CreatesItems_AndSetsHealthOk` prüft `Title`/`Link`/`PublishedAt`/`GuidOrHash`; `SyncFeedAsync_Atom03_MapsIssuedToPublishedAt` prüft Datumsabbildung | Abgedeckt |
+| Datumsabbildung `issued`→`PublishDate`, `modified`→`LastUpdatedTime` (fachlich erforderlich wegen `DetermineStatus`-30-Tage-Regel und Hash-Fallback) | Element-Renames `issued`→`published`, `modified`→`updated` im Wrapper; `created` bewusst nicht abgebildet (begründete Designentscheidung: würde `issued` überschreiben) | `Wrap_Atom03_RenamesElements`, `Load_WrappedAtom03_ProducesFeedWithItemsAndDates` (`PublishDate` aus `issued`, `LastUpdatedTime` aus `modified`), `SyncFeedAsync_Atom03_MapsIssuedToPublishedAt` | Abgedeckt |
+| `content`/`summary` mit `mode`-Attribut mindestens so abbilden, dass `GetContentHtml` weiterhin Text liefert | Kontextsensitive `type`-Wert-Übersetzung (`text/html`→`html` usw.) auf Text-/Content-Konstrukten; `mode` wird durchgereicht; `link@type` explizit ausgenommen | `Wrap_ContentType_TranslatesMimeToAtom10`, `Wrap_LinkType_NotTranslated`, Roundtrip-Test prüft `TextSyndicationContent` | Abgedeckt |
+| Keine Datenmodell-, Interface- oder UI-Änderung | Plan ändert ausschließlich `FeedSyncService.RunSyncAsync` intern + neue interne Reader-Klasse; `IFeedSyncService`, Repositories, DI (`MauiProgram.cs:72`) und alle Aufrufer unverändert — im Code verifiziert | Kein Test nötig (Nicht-Anforderung); `ServiceCollectionTests` bleibt unverändert gültig, da keine neue DI-Registrierung | Abgedeckt |
+| Fehlerbehandlung unverändert: nicht lesbare Dokumente → `FeedHealth.Error` + `FeedSyncErrorKind.Parse` + `SyncLog` + Debug-Log | `MoveToContent`-Peek wirft `XmlException` im selben `catch` (`FeedSyncService.cs:92-104`); Klassifizierung unverändert | Bestehende Tests `SyncFeedAsync_InvalidXml_SetsError`/`_ClassifiedAsParse` als Regressionssicherung explizit benannt | Abgedeckt |
+| Bestehende RSS-2.0-/Atom-1.0-Tests bleiben unverändert grün (kein Verhaltensbruch) | Peek konsumiert nur Präambel; `SyndicationFeed.Load` ruft intern selbst `MoveToContent` — im Risiko-Abschnitt begründet | Regressionsschritt 6 (gesamte `Reporter.Tests`-Suite) + benannte Beobachtungstests (`SyncFeedAsync_ValidRss_CreatesItems_AndSetsHealthOk`, `SyncFeedAsync_KeywordTitleMatch_AtomFeed_NotSaved`) | Abgedeckt |
+| Neue Hilfsmethode `TestFeedXml.Atom03(...)` mit `issued`/`modified` | Als Schritt 3 der Umsetzungsreihenfolge geplant; Signatur mit Tupel-Parametern analog `Rss`/`Atom` — gegen `TestFeedXml.cs` verifiziert (nur `Rss`/`Atom` vorhanden) | Hilfsmethode selbst ist Testinfrastruktur; Nutzung durch die neuen Integrationstests | Abgedeckt |
+| Format-Erkennung: Atom 0.3 wird erkannt, RSS 2.0/Atom 1.0/ungenügende Dokumente laufen unverändert weiter | Erkennung allein über Root `feed` + Namespace (`version`-Attribut wird bewusst nicht geprüft — begründete Entscheidung); Peek in `RunSyncAsync` | `Wrap_OtherNamespaces_PassThrough`, bestehende RSS-/Atom-1.0-/InvalidXml-Tests als Negativ-/Regressionssicherung | Abgedeckt |
+| Dokumentation der Formatunterstützung (`ablauf-technisch.md`, `synchronisation.md`) | Schritt 7: `ablauf-technisch.md` (Abschnitt 4 enthält tatsächlich den Ingest-Pfad um `SyndicationFeed.Load` — verifiziert, Zeile 89), `synchronisation.md` („RSS-/Atom-Daten" — verifiziert, Zeile 18), zusätzlich `architektur.md` (`FeedSyncService`-Beschreibung — verifiziert, Zeile 59) | Nicht anwendbar (Doku) | Abgedeckt |
+| Keine Konfiguration/Migration (implizit für alle Feeds) | Abschnitt „Konfigurationsänderungen: Keine"; „Datenbankmigrationen: Keine" | Nicht anwendbar | Abgedeckt |
+
+## E2E-Abdeckung
+
+| Benutzerfluss / Akzeptanzkriterium | Geplanter E2E-Test | Status |
+|------------------------------------|--------------------|--------|
+| Feed anlegen und synchronisieren (manueller Sync via `FeedsViewModel`/`UnreadViewModel`, Hintergrund-Sync via `AutoRefreshService`/`ScheduledSyncRunner`) | Kein neuer E2E-Test | Nicht erforderlich mit Begründung: Die Anforderung ändert keinen Benutzerfluss — keine UI-, Interface- oder Datenmodelländerung; der einzige Unterschied ist das serverseitig akzeptierte Payload-Format, das über denselben unveränderten UI-Pfad eingeht. Der Fluss „Feed anlegen → synchronisieren → Items in Liste/DB" ist bereits durch die bestehenden Smoke-Tests `DirectAdd_FeedAppearsInListAndDatabase` und `Search_SubscribesResult_PersistsFeed` abgedeckt (in `src/Reporter.E2ETests/SmokeTests.cs` verifiziert). Der Funktionsnachweis erfolgt über Integrationstests gegen In-Memory-SQLite mit `FakeHttpMessageHandler`, die den vollständigen Sync-Pfad inkl. Format-Erkennung, Parse, Dedup, Persistenz und `SyncLog` abdecken. |
+
+## Hinweise
+
+- **Verifizierte Planannahmen im Code:** Parse-Stelle `FeedSyncService.cs:156-159` (GetStreamAsync → `XmlReader.Create` mit `DtdProcessing.Ignore` → `SyndicationFeed.Load` via `Task.Run`); kein `InternalsVisibleTo` für `Reporter.Tests` (daher `public`-Sichtbarkeit der neuen Klasse korrekt); `CS1591` steht in `Reporter.Core.csproj` unter `WarningsAsErrors` (XML-Doc-Pflicht korrekt erkannt); `System.ServiceModel.Syndication` 10.0.11 bereits referenziert; `TestFeedXml` besitzt nur `Rss`/`Atom`; `scripts/Run-StaticChecks.ps1` existiert.
+- **Optionaler Negativtest (keine Lücke, aber sinnvoll):** Ein Integrationstest, der ein erkanntes, aber weiterhin nicht parsebares Atom-0.3-Dokument (z. B. `mode="xml"` ohne `div`-Wrapper oder wohlgeformtes Atom 0.3 mit Defekt) in den `Parse`-Fehlerpfad schickt, würde die bewusst akzeptierte Einschränkung aus den Designentscheidungen zusätzlich absichern. Der generische Pfad ist bereits durch `SyncFeedAsync_InvalidXml_*` abgedeckt.
+- **Optionaler Edge-Case-Test:** Atom-0.3-Dokument ohne `version`-Attribut bzw. ohne `issued` (`PublishedAt = null`, SHA256-Fallback in `NormalizeGuidOrHash`) — im Risiko-Abschnitt beschrieben, aber ohne eigenen Test. Beides ist begründetes Designverhalten; eine explizite Absicherung wäre konsistent.
