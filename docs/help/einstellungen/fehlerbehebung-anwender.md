@@ -39,12 +39,13 @@
 
 **Symptom:** Neue Artikel erscheinen erst nach manuellem Aktualisieren.
 
-**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — die automatische Aktualisierung läuft nur bei geöffneter App. Sollen die Feeds bereits beim Öffnen der App abgerufen werden, ist zusätzlich der Schalter **Beim Programmstart abrufen** zuständig; ohne Internetverbindung wird dieser Abruf übersprungen.
+**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — der periodische Abgleich innerhalb der App läuft nur bei geöffneter App. Auf iOS kann zwar auch das System bei geschlossener App abgleichen, legt den Zeitpunkt aber selbst fest und benötigt die Freigabe **Hintergrundaktualisierung** in den iOS-Einstellungen. Sollen die Feeds bereits beim Öffnen der App abgerufen werden, ist zusätzlich der Schalter **Beim Programmstart abrufen** zuständig; ohne Internetverbindung wird dieser Abruf übersprungen.
 
 **Lösung:**
 1. In den **Einstellungen** den Schalter **Automatische Hintergrund-Aktualisierung** einschalten.
 2. Das gewünschte **Abruf-Intervall** wählen; für einen Abruf beim App-Start **Beim Programmstart abrufen** einschalten.
-3. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
+3. Auf iOS zusätzlich in den Systemeinstellungen unter **Allgemein** → **Hintergrundaktualisierung** prüfen, ob die Funktion für Reporter freigegeben ist — sonst läuft der Abgleich bei geschlossener App nie. Das **Abruf-Intervall** ist dabei nur eine Mindestpause; iOS kann den Abgleich deutlich später ausführen.
+4. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
 
 ## Ungelesene Artikel erscheinen in unerwünschter Reihenfolge
 
@@ -60,12 +61,13 @@
 
 **Symptom:** Neue Artikel erscheinen, aber es gibt keine Benachrichtigung.
 
-**Ursache:** Der Schalter **Benachrichtigungen** ist aus, die iOS-Berechtigung wurde verweigert (Hinweiszeile mit **Einstellungen öffnen** sichtbar) oder noch nie angefragt (Zeile mit **Benachrichtigungen erlauben** sichtbar), eine **Ruhezeit** läuft gerade, der Feed ist einzeln stummgeschaltet oder ein Schlagwort-Filter greift.
+**Ursache:** Der Schalter **Benachrichtigungen** ist aus, die iOS-Berechtigung wurde verweigert (Hinweiszeile mit **Einstellungen öffnen** sichtbar) oder noch nie angefragt (Zeile mit **Benachrichtigungen erlauben** sichtbar), eine **Ruhezeit** läuft gerade, der Feed ist einzeln stummgeschaltet oder ein Schlagwort-Filter greift. Außerdem erscheinen Mitteilungen nur aus dem Hintergrund-Abgleich bei geschlossener App — dafür muss die **Automatische Hintergrund-Aktualisierung** eingeschaltet und die iOS-Option **Hintergrundaktualisierung** freigegeben sein; Abgleiche bei geöffneter App erzeugen bewusst keine Mitteilung.
 
 **Lösung:**
 1. In den **Einstellungen** unter **Benachrichtigungen & Ruhezeiten** den Schalter **Benachrichtigungen** prüfen; bei sichtbarer Hinweiszeile **Benachrichtigungen erlauben** tippen (öffnet den iOS-Dialog) bzw. **Einstellungen öffnen** tippen und die Berechtigung in iOS freischalten.
 2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed antippen → **Bearbeiten**) prüfen.
-3. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
+3. Unter **Synchronisation & Lesefluss** die **Automatische Hintergrund-Aktualisierung** prüfen und in den iOS-Einstellungen (**Allgemein** → **Hintergrundaktualisierung**) die Freigabe für Reporter sicherstellen.
+4. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
 
 ## Erscheinungsbild wechselt nicht
 

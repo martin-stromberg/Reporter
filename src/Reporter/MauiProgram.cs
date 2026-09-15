@@ -64,6 +64,8 @@ public static class MauiProgram
             .AddSingleton<INotificationService, NotificationService>()
             .AddSingleton<ILocalNotificationService, LocalNotificationService>()
             .AddSingleton<INetworkStatusService, NetworkStatusService>()
+            .AddSingleton<IBackgroundRefreshService, BackgroundRefreshService>()
+            .AddSingleton<IScheduledSyncRunner, ScheduledSyncRunner>()
             .AddSingleton<IDebugLogService, DebugLogService>()
             .AddSingleton<IEmailService, EmailService>()
             .AddSingleton<IDeviceInfoProvider, DeviceInfoProvider>()

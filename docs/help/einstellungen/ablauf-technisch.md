@@ -64,7 +64,7 @@ Beteiligte Komponenten:
 - `SettingsViewModel.PersistOnChange` / `PersistAsync` / `SaveRetention` — Persistierungslogik
 - `SettingsRepository.SaveAsync` — schreibt alle Felder auf den Singleton-Datensatz
 - `IAppThemeService.ApplyTheme` — Theme-Sofortumschaltung
-- `IAutoRefreshService.ApplySettingsAsync` — Timer-Neukonfiguration
+- `IAutoRefreshService.ApplySettingsAsync` — Timer-Neukonfiguration inkl. Weiterleitung an `IBackgroundRefreshService` (OS-Hintergrundabruf, Abschnitt 5)
 
 ### 3. Keyword hinzufügen und entfernen
 
@@ -130,15 +130,20 @@ Beteiligte Komponenten:
 
 Zusätzlich startet `StartAsync` bei `settings.RefreshOnStartupEnabled && _networkStatusService.IsOnline` einen einmaligen Start-Abruf: `RunStartupSyncAsync` ruft `IFeedSyncService.SyncAllAsync` fire-and-forget auf (`_ = …`, eigener `try/catch` mit `Debug.WriteLine` `"AutoRefreshService startup sync failed"`) — der App-Start wird weder blockiert noch kann ein Sync-Fehler ihn beeinträchtigen; offline wird der Start-Abruf übersprungen.
 
-`AutoRefreshService.ApplySettingsAsync` läuft unter `_stateLock` (`SemaphoreSlim`), stoppt einen laufenden Loop (`CancellationTokenSource` kancellieren, Task awaiten, `OperationCanceledException` erwartet) und startet bei `AutoRefreshEnabled` einen neuen Loop `RunLoopAsync` mit `PeriodicTimer(TimeSpan.FromMinutes(clamp(RefreshIntervalMinutes, 1, 1440)), _timeProvider)`.
+`AutoRefreshService.ApplySettingsAsync` läuft unter `_stateLock` (`SemaphoreSlim`), stoppt einen laufenden Loop (`CancellationTokenSource` kancellieren, Task awaiten, `OperationCanceledException` erwartet) und startet bei `AutoRefreshEnabled` einen neuen Loop `RunLoopAsync` mit `PeriodicTimer(TimeSpan.FromMinutes(SettingsValues.ClampRefreshIntervalMinutes(RefreshIntervalMinutes)), _timeProvider)` — die Grenzen 1–1440 liegen zentral in `SettingsValues` (`MinRefreshIntervalMinutes`/`MaxRefreshIntervalMinutes`) und werden vom Timer-Loop und dem OS-Hintergrundabruf gemeinsam genutzt.
+
+Nach `StopLoopAsync` und **vor** der `AutoRefreshEnabled`-Prüfung leitet `ApplySettingsAsync` das `Settings`-Objekt in einem eigenen `try/catch` an `IBackgroundRefreshService.ApplySettingsAsync` weiter — nur wenn `IBackgroundRefreshService.IsSupported` greift (nur iOS; Fehler → `Debug.WriteLine` + `IDebugLogService`, Kategorie `Sync`, Level `Warning`). `BackgroundRefreshService` (`src/Reporter/Services`, `#if IOS`) plant daraufhin den OS-seitigen Hintergrundabruf: bei `AutoRefreshEnabled` `BGTaskScheduler.Shared.Submit(new BGAppRefreshTaskRequest(RefreshTaskIdentifier) { EarliestBeginDate = now + SettingsValues.ClampRefreshIntervalMinutes(RefreshIntervalMinutes) })`, sonst `BGTaskScheduler.Shared.Cancel(RefreshTaskIdentifier)` — ein ausgeschalteter Schalter meldet den Task also ab. Die Registrierung des Tasks erfolgt in `AppDelegate.FinishedLaunching` (`RegisterBackgroundFetchTask`); der Launch-Handler (`HandleRefreshTaskAsync`) setzt den `ExpirationHandler` (Kancellation via `CancellationTokenSource`), löst `IScheduledSyncRunner` lazy über `IPlatformApplication.Current.Services` auf, ruft `RunAsync` (fehlerisolierter `SyncAllAsync` in `ScheduledSyncRunner` aus `Reporter.Core` + Neuplanung des Folgeabrufs aus den persistierten Settings via `IBackgroundRefreshService.ApplySettingsAsync`) auf und schließt mit `task.SetTaskCompleted(success)` ab; Fehler des Handlers werden per `Debug.WriteLine` und `IDebugLogService`-`Warning` protokolliert. iOS steuert die tatsächliche Ausführungshäufigkeit systemseitig — `EarliestBeginDate` ist nur eine Untergrenze. Auf Nicht-iOS-Targets ist das Gateway ein No-Op und wird wegen `IsSupported == false` gar nicht erst aufgerufen. Details zum Benachrichtigungs-Zusammenhang siehe [Benachrichtigungen — Technischer Ablauf](../benachrichtigungen/ablauf-technisch.md).
 
 `RunLoopAsync` wartet pro Tick auf `timer.WaitForNextTickAsync` und ruft anschließend `IFeedSyncService.SyncAllAsync(cancellationToken)` auf. Da jeder Tick den Sync sequenziell awaitet, können sich Abrufe nicht überlappen; während eines laufenden Syncs verstrichene Perioden fasst der `PeriodicTimer` zusammen. Exceptions pro Tick werden abgefangen und per `Debug.WriteLine` protokolliert — der Timer läuft weiter.
 
-`StopAsync` beendet den Loop. `SettingsViewModel.PersistAsync` ruft `ApplySettingsAsync` bei jeder relevanten Änderung, sodass der Timer sofort mit dem neuen Intervall neu startet bzw. stoppt.
+`StopAsync` beendet den Loop. `SettingsViewModel.PersistAsync` ruft `ApplySettingsAsync` bei jeder relevanten Änderung, sodass der Timer sofort mit dem neuen Intervall neu startet bzw. stoppt — und der OS-Hintergrundabruf über die Weiterleitung mitgeplant bzw. abgemeldet wird.
 
 Beteiligte Komponenten:
 - `App.OnStart` — Startpunkt
-- `AutoRefreshService` (`StartAsync`, `RunStartupSyncAsync`, `ApplySettingsAsync`, `StopAsync`, `RunLoopAsync`) — Timer-Steuerung und einmaliger Start-Abruf
+- `AutoRefreshService` (`StartAsync`, `RunStartupSyncAsync`, `ApplySettingsAsync`, `StopAsync`, `RunLoopAsync`) — Timer-Steuerung, einmaliger Start-Abruf und Weiterleitung an das Hintergrundabruf-Gateway
+- `IBackgroundRefreshService` / `BackgroundRefreshService` (`IsSupported`, `ApplySettingsAsync`) — OS-Hintergrundabruf-Scheduling (nur iOS)
+- `IScheduledSyncRunner` / `ScheduledSyncRunner` (`RunAsync`) — Sync-Ausführung und Neuplanung des Folgeabrufs (plattformneutral in `Reporter.Core`)
+- `AppDelegate` (`RegisterBackgroundFetchTask`, `HandleRefreshTaskAsync`) — `BGTaskScheduler`-Registrierung und Task-Lebenszyklus (iOS)
 - `INetworkStatusService.IsOnline` — Guard für den Start-Abruf (und die Timer-Ticks)
 - `TimeProvider` — injizierbar (Standard `TimeProvider.System`; Tests nutzen `FakeTimeProvider`)
 - `IFeedSyncService.SyncAllAsync` — eigentlicher Abruf
@@ -248,6 +253,7 @@ Beteiligte Komponenten:
 - Alle `App.OnStart`-Blöcke (Cleanup, Theme, Auto-Refresh) sind einzeln `try/catch`-isoliert und protokollieren per `Debug.WriteLine` — kein Block darf den App-Start verhindern. Gleiches gilt für `MauiProgram.ApplyPersistedLanguage` (Meldung `MauiProgram.ApplyPersistedLanguage failed`): Bei einem Fehler bleibt es beim bisherigen Systemverhalten.
 - `SettingsViewModel.PersistAsync`, `LoadAsync`, `AddKeywordAsync`, `RemoveKeywordAsync` fangen Exceptions und protokollieren per `Debug.WriteLine`; es gibt keinen anwendersichtbaren Fehlerdialog außer den Keyword-Validierungsmeldungen (`HasError`/`ErrorMessage`).
 - `AutoRefreshService.RunLoopAsync` fängt Exceptions pro Tick ab (Timer läuft weiter); `OperationCanceledException` beim regulären Stoppen wird erwartet und geschluckt.
+- Die Weiterleitung an `IBackgroundRefreshService.ApplySettingsAsync` läuft in einem eigenen `try/catch` — ein Fehler des Hintergrundabruf-Gateways beeinträchtigt weder die Persistierung noch den Timer-Loop (`Debug.WriteLine` + `IDebugLogService`, `Sync`/`Warning`). Der iOS-Task-Handler selbst ist ebenfalls fehlerisoliert: `SetTaskCompleted` läuft im `finally`, der `ExpirationHandler` kancelliert den Sync bei Ablauf des iOS-Zeitbudgets, und `ScheduledSyncRunner` plant den Folgeabruf auch im Fehlerfall neu.
 - `ArticleDetailViewModel` fällt bei nicht ladbaren Settings auf Standardwerte zurück, statt den Artikel nicht zu öffnen.
 - `RequestNotificationAuthorizationAsync`/`RefreshNotificationPermissionAsync` fangen Exceptions per `Debug.WriteLine` ab; ein Fehler setzt `NotificationPermissionDenied` und `NotificationPermissionNotDetermined` auf `false` — die Hinweiszeilen erscheinen nie aufgrund eines Auslesefehlers.
 - `DebugLogService.LogAsync`/`BeginSessionAsync`/`SetEnabled` werfen niemals — eigene Fehler gehen ausschließlich an `Debug.WriteLine` (der Logger sitzt selbst in Fehlerpfaden). Der Session-Reset in `BeginSessionAsync` läuft auch bei ausgeschalteter Sammlung; `SetEnabled` schreibt den Übergangseintrag fire-and-forget.

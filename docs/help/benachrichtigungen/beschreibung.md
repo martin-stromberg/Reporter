@@ -6,11 +6,11 @@
 
 ## Zweck
 
-Reporter benachrichtigt dich auf dem iPhone/iPad über neue Artikel in deinen Feeds — mit Banner, Ton und Mitteilungszentrale, auch während die App geöffnet ist. So entgeht dir kein neuer Beitrag, ohne dass du die Feeds manuell aktualisieren musst.
+Reporter benachrichtigt dich auf dem iPhone/iPad über neue Artikel in deinen Feeds — mit Banner, Ton und Eintrag in der Mitteilungszentrale. Sichtbar wird eine Benachrichtigung allerdings nur, wenn der Abgleich im Hintergrund durch das System stattfindet, also während die App nicht geöffnet ist. So entgeht dir kein neuer Beitrag, ohne dass die App dich bei der Nutzung mit Bannern unterbricht.
 
 ## Funktionsweise
 
-Nach jedem Feed-Abgleich — egal ob manuell über **Aktualisieren** im Feed-Kontextmenü, das Herunterziehen der Feed-Liste oder automatisch im Hintergrund — prüft die App, ob neue Artikel gespeichert wurden. Für jeden neuen Artikel entscheiden vier Bedingungen, ob eine Benachrichtigung erscheint:
+Nach jedem Feed-Abgleich — ob manuell über **Aktualisieren** im Feed-Kontextmenü, das Herunterziehen der Feed-Liste oder automatisch — prüft die App, ob neue Artikel gespeichert wurden, und wendet die Benachrichtigungsregeln an. Eine sichtbare Mitteilung entsteht dabei nur aus dem automatischen Hintergrund-Abgleich, den iOS ausführt, während die App nicht geöffnet ist. Läuft der Abgleich dagegen bei geöffneter App (manuell, per Timer oder beim Programmstart), erscheinen neue Artikel still in den Listen — ohne Banner, ohne Ton und ohne Eintrag im Mitteilungszentrum. Für jeden neuen Artikel entscheiden vier Bedingungen, ob eine Benachrichtigung entsteht:
 
 1. **Benachrichtigungen** in den **Einstellungen** (Karte **Benachrichtigungen & Ruhezeiten**) müssen eingeschaltet sein.
 2. Der Schalter **Benachrichtigungen** des betreffenden Feeds (Seite **Feeds** → Feed antippen → **Bearbeiten**) muss eingeschaltet sein — so lassen sich einzelne Feeds stummschalten.
@@ -25,7 +25,7 @@ Tippst du eine Benachrichtigung an, öffnet die App direkt den Artikel; bei eine
 
 ## Beispiele
 
-- Du abonnierst einen News-Feed: Bei jedem neuen Artikel erscheint sofort eine Benachrichtigung mit dem Feed-Namen und dem Artikeltitel.
+- Du abonnierst einen News-Feed: Findet der Hintergrund-Abgleich neue Artikel — etwa während die App geschlossen ist —, erscheint eine Benachrichtigung mit dem Feed-Namen und dem Artikeltitel.
 - Ein Feed postet sehr häufig: Schalte **Sammel-Benachrichtigung** ein — statt fünf Einzelmeldungen kommt eine Benachrichtigung „5 neue Artikel: …".
 - Ein lauter Feed soll still bleiben: Tippe den Feed auf der Seite **Feeds** an, wähle **Bearbeiten** und schalte **Benachrichtigungen** aus — andere Feeds benachrichtigen weiterhin.
 - Nachts willst du Ruhe: Aktiviere **Ruhezeit (Nicht stören)** von 22:00 bis 07:00 Uhr — in diesem Zeitraum erscheinen keine Benachrichtigungen.
@@ -33,6 +33,7 @@ Tippst du eine Benachrichtigung an, öffnet die App direkt den Artikel; bei eine
 ## Einschränkungen
 
 - Lokale Benachrichtigungen gibt es nur auf iOS. Auf anderen Plattformen ist die Funktion wirkungslos — die Schalter lassen sich zwar setzen, es erscheint aber keine Benachrichtigung.
-- Benachrichtigungen entstehen nur bei einem Feed-Abgleich. Die automatische Hintergrund-Aktualisierung läuft nur bei geöffneter App — ist die App geschlossen, werden neue Artikel (und damit Benachrichtigungen) erst beim nächsten Öffnen erzeugt.
+- Sichtbare Benachrichtigungen erzeugt ausschließlich der automatische Hintergrund-Abgleich. Neue Artikel aus einem Abgleich bei geöffneter App (Herunterziehen der Liste, **Aktualisieren** im Feed-Menü, der periodische Abgleich oder der Start-Abruf) stehen in **Ungelesen** bereit, lösen aber bewusst keine Mitteilung aus.
+- Der Hintergrund-Abgleich ist an die **Automatische Hintergrund-Aktualisierung** gekoppelt: Ist der Schalter aus, läuft bei geschlossener App kein Abgleich — und es kommen keine Benachrichtigungen. Den tatsächlichen Zeitpunkt bestimmt iOS anhand von Nutzungsverhalten und Energiestatus; das **Abruf-Intervall** gilt nur als Mindestpause, nicht als Garantie. Ist die Option **Hintergrundaktualisierung** in den iOS-Systemeinstellungen für Reporter (oder generell) deaktiviert, läuft der Abgleich nie.
 - Während der Ruhezeit verworfene Benachrichtigungen werden nicht nachgeholt.
 - Wurde die System-Berechtigung für Benachrichtigungen verweigert, zeigt die Einstellungsseite eine Hinweiszeile mit der Schaltfläche **Einstellungen öffnen**; erst nach dem Freischalten in den iOS-Systemeinstellungen kommen Benachrichtigungen an.

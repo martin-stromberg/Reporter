@@ -8,8 +8,10 @@ using UserNotifications;
 namespace Reporter;
 
 /// <summary>
-/// Presents local notifications as banners while the app is in the foreground
-/// and handles notification taps (in-app navigation to the article or the unread list).
+/// Suppresses the foreground presentation of local notifications — notifications
+/// are only surfaced when iOS delivers them while the app is not in the foreground
+/// (the OS background refresh) — and handles notification taps (in-app navigation
+/// to the article or the unread list).
 /// </summary>
 public class NotificationDelegate : UNUserNotificationCenterDelegate
 {
@@ -19,7 +21,10 @@ public class NotificationDelegate : UNUserNotificationCenterDelegate
         UNNotification notification,
         Action<UNNotificationPresentationOptions> completionHandler)
     {
-        completionHandler(UNNotificationPresentationOptions.Banner | UNNotificationPresentationOptions.List | UNNotificationPresentationOptions.Sound);
+        // iOS ruft diese Methode nur bei Vordergrund-App auf — die Mitteilung
+        // wird komplett unterdrueckt (kein Banner, kein Sound, kein Eintrag im
+        // Mitteilungszentrum); Hintergrund-Zustellungen zeigt iOS automatisch an.
+        completionHandler(UNNotificationPresentationOptions.None);
     }
 
     /// <inheritdoc />

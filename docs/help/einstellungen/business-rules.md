@@ -65,11 +65,23 @@
 **Beschreibung:** Die UI bietet nur die vier benannten Intervalle 15/30/60/240 Minuten an (`RefreshIntervalOption`); persistiert wird der `int`-Minutenwert (`RefreshIntervalMinutes`, Default 30).
 
 **Verhalten:**
-- `AutoRefreshService.ApplySettingsAsync` clampet den gelesenen Wert defensiv auf `[1, 1440]` Minuten (`MinRefreshIntervalMinutes`/`MaxRefreshIntervalMinutes`), falls die DB einen anderen Wert enthält.
-- `AutoRefreshEnabled == false` → kein Timer-Loop; `ApplySettingsAsync` stoppt einen laufenden Loop.
-- Änderungen am Toggle oder Intervall starten den Timer sofort neu (Aufruf aus `SettingsViewModel.PersistAsync`).
+- `AutoRefreshService.ApplySettingsAsync` clampet den gelesenen Wert defensiv auf `[1, 1440]` Minuten über `SettingsValues.ClampRefreshIntervalMinutes` (Konstanten `MinRefreshIntervalMinutes`/`MaxRefreshIntervalMinutes`, zentral in `Reporter.Core.Models` — gemeinsam genutzt vom Timer-Loop und der `EarliestBeginDate` des iOS-Hintergrundabrufs), falls die DB einen anderen Wert enthält.
+- `AutoRefreshEnabled == false` → kein Timer-Loop; `ApplySettingsAsync` stoppt einen laufenden Loop und meldet zusätzlich den OS-Hintergrundabruf ab (`IBackgroundRefreshService.ApplySettingsAsync` → `BGTaskScheduler.Shared.Cancel` unter iOS).
+- Änderungen am Toggle oder Intervall starten den Timer sofort neu und planen den OS-Hintergrundabruf mit (Aufruf aus `SettingsViewModel.PersistAsync`).
 
-**Umsetzung:** `AutoRefreshService`, `SettingsViewModel.RefreshIntervalOptions`.
+**Umsetzung:** `AutoRefreshService`, `BackgroundRefreshService` (iOS-`BGAppRefreshTask`-Scheduling), `SettingsValues.ClampRefreshIntervalMinutes`, `SettingsViewModel.RefreshIntervalOptions`.
+
+## OS-Hintergrundabruf an Auto-Refresh gekoppelt
+
+**Beschreibung:** Der iOS-`BGAppRefreshTask` besitzt keinen eigenen Schalter und kein eigenes Intervall — er folgt vollständig `AutoRefreshEnabled`/`RefreshIntervalMinutes`. Damit steuert ein einziger Schalter beide Abrufmechanismen konsistent: den In-App-`PeriodicTimer` und den OS-Task.
+
+**Bedingungen:**
+- `IBackgroundRefreshService.IsSupported` ist nur unter iOS `true` — die Weiterleitung aus `AutoRefreshService.ApplySettingsAsync` greift nur dort; auf Windows/Android/MacCatalyst ist das Gateway ein No-Op.
+- Die Weiterleitung läuft **vor** der `AutoRefreshEnabled`-Prüfung — nur so meldet ein deaktivierter Schalter den Task zuverlässig ab (`Cancel` statt `Submit`).
+- Der Task wird einmalig in `AppDelegate.FinishedLaunching` beim `BGTaskScheduler` registriert (`RegisterBackgroundFetchTask`) und nach jedem ausgeführten Lauf von `ScheduledSyncRunner.RunAsync` aus den persistierten Settings neu eingeplant — auch im Fehler- und Kancellierungsfall, damit sich der Abruf nicht „totläuft".
+- `EarliestBeginDate` ist für iOS nur eine Untergrenze — die tatsächliche Ausführungshäufigkeit ist systemgesteuert und nicht garantiert; die Systemoption „Hintergrundaktualisierung" kann den Task zusätzlich komplett verhindern (wird nicht ausgewertet).
+
+**Umsetzung:** `IBackgroundRefreshService`/`BackgroundRefreshService` (`ApplySettingsAsync` → `BGAppRefreshTaskRequest` mit `EarliestBeginDate` bzw. `Cancel`, Konstante `RefreshTaskIdentifier`), `IScheduledSyncRunner`/`ScheduledSyncRunner.RunAsync` (Sync + Neuplanung), `AutoRefreshService.ApplySettingsAsync` (fehlerisolierte Weiterleitung, `IsSupported`-Gate), `AppDelegate` (Registrierung, `ExpirationHandler`, `SetTaskCompleted`), `Info.plist` (`UIBackgroundModes`/`fetch`, `BGTaskSchedulerPermittedIdentifiers`).
 
 ## Start-Abruf ist opt-out und fehlerisoliert
 

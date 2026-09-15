@@ -15,8 +15,8 @@ Alle Einstellungen findest du auf dem Tab **Einstellungen**. Jede Änderung wird
 | **Gelesene Artikel aufbewahren** | Schieberegler von 1 bis 365 Tagen (Voreinstellung 30 Tage). Bestimmt, wie lange gelesene Artikel erhalten bleiben, bevor sie beim App-Start gelöscht werden. |
 | **Schlagwort eingeben…** / **+ Hinzufügen** | Legt ein Schlagwort für den Keyword-Filter an. Neue Artikel mit diesem Schlagwort in Titel oder Inhalt werden beim Feed-Abruf verworfen und erscheinen nicht in den Listen. Bereits gespeicherte Treffer bleiben sichtbar, bis sie gelesen wurden und die Aufbewahrungsfrist abgelaufen ist. |
 | **Teilwort, Groß-/Kleinschreibung egal** | Mit dem Badge **Immer aktiv** gekennzeichnet: Der Filter findet das Schlagwort auch als Wortbestandteil und unabhängig von Groß-/Kleinschreibung. Nicht abschaltbar. |
-| **Automatische Hintergrund-Aktualisierung** | Ein/Aus (Voreinstellung ein). Lädt alle Feeds periodisch nach, solange die App geöffnet ist. |
-| **Abruf-Intervall** | *Alle 15 Minuten*, *Alle 30 Minuten* (Voreinstellung), *Stündlich* oder *Alle 4 Stunden*. Nur aktiv, wenn die automatische Aktualisierung eingeschaltet ist. |
+| **Automatische Hintergrund-Aktualisierung** | Ein/Aus (Voreinstellung ein). Lädt alle Feeds periodisch nach, solange die App geöffnet ist; auf iOS erlaubt der Schalter zusätzlich den Abgleich durch das System bei geschlossener App — nur dieser Abgleich erzeugt sichtbare Benachrichtigungen. |
+| **Abruf-Intervall** | *Alle 15 Minuten*, *Alle 30 Minuten* (Voreinstellung), *Stündlich* oder *Alle 4 Stunden*. Nur aktiv, wenn die automatische Aktualisierung eingeschaltet ist. Für den System-Abgleich bei geschlossener App gilt der Wert als Mindestpause — den tatsächlichen Zeitpunkt bestimmt iOS. |
 | **Beim Programmstart abrufen** | Ein/Aus (Voreinstellung ein). Löst beim Öffnen der App einmalig einen Abruf aller Feeds im Hintergrund aus — unabhängig vom Abruf-Intervall; ohne Internetverbindung wird er übersprungen. |
 | **Sortierung der ungelesenen Artikel** | *Neueste zuerst* (Voreinstellung) oder *Älteste zuerst*. Legt die Reihenfolge der Liste **Ungelesen** fest; die Liste **Später** bleibt immer nach neuestem Datum sortiert. |
 | **Automatisch als gelesen markieren** | Ein/Aus (Voreinstellung ein). Markiert geöffnete Artikel automatisch als gelesen. |
@@ -67,7 +67,7 @@ Bei ungültiger Eingabe erscheint eine rote Fehlermeldung unter dem Feld:
 
 - Alle Einstellungen gelten anwendungsweit, nicht pro Feed — mit einer Ausnahme: Benachrichtigungen lassen sich zusätzlich pro Feed auf der Seite **Feeds** steuern (Feed antippen → **Bearbeiten** → Schalter **Benachrichtigungen**).
 - Benachrichtigungen benötigen auf iOS eine System-Berechtigung; sie wird beim ersten Einschalten des Hauptschalters angefragt (nicht beim App-Start). Bei Verweigerung weist eine Hinweiszeile mit **Einstellungen öffnen** darauf hin; wurde die Berechtigung noch nie angefragt, bietet eine neutrale Zeile **Benachrichtigungen erlauben** den direkten Weg zum System-Dialog.
-- Die automatische Hintergrund-Aktualisierung läuft nur bei geöffneter App; der Start-Abruf über **Beim Programmstart abrufen** läuft einmalig beim Öffnen und verzögert den Start nicht.
+- Der periodische Abgleich der **Automatischen Hintergrund-Aktualisierung** läuft innerhalb der App nur bei geöffneter App; auf iOS kann zusätzlich das System bei geschlossener App abgleichen (Voraussetzung: die iOS-Option **Hintergrundaktualisierung** ist für Reporter freigegeben). Der Start-Abruf über **Beim Programmstart abrufen** läuft einmalig beim Öffnen und verzögert den Start nicht.
 - Ungelesene und für später gemerkte Artikel sind von jeder automatischen Löschung ausgenommen.
 - Optionen unter einem ausgeschalteten Schalter (Abruf-Intervall, Verzögerung, Ruhezeit) sind abgedunkelt und nicht bedienbar.
 - Der **×**-Schalter zum Entfernen eines Schlagworts trägt eine Screenreader-Beschriftung („Schlagwort … entfernen").

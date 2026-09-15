@@ -17,12 +17,13 @@
 
 **Symptom:** Feeds werden nicht periodisch aktualisiert, obwohl „Automatische Hintergrund-Aktualisierung" eingeschaltet ist.
 
-**Ursache:** Der `PeriodicTimer` in `AutoRefreshService` lebt nur innerhalb des laufenden App-Prozesses. Wird die App geschlossen oder vom System beendet, läuft kein Hintergrund-Abruf mehr. Fehler in `App.OnStart` beim `StartAsync` werden ebenfalls nur per `Debug.WriteLine` protokolliert (`"App.OnStart auto refresh start failed"`).
+**Ursache:** Der `PeriodicTimer` in `AutoRefreshService` lebt nur innerhalb des laufenden App-Prozesses. Unter iOS übernimmt ergänzend ein `BGAppRefreshTask` den Abruf bei geschlossener App — er ist an denselben Schalter gekoppelt (`ApplySettingsAsync` leitet die Settings an `IBackgroundRefreshService` weiter, nur bei `IsSupported`), aber iOS bestimmt den tatsächlichen Ausführungszeitpunkt systemseitig (`EarliestBeginDate` aus `SettingsValues.ClampRefreshIntervalMinutes(RefreshIntervalMinutes)` ist nur eine Untergrenze), und die Systemoption **Hintergrundaktualisierung** muss freigegeben sein. Fehler in `App.OnStart` beim `StartAsync` werden ebenfalls nur per `Debug.WriteLine` protokolliert (`"App.OnStart auto refresh start failed"`).
 
 **Lösung:**
-1. Debug-Ausgabe auf `auto refresh start failed` und `AutoRefreshService sync failed` prüfen.
+1. Debug-Ausgabe auf `auto refresh start failed` und `AutoRefreshService sync failed` prüfen; für den iOS-Hintergrundabruf zusätzlich auf `AutoRefreshService background refresh apply failed`, `BackgroundRefreshService submit failed` bzw. die Session-Log-Meldungen `Background refresh apply failed`, `Background refresh scheduling failed`, `Background task registration failed` (Kategorie `Sync`, Level `Warning`).
 2. In der Datenbank verifizieren: `settings.auto_refresh_enabled = 1` und plausibles `refresh_interval_minutes` (wird auf 1–1440 geclamppt).
-3. Beachten: Sync-Fehler einzelner Ticks stoppen den Timer nicht — nur stille `SyncLog`-Einträge bzw. Debug-Ausgaben zeigen sie an.
+3. iOS-Hintergrundabruf: `Info.plist` muss `UIBackgroundModes` = `fetch` und `BGTaskSchedulerPermittedIdentifiers` = `de.martinstromberg.reporter.feedrefresh` enthalten (identisch zu `BackgroundRefreshService.RefreshTaskIdentifier`); Diagnose zum Task selbst siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/troubleshooting.md), Abschnitt „Hintergrundabruf (`BGAppRefreshTask`) läuft nicht".
+4. Beachten: Sync-Fehler einzelner Ticks stoppen den Timer nicht — nur stille `SyncLog`-Einträge bzw. Debug-Ausgaben zeigen sie an.
 
 ## Start-Abruf läuft nicht
 

@@ -114,6 +114,56 @@ public class ServiceCollectionTests
         connection.Dispose();
     }
 
+    /// <summary>
+    /// Verifies that the auto refresh service can be resolved with its full
+    /// constructor dependency set including the background refresh gateway,
+    /// mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesAutoRefreshService()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<IFeedSyncService, FakeFeedSyncService>()
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>()
+            .AddSingleton<IBackgroundRefreshService, FakeBackgroundRefreshService>()
+            .AddSingleton<IAutoRefreshService, AutoRefreshService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IAutoRefreshService>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the scheduled sync runner can be resolved with its full
+    /// constructor dependency set, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesScheduledSyncRunner()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<IFeedSyncService, FakeFeedSyncService>()
+            .AddSingleton<IBackgroundRefreshService, FakeBackgroundRefreshService>()
+            .AddSingleton<IScheduledSyncRunner, ScheduledSyncRunner>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IScheduledSyncRunner>());
+
+        connection.Dispose();
+    }
+
     private static void AddTestRepositories(ServiceCollection services, SqliteConnection connection)
     {
         services.AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite(connection))
