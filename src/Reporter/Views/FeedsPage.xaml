@@ -5,8 +5,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
              x:Class="Reporter.Views.FeedsPage"
              x:Name="Page"
+             x:DataType="vm:FeedsViewModel"
              Title="{x:Static strings:AppResources.PageTitleFeeds}"
              Shell.NavBarIsVisible="False">
     <Grid RowDefinitions="Auto,*"
@@ -67,7 +69,7 @@
             <CollectionView ItemsSource="{Binding SearchResults}"
                             EmptyView="{x:Static strings:AppResources.FeedSearchNoResults}">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="models:FeedSearchResult">
                         <Border Padding="16"
                                 Margin="0,6"
                                 MinimumHeightRequest="44"
@@ -142,7 +144,7 @@
             <CollectionView ItemsSource="{Binding Feeds}"
                             EmptyView="{x:Static strings:AppResources.PlaceholderFeeds}">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="models:FeedListItem">
                         <Border Padding="16"
                                 Margin="0,6"
                                 StrokeShape="RoundRectangle 12"

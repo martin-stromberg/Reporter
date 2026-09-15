@@ -4,8 +4,10 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
              x:Name="Card"
-             x:Class="Reporter.Views.ArticleCardView">
+             x:Class="Reporter.Views.ArticleCardView"
+             x:DataType="models:ItemListItem">
     <Border Padding="16"
             Margin="0,6"
             StrokeShape="RoundRectangle 16"

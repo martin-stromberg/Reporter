@@ -40,8 +40,21 @@ public static class MauiProgram
                 fonts.AddFont("Newsreader-Italic.ttf", "NewsreaderItalic");
             });
 
-        var databasePath = Path.Combine(FileSystem.AppDataDirectory, "reporter.db");
-        Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
+        // REPORTER_DB_PATH allows the E2E suite to point the app at an isolated
+        // database file so test runs never touch the developer's real data.
+        var databasePathOverride = Environment.GetEnvironmentVariable("REPORTER_DB_PATH");
+        var databasePath = string.IsNullOrWhiteSpace(databasePathOverride)
+            ? Path.Combine(FileSystem.AppDataDirectory, "reporter.db")
+            : databasePathOverride;
+        var databaseDirectory = Path.GetDirectoryName(databasePath);
+        if (!string.IsNullOrEmpty(databaseDirectory))
+        {
+            Directory.CreateDirectory(databaseDirectory);
+        }
+
+        // REPORTER_FEEDSEARCH_ENDPOINT points the feed search at a stub server
+        // during E2E runs; invalid values fall back to the built-in default.
+        var feedSearchEndpoint = ResolveFeedSearchEndpoint(Environment.GetEnvironmentVariable("REPORTER_FEEDSEARCH_ENDPOINT"));
 
         builder.Services
             .AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite($"Data Source={databasePath}"))
@@ -53,7 +66,8 @@ public static class MauiProgram
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()
             .AddSingleton<IDebugLogRepository, DebugLogRepository>()
             .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
-            .AddSingleton<IFeedSearchService, FeedSearchService>()
+            .AddSingleton<IFeedSearchService>(provider =>
+                new FeedSearchService(provider.GetRequiredService<HttpClient>(), feedSearchEndpoint))
             .AddSingleton<IFeedIconService, FeedIconService>()
             .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<IRetentionCleanupService, RetentionCleanupService>()
@@ -91,6 +105,21 @@ public static class MauiProgram
         var app = builder.Build();
         ApplyPersistedLanguage(app);
         return app;
+    }
+
+    /// <summary>
+    /// Validates the <c>REPORTER_FEEDSEARCH_ENDPOINT</c> override: only absolute
+    /// http/https URIs are accepted, anything else falls back to the default endpoint.
+    /// </summary>
+    /// <param name="value">The raw environment variable value.</param>
+    /// <returns>The validated endpoint, or <see langword="null"/> when absent or invalid.</returns>
+    private static string? ResolveFeedSearchEndpoint(string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                ? uri.AbsoluteUri
+                : null;
     }
 
     /// <summary>

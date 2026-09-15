@@ -394,6 +394,27 @@ public class FeedSearchServiceTests
     }
 
     /// <summary>
+    /// Verifies that a directory endpoint passed to the constructor receives the
+    /// directory request instead of the built-in feedsearch.dev endpoint.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Ctor_CustomDirectoryEndpoint_RequestsOverrideHost()
+    {
+        var handler = new StubHttpMessageHandler();
+        handler.On("localhost:9/dir", "[]", "application/json");
+        var service = new FeedSearchService(new HttpClient(handler), "http://localhost:9/dir");
+
+        var results = await service.SearchAsync("https://example.com");
+
+        Assert.Empty(results);
+        Assert.Contains(handler.RequestedUrls,
+            url => url.StartsWith("http://localhost:9/dir", StringComparison.Ordinal));
+        Assert.DoesNotContain(handler.RequestedUrls,
+            url => url.Contains("feedsearch.dev", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// A stub <see cref="HttpMessageHandler"/> that returns configured responses per
     /// request URL and records every requested URL.
     /// </summary>

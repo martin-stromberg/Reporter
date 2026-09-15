@@ -6,8 +6,10 @@
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              xmlns:views="clr-namespace:Reporter.Views;assembly=Reporter"
              xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
              x:Name="PageRoot"
              x:Class="Reporter.Views.LaterPage"
+             x:DataType="vm:LaterViewModel"
              Title="{x:Static strings:AppResources.PageTitleLater}"
              Shell.NavBarIsVisible="False">
     <Grid RowDefinitions="Auto,*,Auto"

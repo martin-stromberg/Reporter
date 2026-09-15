@@ -5,8 +5,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
              xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
              x:Name="PageRoot"
              x:Class="Reporter.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
              Title="{x:Static strings:AppResources.PageTitleSettings}"
              Shell.NavBarIsVisible="False">
     <Grid RowDefinitions="Auto,*"
