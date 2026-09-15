@@ -1072,4 +1072,102 @@ public class FeedSyncServiceTests : IDisposable
         var feed = await _feedRepository.GetByIdAsync(feedId);
         Assert.Equal(FeedSyncErrorKind.Network, feed?.LastErrorKind);
     }
+
+    /// <summary>
+    /// Verifies that an Atom 0.3 document (namespace
+    /// <c>http://purl.org/atom/ns#</c>) is synchronized like RSS/Atom 1.0:
+    /// items are persisted with title, link, publication date and identifier,
+    /// and feed health is set to OK.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Atom03_CreatesItems_AndSetsHealthOk()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var now = DateTime.UtcNow;
+        var xml = TestFeedXml.Atom03(
+        [
+            ("Item One", "https://example.com/1", "tag:example.com,2024:1", now.AddHours(-2), now.AddHours(-1), "&lt;p&gt;One&lt;/p&gt;"),
+            ("Item Two", "https://example.com/2", "tag:example.com,2024:2", now, now, null),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.True(result.Status == FeedHealth.Ok, $"Unexpected status {result.Status}: {result.Message}");
+        Assert.Equal(2, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Equal(2, items.Count);
+        Assert.Contains(items, i =>
+            i.Title == "Item One" && i.Link == "https://example.com/1" &&
+            i.GuidOrHash == "tag:example.com,2024:1" && i.PublishedAt.HasValue);
+        Assert.Contains(items, i =>
+            i.Title == "Item Two" && i.Link == "https://example.com/2" &&
+            i.GuidOrHash == "tag:example.com,2024:2" && i.PublishedAt.HasValue);
+
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Ok, feed.HealthStatus);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        var log = Assert.Single(logs);
+        Assert.Equal(FeedHealth.Ok, log.Status);
+        Assert.NotNull(log.FinishedAt);
+    }
+
+    /// <summary>
+    /// Verifies that the Atom 0.3 <c>issued</c> element of an entry is mapped to
+    /// <see cref="Item.PublishedAt"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Atom03_MapsIssuedToPublishedAt()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var issued = new DateTime(2024, 3, 1, 12, 0, 0, DateTimeKind.Utc);
+        var xml = TestFeedXml.Atom03(
+        [
+            ("Item One", "https://example.com/1", "tag:example.com,2024:1", issued, null, null),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        var item = Assert.Single(items);
+        Assert.Equal(issued, item.PublishedAt);
+    }
+
+    /// <summary>
+    /// Verifies that a placeholder title (the feed URL stored as title) is
+    /// replaced by the title of an Atom 0.3 feed document on the first sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Atom03_PlaceholderTitle_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://example.com/atom03";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = url,
+            Title = url,
+            NotificationsEnabled = true,
+        });
+        var xml = TestFeedXml.Atom03(
+        [
+            ("Item One", "https://example.com/1", "tag:example.com,2024:1", DateTime.UtcNow, null, null),
+        ], feedTitle: "Resolved Atom03 Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Atom03 Title", feed.Title);
+    }
 }
