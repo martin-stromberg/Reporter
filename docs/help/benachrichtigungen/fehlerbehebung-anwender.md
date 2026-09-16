@@ -15,7 +15,7 @@
 4. Öffne **Feeds**, tippe den betroffenen Feed an, wähle **Bearbeiten** und prüfe den Schalter **Benachrichtigungen** des Feeds.
 5. Prüfe die **Schlagwort-Filter**: Enthält der Artikel ein eingerichtetes Schlagwort in Titel oder Text, wird er nicht benachrichtigt — neue Treffer werden bereits beim Abruf verworfen und erscheinen gar nicht erst in den Listen.
 6. Prüfe in der Karte **Synchronisation & Lesefluss**, ob die **Automatische Hintergrund-Aktualisierung** eingeschaltet ist — ohne sie läuft bei geschlossener App kein Abgleich und es kommen keine Benachrichtigungen.
-7. Prüfe in den iOS-Einstellungen unter **Allgemein** → **Hintergrundaktualisierung**, ob die Funktion für Reporter freigegeben ist. Beachte außerdem: iOS legt den Zeitpunkt des Hintergrund-Abgleichs selbst fest — das gewählte **Abruf-Intervall** ist eine Mindestpause, Benachrichtigungen können deutlich später kommen.
+7. Prüfe in den iOS-Einstellungen unter **Allgemein** → **Hintergrundaktualisierung**, ob die Funktion für Reporter freigegeben ist, und schalte den **Energiesparmodus** aus — dieser deaktiviert die Hintergrundaktualisierung. Beachte außerdem: iOS legt den Zeitpunkt des Hintergrund-Abgleichs selbst fest — das gewählte **Abruf-Intervall** ist eine Mindestpause, Benachrichtigungen können deutlich später kommen. Beende die App zudem nicht per Wischen aus dem App-Umschalter — nach einem solchen Beenden führt iOS bis zum nächsten Öffnen keinen Hintergrund-Abgleich aus.
 
 ## Bei geöffneter App erscheint keine Benachrichtigung
 
@@ -58,4 +58,4 @@
 
 ## Wann Hilfe nötig ist
 
-Wenn trotz eingeschalteter Benachrichtigungen, erteilter iOS-Berechtigung und deaktivierter Ruhezeit weiterhin keine Benachrichtigungen ankommen, oder wenn die App beim Antippen einer Benachrichtigung abstürzt bzw. gar nicht reagiert, wende dich an den Support bzw. die Entwicklung. Gib dabei an, welcher Feed betroffen ist, welche Schalter gesetzt sind und ob die Hinweiszeile in den Einstellungen sichtbar war.
+Wenn trotz eingeschalteter Benachrichtigungen, erteilter iOS-Berechtigung und deaktivierter Ruhezeit weiterhin keine Benachrichtigungen ankommen, oder wenn die App beim Antippen einer Benachrichtigung abstürzt bzw. gar nicht reagiert, wende dich an den Support bzw. die Entwicklung. Gib dabei an, welcher Feed betroffen ist, welche Schalter gesetzt sind und ob die Hinweiszeile in den Einstellungen sichtbar war. Hilfreich ist ein Debugbericht: aktiviere dazu **Debuginformationen sammeln** in den Einstellungen, warte das gewählte Abruf-Intervall ab und sende den Bericht anschließend über **Debugbericht senden** — er zeigt, ob der Hintergrund-Abgleich eingeplant und von iOS ausgeführt wurde und ob eine Benachrichtigung abgesetzt wurde.

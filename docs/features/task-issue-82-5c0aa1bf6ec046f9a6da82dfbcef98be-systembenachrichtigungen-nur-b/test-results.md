@@ -6,7 +6,7 @@
 
 **Status:** Fehler vorhanden
 
-Alle 491 automatisierten Tests sind bestanden (0 fehlgeschlagen, 0 übersprungen), darunter die für dieses Feature neu hinzugekommenen Tests `ScheduledSyncRunnerTests` (4 Tests: `RunAsync_SyncSucceeds_ReturnsTrueAndReschedules`, `RunAsync_SyncFails_ReturnsFalseAndStillReschedules`, `RunAsync_SyncCancelled_ReturnsFalseAndStillReschedules`, `RunAsync_ReschedulingFails_ReturnsTrue`), die `IBackgroundRefreshService`-Weiterleitungs-Tests in `AutoRefreshServiceTests` (`ApplySettings_ForwardsToBackgroundRefresh`, `ApplySettings_WhenAutoRefreshDisabled_StillForwardsToBackgroundRefresh`, `ApplySettings_BackgroundRefreshThrows_TimerStillConfigured`, `ApplySettings_BackgroundRefreshUnsupported_DoesNotForward`) und `ServiceCollectionTests.AddReporterServices_ResolvesScheduledSyncRunner`. Der Solution-Build lief mit 0 Warnungen und 0 Fehlern durch; `.\scripts\Run-StaticChecks.ps1` (Format, Lizenzheader, Security-Scan, statische Analyse mit `TreatWarningsAsErrors`) ist vollständig grün.
+Alle 504 automatisierten Tests sind bestanden (0 fehlgeschlagen, 0 übersprungen), darunter die für dieses Feature neu hinzugekommenen Tests `ScheduledSyncRunnerTests` (4 Tests: `RunAsync_SyncSucceeds_ReturnsTrueAndReschedules`, `RunAsync_SyncFails_ReturnsFalseAndStillReschedules`, `RunAsync_SyncCancelled_ReturnsFalseAndStillReschedules`, `RunAsync_ReschedulingFails_ReturnsTrue`), die `IBackgroundRefreshService`-Weiterleitungs-Tests in `AutoRefreshServiceTests` (`ApplySettings_ForwardsToBackgroundRefresh`, `ApplySettings_WhenAutoRefreshDisabled_StillForwardsToBackgroundRefresh`, `ApplySettings_BackgroundRefreshThrows_TimerStillConfigured`, `ApplySettings_BackgroundRefreshUnsupported_DoesNotForward`) und `ServiceCollectionTests.AddReporterServices_ResolvesScheduledSyncRunner`. Der Solution-Build lief mit 0 Warnungen und 0 Fehlern durch; `.\scripts\Run-StaticChecks.ps1` (Format, Lizenzheader, Security-Scan, statische Analyse mit `TreatWarningsAsErrors`) ist vollständig grün.
 
 Der Status ist dennoch „Fehler vorhanden", weil von den sieben im Plan als Pflicht markierten E2E-Szenarien auch nach der Remote-Verifikation drei vollständig offen und zwei nur teilweise belegt sind. Die Remote-Verifikation hat dabei einen echten Laufzeitfehler aufgedeckt (synchroner `BGTaskScheduler.Register`-Aufruf → `_os_unfair_lock_recursive_abort` beim Start), der behoben wurde — die verbleibenden Lücken sind Simulator-Limitationen und müssen auf einem physischen iOS-Gerät nachgeholt werden.
 
@@ -14,7 +14,7 @@ Der Status ist dennoch „Fehler vorhanden", weil von den sieben im Plan als Pfl
 
 ### Automatisierte Tests
 
-Keine — 491/491 bestanden.
+Keine — 504/504 bestanden.
 
 ### Manuelle iOS-E2E-Szenarien (Pflicht laut Plan, teilweise auf dem Simulator verifiziert — siehe „Remote-iOS-Verifikation")
 
@@ -40,6 +40,16 @@ Keine — 491/491 bestanden.
 6. **Simulator-Limitation:** `BGTaskScheduler.Submit` schlägt mit `BGTaskSchedulerErrorDomain Code=1` (`Unavailable`) fehl, obwohl `UIApplication.backgroundRefreshStatus` = `2` (Available) ist — die Einstellung ist also nicht die Ursache, der Simulator unterstützt das Scheduling schlicht nicht. `getPendingTaskRequestsWithCompletionHandler:` lieferte `0` Requests; `_simulateLaunchForTaskWithIdentifier`/`_simulateExpirationForTaskWithIdentifier` verweigern ohne Pending-Request (`No task request … has been scheduled`). Auch der private Pfad `_unsafe_submitTaskRequest:` wurde erfolglos geprüft. Die Handler-Ausführung selbst ist damit auf dem Simulator nicht testbar — physisches Gerät erforderlich.
 7. **Stabilität:** Vorder-/Hintergrund-Wechsel ohne Debugger → kein Crash. Die fünf Simulator-Crash-Reports verteilen sich auf: 3× Pre-Fix-`unfair_lock`-Abbruch (09:49/09:57/09:59), 1× lldb-Selektor-Tippfehler (`+[BGTaskScheduler shared]` statt `sharedScheduler` → `NSInvalidArgumentException`, 10:22), 1× lldb-Detach-SIGSEGV am suspendierten Prozess (Main-Thread im `mach_msg`-Runloop, 10:32) — letztere beiden sind Test-Artefakte ohne App-Code-Beteiligung.
 
+## Geräte-Rückmeldung des Anwenders (2026-09-16)
+
+Der Anwender hat auf einem physischen iOS-Gerät getestet: App gestartet (Start-Abruf lief), alle Beiträge gelesen, Benachrichtigungen + `AutoRefreshEnabled` mit 30-Minuten-Intervall aktiv, App in den Hintergrund gebracht — nach 2 Stunden **keine** Benachrichtigung trotz neuer Artikel. Beim Wiederöffnen war die Startseite leer; nach Navigation erschienen Beiträge (fehlende Startseiten-Aktualisierung = separates, später zu lösendes Problem).
+
+**Bewertung:** Nicht unterscheidbar, ob iOS den `BGAppRefreshTask` schlicht noch nicht zugestellt hat (heuristikgesteuert, `EarliestBeginDate` ist nur Untergrenze — 2 h sind im normalen Bereich), ob die Systemoption **Hintergrundaktualisierung**/Energiesparmodus den Abruf verhindert hat, oder ob eine Mitteilung unterdrückt wurde. Bisher war die Erfolgskette nicht beobachtbar.
+
+**Gegenmaßnahmen (2026-09-16 umgesetzt):** Vollständige `IDebugLogService`-Instrumentierung der Kette (`Background task registered`, `Background refresh scheduled`/`unscheduled`/`scheduling unavailable` — letzteres bei `BackgroundRefreshStatus` ≠ `Available`, `Background refresh task started`/`completed`, `Background refresh sync started`/`finished`, `Notification posted`/`dropped`/`suppressed`), `BackgroundRefreshStatus`-Auswertung vor `Submit`, `SyncResult.Status`-Auswertung für `SetTaskCompleted`, `_syncAllLock`-Serialisierung in `SyncAllAsync` gegen parallele Doppel-Syncs bei Task-getriggertem Start, erweiterte Troubleshooting-Doku. Nächster Schritt: Reproduktion mit aktiviertem „Debuginformationen sammeln" und Debugbericht — das Protokoll zeigt die Abbruchstelle.
+
+**Zweiter Befund aus `debug.log` (2026-09-16):** Startabsturz durch `NSInternalInconsistencyException` — `Submit` lief während `FinishedLaunching` vor der verzögerten `Register`-Ausführung (Nebenwirkung des `_os_unfair_lock`-Fixes). Behoben durch ein Registrierungs-Gate (`TaskCompletionSource` + `NotifyTaskRegistered` aus `AppDelegate`, 10-s-Timeout) — `Submit`/`Cancel` laufen erst nach Registrierung auf der Main-Queue, beide nativen Aufrufe zusätzlich in try/catch abgesichert. Verifikation: `net10.0-ios`-Build (iossimulator-x64) 0 Warnungen/0 Fehler, 504/504 Tests, `Run-StaticChecks.ps1` grün.
+
 ## E2E-Abdeckung
 
 | Szenario | Test / Testklasse | Ergebnis |
@@ -54,8 +64,8 @@ Keine — 491/491 bestanden.
 
 ## Zusammenfassung
 
-- Gesamt: 491
-- Bestanden: 491
+- Gesamt: 504
+- Bestanden: 504
 - Fehlgeschlagen: 0
 - Übersprungen: 0
 - Manuelle E2E-Pflichtszenarien: 1 verifiziert (Start-Abruf), 3 teilweise verifiziert (Pull-to-Refresh, Timer, `AutoRefreshEnabled`-Kopplung), 3 nicht ausgeführt (simulierter `BGAppRefreshTask`, Expiration, Tap-Navigation — Simulator-Limitation bzw. fehlende UI-Eingabe, siehe oben)

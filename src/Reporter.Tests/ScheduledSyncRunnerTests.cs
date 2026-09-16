@@ -55,7 +55,11 @@ public class ScheduledSyncRunnerTests : IDisposable
         var applied = Assert.Single(_backgroundRefreshService.AppliedSettings);
         Assert.Equal(persisted.RefreshIntervalMinutes, applied.RefreshIntervalMinutes);
         Assert.Equal(persisted.AutoRefreshEnabled, applied.AutoRefreshEnabled);
-        Assert.Empty(_debugLogService.LoggedEntries);
+        var entries = _debugLogService.LoggedEntries;
+        Assert.Equal(2, entries.Count);
+        Assert.All(entries, e => Assert.Equal(DebugLogLevel.Info, e.Level));
+        Assert.Equal("Background refresh sync started", entries[0].Message);
+        Assert.Equal("Background refresh sync finished", entries[1].Message);
     }
 
     /// <summary>
@@ -73,9 +77,9 @@ public class ScheduledSyncRunnerTests : IDisposable
 
         Assert.False(success);
         Assert.Single(_backgroundRefreshService.AppliedSettings);
-        var entry = Assert.Single(_debugLogService.LoggedEntries);
+        var entry = Assert.Single(_debugLogService.LoggedEntries, e => e.Level == DebugLogLevel.Error);
         Assert.Equal(DebugLogCategory.Sync, entry.Category);
-        Assert.Equal(DebugLogLevel.Error, entry.Level);
+        Assert.Equal("Background refresh sync failed", entry.Message);
         Assert.Contains("sync failed", entry.Details);
     }
 
@@ -108,9 +112,9 @@ public class ScheduledSyncRunnerTests : IDisposable
         var success = await _runner.RunAsync();
 
         Assert.True(success);
-        var entry = Assert.Single(_debugLogService.LoggedEntries);
+        var entry = Assert.Single(_debugLogService.LoggedEntries, e => e.Level == DebugLogLevel.Warning);
         Assert.Equal(DebugLogCategory.Sync, entry.Category);
-        Assert.Equal(DebugLogLevel.Warning, entry.Level);
+        Assert.Equal("Background refresh rescheduling failed", entry.Message);
         Assert.Contains("scheduling failed", entry.Details);
     }
 }

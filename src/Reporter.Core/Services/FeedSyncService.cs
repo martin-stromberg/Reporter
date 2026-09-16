@@ -25,6 +25,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly IKeywordFilter _keywordFilter;
     private readonly IFeedIconService _feedIconService;
     private readonly IDebugLogService? _debugLogService;
+    private readonly SemaphoreSlim _syncAllLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -107,40 +108,51 @@ public class FeedSyncService : IFeedSyncService
     /// <inheritdoc />
     public async Task<SyncResult> SyncAllAsync(CancellationToken cancellationToken = default)
     {
-        if (!_networkStatusService.IsOnline)
+        // Parallele Gesamt-Syncs (z. B. Start-Abruf gleichzeitig mit einem
+        // OS-Hintergrundabruf) wuerden dieselben neuen Artikel doppelt
+        // einspielen und doppelt benachrichtigen.
+        await _syncAllLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
-        }
-
-        var feeds = await _feedRepository.GetAllAsync().ConfigureAwait(false);
-        if (feeds.Count == 0)
-        {
-            return new SyncResult(FeedHealth.Ok, 0, "No feeds configured.");
-        }
-
-        var totalNew = 0;
-        var hasError = false;
-        var hasWarning = false;
-        var messages = new List<string>();
-
-        foreach (var feed in feeds)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var result = await SyncFeedAsync(feed.Id, cancellationToken).ConfigureAwait(false);
-            totalNew += result.NewItems;
-            hasError = hasError || result.Status == FeedHealth.Error;
-            hasWarning = hasWarning || result.Status == FeedHealth.Warning;
-
-            if (!string.IsNullOrEmpty(result.Message))
+            if (!_networkStatusService.IsOnline)
             {
-                messages.Add($"{feed.Title}: {result.Message}");
+                return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
             }
-        }
 
-        var status = hasError ? FeedHealth.Error : hasWarning ? FeedHealth.Warning : FeedHealth.Ok;
-        var combinedMessage = messages.Count > 0 ? string.Join("; ", messages) : null;
-        return new SyncResult(status, totalNew, combinedMessage);
+            var feeds = await _feedRepository.GetAllAsync().ConfigureAwait(false);
+            if (feeds.Count == 0)
+            {
+                return new SyncResult(FeedHealth.Ok, 0, "No feeds configured.");
+            }
+
+            var totalNew = 0;
+            var hasError = false;
+            var hasWarning = false;
+            var messages = new List<string>();
+
+            foreach (var feed in feeds)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var result = await SyncFeedAsync(feed.Id, cancellationToken).ConfigureAwait(false);
+                totalNew += result.NewItems;
+                hasError = hasError || result.Status == FeedHealth.Error;
+                hasWarning = hasWarning || result.Status == FeedHealth.Warning;
+
+                if (!string.IsNullOrEmpty(result.Message))
+                {
+                    messages.Add($"{feed.Title}: {result.Message}");
+                }
+            }
+
+            var status = hasError ? FeedHealth.Error : hasWarning ? FeedHealth.Warning : FeedHealth.Ok;
+            var combinedMessage = messages.Count > 0 ? string.Join("; ", messages) : null;
+            return new SyncResult(status, totalNew, combinedMessage);
+        }
+        finally
+        {
+            _syncAllLock.Release();
+        }
     }
 
     private async Task<SyncResult> RunSyncAsync(Feed feed, SyncLog log, CancellationToken cancellationToken)
