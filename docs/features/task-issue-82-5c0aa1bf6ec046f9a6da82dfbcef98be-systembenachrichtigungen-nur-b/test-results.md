@@ -48,6 +48,8 @@ Der Anwender hat auf einem physischen iOS-Gerät getestet: App gestartet (Start-
 
 **Gegenmaßnahmen (2026-09-16 umgesetzt):** Vollständige `IDebugLogService`-Instrumentierung der Kette (`Background task registered`, `Background refresh scheduled`/`unscheduled`/`scheduling unavailable` — letzteres bei `BackgroundRefreshStatus` ≠ `Available`, `Background refresh task started`/`completed`, `Background refresh sync started`/`finished`, `Notification posted`/`dropped`/`suppressed`), `BackgroundRefreshStatus`-Auswertung vor `Submit`, `SyncResult.Status`-Auswertung für `SetTaskCompleted`, `_syncAllLock`-Serialisierung in `SyncAllAsync` gegen parallele Doppel-Syncs bei Task-getriggertem Start, erweiterte Troubleshooting-Doku. Nächster Schritt: Reproduktion mit aktiviertem „Debuginformationen sammeln" und Debugbericht — das Protokoll zeigt die Abbruchstelle.
 
+**Zweiter Befund aus `debug.log` (2026-09-16):** Startabsturz durch `NSInternalInconsistencyException` — `Submit` lief während `FinishedLaunching` vor der verzögerten `Register`-Ausführung (Nebenwirkung des `_os_unfair_lock`-Fixes). Behoben durch ein Registrierungs-Gate (`TaskCompletionSource` + `NotifyTaskRegistered` aus `AppDelegate`, 10-s-Timeout) — `Submit`/`Cancel` laufen erst nach Registrierung auf der Main-Queue, beide nativen Aufrufe zusätzlich in try/catch abgesichert. Verifikation: `net10.0-ios`-Build (iossimulator-x64) 0 Warnungen/0 Fehler, 504/504 Tests, `Run-StaticChecks.ps1` grün.
+
 ## E2E-Abdeckung
 
 | Szenario | Test / Testklasse | Ergebnis |

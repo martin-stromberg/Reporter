@@ -34,6 +34,20 @@ Wahrscheinlichste Ursachen: iOS hat den `BGAppRefreshTask` schlicht noch nicht z
 
 **Verbleibt offen:** Verifikation der tatsächlichen `BGAppRefreshTask`-Zustellung auf dem Gerät des Anwenders — mit dem neuen Logging über einen Debugbericht belegbar.
 
+### Zweiter Befund (2026-09-16, aus `debug.log`)
+
+Die Geräte-`debug.log` zeigte einen **Startabsturz** und zugleich die wahrscheinliche Ursache für die ausgebliebenen Benachrichtigungen:
+
+```
+NSInternalInconsistencyException: No launch handler registered for task
+with identifier de.martinstromberg.reporter.feedrefresh
+   at BGTaskScheduler.Submit(...) → BackgroundRefreshService.ApplySettingsAsync:73
+```
+
+**Ursache:** `ApplySettingsAsync` (Startup-Pfad über `App.OnStart` → `AutoRefreshService.StartAsync`) rief `BGTaskScheduler.Submit` synchron während `FinishedLaunching` auf — die Registrierung ist seit dem `_os_unfair_lock`-Fix jedoch per `DispatchAsync` auf den nächsten Main-Queue-Durchlauf verlagert und lief daher noch nicht. iOS wirft bei `Submit` vor `Register` eine Exception → Absturz beim Start bzw. `Submit` schlug bei jedem Start fehl → nie ein Pending-Request → keine Hintergrund-Benachrichtigungen.
+
+**Fix:** Registrierungs-Gate in `BackgroundRefreshService` (`TaskCompletionSource`, von `AppDelegate` via `NotifyTaskRegistered` signalisiert, 10-s-Timeout); `Submit`/`Cancel` laufen erst nach dem Gate auf der Main-Queue; beide Aufrufe zusätzlich in try/catch (gemarshallte `ObjCException`) abgesichert; `Register` selbst ebenfalls try/catch + Gate-Signal auch im Fehlerfall. Verifikation: iOS-TFM-Build (`net10.0-ios`, iossimulator-x64) 0 Warnungen/0 Fehler, 504/504 Tests, `Run-StaticChecks.ps1` grün. Die tatsächliche Task-Zustellung bleibt auf dem physischen Gerät nachzuweisen.
+
 ## Offene Planelemente
 
 - [ ] E2E-Pflichtszenario (Tasks #23, Plan-Tabelle „E2E-Tests") — **teilweise verifiziert**: Vordergrund-Syncs ohne Banner/Sound/Mitteilungszentrum (Simulator-Logs belegt für Timer- und Startup-Pfad; Pull-to-Refresh-Geste nicht separat ausgelöst), `AutoRefreshEnabled`-Kopplung auf Submit/Cancel-Ebene belegt. **Offen:** tatsächliche `BGAppRefreshTask`-Ausführung mit sichtbarer Mitteilung (Simulator: Submit = Code 1 Unavailable), Expiration-Verhalten, Tap-Navigation — physisches iOS-Gerät erforderlich.

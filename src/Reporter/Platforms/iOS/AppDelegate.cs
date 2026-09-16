@@ -43,15 +43,30 @@ public class AppDelegate : MauiUIApplicationDelegate
 
     private void RegisterBackgroundFetchTask()
     {
-        var registered = BGTaskScheduler.Shared.Register(BackgroundRefreshService.RefreshTaskIdentifier, null, task =>
-        {
-            if (task is BGAppRefreshTask refreshTask)
-            {
-                _ = HandleRefreshTaskAsync(refreshTask);
-            }
-        });
-
         var debugLogService = IPlatformApplication.Current?.Services?.GetService<IDebugLogService>();
+        var registered = false;
+        try
+        {
+            registered = BGTaskScheduler.Shared.Register(BackgroundRefreshService.RefreshTaskIdentifier, null, task =>
+            {
+                if (task is BGAppRefreshTask refreshTask)
+                {
+                    _ = HandleRefreshTaskAsync(refreshTask);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Z. B. wenn der Identifier nicht in BGTaskSchedulerPermittedIdentifiers
+            // steht — darf den App-Start nicht abstuerzen lassen.
+            Debug.WriteLine($"AppDelegate background task registration threw: {ex}");
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background task registration failed", ex.ToString(), DebugLogLevel.Warning);
+        }
+
+        // Submit-Aufrufe duerfen erst nach abgeschlossener Registrierung laufen
+        // (sonst NSInternalInconsistencyException) — siehe BackgroundRefreshService.
+        BackgroundRefreshService.NotifyTaskRegistered(registered);
+
         if (!registered)
         {
             Debug.WriteLine($"AppDelegate background task registration failed: {BackgroundRefreshService.RefreshTaskIdentifier}");
