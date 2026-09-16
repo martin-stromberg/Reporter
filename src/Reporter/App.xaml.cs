@@ -50,6 +50,18 @@ public partial class App : Application
 
         try
         {
+            var demoContentService = scope.ServiceProvider.GetRequiredService<IDemoContentService>();
+            await demoContentService.EnsureSeededAsync();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Seeden des Demo-Inhalts darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart demo content seed failed: {ex}");
+            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Demo content seed failed", ex.ToString(), DebugLogLevel.Error);
+        }
+
+        try
+        {
             var cleanupService = scope.ServiceProvider.GetRequiredService<IRetentionCleanupService>();
             await cleanupService.CleanupAsync();
         }

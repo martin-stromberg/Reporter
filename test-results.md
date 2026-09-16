@@ -2,6 +2,66 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #96: Demo-Feed beim ersten Start
+
+Branch: `task/issue-96-531e8f1a79494f299fbcc3819e768229-demo`
+
+Umfang: Beim erstmaligen Start (frische SQLite-Datenbank — `!File.Exists(databasePath)`
+in `MauiProgram` vor `builder.Build()`) seedet der neue `DemoContentService`
+(`Reporter.Core`) einmalig die Kategorie „News" und den Feed
+`https://www.apple.com/newsroom/rss-feed.rss` (Titel „Apple Newsroom",
+`NotificationsEnabled = false`). Der `FirstRunState`-POCO transportiert das
+First-Run-Signal in die DI; `App.OnStart` ruft `EnsureSeededAsync` fehlerisoliert
+vor dem `IRetentionCleanupService`-Block auf. Die E2E-Fixture unterdrückt den
+Seed über die neue Umgebungsvariable `REPORTER_DISABLE_DEMO_SEED`.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests (Release) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --settings src/Reporter.Tests/coverlet.runsettings --collect:"XPlat Code Coverage"` | 513 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 504) |
+| Tests (Release, Iteration 2) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 514 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Skript-Tests | `npm test` | 36 bestanden, 0 fehlgeschlagen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+| Build (Debug, win-x64) | `dotnet build src/Reporter/Reporter.csproj -c Debug -f net10.0-windows10.0.19041.0` | Erfolgreich, 0 Warnungen, 0 Fehler |
+| E2E (Iteration 2) | `.\scripts\Run-E2ETests.ps1` | 8/8 bestanden (inkl. `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed`) |
+
+Neue Tests: `DemoContentServiceTests` (9 — First-Run legt Kategorie + Feed mit
+korrekten Defaults an, No-op bei `IsFirstRun = false` und
+`DemoSeedSuppressed = true`, Wiederverwendung vorhandener Kategorie „News",
+Idempotenz bei Zweitaufruf, Skip bei vorhandenem Demo-Feed, Info-Log-Eintrag
+„Demo content seeded" via `FakeDebugLogService`, abgebrochenes Token wirft
+`OperationCanceledException` ohne DB-Schreibzugriff),
+`ServiceCollectionTests.AddReporterServices_ResolvesDemoContentService`.
+Neu in E2E: `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed` (eigener
+`Reporter.exe`-Prozess auf frischer Temp-DB ohne Disable-Flag, prüft
+Feed-Zeile, Kategorie „News" und Feed-Karte per FlaUI) sowie
+`FeedDbAssertions.CategoryExistsAsync`. `ReporterAppFixture` setzt jetzt
+`REPORTER_DISABLE_DEMO_SEED=1`; `ResolveAppPath` ist `internal`.
+
+### Manuelle Verifikation (durchgeführt)
+
+Unpackaged `win-x64`-Debug-Build mit frischer `REPORTER_DB_PATH` im
+Temp-Verzeichnis gestartet und nach 20 s beendet; SQLite-Abfrage der DB:
+
+- [x] **Demo-Seed:** `feeds` enthält `https://www.apple.com/newsroom/rss-feed.rss`
+  mit `title='Apple Newsroom'`, `notifications_enabled=0`, `health_status='OK'`,
+  `category_id` zeigt auf die neue Zeile `categories` (`name='News'`) —
+  Kategorie und Feed exakt wie geplant angelegt
+
+### E2E-Verifikation
+
+Die FlaUI-Suite wurde in Iteration 2 in der interaktiven
+Windows-Desktop-Session ausgeführt (`.\scripts\Run-E2ETests.ps1`):
+**8/8 bestanden** — `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed`
+weist Feed-Zeile, Kategorie „News" und die sichtbare Feed-Karte auf frischer
+Temp-DB nach; die sieben `SmokeTests` bleiben durch
+`REPORTER_DISABLE_DEMO_SEED` hermetisch. Drei in einem früheren Lauf
+fehlgeschlagene Smoke-Tests (`NoClickablePointException` auf Karten-Gruppen)
+erwiesen sich als umgebungsbedingter UIA-Provider-Flake ohne Feature-Bezug
+(kein UI-Diff zu `b231a7c`) und sind im Wiederholungslauf bestanden — Details
+in `docs/features/task-issue-96-531e8f1a79494f299fbcc3819e768229-demo/test-results.md`.
+
 ## Issue #81: Debuginformationen sammeln und per E-Mail versenden
 
 Umfang: Opt-in-Schalter `settings.debug_collection_enabled`, session-scoped

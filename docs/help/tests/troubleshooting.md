@@ -54,7 +54,7 @@
 
 ## `dotnet test Reporter.sln` schlägt ohne gebaute App fehl
 
-**Symptom:** Ein Solution-weiter Testlauf meldet sieben fehlgeschlagene `Reporter.E2ETests`-Tests.
+**Symptom:** Ein Solution-weiter Testlauf meldet acht fehlgeschlagene `Reporter.E2ETests`-Tests.
 
 **Ursache:** Das E2E-Projekt ist Teil der Solution; ohne gebaute `Reporter.exe` und interaktive Session kann es nicht laufen.
 
@@ -64,13 +64,13 @@
 
 ## Versehentlich gesetzte Env-Overrides
 
-**Symptom:** Die manuell gestartete App findet keine echten Feed-Verzeichnis-Treffer oder schreibt in eine unerwartete Datenbankdatei.
+**Symptom:** Die manuell gestartete App findet keine echten Feed-Verzeichnis-Treffer, schreibt in eine unerwartete Datenbankdatei oder legt auf einer frischen Datenbank keinen Demo-Feed an — oder `DemoSeedTests` schlägt fehl, weil der Seed unterdrückt bleibt.
 
-**Ursache:** `REPORTER_FEEDSEARCH_ENDPOINT`/`REPORTER_DB_PATH` sind dauerhaft im Benutzer-/System-Environment gesetzt — die Overrides wirken in **jedem** Build, auch Release.
+**Ursache:** `REPORTER_FEEDSEARCH_ENDPOINT`, `REPORTER_DB_PATH` oder `REPORTER_DISABLE_DEMO_SEED` sind dauerhaft im Benutzer-/System-Environment gesetzt — die Overrides wirken in **jedem** Build, auch Release. `DemoSeedTests` entfernt das Flag zwar aus dem eigenen App-Prozess, doch ein dauerhaft gesetzter Wert ist ein starkes Indiz für weitere vererbte Overrides.
 
 **Lösung:**
 1. Variablen aus dem persistenten Environment entfernen; sie sind ausschließlich pro Prozess-Start für die Suite gedacht.
-2. Endpoint-Werte, die keine absolute `http`/`https`-URI sind, werden ignoriert — der DB-Pfad-Override dagegen wirkt unvalidiert und kann den App-Start mit einer Ausnahme abbrechen.
+2. Endpoint-Werte, die keine absolute `http`/`https`-URI sind, werden ignoriert — der DB-Pfad-Override dagegen wirkt unvalidiert und kann den App-Start mit einer Ausnahme abbrechen. `REPORTER_DISABLE_DEMO_SEED` wirkt mit jedem Wert außer `0`/`false`.
 
 ## Verwaiste Prozesse oder Temp-Verzeichnisse
 

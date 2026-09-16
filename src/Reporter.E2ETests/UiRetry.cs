@@ -185,6 +185,70 @@ public static class UiRetry
     }
 
     /// <summary>
+    /// Selects a Shell tab by its localized title and returns whether a
+    /// selectable candidate was found in time. Prefers the selection-item
+    /// pattern, falls back to invoking/clicking a non-text candidate and opens
+    /// the NavigationView overflow ("Mehr"/"More") when the tab is not yet in
+    /// the UIA tree — on the narrow window only the first tabs render in the
+    /// Shell tab strip. Callers assert on the result and wait for an anchor of
+    /// the target page themselves.
+    /// </summary>
+    /// <param name="window">The main window to search.</param>
+    /// <param name="tabTitle">The localized tab title.</param>
+    /// <returns>Whether the tab was selected.</returns>
+    public static bool SelectTab(Window window, string tabTitle)
+    {
+        return WaitFor(() =>
+        {
+            var candidates = window.FindAllDescendants(cf => cf.ByName(tabTitle));
+            foreach (var candidate in candidates)
+            {
+                if (candidate.Patterns.SelectionItem.TryGetPattern(out var selection))
+                {
+                    selection.Select();
+                    return true;
+                }
+            }
+
+            var clickable = candidates.FirstOrDefault(e => e.ControlType != ControlType.Text);
+            if (clickable is not null)
+            {
+                InvokeOrClick(clickable);
+                return true;
+            }
+
+            var overflow = window.FindFirstDescendant(cf => cf.ByAutomationId("TopNavOverflowButton"));
+            if (overflow is not null)
+            {
+                InvokeOrClick(overflow);
+            }
+
+            return false;
+        });
+    }
+
+    /// <summary>
+    /// Waits for a feed or category card by its title. Cards are MAUI borders
+    /// exposed as a Group; the CollectionView ListItem wrapper carries the same
+    /// name, so the group is preferred — a Select() on the list item would not
+    /// fire the tap gesture. When no group appears within
+    /// <paramref name="timeout"/>, any element with the title is accepted as a
+    /// fallback (with the regular 20 s default timeout).
+    /// </summary>
+    /// <param name="root">The element to search below.</param>
+    /// <param name="title">The card title (UIA name).</param>
+    /// <param name="timeout">An optional timeout for the group lookup overriding the 20 s default.</param>
+    /// <returns>The found card element.</returns>
+    public static AutomationElement WaitForCard(
+        AutomationElement root,
+        string title,
+        TimeSpan? timeout = null)
+    {
+        return TryFindElementByName(root, title, ControlType.Group, timeout)
+            ?? WaitForElementByName(root, title);
+    }
+
+    /// <summary>
     /// Polls <paramref name="condition"/> until it returns <see langword="true"/> or
     /// the timeout elapses.
     /// </summary>

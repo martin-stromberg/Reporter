@@ -15,6 +15,8 @@
 
 Tippe auf das App-Icon **Reporter**. Nach dem Start-Screen erscheint die Navigationsleiste am unteren Bildschirmrand.
 
+> **Hinweis:** Beim allerersten Start nach der Installation ist die App nicht leer — unter **Feeds** liegt bereits der Beispiel-Feed **Apple Newsroom**, unter **Kategorien** die Kategorie **News**. Beide lassen sich wie selbst angelegte Einträge bearbeiten oder löschen.
+
 ### 2. Zwischen den Bereichen wechseln
 
 Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
