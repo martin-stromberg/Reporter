@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Data;
 using Reporter.Data.Repositories;
@@ -160,6 +161,31 @@ public class ServiceCollectionTests
         var provider = services.BuildServiceProvider();
 
         Assert.NotNull(provider.GetRequiredService<IScheduledSyncRunner>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the demo content service can be resolved with a registered
+    /// <see cref="FirstRunState"/> and the repository set, mirroring the
+    /// <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesDemoContentService()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton(new FirstRunState { IsFirstRun = false, DemoSeedSuppressed = false })
+            .AddSingleton<IDemoContentService, DemoContentService>()
+            .AddSingleton<IDebugLogService, FakeDebugLogService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IDemoContentService>());
 
         connection.Dispose();
     }

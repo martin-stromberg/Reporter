@@ -6,7 +6,7 @@
 
 ## Übersicht
 
-Die E2E-Infrastruktur exponiert zwei Schnittstellen: den HTTP-Antwortbereich des in-process `StubFeedServer` (die „API", gegen die die getestete App läuft) sowie den erweiterten `FeedSearchService`-Konstruktor und die drei Umgebungsvariablen als Prozess-Schnittstelle.
+Die E2E-Infrastruktur exponiert zwei Schnittstellen: den HTTP-Antwortbereich des in-process `StubFeedServer` (die „API", gegen die die getestete App läuft) sowie den erweiterten `FeedSearchService`-Konstruktor und die vier Umgebungsvariablen als Prozess-Schnittstelle.
 
 ## Authentifizierung
 
@@ -86,4 +86,5 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 |----------|-------------|-------------|---------|
 | `REPORTER_FEEDSEARCH_ENDPOINT` | `MauiProgram.CreateMauiApp` → `ResolveFeedSearchEndpoint` | Nur absolute `http`/`https`-URIs (`Uri.TryCreate`, `UriKind.Absolute`); ungültig/leer → `null` → Default-Endpunkt | Feed-Verzeichnis-Anfragen gehen an den Override statt `feedsearch.dev` |
 | `REPORTER_DB_PATH` | `MauiProgram.CreateMauiApp` | Nur `IsNullOrWhiteSpace`; `Directory.CreateDirectory` legt das Verzeichnis an | Vollständiger Dateipfad der SQLite-DB statt `FileSystem.AppDataDirectory/reporter.db` |
+| `REPORTER_DISABLE_DEMO_SEED` | `MauiProgram.CreateMauiApp` → `ResolveDemoSeedSuppressed` | Gesetzt und weder `"0"` noch `"false"` (`OrdinalIgnoreCase`) → unterdrückt; leer/`0`/`false` → Seed aktiv | Macht `IDemoContentService.EnsureSeededAsync` zum No-op — die App legt auf der frischen DB keine Demo-Kategorie/keinen Demo-Feed an |
 | `REPORTER_APP_PATH` | `ReporterAppFixture.ResolveAppPath` | Muss auf eine existierende Datei zeigen, sonst Konventionspfad `src/Reporter/bin/Debug/net10.0-windows10.0.19041.0/win-x64/Reporter.exe` (Vorfahren-Suche ab `AppContext.BaseDirectory`) | Pfad zur zu testenden `Reporter.exe` |

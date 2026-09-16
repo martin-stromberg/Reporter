@@ -9,6 +9,7 @@
 
 ## What's New
 
+- Fresh installations now start with demo content: a "News" category containing the "Apple Newsroom" feed (`https://www.apple.com/newsroom/rss-feed.rss`) — notifications for the feed are off by default, its articles are loaded by the regular startup sync, and feed and category can be edited or deleted like normal entries. Existing installations are unaffected.
 - Internal tooling — no user-facing change: `scripts/iOS-Deployment.ps1` gained `store`/`upload` actions for signed release builds, IPA validation and upload to App Store Connect/TestFlight via the App Store Connect API, including automatic build-number bump, SSH delegation from Windows and step-by-step setup docs under `docs/help/ios-deployment/`.
 - Fixed: feeds published in the legacy Atom 0.3 format (e.g. sportschau.de) now synchronize — previously the refresh failed with an "invalid feed format" error.
 - Internal quality measure — no user-facing change: new end-to-end test suite for the Windows app (`src/Reporter.E2ETests`, invoked via `scripts/Run-E2ETests.ps1`) that launches the app against a local stub server and smoke-tests the main screens via FlaUI/UIA3 — enabled by compiled bindings on all views and the test-only environment variables `REPORTER_FEEDSEARCH_ENDPOINT` and `REPORTER_DB_PATH`.
@@ -52,6 +53,7 @@
 
 ## Neuerungen
 
+- Neuinstallationen starten jetzt mit Demo-Inhalt: eine Kategorie „News" mit dem Feed „Apple Newsroom" (`https://www.apple.com/newsroom/rss-feed.rss`) — Benachrichtigungen des Feeds sind standardmäßig aus, die Artikel lädt der reguläre Start-Abruf, und Feed wie Kategorie lassen sich wie normale Einträge bearbeiten oder löschen. Bestandsinstallationen bleiben unberührt.
 - Korrigiert: Feeds im veralteten Atom-0.3-Format (z. B. sportschau.de) werden jetzt synchronisiert — zuvor schlug der Abruf mit dem Fehler „ungültiges Feed-Format" fehl.
 - Interne Qualitätsmaßnahme — keine anwendersichtbare Änderung: neue End-to-End-Testsuite für die Windows-App (`src/Reporter.E2ETests`, Aufruf via `scripts/Run-E2ETests.ps1`), die die App gegen einen lokalen Stub-Server startet und die Hauptansichten per FlaUI/UIA3-Smoke-Tests prüft — ermöglicht durch Compiled Bindings auf allen Views und die nur für Testzwecke gedachten Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT` und `REPORTER_DB_PATH`.
 - iOS: Feeds werden jetzt auch bei geschlossener App aktualisiert — über einen vom System eingeplanten Hintergrundabruf, der den Einstellungen „Automatische Hintergrund-Aktualisierung" und „Abruf-Intervall" folgt und bei deaktiviertem automatischem Abruf abgemeldet wird.

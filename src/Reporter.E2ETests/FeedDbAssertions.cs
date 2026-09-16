@@ -20,12 +20,47 @@ public static class FeedDbAssertions
     /// <param name="url">The feed URL to look for.</param>
     /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
     /// <returns>Whether a feed row with the URL exists.</returns>
-    public static async Task<bool> FeedExistsAsync(string databasePath, string url, TimeSpan? timeout = null)
+    public static Task<bool> FeedExistsAsync(string databasePath, string url, TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => ExistsCoreAsync(
+                path,
+                "SELECT COUNT(*) FROM feeds WHERE url = $url",
+                "$url",
+                url));
+
+    /// <summary>
+    /// Polls the <c>categories</c> table until a row with the given name exists
+    /// or the timeout elapses. Mirrors the polling structure of
+    /// <see cref="FeedExistsAsync"/>.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="name">The category name to look for.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether a category row with the name exists.</returns>
+    public static Task<bool> CategoryExistsAsync(string databasePath, string name, TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => ExistsCoreAsync(
+                path,
+                "SELECT COUNT(*) FROM categories WHERE name = $name",
+                "$name",
+                name));
+
+    // Polls the check until it reports the row or the timeout elapses; the
+    // polling absorbs the delay between the UI action and the asynchronous
+    // persistence inside the app.
+    private static async Task<bool> PollUntilExistsAsync(
+        string databasePath,
+        TimeSpan? timeout,
+        Func<string, Task<bool>> check)
     {
         var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(15));
         while (true)
         {
-            if (await ExistsCoreAsync(databasePath, url).ConfigureAwait(false))
+            if (await check(databasePath).ConfigureAwait(false))
             {
                 return true;
             }
@@ -39,7 +74,13 @@ public static class FeedDbAssertions
         }
     }
 
-    private static async Task<bool> ExistsCoreAsync(string databasePath, string url)
+    // Runs a read-only "does a row match" COUNT query with a single string
+    // parameter against the app's database.
+    private static async Task<bool> ExistsCoreAsync(
+        string databasePath,
+        string commandText,
+        string parameterName,
+        string value)
     {
         if (!File.Exists(databasePath))
         {
@@ -50,8 +91,8 @@ public static class FeedDbAssertions
             $"Data Source={databasePath};Mode=ReadOnly;Default Timeout=5");
         await connection.OpenAsync().ConfigureAwait(false);
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM feeds WHERE url = $url";
-        command.Parameters.AddWithValue("$url", url);
+        command.CommandText = commandText;
+        command.Parameters.AddWithValue(parameterName, value);
         var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
         return result is long count && count > 0;
     }

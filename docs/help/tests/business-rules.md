@@ -36,18 +36,34 @@
 
 ## Env-Override-Validierung in der App
 
-**Beschreibung:** Die beiden Test-Overrides sind bewusst schmal gehalten — sie existieren nur auf Prozess-Start-Ebene und sind kein persistiertes Benutzer-Setting.
+**Beschreibung:** Die Test-Overrides sind bewusst schmal gehalten — sie existieren nur auf Prozess-Start-Ebene und sind kein persistiertes Benutzer-Setting.
 
 **Bedingungen:**
 - `REPORTER_FEEDSEARCH_ENDPOINT`: nicht leer **und** `Uri.TryCreate(…, UriKind.Absolute)` mit Scheme `http` oder `https`.
 - `REPORTER_DB_PATH`: lediglich `!string.IsNullOrWhiteSpace`.
+- `REPORTER_DISABLE_DEMO_SEED`: gesetzt (nicht leer) **und** weder `"0"` noch `"false"` (`OrdinalIgnoreCase`).
 
 **Verhalten:**
 - Gültiger Endpoint → `IFeedSearchService`-Factory übergibt ihn an `FeedSearchService(HttpClient, string?)`.
 - Ungültiger/leerer Endpoint → `null` → Konstruktor-Fallback auf `https://feedsearch.dev/api/v1/search` (kein Fehler, keine Meldung).
 - Ungültiger DB-Pfad → sichtbare Ausnahme beim App-Start (bewusst, da reiner Test-Override).
+- Unterdrückungs-Flag gesetzt → `FirstRunState.DemoSeedSuppressed = true` → `IDemoContentService.EnsureSeededAsync` ist ein No-op; `0`/`false`/nicht gesetzt lassen den Seed unverändert aktiv.
 
-**Umsetzung:** `MauiProgram.CreateMauiApp` / `ResolveFeedSearchEndpoint` (`src/Reporter/MauiProgram.cs`), `FeedSearchService`-Konstruktor (`src/Reporter.Core/Services/FeedSearchService.cs`).
+**Umsetzung:** `MauiProgram.CreateMauiApp` / `ResolveFeedSearchEndpoint` / `ResolveDemoSeedSuppressed` (`src/Reporter/MauiProgram.cs`), `FeedSearchService`-Konstruktor (`src/Reporter.Core/Services/FeedSearchService.cs`), `DemoContentService` (`src/Reporter.Core/Services/DemoContentService.cs`).
+
+## Demo-Seed-Unterdrückung statt impliziter Kopplung
+
+**Beschreibung:** Jeder E2E-Lauf startet die App mit einer frischen Temp-Datenbank — ohne Gegenmaßnahme würde der First-Run-Demo-Seed (Kategorie „News", Feed „Apple Newsroom") in jedem Lauf greifen: eine zusätzliche Feed-Karte und Kategorie in den Smoke-Tests sowie ein echter externer Abruf von apple.com durch den Start-Sync.
+
+**Bedingungen:**
+- `ReporterAppFixture.InitializeAsync` setzt `REPORTER_DISABLE_DEMO_SEED=1` auf dem App-Prozess.
+- `DemoSeedTests` braucht den Seed dagegen aktiv — die Unterdrückung darf nicht an das Vorhandensein von `REPORTER_DB_PATH` gekoppelt sein (dieses wird auch für manuelle Starts mit frischer DB genutzt, wo der Seed greifen soll).
+
+**Verhalten:**
+- Die Fixture-Instanz läuft hermetisch: kein Demo-Content, kein externer Netzverkehr zum Demo-Feed.
+- `DemoSeedTests` startet eine eigene `Reporter.exe`-Instanz, entfernt `REPORTER_DISABLE_DEMO_SEED` explizit aus deren Environment (ein global gesetzter Wert würde die Testprämisse „kein Suppression-Flag" sonst verletzen) und weist den Seed über DB-Assertions und die sichtbare Karte nach — unabhängig vom Sync-Erfolg gegen apple.com.
+
+**Umsetzung:** `ReporterAppFixture.InitializeAsync` und `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed` (`src/Reporter.E2ETests/`).
 
 ## Compiled Bindings: typisierte Kontexte und Runtime-Fallbacks
 

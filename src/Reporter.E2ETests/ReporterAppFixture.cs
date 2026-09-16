@@ -57,6 +57,10 @@ public sealed class ReporterAppFixture : IAsyncLifetime
         var startInfo = new ProcessStartInfo(appPath) { UseShellExecute = false };
         startInfo.Environment["REPORTER_FEEDSEARCH_ENDPOINT"] = Server.DirectoryUrl;
         startInfo.Environment["REPORTER_DB_PATH"] = DatabasePath;
+        // The fresh temp database would trigger the first-run demo seed: the
+        // extra "News" category and feed card plus the real apple.com request
+        // would break the hermetic smoke tests, so the seed is disabled here.
+        startInfo.Environment["REPORTER_DISABLE_DEMO_SEED"] = "1";
         var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException($"Could not start '{appPath}'.");
 
@@ -178,7 +182,8 @@ public sealed class ReporterAppFixture : IAsyncLifetime
     // REPORTER_APP_PATH wins when it points at an existing file; otherwise the
     // Debug build output convention is used by walking up from the test output
     // directory until the repository root (containing src/Reporter) is found.
-    private static string ResolveAppPath()
+    // Internal so DemoSeedTests can reuse the resolution for its own instance.
+    internal static string ResolveAppPath()
     {
         var overridePath = Environment.GetEnvironmentVariable("REPORTER_APP_PATH");
         if (!string.IsNullOrWhiteSpace(overridePath) && File.Exists(overridePath))

@@ -18,6 +18,8 @@ Nach dem Start erscheint die untere Navigationsleiste mit fünf Bereichen — je
 - **Kategorien** — Verwaltet Kategorien für Feeds.
 - **Einstellungen** — Konfiguriert Aufbewahrungsdauer, Keyword-Filter, automatische Hintergrund-Aktualisierung, den Abruf beim Programmstart, die Sortierung der Ungelesen-Liste, automatisches Als-gelesen-Markieren, Benachrichtigungen mit Ruhezeiten, das Farbschema und die Sprache. Unter **Diagnose & Support** sammelst du bei Bedarf Fehlerinformationen der laufenden Sitzung und sendest sie als vorbefüllten E-Mail-Entwurf an den Support. Details siehe [Einstellungen](../einstellungen/index.md).
 
+Beim allerersten Start (frische Installation mit leerer Datenbank) richtet Reporter bereits einen Beispiel-Feed ein: die Kategorie **News** mit dem Feed **Apple Newsroom** (`https://www.apple.com/newsroom/rss-feed.rss`). Der Feed erscheint wie jeder andere als Karte unter **Feeds**, wird beim Start-Abruf synchronisiert und lässt sich jederzeit bearbeiten oder löschen; Benachrichtigungen sind für ihn vorsorglich ausgeschaltet.
+
 Artikelkarten zeigen neben Titel und Teasertext ein Bild — das Artikelbild, ersatzweise das Favicon des Feeds oder einen Kreis mit dem Anfangsbuchstaben des Feeds — sowie eine geschätzte Lesezeit (bei höchstens einer Minute entfällt die Angabe) und bei ungelesenen Artikeln einen kleinen Punkt in der Kopfzeile; gemerkte Artikel erkennst du am ausgefüllten Lesezeichen. In der Artikeldetailansicht schwebt die Aktionsleiste (Zurück, Lesezeichen, Schriftgröße, Gelesen-Markierung, Teilen, Im Browser öffnen) als abgerundete Leiste über dem Seitenrand. Die App ist für die Bedienung per Screenreader vorbereitet und folgt der Schriftgrößen-Einstellung des Geräts — siehe [Barrierefreiheit](barrierefreiheit.md).
 
 Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist beim App-Start automatisch entfernt. Neue Artikel, die ein Filter-Schlagwort enthalten, werden bereits beim Abruf verworfen und erscheinen nicht in den Listen; bereits gespeicherte Treffer werden nach dem Lesen fristbasiert entfernt. Ungelesene Artikel und Artikel, die du dir für später gemerkt hast, bleiben dabei immer erhalten.
@@ -32,3 +34,4 @@ Auf iOS benachrichtigt dich die App über neue Artikel, sobald der automatische 
 ## Einschränkungen
 
 - Die App benötigt noch keine Anmeldung.
+- Der Beispiel-Feed **Apple Newsroom** wird nur beim allerersten Start mit leerer Datenbank angelegt — löschst du ihn, kommt er nicht wieder (Ausnahme: Die App-Daten werden vollständig zurückgesetzt, dann startet die App wieder wie neu).

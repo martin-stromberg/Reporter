@@ -75,33 +75,7 @@ public sealed class SmokeTests
     // the UIA tree once that flyout is opened.
     private void SelectTab(string tabTitle)
     {
-        var selected = UiRetry.WaitFor(() =>
-        {
-            var candidates = Window.FindAllDescendants(cf => cf.ByName(tabTitle));
-            foreach (var candidate in candidates)
-            {
-                if (candidate.Patterns.SelectionItem.TryGetPattern(out var selection))
-                {
-                    selection.Select();
-                    return true;
-                }
-            }
-
-            var clickable = candidates.FirstOrDefault(e => e.ControlType != ControlType.Text);
-            if (clickable is not null)
-            {
-                UiRetry.InvokeOrClick(clickable);
-                return true;
-            }
-
-            var overflow = Window.FindFirstDescendant(cf => cf.ByAutomationId("TopNavOverflowButton"));
-            if (overflow is not null)
-            {
-                UiRetry.InvokeOrClick(overflow);
-            }
-
-            return false;
-        });
+        var selected = UiRetry.SelectTab(Window, tabTitle);
         Assert.True(
             selected,
             $"Tab '{tabTitle}' was not found. App running: {!_fixture.App.HasExited}");
@@ -150,12 +124,10 @@ public sealed class SmokeTests
         return cardTitle;
     }
 
-    // Finds a card by its title. Cards are MAUI borders exposed as a Group; the
-    // CollectionView ListItem wrapper carries the same name, so the group is
-    // preferred — a Select() on the list item would not fire the tap gesture.
+    // Finds a card by its title (see UiRetry.WaitForCard for the Group-first
+    // lookup with fallback).
     private AutomationElement WaitForCard(string title)
-        => UiRetry.TryFindElementByName(Window, title, ControlType.Group, TimeSpan.FromSeconds(5))
-            ?? WaitForElementByName(title);
+        => UiRetry.WaitForCard(Window, title, TimeSpan.FromSeconds(5));
 
     // Taps a feed card by its title (SemanticProperties.Description -> UIA name).
     private void OpenFeedActions(string feedTitle)
