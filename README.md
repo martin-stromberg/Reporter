@@ -101,10 +101,11 @@ dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
 
 Fuer gezieltes Build/Deployment (IPA, Simulator, physisches Geraet) steht `scripts/iOS-Deployment.ps1` bereit:
 
-**Wichtig:** `simulator` und `device` setzen voraus, dass das Skript direkt auf einem Mac ausgefuehrt wird.
+**Wichtig:** `simulator` setzt voraus, dass das Skript direkt auf einem Mac ausgefuehrt wird.
 Microsoft unterstuetzt `dotnet build -t:Run` fuer iOS/tvOS aktuell **nicht von Windows aus**.
-Auf Windows koennen mit `build` die iOS-Kompilate (bzw. mit Codesigning `.ipa`) erzeugt werden;
-das Deployment muss dann ueber Visual Studio oder manuell auf dem Mac erfolgen.
+`device` und `list` funktionieren von Windows per SSH an den Build-Mac (`-ServerAddress`/`-ServerUser`,
+schluesselbasiertes SSH noetig): Der Build laeuft ueber Pair-to-Mac, die Installation und der Start auf dem
+Geraet ueber `xcrun devicectl` — mit `-Console` wird die App-Ausgabe ins Terminal gestreamt.
 
 Auf dem Mac startet `simulator` die App im iOS-Simulator, wartet kurz und speichert
 einen Screenshot unter `src/Reporter/bin/<config>/net10.0-ios/<rid>/`.
@@ -117,7 +118,11 @@ einen Screenshot unter `src/Reporter/bin/<config>/net10.0-ios/<rid>/`.
 .\scripts\iOS-Deployment.ps1 -Action build -CodesignKey "Apple Distribution: ..." -CodesignProvision "ReporterProfile" -ServerAddress 192.168.1.10 -ServerUser me
 .\scripts\iOS-Deployment.ps1 -Action simulator -Device "E25BBE37-69BA-4720-B6FD-D54C97791E79"
 .\scripts\iOS-Deployment.ps1 -Action device -Device "DEINE-UDID" -CodesignKey "..." -CodesignProvision "..."
+.\scripts\iOS-Deployment.ps1 -Action store    # Release-Build + Validierung + Upload nach App Store Connect (TestFlight)
+.\scripts\iOS-Deployment.ps1 -Action upload -IpaPath "..."  # vorhandene .ipa erneut hochladen
 ```
+
+`store`/`upload` benoetigen zusaetzlich einen App-Store-Connect-API-Key (`-ApiKeyPath`/`-ApiKeyId`/`-ApiIssuerId` bzw. `REPORTER_IOS_API_*`) und funktionieren auf dem Mac direkt sowie von Windows per SSH-Delegation an den Build-Host (schluesselbasiertes SSH noetig). `store` erhoeht automatisch die Buildnummer (`-NoBumpBuildNumber` schaltet das ab); alle Laeufe protokollieren nach `logs/`. Setup-Anleitung (Zertifikat, Profil, API-Key, App-Eintrag) und der Weg ueber TestFlight bis zur oeffentlichen Freigabe stehen in [docs/help/ios-deployment/](docs/help/ios-deployment/index.md).
 
 ## Konfiguration
 

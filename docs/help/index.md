@@ -15,5 +15,6 @@
 
 ## Systemverwaltung
 
+- [iOS-Deployment](ios-deployment/index.md) — Der lokale iOS-Buildlauf bringt Reporter per Skript auf ein Gerät oder in den App Store/TestFlight: Einmal-Setup (Zertifikat, Profil, API-Key), Upload-Ablauf und Schritt-für-Schritt-Anleitung für TestFlight-Tester und öffentliche Freigabe.
 - [Release-Management](release-management/index.md) — Die automatisierte Release-Pipeline erzeugt RC-Pre-Releases auf `staging`, Promotion-PRs nach `main`, stabile Releases mit Plattform-Artefakten und Backmerge-PRs zurück nach `staging`.
 - [Tests](tests/index.md) — Die automatisierte Testinfrastruktur umfasst neben den Unit-Tests eine End-to-End-Smoke-Suite, die die echte Windows-App gegen einen lokalen Test-Webserver fährt, sowie Compiled Bindings auf allen XAML-Views, die Binding-Fehler bereits zur Compile-Zeit sichtbar machen.
