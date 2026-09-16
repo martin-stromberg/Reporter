@@ -9,6 +9,7 @@
 
 ## What's New
 
+- Internal tooling — no user-facing change: `scripts/iOS-Deployment.ps1` gained `store`/`upload` actions for signed release builds, IPA validation and upload to App Store Connect/TestFlight via the App Store Connect API, including automatic build-number bump, SSH delegation from Windows and step-by-step setup docs under `docs/help/ios-deployment/`.
 - Fixed: feeds published in the legacy Atom 0.3 format (e.g. sportschau.de) now synchronize — previously the refresh failed with an "invalid feed format" error.
 - Internal quality measure — no user-facing change: new end-to-end test suite for the Windows app (`src/Reporter.E2ETests`, invoked via `scripts/Run-E2ETests.ps1`) that launches the app against a local stub server and smoke-tests the main screens via FlaUI/UIA3 — enabled by compiled bindings on all views and the test-only environment variables `REPORTER_FEEDSEARCH_ENDPOINT` and `REPORTER_DB_PATH`.
 - iOS: feeds are now also refreshed while the app is closed, via an OS-scheduled background refresh task — the schedule follows the "Automatic background refresh" switch and the "Fetch interval" setting, and the task is cancelled when automatic refresh is disabled.
