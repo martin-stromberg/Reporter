@@ -7,6 +7,7 @@ using Reporter.Core.Services;
 #if IOS
 using BackgroundTasks;
 using Foundation;
+using UIKit;
 #endif
 
 namespace Reporter.Services;
@@ -50,6 +51,17 @@ public class BackgroundRefreshService : IBackgroundRefreshService
 #if IOS
         if (settings.AutoRefreshEnabled)
         {
+            var refreshStatus = UIApplication.SharedApplication.BackgroundRefreshStatus;
+            if (refreshStatus != UIBackgroundRefreshStatus.Available)
+            {
+                // Deaktiviert in den iOS-Einstellungen oder eingeschraenkt (z. B.
+                // Energiesparmodus, Bildschirmzeit) — Submit wuerde mit
+                // BGTaskSchedulerErrorCode.Unavailable fehlschlagen.
+                Debug.WriteLine($"BackgroundRefreshService scheduling unavailable: {refreshStatus}");
+                _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh scheduling unavailable", $"BackgroundRefreshStatus: {refreshStatus}", DebugLogLevel.Warning);
+                return Task.CompletedTask;
+            }
+
             var intervalMinutes = SettingsValues.ClampRefreshIntervalMinutes(settings.RefreshIntervalMinutes);
             var request = new BGAppRefreshTaskRequest(RefreshTaskIdentifier)
             {
@@ -63,10 +75,15 @@ public class BackgroundRefreshService : IBackgroundRefreshService
                 Debug.WriteLine($"BackgroundRefreshService submit failed: {error?.LocalizedDescription}");
                 _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh scheduling failed", error?.ToString(), DebugLogLevel.Warning);
             }
+            else
+            {
+                _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh scheduled", $"Identifier: {RefreshTaskIdentifier}, earliest: {request.EarliestBeginDate}, interval: {intervalMinutes} min", DebugLogLevel.Info);
+            }
         }
         else
         {
             BGTaskScheduler.Shared.Cancel(RefreshTaskIdentifier);
+            _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh unscheduled", $"Identifier: {RefreshTaskIdentifier}", DebugLogLevel.Info);
         }
 #endif
         return Task.CompletedTask;

@@ -51,16 +51,21 @@ public class AppDelegate : MauiUIApplicationDelegate
             }
         });
 
+        var debugLogService = IPlatformApplication.Current?.Services?.GetService<IDebugLogService>();
         if (!registered)
         {
             Debug.WriteLine($"AppDelegate background task registration failed: {BackgroundRefreshService.RefreshTaskIdentifier}");
-            var debugLogService = IPlatformApplication.Current?.Services?.GetService<IDebugLogService>();
             _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background task registration failed", $"Identifier: {BackgroundRefreshService.RefreshTaskIdentifier}", DebugLogLevel.Warning);
+        }
+        else
+        {
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background task registered", $"Identifier: {BackgroundRefreshService.RefreshTaskIdentifier}", DebugLogLevel.Info);
         }
     }
 
     private async Task HandleRefreshTaskAsync(BGAppRefreshTask task)
     {
+        var stopwatch = Stopwatch.StartNew();
         using var cts = new CancellationTokenSource();
         task.ExpirationHandler = cts.Cancel;
 
@@ -70,6 +75,7 @@ public class AppDelegate : MauiUIApplicationDelegate
         {
             var services = IPlatformApplication.Current?.Services;
             debugLogService = services?.GetService<IDebugLogService>();
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh task started", $"Identifier: {task.Identifier}", DebugLogLevel.Info);
             var scheduledSyncRunner = services?.GetService<IScheduledSyncRunner>();
             if (scheduledSyncRunner is not null)
             {
@@ -90,6 +96,7 @@ public class AppDelegate : MauiUIApplicationDelegate
         }
         finally
         {
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh task completed", $"Success: {success}, elapsed: {stopwatch.ElapsedMilliseconds} ms", DebugLogLevel.Info);
             task.SetTaskCompleted(success);
         }
     }

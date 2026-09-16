@@ -21,6 +21,7 @@ public class NotificationService : INotificationService
     private readonly ISettingsRepository _settingsRepository;
     private readonly IKeywordFilter _keywordFilter;
     private readonly ILocalNotificationService _localNotificationService;
+    private readonly IDebugLogService? _debugLogService;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>
@@ -30,16 +31,19 @@ public class NotificationService : INotificationService
     /// <param name="keywordFilter">The keyword filter used to exclude matching items.</param>
     /// <param name="localNotificationService">The platform notification service.</param>
     /// <param name="timeProvider">The time provider used for the quiet-hours evaluation.</param>
+    /// <param name="debugLogService">The optional session debug log service used to record suppressed notifications.</param>
     public NotificationService(
         ISettingsRepository settingsRepository,
         IKeywordFilter keywordFilter,
         ILocalNotificationService localNotificationService,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IDebugLogService? debugLogService = null)
     {
         _settingsRepository = settingsRepository;
         _keywordFilter = keywordFilter;
         _localNotificationService = localNotificationService;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _debugLogService = debugLogService;
     }
 
     /// <inheritdoc />
@@ -53,11 +57,13 @@ public class NotificationService : INotificationService
         var settings = await _settingsRepository.GetAsync(cancellationToken).ConfigureAwait(false);
         if (!settings.NotificationsEnabled)
         {
+            _ = _debugLogService?.LogAsync(DebugLogCategory.Notification, "Notification suppressed: globally disabled", $"Feed '{feed.Title}', {newItems.Count} new items", DebugLogLevel.Info);
             return;
         }
 
         if (IsQuietHoursActive(settings))
         {
+            _ = _debugLogService?.LogAsync(DebugLogCategory.Notification, "Notification suppressed: quiet hours", $"Feed '{feed.Title}', {newItems.Count} new items", DebugLogLevel.Info);
             return;
         }
 

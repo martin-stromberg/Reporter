@@ -34,11 +34,13 @@ public class ScheduledSyncRunner : IScheduledSyncRunner
     /// <inheritdoc />
     public async Task<bool> RunAsync(CancellationToken cancellationToken = default)
     {
+        _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh sync started", level: DebugLogLevel.Info);
         var success = false;
         try
         {
-            await _feedSyncService.SyncAllAsync(cancellationToken).ConfigureAwait(false);
-            success = true;
+            var result = await _feedSyncService.SyncAllAsync(cancellationToken).ConfigureAwait(false);
+            success = result.Status != FeedHealth.Error;
+            _ = _debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh sync finished", $"Status: {result.Status}, NewItems: {result.NewItems}", DebugLogLevel.Info);
         }
         catch (Exception ex)
         {

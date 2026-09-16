@@ -23,6 +23,11 @@ public static class DebugLogCategory
     public const string Exception = "Exception";
 
     /// <summary>
+    /// Category for local notification delivery events.
+    /// </summary>
+    public const string Notification = "Notification";
+
+    /// <summary>
     /// Category for settings-related events.
     /// </summary>
     public const string Settings = "Settings";

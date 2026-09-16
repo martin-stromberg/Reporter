@@ -19,6 +19,21 @@ Der Fortsetzungslauf hat über eine Pair-to-Mac-Verbindung (macOS 26.6.2, Xcode 
 
 Die verbleibenden Punkte erfordern ein **physisches iOS-Gerät** (bzw. eine macOS-GUI-Sitzung für die Tap-Navigation): Der Simulator lehnt `BGTaskScheduler.Submit` mit `BGTaskSchedulerErrorDomain Code=1` (Unavailable) ab — trotz `backgroundRefreshStatus = 2` (Available) —, sodass kein Pending-Request entsteht und `_simulateLaunchForTaskWithIdentifier`/`_simulateExpirationForTaskWithIdentifier` die Simulation verweigern. Auch der private Pfad `_unsafe_submitTaskRequest:` wurde erfolglos geprüft.
 
+## Stand nach Geräte-Rückmeldung (2026-09-16)
+
+Der Anwender hat das Feature auf einem physischen Gerät getestet: App gestartet (Abruf lief), alle Beiträge gelesen, Benachrichtigungen + 30-Minuten-Intervall aktiv, App in den Hintergrund gebracht — nach 2 Stunden **keine** Benachrichtigung trotz neuer Artikel. Beim Wiederöffnen war die Startseite leer; nach Navigation erschienen Beiträge (Startseiten-Aktualisierung ist ein separates, später zu lösendes Problem).
+
+Wahrscheinlichste Ursachen: iOS hat den `BGAppRefreshTask` schlicht noch nicht zugestellt (`EarliestBeginDate` ist nur eine Untergrenze — Zustellung heuristikgesteuert), `Hintergrundaktualisierung`/`Energiesparmodus` auf dem Gerät deaktiviert, oder die Mitteilung wurde unterdrückt.
+
+**Gegenmaßnahmen (umgesetzt):**
+- Vollständiges Lifecycle-Logging über die ganze Kette (`IDebugLogService`, Kategorien `Sync`/`Notification`): `Background task registered`, `Background refresh scheduled` (inkl. `earliest`), `Background refresh task started`/`completed`, `Background refresh sync started`/`finished`, `Notification posted`/`dropped`/`suppressed`. Damit zeigt ein Debugbericht exakt, an welcher Stelle die Kette abbricht.
+- `BackgroundRefreshService` wertet jetzt `UIApplication.BackgroundRefreshStatus` aus — bei `Denied`/`Restricted` (iOS-Option aus/Energiesparmodus/Bildschirmzeit) wird `Submit` übersprungen und als `Warning` protokolliert.
+- `ScheduledSyncRunner.RunAsync` wertet jetzt `SyncResult.Status` aus (`Error` → `SetTaskCompleted(false)`).
+- `FeedSyncService.SyncAllAsync` serialisiert Gesamt-Syncs per `_syncAllLock` (behebt echte Race: Start-Abruf eines Task-getriggerten Starts parallel zum Task-Handler → doppelte Items/Benachrichtigungen).
+- Troubleshooting-Doku erweitert: Debugbericht-Workflow, iOS-Checkliste (Hintergrundaktualisierung, Energiesparmodus, kein Force-Quit), Hinweis dass das Intervall eine Mindestpause ist.
+
+**Verbleibt offen:** Verifikation der tatsächlichen `BGAppRefreshTask`-Zustellung auf dem Gerät des Anwenders — mit dem neuen Logging über einen Debugbericht belegbar.
+
 ## Offene Planelemente
 
 - [ ] E2E-Pflichtszenario (Tasks #23, Plan-Tabelle „E2E-Tests") — **teilweise verifiziert**: Vordergrund-Syncs ohne Banner/Sound/Mitteilungszentrum (Simulator-Logs belegt für Timer- und Startup-Pfad; Pull-to-Refresh-Geste nicht separat ausgelöst), `AutoRefreshEnabled`-Kopplung auf Submit/Cancel-Ebene belegt. **Offen:** tatsächliche `BGAppRefreshTask`-Ausführung mit sichtbarer Mitteilung (Simulator: Submit = Code 1 Unavailable), Expiration-Verhalten, Tap-Navigation — physisches iOS-Gerät erforderlich.

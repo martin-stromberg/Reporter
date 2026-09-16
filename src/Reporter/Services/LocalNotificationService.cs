@@ -1,7 +1,9 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Diagnostics;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
+using Reporter.Core.Services;
 #if IOS
 using Foundation;
 using UserNotifications;
@@ -19,6 +21,17 @@ public class LocalNotificationService : ILocalNotificationService
     private const UNAuthorizationOptions RequestedAuthorizationOptions =
         UNAuthorizationOptions.Alert | UNAuthorizationOptions.Badge | UNAuthorizationOptions.Sound;
 #endif
+
+    private readonly IDebugLogService? _debugLogService;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LocalNotificationService"/> class.
+    /// </summary>
+    /// <param name="debugLogService">The optional session debug log service used to record delivery events.</param>
+    public LocalNotificationService(IDebugLogService? debugLogService = null)
+    {
+        _debugLogService = debugLogService;
+    }
 
     /// <inheritdoc />
     public bool IsSupported =>
@@ -65,6 +78,8 @@ public class LocalNotificationService : ILocalNotificationService
 #if IOS
         if (!await EnsureAuthorizedAsync(cancellationToken).ConfigureAwait(false))
         {
+            Debug.WriteLine($"LocalNotificationService notification dropped (not authorized): {identifier}");
+            _ = _debugLogService?.LogAsync(DebugLogCategory.Notification, "Notification dropped: authorization not granted", $"Identifier: {identifier}, Title: {title}", DebugLogLevel.Warning);
             return;
         }
 
@@ -80,6 +95,7 @@ public class LocalNotificationService : ILocalNotificationService
         await UNUserNotificationCenter.Current.AddNotificationRequestAsync(request)
             .WaitAsync(cancellationToken)
             .ConfigureAwait(false);
+        _ = _debugLogService?.LogAsync(DebugLogCategory.Notification, "Notification posted", $"Identifier: {identifier}, Title: {title}", DebugLogLevel.Info);
 #else
         await Task.CompletedTask;
 #endif
