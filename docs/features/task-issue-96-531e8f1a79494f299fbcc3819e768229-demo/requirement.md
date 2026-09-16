@@ -1,0 +1,54 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+# Übersetzte Anforderung: Demo-Feed beim ersten Start (Issue #96)
+
+## Fachliche Zusammenfassung
+
+Beim erstmaligen Start der Anwendung (Neuinstallation, leere Datenbank) soll automatisch eine Kategorie „News" mit dem Feed `https://www.apple.com/newsroom/rss-feed.rss` in der SQLite-Datenbank vorbefüllt werden. Es handelt sich um ein einmaliges Seeden von Stammdaten — keine UI-Änderung: Die geseedete Kategorie erscheint in `CategoriesPage`/`CategoriesViewModel`, der Feed als Karte in `FeedsPage`/`FeedsViewModel`, und der bestehende Start-Abruf (`AutoRefreshService.RunStartupSyncAsync` bei `RefreshOnStartupEnabled`, Default `true`) lädt die Artikel des Demo-Feeds automatisch beim ersten Start. Zentraler neu zu klärender Punkt ist die Erkennung des „erstmaligen Starts", da im Projekt bislang kein First-Run-Mechanismus existiert.
+
+## Betroffene Klassen und Komponenten
+
+### Bestehende Klassen (Anpassung / Nutzung)
+
+- `src/Reporter/App.xaml.cs` — `OnStart` (Zeile 36) ist der etablierte Erweiterungspunkt für Startlogik: `MigrateAsync` (Zeile 42) → `IDebugLogService.BeginSessionAsync` → `IRetentionCleanupService.CleanupAsync` → Theme → `INetworkStatusService` → `IAutoRefreshService.StartAsync`. Das Seeden würde hier nach `MigrateAsync` fehlerisoliert (`try/catch` + `Debug.WriteLine` + `IDebugLogService.LogAsync` mit `DebugLogCategory.Lifecycle`, analog den bestehenden Blöcken) eingehängt.
+- `src/Reporter/MauiProgram.cs` — DI-Registrierung eines neuen Seed-Services (Singleton, nach dem Muster `AddSingleton<IRetentionCleanupService, RetentionCleanupService>`); alternativ Bekanntgabe des First-Start-Signals, falls die Erkennung über die Existenz der DB-Datei erfolgt (`databasePath`, Zeile 46–48, ist nur hier bekannt).
+- `src/Reporter.Data/Repositories/CategoryRepository.cs` (`ICategoryRepository.AddAsync`) und `src/Reporter.Data/Repositories/FeedRepository.cs` (`IFeedRepository.AddAsync`, `GetByUrlAsync`) — bestehender Persistenzpfad; kein Schema-Eingriff nötig, wenn die Erkennung nicht über eine neue `settings`-Spalte läuft.
+- `src/Reporter.Core/ViewModels/FeedsViewModel.Search.cs` — `TryPersistNewFeedAsync` (Zeile 301) liefert die Referenz-Defaults für einen neuen `Feed`: `HealthStatus = FeedHealth.Ok`, `NotificationsEnabled = true`, `LastCheckedAt = null`, `FaviconUrl = null` (wird beim ersten erfolgreichen Sync über `FeedSyncService`/`IFeedIconService` nachgezogen, `FeedSyncService.cs:196`).
+
+### Interfaces / Services (neu, Arbeitsnamen)
+
+- `IDemoContentService` / `IDemoDataSeeder` (neu, `src/Reporter.Core/Interfaces/`) mit einer Methode wie `SeedAsync`/`EnsureSeededAsync`; Implementierung `DemoContentService`/`DemoDataSeeder` in `src/Reporter.Core/Services/` — hängt nur an `ICategoryRepository`, `IFeedRepository` und optional `IDebugLogService`, ist damit plattformneutral und unit-testbar (Core hat keine MAUI-Referenz, daher kann die First-Start-Erkennung via `VersionTracking` nicht im Core-Service selbst liegen — siehe Implementierungsansatz).
+- Erkennungsstrategie (Varianten): (a) Aufrufer-seitig in `App.OnStart` über `context.Database.GetAppliedMigrationsAsync()` **vor** `MigrateAsync` — leere Migrationshistorie = frisch angelegte DB = erster Start; (b) `VersionTracking.IsFirstLaunchEver` (MAUI-Essentials, nur in `src/Reporter` verfügbar); (c) `File.Exists(databasePath)` vor der Migration in `MauiProgram`/`App` (erfordert Plumbing des Pfads); (d) neue `settings`-Spalte als persistentes Flag — aufwendigster Weg (Entity `src/Reporter.Data/Entities/Settings.cs`, Modell `src/Reporter.Core/Models/Settings.cs`, `SettingsRepository`-Mapping, neue EF-Migration).
+- **Nicht empfohlene Variante (Annahme):** deklaratives `entity.HasData(...)` in `ReporterDbContext.OnModelCreating` — eine neue Seed-Migration würde den Demo-Feed auch bei **Bestandsinstallationen** einspielen (widerspricht „erstmalig gestartet") und läge zudem in allen per `EnsureCreated` hochgezogenen Test-Datenbanken (`src/Reporter.Tests/TestDbContextFactory.cs:40`), was zahlreiche Repository-Tests mit unerwarteten Datensätzen konfrontierte.
+
+### Tests (`src/Reporter.Tests/`)
+
+- Neuer `DemoContentServiceTests` (o. ä.): Seed legt Kategorie „News" + Feed mit korrekter `CategoryId` und den Defaults an; Zweitaufruf ist idempotent bzw. wird gar nicht erst aufgerufen; Verhalten bei bereits existierender Kategorie „News" (Unique-Index `categories.name`, `ReporterDbContext.cs:81` — vorhandene Kategorie wiederverwenden statt `AddAsync`-Konflikt).
+- First-Start-Erkennung (falls Variante (a)): Test über temporäre SQLite-Datei — `GetAppliedMigrationsAsync` vor `Migrate` leer, danach befüllt.
+- `ServiceCollectionTests` — um die neue Registrierung erweitern; ggf. Fake nach dem Muster `FakeAutoRefreshService`.
+- `src/Reporter.E2ETests/` — **Nebenwirkung beachten:** `ReporterAppFixture` startet die App mit frischer Temp-DB (`REPORTER_DB_PATH`), d. h. der Demo-Feed würde auch in E2E-Läufen geseedet; der Start-Abruf würde dann echten externen Netzverkehr zu `apple.com` auslösen (nur der Feed-Search-Endpunkt ist via `REPORTER_FEEDSEARCH_ENDPOINT` gestubbt, der eigentliche Feed-Download geht über den realen `HttpClient`). Ggf. Seeding unter E2E unterdrücken (z. B. via `REPORTER_DB_PATH`-Vorhandensein oder eigener Env-Variable nach dem `REPORTER_*`-Muster in `MauiProgram`) oder Demo-Karte in den Smoke-Tests tolerieren → siehe Offene Fragen.
+
+## Implementierungsansatz
+
+1. **First-Start-Erkennung festlegen** (Kernentscheidung, siehe Offene Fragen): Pragmatischste Variante ist die Prüfung der angewendeten Migrationen unmittelbar vor `context.Database.MigrateAsync()` in `App.OnStart` — eine frische Installation hat noch keine `__EFMigrationsHistory`-Einträge. Das Signal (z. B. `bool isFirstStart`) wird dem Seed-Service übergeben, sodass der Core-Service selbst frei von MAUI- und DbContext-Abhängigkeiten bleibt.
+2. **Seed-Service:** `SeedAsync` legt über `ICategoryRepository` die Kategorie `Category { Id = Guid.NewGuid(), Name = "News" }` an (bei evtl. vorhandener gleichnamiger Kategorie deren `Id` wiederverwenden — Unique-Index!) und anschließend über `IFeedRepository` den `Feed { Id = Guid.NewGuid(), Url = "https://www.apple.com/newsroom/rss-feed.rss", CategoryId = newsCategory.Id, Title = …, HealthStatus = FeedHealth.Ok, NotificationsEnabled = …, LastCheckedAt = null, FaviconUrl = null }`. Dublettenprüfung über `GetByUrlAsync` analog `TryPersistNewFeedAsync`, falls der Seed-Pfad je außerhalb des First-Start-Kontexts laufen sollte.
+3. **Feed-Titel:** Entweder `FeedTitleFallback.GetFallbackTitle(url)` (ergäbe `"rss-feed.rss"` — Platzhalter, der beim ersten erfolgreichen Sync von `FeedSyncService.ResolveFeedTitle`, `FeedSyncService.cs:276`, durch den Dokumenttitel ersetzt wird) oder direkt ein fester Titel wie „Apple Newsroom" → Offene Frage.
+4. **Einbindung:** Aufruf in `App.OnStart` nach `MigrateAsync` (bzw. nach `BeginSessionAsync`, damit Fehler ins Session-Log geschrieben werden können), fehlerisoliert — ein Seed-Fehler darf den App-Start nicht verhindern. Der bestehende Start-Abruf (`AutoRefreshService.StartAsync`, `AutoRefreshService.cs:49–52`) synchronisiert den Feed anschließend automatisch, sofern online; Titel und Favicon werden dabei vervollständigt.
+5. **Benachrichtigungs-Nebenwirkung prüfen:** Beim ersten Sync des Demo-Feeds sind alle Artikel „neu" → `NotificationService.NotifyNewItemsAsync` würde bei `NotificationSummaryEnabled = false` (Default) pro Artikel eine Benachrichtigung auslösen. Auf Windows/MacCatalyst ist `LocalNotificationService.IsSupported == false` (No-Op); auf iOS greift die Systemberechtigung (wird laut `docs/help/einstellungen/einrichtung-anwender.md:69` erst beim Einschalten des Hauptschalters angefragt — Default `Settings.NotificationsEnabled` ist jedoch `true`) → Offene Frage, ob der Demo-Feed mit `NotificationsEnabled = false` geseedet werden soll.
+6. **Verifikation:** `dotnet test`, `.\scripts\Run-StaticChecks.ps1`; manuelle Verifikation (frische DB → App-Start → Karte sichtbar, Kategorie „News" in den Kategorien); Dokumentation in `docs/help/anwendung/` (z. B. `beschreibung.md`/`datenmodell.md`) sowie ggf. `test-results.md`.
+
+## Konfiguration
+
+- **Kein Anwender-Schalter ableitbar:** Die Demo-Ausstattung ist einmalig und fest kodiert (Kategorie „News", Feed-URL); die Anforderung sieht keine Konfigurierbarkeit vor.
+- **Deaktivierbarkeit für Tests/CI:** Da E2E-Läufe eine frische DB verwenden, ist ggf. ein Unterdrückungsmechanismus sinnvoll (z. B. `REPORTER_DISABLE_DEMO_SEED` o. ä. nach dem bestehenden `REPORTER_DB_PATH`/`REPORTER_FEEDSEARCH_ENDPOINT`-Konvention in `MauiProgram.cs:45–57`) — Annahme, zu klären.
+- **Entfernbarkeit:** Annahme: Kategorie und Feed verhalten sich wie normal angelegte Daten — der Feed ist löschbar/umbenennbar, die Kategorie löschbar (Zuordnung geht per `DeleteBehavior.SetNull` verloren, `ReporterDbContext.cs:101`); ein erneutes Seeden ist nicht vorgesehen.
+
+## Offene Fragen
+
+- **Scope „erstmalig gestartet":** Nur Neuinstallationen (frische DB) oder auch bestehende Installationen nach dem Update? Ein `HasData`-Seed per Migration würde auch Bestandsnutzern den Feed einspielen — wörtlich genommen soll das nicht passieren; zu bestätigen.
+- **Erkennungsstrategie:** Migrationshistorie-basiert (frische DB), `VersionTracking.IsFirstLaunchEver` (installationsbasiert — überlebt ggf. gelöschte DB-Datei), DB-Datei-Existenz in `MauiProgram` oder persistentes Flag in `settings`? Die Varianten unterscheiden sich im Verhalten bei DB-Löschung/Neuinstallation und im Testaufwand.
+- **Feed-Titel:** Fester Titel (z. B. „Apple Newsroom") oder `FeedTitleFallback`-Platzhalter, der beim ersten Sync durch den echten Dokumenttitel ersetzt wird?
+- **Benachrichtigungen:** Soll der Demo-Feed mit `NotificationsEnabled = false` angelegt werden, um eine Flut von Einzel-Benachrichtigungen beim allerersten Sync zu vermeiden (iOS, `NotificationSummaryEnabled` default `false`)? Oder ist das wegen fehlender Systemberechtigung beim ersten Start ohnehin unkritisch?
+- **E2E-/CI-Verhalten:** Soll das Seeding unterdrückt werden, wenn `REPORTER_DB_PATH`/ein E2E-Flag gesetzt ist (vermeidet externen apple.com-Abruf im Start-Sync und eine zusätzliche Karte in den Smoke-Tests), oder sollen die E2E-Tests den Demo-Feed explizit erwarten (ggf. sogar als Test der Anforderung nutzbar)?
+- **Kategorie-Kollision:** Falls die Erkennung nicht streng „frische DB" ist und eine Kategorie „News" bereits existiert (case-sensitive vs. `OrdinalIgnoreCase`): vorhandene Kategorie wiederverwenden oder Seed überspringen?
+- **Erweiterbarkeit:** Die Anforderung listet unter „Feeds" nur einen Eintrag — soll die Seed-Struktur dennoch für mehrere Demo-Feeds/Kategorien erweiterbar gehalten werden (z. B. Auflistung von Seed-Definitionen statt Einzelwerten)?
