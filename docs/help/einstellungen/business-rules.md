@@ -94,6 +94,17 @@
 
 **Umsetzung:** `AutoRefreshService.StartAsync`/`RunStartupSyncAsync`, `SettingsViewModel.RefreshOnStartupEnabled` (Schalter **Beim Programmstart abrufen**, `SettingsRefreshOnStartupLabel`/`SettingsRefreshOnStartupHint`).
 
+## Atom-0.3-Erkennung und Normalisierung beim Feed-Abruf
+
+**Beschreibung:** Der Sync akzeptiert neben RSS 2.0 und Atom 1.0 zusätzlich das veraltete Atom-0.3-Format. Statt einer eigenen Parse-Logik wird ein erkanntes Atom-0.3-Dokument beim Lesen on-the-fly als Atom 1.0 präsentiert — `SyndicationFeed.Load` bleibt die einzige Parse-Stelle und liefert weiterhin `SyndicationFeed`/`SyndicationItem` für die gesamte nachgelagerte Pipeline.
+
+**Bedingungen:**
+- Die Erkennung hängt ausschließlich am Root-Element `feed` im Namespace `http://purl.org/atom/ns#` — das `version`-Attribut wird bewusst nicht geprüft, damit fehlende oder abweichende Angaben den Abruf nicht verhindern. Alle anderen Dokumente laufen unverändert in `SyndicationFeed.Load` (RSS 2.0, Atom 1.0) bzw. in den bestehenden `Parse`-Fehlerpfad.
+- Element-Umbenennungen: `tagline`→`subtitle`, `issued`→`published`, `modified`→`updated`, `copyright`→`rights`. `created` wird bewusst **nicht** auf `published` abgebildet: In der Atom-0.3-Elementreihenfolge folgt `created` auf `issued`, und bei Mehrfachvorkommen gewinnt der letzte Wert — ein Fallback würde das fachlich korrekte `issued` überschreiben. Einträge ohne `issued` erhalten `PublishedAt = null` (bestehendes `DateTimeOffset.MinValue`→`null`-Verhalten); der SHA256-Fallback für `GuidOrHash` funktioniert auch mit `null`.
+- `type`-Attributwerte werden nur auf den Text-/Content-Konstrukten `title`, `tagline`, `copyright`, `summary`, `content` übersetzt (`text/plain`→`text`, `text/html`→`html`, `application/xhtml+xml`→`xhtml`) — ohne Übersetzung würde `text/html` als generischer MIME-Typ kein lesbares `TextSyndicationContent` erzeugen. `link@type` ist in beiden Formaten ein MIME-Typ und bleibt unangetastet (Favicon-Lookup über den `alternate`-Link); Elemente mit `mode="base64"` sind ebenfalls ausgenommen.
+
+**Umsetzung:** `FeedSyncService.PrepareFeedReader` (Root-Peek via `MoveToContent` — konsumiert nur Präambel/Whitespace und funktioniert auf dem nicht seekbaren HTTP-Stream), `Atom03NormalizingXmlReader` (delegierender `XmlReader`; öffentliche Konstante `NamespaceUri`).
+
 ## `UnreadSortOrder`-String-Konvention
 
 **Beschreibung:** `Settings.UnreadSortOrder` ist ein `string?` mit den Werten `"desc"` (Default, *Neueste zuerst*) und `"asc"` (*Älteste zuerst*) — Konstanten `SettingsValues.SortOrderDescending`/`SortOrderAscending`, Spalte `settings.unread_sort_order`. Die Einstellung gilt ausschließlich für die Liste **Ungelesen**; **Später** bleibt fest absteigend sortiert.

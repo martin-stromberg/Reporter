@@ -156,7 +156,8 @@ public class FeedSyncService : IFeedSyncService
         await using var stream = await _httpClient.GetStreamAsync(feed.Url, cancellationToken).ConfigureAwait(false);
         var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore };
         using var reader = XmlReader.Create(stream, settings);
-        var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(reader), cancellationToken).ConfigureAwait(false);
+        using var feedReader = PrepareFeedReader(reader);
+        var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(feedReader), cancellationToken).ConfigureAwait(false);
 
         var feedItems = syndicationFeed.Items.ToList();
 
@@ -374,5 +375,16 @@ public class FeedSyncService : IFeedSyncService
         var value = $"{title}|{link}|{publishedAt:O}";
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return Convert.ToBase64String(hash);
+    }
+
+    // Atom 0.3 documents are normalized to Atom 1.0 on the fly so that
+    // SyndicationFeed.Load remains the single parse entry point; the peek only
+    // consumes preamble/whitespace and works on the non-seekable HTTP stream.
+    private static XmlReader PrepareFeedReader(XmlReader reader)
+    {
+        reader.MoveToContent();
+        return reader.LocalName == "feed" && reader.NamespaceURI == Atom03NormalizingXmlReader.NamespaceUri
+            ? new Atom03NormalizingXmlReader(reader)
+            : reader;
     }
 }

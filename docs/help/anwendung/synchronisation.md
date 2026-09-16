@@ -15,7 +15,7 @@
 
 1. Öffne die Seite **Feeds**.
 2. Tippe die Karte des gewünschten Feeds an und wähle im Menü **Feed-Aktionen** den Eintrag **Aktualisieren**.
-3. Die App ruft den Feed ab, parst die RSS-/Atom-Daten und speichert neue Artikel in der Datenbank. Artikel, die ein eingerichtetes Filter-Schlagwort in Titel oder Inhalt enthalten, werden dabei verworfen und erscheinen nicht in den Listen — intern vermerkt der Protokolleintrag des Abrufs, wie viele Artikel gefiltert wurden.
+3. Die App ruft den Feed ab, parst die Feed-Daten (unterstützte Formate: RSS 2.0, Atom 1.0 und Atom 0.3) und speichert neue Artikel in der Datenbank. Artikel, die ein eingerichtetes Filter-Schlagwort in Titel oder Inhalt enthalten, werden dabei verworfen und erscheinen nicht in den Listen — intern vermerkt der Protokolleintrag des Abrufs, wie viele Artikel gefiltert wurden.
 4. Der Gesundheitsstatus des Feeds wird aktualisiert (**In Ordnung**, **Warnung** oder **Fehler**).
 5. Auf iOS wertet die App für berechtigte neue Artikel die Benachrichtigungsregeln aus — abhängig von den Schaltern in den **Einstellungen** und am Feed, der Ruhezeit und den Schlagwort-Filtern. Eine sichtbare Mitteilung erscheint dabei bei geöffneter App bewusst nicht; sie kommt nur aus dem automatischen Hintergrund-Abgleich bei geschlossener App. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 

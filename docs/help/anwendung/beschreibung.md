@@ -6,7 +6,7 @@
 
 ## Zweck
 
-Reporter bietet einen zentralen Ort, um RSS-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch — wahlweise entsprechend der Systemsprache oder über eine manuelle Sprachauswahl in den Einstellungen (siehe [Sprache](sprache.md)). Bereits synchronisierte Artikel bleiben ohne Internetverbindung vollständig lesbar (siehe [Offline lesen](offline.md)).
+Reporter bietet einen zentralen Ort, um RSS- und Atom-Feeds zu abonnieren, Artikel zu lesen und Beiträge für später zu merken. Die App folgt dem System-Design (Light/Dark) und unterstützt Deutsch und Englisch — wahlweise entsprechend der Systemsprache oder über eine manuelle Sprachauswahl in den Einstellungen (siehe [Sprache](sprache.md)). Bereits synchronisierte Artikel bleiben ohne Internetverbindung vollständig lesbar (siehe [Offline lesen](offline.md)).
 
 ## Funktionsweise
 
