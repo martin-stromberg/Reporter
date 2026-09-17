@@ -150,8 +150,8 @@ $env:REPORTER_IOS_API_ISSUER_ID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Issu
 **Umgebungsvariablen:** die SSH-/Pair-to-Mac-Zugangsdaten setzen —
 
 ```powershell
-$env:REPORTER_IOS_MAC_SERVER_ADDRESS = "mac-mini.local"   # Hostname oder IP des Mac
-$env:REPORTER_IOS_MAC_SERVER_USER    = "mstromberg"       # macOS-Kurzname
+$env:REPORTER_IOS_MAC_SERVER_ADDRESS = "<mac>.local"      # Hostname oder IP des Mac
+$env:REPORTER_IOS_MAC_SERVER_USER    = "<macuser>"        # macOS-Kurzname
 ```
 
 Für Pair-to-Mac-**Builds** (`build`-Aktion von Windows) kommt zusätzlich `REPORTER_IOS_MAC_SERVER_PASSWORD` hinzu (das Passwort des Mac-Benutzers — nur lokal setzen, niemals committen) sowie bei Bedarf `REPORTER_IOS_MAC_DOTNET_ROOT` für den Remote-.NET-Pfad. Für `store`/`upload` ist das Passwort nicht nötig — SSH läuft über den Schlüssel aus Punkt 3.

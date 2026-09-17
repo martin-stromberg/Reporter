@@ -33,7 +33,7 @@
 		<ApplicationTitle>Reporter</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.reporter</ApplicationId>
+		<ApplicationId>de.martinstromberg.reporter</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -50,8 +50,6 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)'=='net10.0-ios'">
-	  <CodesignKey>Apple Development: Created via API (2TJ973266J)</CodesignKey>
-	  <CodesignProvision>VS: de.martinstromberg.reporter Development</CodesignProvision>
 	  <!-- EF Core nutzt Expression.Compile()/Reflection.Emit (z. B. DbSetInitializer) — auf dem
 	       AOT-only-Device stuerzt die App ohne Interpreter mit ExecutionEngineException ab. -->
 	  <UseInterpreter>true</UseInterpreter>

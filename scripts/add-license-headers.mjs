@@ -21,7 +21,7 @@ const MARKER = "PolyForm Noncommercial License";
 const TEXT = "Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.";
 
 const SKIP_DIRS = new Set([".git", ".vs", "node_modules", "bin", "obj", "TestResults", "logs"]);
-const SKIP_FILES = new Set(["LICENSE"]);
+const SKIP_FILES = new Set(["LICENSE", "issue.md"]);
 
 // Comment style per extension / basename.
 const STYLE_BY_EXT = new Map([
