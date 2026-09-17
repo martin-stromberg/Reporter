@@ -18,7 +18,7 @@
 
 | Lauf | Befehl inkl. Filter | Arbeitsverzeichnis | Exit-Code | Erfolgreich | Fehlgeschlagen | Übersprungen | Nachweis |
 |------|--------------------|--------------------|-----------|-------------|----------------|--------------|----------|
-| Baseline (2026-09-13, MESZ) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --logger "trx;LogFileName=inventory-baseline.trx" --logger "console;verbosity=normal"` | Repo-Root `D:\Repositories\softwareschmiede\ee2cf2e6-29e4-4c2b-a7e2-c3d7d5e7a490` | 0 | 331 | 0 | 0 | [Console-Log](test-results/dotnet-test-baseline-console.log), [TRX-Report](test-results/inventory-baseline.trx) |
+| Baseline (2026-09-13, MESZ) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --logger "trx;LogFileName=inventory-baseline.trx" --logger "console;verbosity=normal"` | Repo-Root | 0 | 331 | 0 | 0 | [Console-Log](test-results/dotnet-test-baseline-console.log), [TRX-Report](test-results/inventory-baseline.trx) |
 
 Hinweis: Der Baseline-Lauf baute die Projekte implizit (kein `--no-build`); die Coverage-Settings (`coverlet.runsettings`) wurden lokal nicht verwendet — das ändert nichts an der Testmenge/-auswertung, liefert aber keinen Coverage-Report.
 

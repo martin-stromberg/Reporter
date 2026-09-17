@@ -81,6 +81,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - **Private und nicht-kommerzielle Nutzung ist erlaubt:** persönliche Nutzung, Hobby-Projekte, Forschung und Lehre sowie die Nutzung durch gemeinnützige Organisationen, Bildungseinrichtungen und staatliche Stellen.
 - **Kommerzielle Nutzung ist untersagt:** Jede Nutzung mit kommerziellem Zweck erfordert eine separate, individuell vereinbarte kommerzielle Lizenz — Anfragen an Martin Stromberg (<mstromberg84+reporter@gmail.com>), Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
 - **Beiträge (Contributions)** werden unter derselben Lizenz angenommen — Details siehe [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Sicherheitslücken** bitte vertraulich melden — Details siehe [SECURITY.md](SECURITY.md).
 
 ## Weitere Informationen
 

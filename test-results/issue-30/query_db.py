@@ -1,7 +1,8 @@
 # Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
-import sqlite3, sys
-db = r'C:\Users\Martin\AppData\Local\User Name\com.companyname.reporter\Data\reporter.db'
+import os, sqlite3, sys
+# Path to the app's local SQLite DB (Windows default shown; pass a path as argv[1] to override).
+db = sys.argv[1] if len(sys.argv) > 1 else os.path.expandvars(r'%LOCALAPPDATA%\User Name\com.companyname.reporter\Data\reporter.db')
 uri = 'file:' + db.replace('\\', '/') + '?mode=ro'
 con = sqlite3.connect(uri, uri=True)
 cur = con.cursor()

@@ -1,5 +1,5 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
-#r "D:/Repositories/softwareschmiede/efbace56-7370-47f4-b106-10b83d0e137c/src/Reporter.Core/bin/Release/net10.0/Reporter.Core.dll"
+#r "../../../src/Reporter.Core/bin/Release/net10.0/Reporter.Core.dll"
 
 open System
 open Reporter.Core.Services

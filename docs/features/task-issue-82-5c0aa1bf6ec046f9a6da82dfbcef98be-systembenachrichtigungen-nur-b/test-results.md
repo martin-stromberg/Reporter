@@ -28,7 +28,7 @@ Keine — 504/504 bestanden.
 
 ## Remote-iOS-Verifikation (2026-09-15, Pair-to-Mac)
 
-**Umgebung:** macOS 26.6.2 (arm64), Xcode 26.6, iPhone-17-Simulator mit iOS 26.5 (UDID `3FBA60E3-F11D-46BB-9F9E-DA85183A672F`), Build `net10.0-ios`/`iossimulator-arm64` via Pair-to-Mac (Remote-.NET unter `/Users/mstromberg/Library/Caches/maui/PairToMac/SDKs/dotnet/`).
+**Umgebung:** macOS 26.6.2 (arm64), Xcode 26.6, iPhone-17-Simulator mit iOS 26.5 (UDID `3FBA60E3-F11D-46BB-9F9E-DA85183A672F`), Build `net10.0-ios`/`iossimulator-arm64` via Pair-to-Mac (Remote-.NET unter `/Users/<user>/Library/Caches/maui/PairToMac/SDKs/dotnet/`).
 
 **Durchgeführte Schritte und Ergebnisse:**
 
