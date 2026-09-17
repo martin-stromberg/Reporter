@@ -8,51 +8,35 @@
 [![Release](https://img.shields.io/github/v/release/martin-stromberg/Reporter?include_prereleases)](https://github.com/martin-stromberg/Reporter/releases)
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm--Noncommercial--1.0.0-blue)](LICENSE)
 
-Lokaler RSS-/Feed-Reader als .NET MAUI-App für Windows und iOS.
+Lokaler RSS-/Feed-Reader als .NET MAUI-App für iOS. Der Windows-Build dient als Umgebung für Entwicklung und automatisierte Tests.
 
 ## Features
 
-- .NET MAUI-App mit Shell-Navigation
-- Untere Navigationsleiste mit eigenen Tab-Icons und den Tabs **Ungelesen** (Dashboard mit Kategoriefilter als horizontal scrollbarer Chip-Leiste inkl. Count-Kapseln, Pull-to-Refresh und Infinity-Scroll), **Feeds**, **Später**, **Kategorien** und **Einstellungen**
-- Light/Dark-Theme-Unterstützung über .NET MAUI `AppThemeBinding`
-- Design-System mit den Schriftarten **Newsreader** und **Inter** sowie Farb-, Typografie- und Shape-Tokens aus dem `design-draft` — lückenlos auf allen Seiten umgesetzt: Karten mit Hairline-Border (`SurfaceCard`/`BorderSubtle`), Pill-Chips und -Badges, eigenes App-Icon und Splash-Screen (Issue #30; neues Badge-Motiv — gerundetes Badge mit RSS-Signalbögen und Amber-Dot, Splash-Variante mit „Reporter"-Schriftzug — seit Issue #77)
-- Barrierefreiheit (Issue #30): `SemanticProperties`-Beschriftungen für alle bedienbaren Elemente (Screenreader), dynamische Schriftgrößen (`FontAutoScalingEnabled`), kontrastgeprüfte Text- und Statusfarben sowie Tippflächen von mindestens 44 × 44 pt — Details siehe [docs/help/anwendung/barrierefreiheit.md](docs/help/anwendung/barrierefreiheit.md)
-- Dependency Injection mit `Microsoft.Extensions.DependencyInjection`
-- ViewModel-Basen mit `CommunityToolkit.Mvvm`
-- Vollständig lokalisierte UI über RESX-Dateien (`AppResources`, neutral = Englisch, `AppResources.de.resx` = Deutsch): Die Sprache folgt standardmäßig der Systemsprache (`CurrentUICulture`, Englisch ist der Fallback für alle anderen Sprachen) oder wird manuell in den **Einstellungen** über die Sektion **Sprache** gewählt — **System** / **Deutsch** / **English** (Issue #62). Die Auswahl wird sofort persistiert, wirkt aber erst nach einem Neustart der App (keine Laufzeit-Umschaltung; der Neustart-Hinweis unter dem Sprach-Picker erscheint erst, sobald die Auswahl vom persistierten Wert abweicht — Issue #77); das Sync-Protokoll bleibt technisch/englisch — Details siehe [docs/help/anwendung/sprache.md](docs/help/anwendung/sprache.md) (Issue #28)
-- RSS-/Atom-Feed-Abruf, Parsing und Speicherung neuer Artikel — unterstützte Formate: RSS 2.0, Atom 1.0 und das veraltete Atom 0.3 (wird beim Lesen über `Atom03NormalizingXmlReader` on-the-fly auf Atom 1.0 normalisiert — Issue #91) — inklusive Feed-Health (`OK`/`Warning`/`Error`) und Sync-Log; der Sync dedupliziert in-memory per `HashSet` und persistiert neue Artikel als Batch-Insert (`IItemRepository.AddRangeAsync` — ein `DbContext`, ein `SaveChangesAsync`); neben `https://` werden auch unverschlüsselte `http://`-Feed-Adressen abgerufen — unter iOS/MacCatalyst erlaubt `NSAppTransportSecurity` → `NSAllowsArbitraryLoads` in beiden `Info.plist`-Dateien den Klartext-Abruf des gemeinsamen `HttpClient` (Issue #87)
-- Artikeldetailansicht mit WebView-Volltextdarstellung, automatischem Gelesen-Markieren, `Für später bewahren`-Toggle, Teilen und Öffnen im Browser (Issue #24) — die Aktionen sitzen in einer schwebenden Pill-förmigen Kontrollleiste (Floating Reader Control Bar, transluzent mit Schatten) und die Lesezeit wird über `ReadingTimeEstimator` (200 wpm) lokalisiert angezeigt — entfällt bei geschätzten ≤ 1 Minute (Issue #77); das Feed-Icon der Detailansicht nutzt `Feed.FaviconUrl`
-- `Für später bewahren`-Funktion: Bookmark-Toggle in Artikelliste und Detailansicht; der Tab **Später** zeigt bewahrte Artikel nach `PublishedAt` absteigend sortiert, lädt seitenweise nach (Infinity-Scroll, `PageSize = 20`) und erlaubt das Entfernen der Bewahrung (Issue #25, Paging in Issue #30)
-- Feed-Health als Micro-Pill-Status-Badges auf der **Feeds**-Seite (Issue #30): farbiger Dot plus lokalisiertem Statustext auf getöntem Hintergrund; Artikelkarten zeigen ein Thumbnail mit Standardbild-Kaskade (Artikelbild → Feed-Favicon → Kreis mit Feed-Initial — Issue #77), einen Ungelesen-Dot und die geschätzte Lesezeit in der Meta-Zeile
-- Ausgebaute **Einstellungen**-Seite (Issue #26) mit Sofort-Persistierung in sieben Sektionen: Aufbewahrungsdauer & Speicher, Keyword-Filter (Blacklist), Synchronisation & Lesefluss (inkl. Abruf beim Programmstart und Sortierung der ungelesenen Artikel — Issue #77), Benachrichtigungen & Ruhezeiten, Erscheinungsbild, Sprache sowie Diagnose & Support (Issue #81) — Details siehe [docs/help/einstellungen/](docs/help/einstellungen/index.md)
-- Keyword-Blacklist: Schlagworte werden als Chips verwaltet und per `IKeywordFilter`/`KeywordFilter` (Matching über `KeywordMatcher`: case-insensitives Teilwort-Matching auf Titel und HTML-Inhalt) bereits beim Feed-Abruf ausgewertet — Treffer werden verworfen statt gespeichert, erscheinen in keiner Liste und lösen keine Benachrichtigung aus; die Anzahl verworfener Artikel wird im Sync-Protokoll vermerkt (`, N filtered`). Vor Anlage eines Schlagworts gespeicherte Bestandstreffer bleiben sichtbar und werden erst nach dem Lesen und Ablauf der Aufbewahrungsfrist gelöscht
-- Automatische Hintergrund-Aktualisierung: `AutoRefreshService` ruft `IFeedSyncService.SyncAllAsync` per `PeriodicTimer` auf (Intervalle 15/30/60/240 Minuten, solange die App geöffnet ist); unter iOS plant derselbe Schalter zusätzlich einen OS-Hintergrundabruf über `BGTaskScheduler`/`BGAppRefreshTask` (Gateway `IBackgroundRefreshService`, Sync-Ausführung über `IScheduledSyncRunner` — läuft auch bei suspendierter App; iOS bestimmt den tatsächlichen Ausführungszeitpunkt, das Intervall ist nur eine Untergrenze) (Issue #82); zusätzlich startet `StartAsync` beim App-Start einen fehlerisolierten, nicht blockierenden `SyncAllAsync`, wenn der Schalter **Beim Programmstart abrufen** (`Settings.RefreshOnStartupEnabled`, Standard `true`) aktiv ist und das Gerät online ist (Issue #77)
-- Theme-Auswahl **System** / **Hell** / **Dunkel** über `AppThemeService` (`Application.UserAppTheme`) — wirkt sofort app-weit und wird beim App-Start angewendet
-- Automatische Retention-Löschung beim App-Start: `RetentionCleanupService` entfernt gelesene Artikel, deren Stichtag (`ReadAt ?? PublishedAt`) älter als `Settings.RetentionDays` ist, sowie bereits gespeicherte Keyword-Bestandstreffer auf Basis ihres Veröffentlichungsdatums — ungelesene und bewahrte Artikel (`IsSavedForLater`) sind davon ausgenommen
-- Lokale iOS-Benachrichtigungen bei neuen Artikeln (Issue #27): `NotificationService` wertet nach jedem Feed-Sync aus — globaler Schalter, Pro-Feed-Schalter im Feed-Bearbeitungsformular, Ruhezeit (wird verworfen, nicht nachgeholt) und Keyword-Filter; wählbar einzeln pro Artikel oder als Sammel-Benachrichtigung pro Feed; Antippen öffnet den Artikel bzw. den Tab **Ungelesen**. Sichtbar werden die Mitteilungen nur noch beim OS-Hintergrundabruf (Issue #82): `NotificationDelegate.WillPresentNotification` unterdrückt die Darstellung bei laufender App komplett (`UNNotificationPresentationOptions.None` — kein Banner, kein Sound, kein Mitteilungszentrum-Eintrag für manuelle, Timer- und Start-Abrufe), während iOS Mitteilungen aus dem `BGAppRefreshTask` automatisch anzeigt — Details siehe [docs/help/benachrichtigungen/](docs/help/benachrichtigungen/index.md)
-- Offline-Fähigkeit (Issue #28): Alle synchronisierten Artikel, Feeds und Kategorien bleiben ohne Netzwerk lesbar (lokale SQLite-Daten); `INetworkStatusService`/`NetworkStatusService` überwacht die Konnektivität über `Connectivity.Current`. Offline zeigen **Ungelesen** (gedimmter Sync-Button + Statuszeilen-Hinweis), **Feeds** und **Später** (Hinweis-Banner) sowie die Artikeldetailansicht den Zustand an; Refresh-Commands, `AutoRefreshService` und `FeedSyncService` brechen offline sauber ab (ohne `SyncLog`-Eintrag); `ArticleHtmlSanitizer` neutralisiert Links und entfernt `<img>`-Elemente im Artikel-HTML, `WebViewNavigationGuard` sperrt Rest-Navigation mit lokalisiertem Hinweis-Dialog, `ArticleCardView`-Thumbnails werden ausgeblendet und „Im Browser öffnen" zeigt einen Hinweis statt abzustürzen — Details siehe [docs/help/anwendung/offline.md](docs/help/anwendung/offline.md)
-- Feeds hinzufügen auf der **Feeds**-Seite (Issue #59): Die Seite zeigt initial nur die Feed-Liste; die Schaltfläche **+ Feed per URL hinzufügen** öffnet ein Bottom-Sheet mit dem kombinierten Such-/URL-Eingabefeld, **Suchen** und **URL direkt hinzufügen** (legt die Adresse ohne Suche an und bleibt auch offline aktiv). **Suchen** prüft Domains und vollständige URLs über `IFeedSearchService`/`FeedSearchService` zuerst gegen das öffentliche Verzeichnis **feedsearch.dev** (`skip_crawl=true`) und bei leerem Ergebnis per clientseitiger Autodiscovery gegen die Website selbst (`<link rel="alternate">`-Tags, Standardpfade wie `/feed` oder `/rss.xml`; gemeinsames 2-s-Zeitbudget pro Suchaufruf). Treffer erscheinen als kartenbasierte Liste mit „Suche powered by feedsearch.dev"-Attribution und werden per Tap nach Bestätigungsdialog direkt abonniert; Feeds ohne bekannten Titel erhalten den Dateinamen der Feed-URL als Platzhalter (z. B. `heise-atom.xml`), der beim ersten Sync durch den echten Titel aus dem Feed-Dokument ersetzt wird. Es gibt bewusst keine Freitext-Suche; offline ist die Suche deaktiviert — Details siehe [docs/help/anwendung/feed-suche.md](docs/help/anwendung/feed-suche.md)
-- Feed-Verwaltung auf der **Feeds**-Seite: Ein Tap auf eine Feed-Karte öffnet ein Kontextmenü mit **Aktualisieren**, **Umbenennen** (Eingabedialog mit vorbelegtem Titel), **Kategorie ändern** (Auswahl aller Kategorien inkl. **Keine Kategorie**), **Bearbeiten** (dasselbe Bottom-Sheet im Edit-Modus mit URL-Feld und Benachrichtigungs-Schalter) und **Löschen** — manuell vergebene Titel werden vom Sync nicht überschrieben; trägt der Feed den Status **Fehler**, kommt **Fehlerdetails anzeigen** hinzu (Issue #87): ein Dialog mit dem lokalisierten Grund des letzten fehlgeschlagenen Abrufs und — zweitabsätzig — der technischen Rohmeldung; `FeedSyncService` klassifiziert Fehlschläge via `FeedSyncErrorKind` (`InsecureHttpBlocked`, `HttpStatus`, `Network`, `Parse`, `Unknown`) und persistiert Kategorie + Meldung in `feeds.last_error_kind`/`last_error_message` (Migration `AddFeedLastError`), beide werden beim nächsten erfolgreichen Sync zurückgesetzt — Details siehe [docs/help/anwendung/synchronisation.md](docs/help/anwendung/synchronisation.md)
-- Feed-Symbole und Standardbilder (Issue #77): Beim Anlegen eines Feeds ermittelt `IFeedIconService`/`FeedIconService` fehlerisoliert die Favicon-URL der Feed-Webseite (`<link rel="icon|shortcut icon|apple-touch-icon">` im `<head>` des HTML, Kandidaten werden per Request verifiziert, Fallback `/favicon.ico`; Site-URL aus dem Suchtreffer bzw. Host der Feed-URL) und speichert sie als `Feed.FaviconUrl`; Feeds ohne Favicon (offline angelegt oder Bestandsfeeds) rüstet `FeedSyncService` beim nächsten erfolgreichen Sync über den `alternate`-Site-Link des Feed-Dokuments nach. Artikelkarten ohne eigenes Bild zeigen die Kaskade Artikelbild → Feed-Favicon → Kreis mit dem Initialbuchstaben des Feed-Namens, die Feed-Karten auf der **Feeds**-Seite Favicon → Initialen-Kreis (offline immer der Kreis)
-- Sortierung der Startseite (Issue #77): Der Picker **Sortierung der ungelesenen Artikel** in den **Einstellungen** wählt *Neueste zuerst* (`"desc"`, Standard) oder *Älteste zuerst* (`"asc"`); `UnreadViewModel` liest `Settings.UnreadSortOrder` und reicht die Richtung als `ascending`-Parameter an `IItemRepository.GetUnreadByDateAsync` — die **Später**-Liste bleibt fest absteigend sortiert
-- Diagnose & Support (Issue #81): Der Opt-in-Schalter **Debuginformationen sammeln** aktiviert ein Session-Debug-Log (Tabelle `debug_log_entries`), das unbehandelte Exceptions (`AppDomain.UnhandledException`, `TaskScheduler.UnobservedTaskException`), Sync-/Auto-Refresh-Fehler und Lifecycle-Ereignisse protokolliert; es wird bei jedem App-Start zurückgesetzt — `Error`-Einträge der Vor-Session bleiben erhalten, damit Absturzberichte nach Neustart versendbar sind. Die Aktion **Senden** (nur aktiv bei eingeschalteter Sammlung und verfügbarem Mail-Client) öffnet über `DebugReportService` → `Email.ComposeAsync` einen vorbefüllten Plain-Text-E-Mail-Entwurf im System-Mail-Client — mit App-/Geräte-/OS-Infos, Online-Status, Settings-Snapshot, Feed-Health, den jüngsten 50 `SyncLog`-Einträgen und den jüngsten 200 Session-Log-Einträgen; der Anwender prüft und sendet selbst (kein SMTP-Versand, keine Artikeldaten). Empfänger ist die MSBuild-Property `DebugReportRecipient` (Default `debug@example.com` in `Directory.Build.props`, vor Release zu ersetzen; **Forks** müssen die Property auf ihre eigene Support-Adresse setzen, sonst gehen Berichte an den Upstream-Maintainer) — Details siehe [docs/help/einstellungen/](docs/help/einstellungen/index.md)
-- Demo-Inhalt beim ersten Start (Issue #96): Existiert die SQLite-Datenbankdatei vor der Migration noch nicht (`FirstRunState.IsFirstRun`, in `MauiProgram` via `!File.Exists(databasePath)` erfasst), legt `IDemoContentService`/`DemoContentService` in `App.OnStart` einmalig die Kategorie **News** mit dem Feed **Apple Newsroom** (`https://www.apple.com/newsroom/rss-feed.rss`) an — mit `NotificationsEnabled = false`, damit der allererste Sync weder einen iOS-Berechtigungs-Prompt noch eine Benachrichtigungsflut auslöst; der reguläre Start-Abruf synchronisiert den Feed anschließend wie jeden anderen (Favicon-Nachzug inklusive). Kategorie und Feed verhalten sich wie normal angelegte Daten (editierbar/löschbar, kein erneutes Seeden im selben Datenbestand); eine bereits vorhandene Kategorie „News" wird wiederverwendet, ein vorhandener Demo-Feed nicht dupliziert. Für E2E-/CI-Läufe unterdrückt die Umgebungsvariable `REPORTER_DISABLE_DEMO_SEED` den Seed — Details siehe [docs/help/anwendung/datenmodell.md](docs/help/anwendung/datenmodell.md)
+- Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
+- RSS-/Atom-Feed-Abruf (RSS 2.0, Atom 1.0 und Atom 0.3) mit Feed-Health-Status und Sync-Protokoll
+- Feeds per Suche (feedsearch.dev plus Autodiscovery) oder direkter URL-Eingabe hinzufügen; Verwaltung per Kontextmenü auf der **Feeds**-Seite
+- Artikeldetailansicht mit WebView-Volltext, automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser
+- Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und konfigurierbare Sortierung der ungelesenen Artikel
+- Automatische Hintergrund-Aktualisierung (In-App-Timer; unter iOS zusätzlich OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit Ruhezeiten
+- Vollständig offline lesbar dank lokaler SQLite-Datenhaltung
+- Light/Dark-Theme, lokalisierte UI (Deutsch/Englisch), durchgängige Barrierefreiheit und ein Design-System mit eigenem App-Icon
+- Beim ersten Start legt die App einmalig die Kategorie „News" mit einem Demo-Feed an
 
 ## Projektstruktur
 
 | Projekt | Verantwortlichkeit |
 | --- | --- |
-| `Reporter` | .NET MAUI-App, UI, Navigation |
+| `Reporter` | .NET MAUI-App für iOS, UI, Navigation — der Windows-Build dient als Test-Host |
 | `Reporter.Core` | Domänenmodelle, Schnittstellen, ViewModels, mehrsprachige RESX-Ressourcen und Anwendungs-Services |
 | `Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | Unit- und Integrationstests |
-| `Reporter.E2ETests` | FlaUI-UIA3-End-to-End-Smoke-Tests der Windows-App (nur Windows, interaktive Desktop-Session) |
+| `Reporter.E2ETests` | FlaUI-UIA3-End-to-End-Smoke-Tests der Windows-App |
 
 ## Voraussetzungen
 
-- .NET 10 SDK
-- Windows: Windows 10 Build 19041 oder höher
-- iOS/macOS: Xcode (auf macOS)
+- .NET 10 SDK (inkl. .NET-MAUI-Workload)
+- iOS (Zielplattform): Xcode auf macOS
+- Windows (Entwicklung und Tests): Windows 10 Build 19041 oder höher
 
 ## Installation / Setup
 
@@ -60,189 +44,57 @@ Lokaler RSS-/Feed-Reader als .NET MAUI-App für Windows und iOS.
 dotnet build Reporter.sln
 ```
 
-`Reporter` ist auf `net10.0-windows10.0.19041.0` und `net10.0-ios` ausgerichtet; `dotnet build Reporter.sln` baut beide Ziele. Die Target Frameworks lassen sich über die MSBuild-Schalter `IncludeIosTarget` (Default `true`) und `IncludeAndroidTarget` (Default `false`) steuern — mit `-p:IncludeAndroidTarget=true` kommt `net10.0-android` hinzu (erfordert den Android-Workload). Für iOS-Geräte-Deployment/Signing ist Xcode auf macOS erforderlich.
-
-## Git Hooks
-
-Die Repository enthält Git-Hooks im Ordner `.githooks` (aus dem [Pattern-Collection](https://github.com/martin-stromberg/Pattern-Collection/tree/main/Git-Hooks)-Repo).
-
-Aktivieren:
-
-```bash
-git config --local core.hooksPath .githooks
-```
-
-Oder unter Windows `install-hooks.cmd` / unter macOS/Linux `install-hooks.sh` ausführen.
-
-Die Hooks prüfen unter anderem:
-- Konsistenz der RESX-Lokalisierung (`translation-check.py`)
-- Platzhalter-Implementierungen (`no-notimplemented-check.py`)
-- Razor-Lokalisierung und -Verwendung (`razor-l10n-check.py`, `razor-usage-check.py`)
-- Enum-Testabdeckung (`enum-coverage-check.py`)
-- XML-Dokumentation in `.cs`/`.csproj` (`csproj-xmldoc-check.py`)
-
-Hinweis: `pre-push` blockiert direkte Pushes auf `main` und `staging`.
-
-Die Projekte sind bereits so konfiguriert, dass `GenerateDocumentationFile` aktiviert und `CS1591` als Fehler behandelt wird. Neue öffentliche APIs müssen also mit XML-Dokumentation (`<summary>`, `<param>`, `<returns>`) versehen werden.
+Primäres Ziel-Framework ist `net10.0-ios` — unter macOS das einzige; unter Windows baut zusätzlich `net10.0-windows10.0.19041.0` als Entwicklungs- und Testziel. Die Target Frameworks lassen sich über die MSBuild-Schalter `IncludeIosTarget` (Default `true`) und `IncludeAndroidTarget` (Default `false`) steuern.
 
 ## Starten
 
-Auf Windows:
-
 ```bash
+# iOS (auf macOS)
+dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
+
+# Windows (Entwicklung und Tests)
 dotnet run --project src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0
 ```
 
-Auf macOS/iOS:
-
-```bash
-dotnet build src/Reporter/Reporter.csproj -f net10.0-ios
-dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
-```
-
-Fuer gezieltes Build/Deployment (IPA, Simulator, physisches Geraet) steht `scripts/iOS-Deployment.ps1` bereit:
-
-**Wichtig:** `simulator` setzt voraus, dass das Skript direkt auf einem Mac ausgefuehrt wird.
-Microsoft unterstuetzt `dotnet build -t:Run` fuer iOS/tvOS aktuell **nicht von Windows aus**.
-`device` und `list` funktionieren von Windows per SSH an den Build-Mac (`-ServerAddress`/`-ServerUser`,
-schluesselbasiertes SSH noetig): Der Build laeuft ueber Pair-to-Mac, die Installation und der Start auf dem
-Geraet ueber `xcrun devicectl` — mit `-Console` wird die App-Ausgabe ins Terminal gestreamt.
-
-Auf dem Mac startet `simulator` die App im iOS-Simulator, wartet kurz und speichert
-einen Screenshot unter `src/Reporter/bin/<config>/net10.0-ios/<rid>/`.
-
-```powershell
-# Menue starten
-.\scripts\iOS-Deployment.ps1
-
-# Beispiele
-.\scripts\iOS-Deployment.ps1 -Action build -CodesignKey "Apple Distribution: ..." -CodesignProvision "ReporterProfile" -ServerAddress 192.168.1.10 -ServerUser me
-.\scripts\iOS-Deployment.ps1 -Action simulator -Device "E25BBE37-69BA-4720-B6FD-D54C97791E79"
-.\scripts\iOS-Deployment.ps1 -Action device -Device "DEINE-UDID" -CodesignKey "..." -CodesignProvision "..."
-.\scripts\iOS-Deployment.ps1 -Action store    # Release-Build + Validierung + Upload nach App Store Connect (TestFlight)
-.\scripts\iOS-Deployment.ps1 -Action upload -IpaPath "..."  # vorhandene .ipa erneut hochladen
-```
-
-`store`/`upload` benoetigen zusaetzlich einen App-Store-Connect-API-Key (`-ApiKeyPath`/`-ApiKeyId`/`-ApiIssuerId` bzw. `REPORTER_IOS_API_*`) und funktionieren auf dem Mac direkt sowie von Windows per SSH-Delegation an den Build-Host (schluesselbasiertes SSH noetig). `store` erhoeht automatisch die Buildnummer (`-NoBumpBuildNumber` schaltet das ab); alle Laeufe protokollieren nach `logs/`. Setup-Anleitung (Zertifikat, Profil, API-Key, App-Eintrag) und der Weg ueber TestFlight bis zur oeffentlichen Freigabe stehen in [docs/help/ios-deployment/](docs/help/ios-deployment/index.md).
-
-## Konfiguration
-
-Alle nutzerkonfigurierbaren Optionen liegen im Singleton-`Settings`-Datensatz (Tabelle `settings`) und werden über die **Einstellungen**-Seite sofort persistiert:
-
-| Einstellung | Feld | Standard | Beschreibung |
-|-------------|------|----------|--------------|
-| Aufbewahrungsdauer | `RetentionDays` | `30` | Tage, die gelesene Artikel aufbewahrt werden (1–365) |
-| Hintergrund-Aktualisierung | `AutoRefreshEnabled` | `true` | Periodischer Feed-Sync Ein/Aus; steuert unter iOS zusätzlich den OS-Hintergrundabruf (`BGAppRefreshTask` — ausgeschaltet wird der Task abgemeldet) |
-| Abruf-Intervall | `RefreshIntervalMinutes` | `30` | Minuten zwischen den Syncs (15/30/60/240); unter iOS zugleich Untergrenze (`EarliestBeginDate`) für den Hintergrundabruf |
-| Abruf beim Programmstart | `RefreshOnStartupEnabled` | `true` | Fehlerisolierter Feed-Sync beim App-Start (blockiert den Start nicht) |
-| Ungelesen-Sortierung | `UnreadSortOrder` | `"desc"` | `"desc"` = neueste zuerst, `"asc"` = älteste zuerst (nur Tab **Ungelesen**) |
-| Auto-Gelesen beim Öffnen | `AutoMarkReadMode` | `"on_scroll"` | `"off"` deaktiviert die automatische Gelesen-Markierung |
-| Markierungs-Verzögerung | `AutoMarkReadDelaySeconds` | `5` | Sekunden bis zur Gelesen-Markierung (0/1/3/5) |
-| Benachrichtigungen | `NotificationsEnabled` | `true` | Globaler Schalter für lokale Benachrichtigungen (nur iOS wirksam); beim Aktivieren wird die System-Berechtigung angefragt; Mitteilungen erscheinen nur beim OS-Hintergrundabruf, bei laufender App werden sie unterdrückt |
-| Sammel-Benachrichtigung | `NotificationSummaryEnabled` | `false` | `true` = eine Benachrichtigung pro Feed und Sync statt je eine pro Artikel |
-| Ruhezeit VON/BIS | `QuietHoursStart` / `QuietHoursEnd` | `null` | Nicht-stören-Zeitraum, auch über Mitternacht |
-| Erscheinungsbild | `Theme` | `"system"` | `"system"` / `"light"` / `"dark"` |
-| Sprache | `Language` | `"system"` | `"system"` / `"de"` / `"en"` — wirkt erst nach einem Neustart der App |
-| Debuginformationen sammeln | `DebugCollectionEnabled` | `false` | Opt-in: schaltet das Session-Debug-Log (`debug_log_entries`) zur Laufzeit ein/aus und aktiviert den Versand des Debugberichts |
-
-Der Ein/Aus-Schalter für die Ruhezeit ist reiner Ansichts-Zustand (`QuietHoursEnabled`, keine eigene Spalte): Ausgeschaltet werden `QuietHoursStart`/`QuietHoursEnd` als `null` persistiert, die zuletzt gewählten Zeiten bleiben für die Sitzung erhalten.
-
-Zusätzlich besitzt jeder Feed einen eigenen **Benachrichtigungen**-Schalter (`Feed.NotificationsEnabled`, Standard `true`) im Bearbeitungsmodus des Feed-Formulars (**Bearbeiten** im Feed-Kontextmenü) auf der **Feeds**-Seite — damit lassen sich einzelne Feeds stummschalten.
-
-Keyword-Filter liegen als eigene Datensätze in der Tabelle `keywords`. Details siehe [docs/help/einstellungen/](docs/help/einstellungen/index.md).
-
-Plattformseitig erlauben die `Info.plist`-Dateien unter `src/Reporter/Platforms/iOS` und `src/Reporter/Platforms/MacCatalyst` über `NSAppTransportSecurity` → `NSAllowsArbitraryLoads` Klartext-HTTP für den App-weiten `HttpClient` — eine statische Build-/Plattform-Einstellung für `http://`-Feed-Adressen (Issue #87), keine Laufzeit-Option. Die iOS-`Info.plist` deklariert außerdem `UIBackgroundModes` → `fetch` und `BGTaskSchedulerPermittedIdentifiers` → `de.martinstromberg.reporter.feedrefresh` für den OS-Hintergrundabruf (Issue #82).
-
-Für Test- und CI-Läufe existieren darüber hinaus Prozess-Umgebungsvariablen nach dem `REPORTER_*`-Muster — `REPORTER_DB_PATH` (abweichender Datenbankpfad), `REPORTER_FEEDSEARCH_ENDPOINT` (Stub statt feedsearch.dev), `REPORTER_APP_PATH` (abweichende `Reporter.exe` für die E2E-Suite) und `REPORTER_DISABLE_DEMO_SEED` (unterdrückt den Demo-Seed beim ersten Start; jeder gesetzte Wert außer `"0"`/`"false"` wirkt) — Details siehe Abschnitt [Tests](#tests).
-
-## Architektur
-
-- `MauiProgram.CreateMauiApp()` konfiguriert DI, Fonts und MAUI.
-- `AppShell` definiert die Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**.
-- `Colors.xaml` und `Styles.xaml` implementieren das Design-System (Light/Dark, Newsreader/Inter, Farbtokens).
-- `Reporter.Core` enthält die Domänenmodelle (`Feed`, `Category`, `Item`, `Keyword`, `Settings`, `SyncLog`, `DebugLogEntry`, `AppDeviceInfo`), Repository-Schnittstellen (`IFeedRepository`, `ICategoryRepository`, `IItemRepository`, `IKeywordRepository`, `ISettingsRepository`, `ISyncLogRepository`, `IDebugLogRepository`) und die Anwendungs-Services `IFeedSyncService` / `FeedSyncService` (RSS-/Atom-Sync — parst RSS 2.0, Atom 1.0 und Atom 0.3; Atom-0.3-Dokumente werden nach `MoveToContent`-Root-Erkennung in `Atom03NormalizingXmlReader` gewrappt und on-the-fly als Atom 1.0 normalisiert — mit Ingest-Keyword-Filter: Treffer werden vor dem Speichern verworfen und als `, N filtered` im `SyncLog` ausgewiesen; klassifiziert Fehlschläge via `FeedSyncErrorKind.Classify` — `InsecureHttpBlocked`/`HttpStatus`/`Network`/`Parse`/`Unknown` — und persistiert Kategorie + Rohmeldung in `Feed.LastErrorKind`/`LastErrorMessage`, zurückgesetzt beim nächsten erfolgreichen Sync), `IRetentionCleanupService` / `RetentionCleanupService` (Retention-Löschung gelesener Artikel beim App-Start inkl. Keyword-Regel für gespeicherte Bestandstreffer, ausgenommen ungelesene und `IsSavedForLater`-Artikel), `IKeywordMatcher` / `KeywordMatcher` (`OrdinalIgnoreCase`-Teilwort-Matching) und `IKeywordFilter` / `KeywordFilter` (kapselt Keyword-Laden + Matching; genutzt von `FeedSyncService`, `RetentionCleanupService` und `NotificationService`) sowie `IAutoRefreshService` / `AutoRefreshService` (periodischer Hintergrund-Sync per `PeriodicTimer` über `TimeProvider` plus optionaler, nicht blockierender Start-Sync bei `RefreshOnStartupEnabled`; leitet die Settings fehlerisoliert an `IBackgroundRefreshService` weiter) und `IScheduledSyncRunner` / `ScheduledSyncRunner` (führt den Sync eines ausgelösten OS-Hintergrund-Tasks fehlerisoliert aus und plant den Folgeabruf aus den persistierten Settings neu — auch im Fehler- und Kancellierungsfall), `INotificationService` / `NotificationService` (Benachrichtigungs-Entscheidung nach jedem Sync: Pro-Feed-/globaler Schalter, Ruhezeit via `TimeProvider`, Keyword-Filter, Einzel- vs. Sammel-Modus mit stabilen Dedup-Identifiern) und `IFeedSearchService` / `FeedSearchService` (Feed-Suche über feedsearch.dev plus clientseitige Autodiscovery im gemeinsamen 2-s-Zeitbudget; wirft `FeedSearchUnavailableException` nur bei Ausfall beider Quellen) sowie `IFeedIconService` / `FeedIconService` (Favicon-Discovery: `<link rel="icon">`-Parsing mit verifizierten Kandidaten und `/favicon.ico`-Fallback; genutzt bei der Feed-Anlage in `FeedsViewModel` und zur Nachrüstung fehlender Favicons im `FeedSyncService`; `FeedSiteResolver` löst die Site-URL) und `ReadingTimeEstimator` (lokalisierte Lesezeit-Schätzung aus dem HTML-Inhalt, 200 wpm, unterdrückt ≤ 1 Minute — geteilt von `ItemRepository`-Projektionen und `ArticleDetailViewModel`). `IItemRepository` bietet seitenweises Laden (`GetUnreadByDateAsync(page, pageSize, categoryId, ascending)` — Sortierrichtung aus `Settings.UnreadSortOrder` —, `GetSavedForLaterAsync(page, pageSize)`) und Batch-Insert (`AddRangeAsync`). `IDebugLogService` / `DebugLogService` (Session-Debug-Log in `debug_log_entries`: `BeginSessionAsync` setzt beim App-Start bis auf `Error`-Einträge zurück und lädt `Settings.DebugCollectionEnabled` ins speicherinterne `IsEnabled`-Flag, `SetEnabled` schaltet zur Laufzeit; `LogAsync` ist bei ausgeschalteter Sammlung ein No-op, wirft niemals und hält die Tabelle per `TrimToLatestAsync` bei `MaxStoredEntries = 500`; Konstanten `DebugLogLevel` `Info`/`Warning`/`Error` und `DebugLogCategory` `Lifecycle`/`Sync`/`Exception`/`Settings`/`Report`) und `IDebugReportService` / `DebugReportService` (sammelt `AppDeviceInfo`, `INetworkStatusService.IsOnline`, Settings-Snapshot, Feed-Health, `ISyncLogRepository.GetLatestAsync(MaxSyncLogEntries = 50)` und `IDebugLogRepository.GetLatestAsync(MaxDebugLogEntries = 200)` und formatiert den lokalisierten Plain-Text-Report; Empfänger-Konstante `DebugReportRecipient`, `IsSupported` delegiert an `IEmailService`).
-- `IDemoContentService` / `DemoContentService` (`src/Reporter.Core/Services/`) seedet beim allerersten Start die Kategorie „News" und den Demo-Feed „Apple Newsroom" über die regulären Repositories (Issue #96). Die First-Run-Erkennung liegt in `MauiProgram` (`isFirstRun = !File.Exists(databasePath)`, ausgewertet vor `builder.Build()`, weil `ApplyPersistedLanguage` die DB-Datei per `Migrate()` anlegt) und wird als `FirstRunState`-Singleton (`IsFirstRun`, `DemoSeedSuppressed` via `REPORTER_DISABLE_DEMO_SEED`, berechnetes `ShouldSeedDemoContent`) in den Service injiziert; `App.OnStart` ruft `EnsureSeededAsync` fehlerisoliert nach `BeginSessionAsync` und vor dem Retention-Cleanup auf. Der Service ist idempotent (`GetByUrlAsync`-Dublettenprüfung) und verwendet eine vorhandene Kategorie „News" per `OrdinalIgnoreCase` wieder (Unique-Index `categories.name`).
-- `IAppThemeService` / `AppThemeService` (`src/Reporter/Services/`) setzt `Application.UserAppTheme` anhand `Settings.Theme` — das Interface liegt in `Reporter.Core`, die Implementierung im MAUI-Projekt, da Core keine MAUI-Referenz hat.
-- `AppCulture` (`src/Reporter.Core/Localization/`, statisch) wendet die persistierte Sprachwahl (`Settings.Language`) beim App-Start an: `MauiProgram.CreateMauiApp` ruft nach `builder.Build()` synchron die EF-Migration auf, liest `Settings` und setzt via `AppCulture.Apply` `CurrentUICulture`/`CurrentCulture` sowie die `DefaultThreadCurrent*`-Defaults — bevor `CreateWindow`/`AppShell` lokalisierte Ressourcen lesen. `"system"` und unbekannte Werte sind ein No-Op.
-- `ILocalNotificationService` / `LocalNotificationService` (`src/Reporter/Services/`) kapselt das iOS-`UserNotifications`-Framework (`UNUserNotificationCenter`, `#if IOS`, No-Op auf anderen Plattformen) nach demselben Gateway-Muster. `NotificationDelegate` unter `Platforms/iOS/` unterdrückt die Vordergrund-Darstellung komplett (`WillPresentNotification` → `UNNotificationPresentationOptions.None` — Issue #82) und navigiert beim Antippen in-app zur Artikeldetailansicht (`articledetail?itemId=…`) bzw. bei Sammel-Benachrichtigungen zum Tab **Ungelesen** (mit Browser-Fallback beim Kaltstart).
-- `IBackgroundRefreshService` / `BackgroundRefreshService` (`src/Reporter/Services/`) kapselt nach demselben Gateway-Muster den iOS-`BGTaskScheduler` (`#if IOS`, No-Op auf anderen Plattformen): `ApplySettingsAsync` plant den `BGAppRefreshTask` `de.martinstromberg.reporter.feedrefresh` (Konstante `RefreshTaskIdentifier`, deklariert in der iOS-`Info.plist` via `UIBackgroundModes`/`fetch` und `BGTaskSchedulerPermittedIdentifiers`) mit `EarliestBeginDate` aus dem geclamppten `RefreshIntervalMinutes` ein bzw. meldet ihn bei deaktiviertem `AutoRefreshEnabled` ab. `AppDelegate.FinishedLaunching` registriert den Task (`RegisterBackgroundFetchTask`); der Launch-Handler `HandleRefreshTaskAsync` setzt den `ExpirationHandler` (Kancellation bei Ablauf des iOS-Zeitbudgets), löst `IScheduledSyncRunner` lazy über `IPlatformApplication.Current.Services` auf und schließt mit `SetTaskCompleted` ab (Issue #82).
-- `INetworkStatusService` / `NetworkStatusService` (`src/Reporter/Services/`) abstrahiert `Connectivity.Current` nach demselben Gateway-Muster und dispatcht `ConnectivityChanged` per `MainThread.BeginInvokeOnMainThread` auf den UI-Thread. `BaseViewModel` kapselt das `IsOnline`-Tracking für alle ViewModels (`InitConnectivity`/`TrackConnectivity`/`UntrackConnectivity`/`RefreshConnectivityStatus`); `ArticleHtmlSanitizer` und `WebViewNavigationGuard` in `Reporter.Core` halten die Offline-HTML-Aufbereitung und Link-Klassifizierung unit-testbar.
-- `IEmailService` / `EmailService` und `IDeviceInfoProvider` / `DeviceInfoProvider` (`src/Reporter/Services/`) kapseln nach demselben Gateway-Muster `Microsoft.Maui.ApplicationModel.Communication.Email` (`IsComposeSupported`/`ComposeAsync`, `EmailBodyFormat.PlainText`, Plattformfehler → `false`) bzw. `AppInfo`/`DeviceInfo` (als `AppDeviceInfo`-Snapshot) für den Debugbericht. `App.OnStart` ruft nach `MigrateAsync()` `IDebugLogService.BeginSessionAsync`, abonniert `AppDomain.CurrentDomain.UnhandledException`/`TaskScheduler.UnobservedTaskException` und schreibt in `OnSleep`/`OnResume` `Lifecycle`-Einträge; `FeedSyncService` und `AutoRefreshService` protokollieren Sync-Fehler ins Session-Log. `SettingsViewModel.SendDebugReportAsync` triggert den Versand (Guard in der Methode, nicht `CanExecute`) und meldet Fehlschläge über das `DebugReportFailed`-Event an `SettingsPage` (`DisplayAlertAsync`).
-- `Reporter.Data` stellt die EF Core-Entitäten und Repository-Implementierungen bereit; Repositories verwenden `IDbContextFactory<ReporterDbContext>` für kurzlebige, thread-sichere DbContext-Instanzen.
-- `Reporter` (MAUI-Projekt) enthält die Seiten (`FeedsPage` usw.) und das App-Shell-Setup.
-- `Reporter.Core` enthält `BaseViewModel`, die ViewModels (`FeedsViewModel`, `CategoriesViewModel`, `UnreadViewModel`, `LaterViewModel`, `SettingsViewModel`) und `AppResources`.
-- `FeedsViewModel` nutzt `IFeedSyncService` für manuelles Refresh einzelner oder aller Feeds sowie `IFeedSearchService` für die Feed-Suche (Trefferauswahl über `SubscribeResultCommand`, direktes Hinzufügen über `DirectAddCommand`); `ShowAddForm`/`IsEditMode` steuern das Hinzufügen-/Bearbeiten-Sheet, `RenameFeedAsync`/`ChangeFeedCategoryAsync` bedienen die Kontextmenü-Aktionen; `GetFeedErrorMessage` mappt `FeedListItem.LastErrorKind` auf den lokalisierten `FeedErrorKind*`-Text und hängt die technische `LastErrorMessage` an — aufgerufen aus `FeedsPage.ShowFeedErrorDetailsAsync` für den Kontextmenü-Eintrag **Fehlerdetails anzeigen**. Der statische Helper `FeedTitleFallback` liefert Dateinamen-/Host-Platzhaltertitel, die `FeedSyncService` beim ersten Sync durch den echten Feed-Titel ersetzt.
+Geräte-Deployment, Simulator, Signing und App-Store-Upload übernimmt `scripts/iOS-Deployment.ps1` — Details siehe [iOS-Deployment](docs/help/ios-deployment/index.md).
 
 ## Tests
 
 ```bash
-dotnet test Reporter.sln --filter "Category!=E2E"   # Unit-/Integrationstests (E2E-Suite ausgenommen)
-npm test   # node:test-Suite für die Release-Skripte unter scripts/ (*.test.mjs)
+dotnet test Reporter.sln --filter "Category!=E2E"   # Unit-/Integrationstests
+npm test                                          # node:test-Suite der Release-Skripte
+.\scripts\Run-E2ETests.ps1                        # E2E-Smoke-Tests (nur Windows, interaktive Desktop-Session)
 ```
-
-- `Reporter.Tests` referenziert `Reporter.Core` und `Reporter.Data`, sodass ViewModels (z. B. `FeedsViewModel`) und Services direkt getestet werden können.
-- `npm test` führt die `node:test`-Suite für die Release-Tooling-Skripte aus (`resolve-release-version.mjs`, `release-assets.mjs`, `create-update-manifest.mjs`) — u. a. Tag-Parsing, Release-Klassifizierung, Prerelease-Guard und `update.json`-Manifest-Erzeugung.
-- xUnit mit EF Core SQLite (In-Memory) für Repository- und Integrationstests; `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) für den Timer-basierten `AutoRefreshService`; handgeschriebene Fakes statt Mocking-Framework.
-- `SettingsViewModelTests_*` decken den Einstellungs-Flow inkl. Keyword-Verwaltung, Sprachauswahl und Sofort-Persistierung ab, `KeywordMatcherTests` das Teilwort-Matching; `AppCultureTests` prüft das Sprach-Mapping (`ResolveCulture`).
-- `FeedsViewModelTests` deckt die UI-nahen Refresh-Commands ab (Refresh für einen Feed, Refresh aller Feeds und Fehleranzeige) sowie die Feed-Suche und das Hinzufügen (Trefferauswahl, `DirectAddCommand` inkl. Offline-Pfad, Dublettenprüfung, Fallback-Dialoge, Sheet-Sichtbarkeit `ShowAddForm`/`IsEditMode`, `RenameFeedAsync`, `ChangeFeedCategoryAsync`) über `FakeFeedSearchService`; `FeedSearchServiceTests` prüft Mapping, Autodiscovery-Pfade, Sortierung/Dedupe und Timeout via `HttpClient` auf gemocktem `HttpMessageHandler`; `FeedTitleFallbackTests` deckt die Dateinamen-/Host-Fallback-Kette und die Platzhalter-Erkennung ab; `FeedIconServiceTests` prüft die Favicon-Discovery (`<link>`-Parsing, `/favicon.ico`-Fallback, Kandidaten-Verifizierung) via `HttpClient` auf gemocktem `HttpMessageHandler`.
-- `NotificationServiceTests` decken die Benachrichtigungs-Entscheidungslogik ab (Ruhezeiten inkl. Mitternachts-Wrap-around via `FakeTimeProvider`, Keyword-Filter, Einzel-/Sammel-Modus, Dedup-Identifier); `FakeLocalNotificationService`/`FakeNotificationService` kapseln den nicht unit-testbaren Plattformdienst, und `FeedSyncServiceTests` prüft die Integration Ende-zu-Ende auf Service-Ebene (inkl. Ersetzen von URL-/Host-/Dateinamen-Platzhaltertiteln durch den echten Feed-Titel sowie den Ingest-Keyword-Filter mit `, N filtered`-Ausweis im `SyncLog`) und die Fehlerklassifikation (`SyncFeedAsync_*_ClassifiedAs*`: `InsecureHttpBlocked` bei `http`-Netzwerkfehler, `HttpStatus` bei Nicht-2xx, `Parse` bei ungültigem XML, `Network` bei `https`-Netzwerkfehler) samt Setzen/Zurücksetzen von `Feed.LastErrorKind`/`LastErrorMessage`; `KeywordFilterTests_E2E` deckt den Benutzerfluss „Schlagwort anlegen → Feed synchronisieren → Treffer verworfen, nicht benachrichtigt, im Protokoll ausgewiesen" ab.
-- `FakeNetworkStatusService` simuliert Online-/Offline-Wechsel; `ArticleHtmlSanitizerTests` prüft Link-Neutralisierung und `<img>`-Entfernung, `WebViewNavigationGuardTests` die externe-URL-Klassifizierung und `BaseViewModelConnectivityTests` das `IsOnline`-Tracking; die ViewModel-Tests (`UnreadViewModelTests`, `FeedsViewModelTests`, `LaterViewModelTests`) decken die Offline-Frühabbrüche der Refresh-Commands ab. `LaterViewModelTests` und `ItemRepositoryTests` prüfen zudem das seitenweise Laden der Später-Liste und den Batch-Insert (`AddRangeAsync`), `ReadingTimeEstimatorTests` die Lesezeit-Berechnung.
-- `DebugLogServiceTests` und `DebugLogRepositoryTests` (In-Memory-SQLite) prüfen den Session-Reset mit Erhalt der `Error`-Einträge, das `IsEnabled`-Flag, den No-op bei ausgeschalteter Sammlung und `TrimToLatestAsync`; `DebugReportServiceTests` und `DebugReportTests_E2E` decken Report-Aufbau (alle sieben Abschnitte, Begrenzungen, `IsSupported == false`) und den Versandpfad über die Fakes `FakeEmailService`/`FakeDeviceInfoProvider`/`FakeDebugLogService` ab; `SettingsViewModelTests_Debug` prüft Laden/Persistieren von `DebugCollectionEnabled`, `DebugSendEnabled` und den `SendDebugReportCommand`-Guard inkl. `DebugReportFailed`, `FeedSyncServiceTests_DebugLog` und `AutoRefreshServiceTests_DebugLog` die Instrumentierung der Fehlerpfade. `ScheduledSyncRunnerTests` prüft den Hintergrundabruf-Runner (Erfolgs-, Fehler- und Kancellierungspfad inkl. Neuplanung des Folgeabrufs) und `AutoRefreshServiceTests` die fehlerisolierte Weiterleitung an `IBackgroundRefreshService` über `FakeBackgroundRefreshService`.
-- `Reporter.E2ETests` (Issue #73) enthält eine FlaUI-UIA3-Smoke-Suite mit acht Tests, die die echte Windows-App gegen einen in-process Kestrel-Test-Webserver (`StubFeedServer`, dynamischer Port) fährt — App-Start/Feed-Liste, Add-Sheet-Fokus, Direkt-Add mit SQLite-Verifikation, Umbenennen und Kategorie ändern per ActionSheet sowie Suche/Abo inkl. Autodiscovery-Fallback; `DemoSeedTests` (Issue #96) startet eine eigene App-Instanz mit frischer Temp-Datenbank und belegt den First-Start-Demo-Seed über die gespeicherten Datensätze und die sichtbare Feed-Karte. Die Suite ist nur unter Windows in einer interaktiven Desktop-Session lauffähig (kein CI-Job); alle Tests tragen `[Trait("Category", "E2E")]` und laufen daher im obigen `dotnet test`-Befehl nicht mit. Ausführung inkl. App-Build über `.\scripts\Run-E2ETests.ps1`; die App wird dabei über die Prozess-Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT` (Stub statt feedsearch.dev), `REPORTER_DB_PATH` (Temp-Datenbank) und `REPORTER_DISABLE_DEMO_SEED` (unterdrückt den Demo-Seed in der hermetischen Suite; `DemoSeedTests` entfernt das Flag für die eigene Instanz) isoliert — Details siehe [docs/help/tests/](docs/help/tests/index.md).
-- Alle XAML-Views verwenden Compiled Bindings (`x:DataType` auf Seiten- und `DataTemplate`-Ebene), sodass Binding-Fehler bereits zur Compile-Zeit als Build-Fehler sichtbar werden (Issue #73); die wenigen verbleibenden `BindingContext.*`-`x:Reference`-Hops bleiben bewusst Runtime-Bindings.
 
 ## CI/CD
 
-Das Repository verwendet GitHub Actions für eine vollautomatische Release-Pipeline nach dem Branch-Modell `staging` → `main` — Details siehe [docs/help/release-management/](docs/help/release-management/index.md):
-
-- `.github/workflows/pr-staging-ci.yml` (`PR CI for Staging`) — führt bei PRs nach `staging` parallel `static checks` (Format, Security-Scan, statische Analyse) und `build & test` (inkl. Coverage-Threshold 70 %) aus; reine Backmerge-PRs werden über `detect-backmerge`/`back-merge-skip` erkannt und überspringen die Gates.
-- `.github/workflows/staging-ci.yml` (`Pre-Release`) — nach den Gates ermittelt `semantic-release --dry-run` aus den Conventional-Commits-Botschaften die nächste Version und erzeugt ein RC-Pre-Release `vX.Y.Z-rc.N` mit `release-win-x64.zip` (Windows), `release-android.apk` (Android) und dem Update-Manifest `update.json`; `release-ios.ipa` kommt hinzu, sobald die Repository-Variable `IOS_SIGNING_ENABLED=true` gesetzt ist.
-- `.github/workflows/staging-to-main-promotion.yml` — öffnet nach erfolgreichem Pre-Release-Lauf einen Draft-PR `staging` → `main` (Label `automated-promotion`).
-- `.github/workflows/release.yml` (`Release`) — stabiles Release `vX.Y.Z` bei Push auf `main` bzw. manuellem Tag `v*.*.*` (semantic-release, `release.config.js` mit `branches: ["main"]`); existiert ein Release bereits ohne vollständige Assets, werden die fehlenden Dateien per Asset-Repair (`upload-existing`) nachgeladen statt ein neues Release anzulegen.
-- `.github/workflows/sync-staging-with-main.yml` (`Backmerge Main to Staging`) — öffnet nach jedem Push auf `main` bei Bedarf einen PR `main` → `staging` (Label `automated-backmerge`, zwingend per „Create a merge commit" mergen).
-- `.github/workflows/verify-pr-source.yml` — erlaubt PRs nach `main` nur aus `staging`.
-- `.github/workflows/security-scan.yml` — wöchentlicher Sicherheits-Scan der Abhängigkeiten.
-- Composite Actions unter `.github/actions/`: `build-and-package` (Windows-`win-x64`-ZIP), `package-android` (APK), `package-ios` (IPA auf `macos-latest`, über `vars.IOS_SIGNING_ENABLED` aktivierbar), `checkout-release-tag` (Tag-Checkout für den Asset-Repair-Pfad) und `security-scan`.
-- Release-Tooling: `release.config.js` + `package.json` (gepinnte semantic-release-Toolchain, `npm run release`), Skripte unter `scripts/`: `resolve-release-version.mjs` (Versions-/Release-Auflösung inkl. Asset-Vollständigkeitsprüfung und Prerelease-Guard), `release-assets.mjs` (Asset-Liste inkl. iOS-Schalter), `create-update-manifest.mjs` (`update.json` mit `sha256`/`sizeBytes`/`assetUrl` pro Asset).
-
-**Repository-Nacharbeiten:** Die Labels `automated-promotion`/`automated-backmerge` legen die Workflows bei Bedarf selbst an. Branch-Protection für `main`/`staging` (Required Checks `static checks`, `build & test`, `verify-source`) ist als Admin-Nacharbeit dokumentiert — die Protection-APIs antworten im privaten Repository auf dem Free-Plan mit HTTP 403 (siehe [Installation & Konfiguration](docs/help/release-management/installation.md)). iOS-Signierung wird ohne Codeänderung über die Secrets `IOS_CODESIGN_KEY`/`IOS_PROVISIONING_PROFILE` plus die Variable `IOS_SIGNING_ENABLED=true` aktiviert.
+GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md).
 
 ## Changelog
 
 Siehe [changes.log](changes.log).
-
-## Dokumentation
-
-- [Hilfe / Anwenderdokumentation](docs/help/index.md)
-- [Einstellungen](docs/help/einstellungen/index.md) — Aufbewahrungsdauer, Keyword-Filter, Hintergrund-Aktualisierung (In-App-Timer plus iOS-`BGAppRefreshTask`) & Abruf beim Programmstart, Ungelesen-Sortierung, Benachrichtigungen & Ruhezeiten, Erscheinungsbild, Sprache, Diagnose & Support (Debug-Sammlung, Debugbericht per E-Mail)
-- [Benachrichtigungen](docs/help/benachrichtigungen/index.md) — Lokale iOS-Benachrichtigungen nur beim OS-Hintergrundabruf: Schalter, Ruhezeiten, Sammel-Modus, Berechtigung, Vordergrund-Unterdrückung und Tap-Navigation
-- [Offline lesen](docs/help/anwendung/offline.md) — Offline-Indikatoren, deaktivierte Links/Bilder, pausierter Hintergrund-Sync
-- [Feeds suchen und hinzufügen](docs/help/anwendung/feed-suche.md) — Bottom-Sheet zum Hinzufügen: Feed-Suche über feedsearch.dev + Autodiscovery, Treffer-Abo, direkte URL-Eingabe (offline), Dateinamen-Titel-Fallback; Feed-Verwaltung per Kontextmenü (Umbenennen, Kategorie ändern, Bearbeiten, Fehlerdetails bei Fehler-Status)
-- [Feeds synchronisieren](docs/help/anwendung/synchronisation.md) — Abruf-Zeitpunkte und -Verhalten, `https`-/`http`-Feed-Adressen (inkl. iOS/macOS via ATS-Freigabe), Gesundheitsstatus und Fehlerdetails pro Feed
-- [Sprache (Deutsch / Englisch)](docs/help/anwendung/sprache.md) — UI-Sprache nach Systemsprache, Englisch als Fallback
-- [Barrierefreiheit](docs/help/anwendung/barrierefreiheit.md) — Screenreader-Beschriftungen, dynamische Schriftgrößen, Tippflächen und Kontraste
-- [Release-Management](docs/help/release-management/index.md) — Release-Pipeline: RC-Pre-Releases auf `staging`, Promotion nach `main`, stabile Releases mit Plattform-Artefakten, Backmerge
-- [Tests](docs/help/tests/index.md) — Testinfrastruktur: FlaUI-UIA3-E2E-Smoke-Suite (`Run-E2ETests.ps1`, Kestrel-Stub-Server, Env-Overrides `REPORTER_FEEDSEARCH_ENDPOINT`/`REPORTER_DB_PATH`/`REPORTER_DISABLE_DEMO_SEED`) und Compiled Bindings
 
 ## Lizenz
 
 Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den vollständigen Lizenztext siehe [LICENSE](LICENSE).
 
 - **Private und nicht-kommerzielle Nutzung ist erlaubt:** persönliche Nutzung, Hobby-Projekte, Forschung und Lehre sowie die Nutzung durch gemeinnützige Organisationen, Bildungseinrichtungen und staatliche Stellen.
-- **Kommerzielle Nutzung ist untersagt:** Jede Nutzung mit kommerziellem Zweck ist von dieser Lizenz nicht gedeckt und erfordert eine separate, individuell vereinbarte Genehmigung.
-- **Kommerzielle Lizenzierung:** Anfragen an Martin Stromberg (<mstromberg84+github@gmail.com>) — Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
-- **Beiträge (Contributions):** Werden unter derselben Lizenz angenommen — Details siehe [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Kommerzielle Nutzung ist untersagt:** Jede Nutzung mit kommerziellem Zweck erfordert eine separate, individuell vereinbarte kommerzielle Lizenz — Anfragen an Martin Stromberg (<mstromberg84+reporter@gmail.com>), Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+- **Beiträge (Contributions)** werden unter derselben Lizenz angenommen — Details siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### Lizenz-FAQ
+## Weitere Informationen
 
-**Was bedeutet private bzw. nicht-kommerzielle Nutzung?**
-Persönliche Nutzung für private Zwecke — etwa eigene Recherche, Experimente und Tests, persönliches Studium, private Unterhaltung, Hobby-Projekte und Amateur-Vorhaben ohne kommerzielle Zielsetzung. Ebenfalls erlaubt ist die Nutzung durch gemeinnützige Organisationen, Bildungseinrichtungen, öffentliche Forschungseinrichtungen, Organisationen für öffentliche Sicherheit und Gesundheit, Umweltschutzorganisationen und staatliche Stellen — unabhängig von der Finanzierungsquelle.
+**Anwendung und Konfiguration**
 
-**Was gilt als kommerzielle Nutzung?**
-Jede Nutzung mit kommerziellem Zweck oder in kommerziellem Kontext — z. B. der Einsatz der App in einem Unternehmen, die Einbindung des Codes in ein kommerzielles Produkt oder einen kostenpflichtigen Dienst sowie die Nutzung gegen Vergütung. Solche Nutzung ist durch die PolyForm Noncommercial License nicht abgedeckt.
+- [Anwendung im Überblick](docs/help/anwendung/index.md) — Bedienung, Feed-Suche und -Verwaltung, Synchronisation, Offline-Verhalten, Sprache, Barrierefreiheit, Architektur und Datenmodell
+- [Einstellungen](docs/help/einstellungen/index.md) — Aufbewahrungsdauer, Keyword-Filter, Hintergrund-Aktualisierung, Ungelesen-Sortierung, Benachrichtigungen & Ruhezeiten, Erscheinungsbild, Sprache sowie Diagnose & Support
+- [Benachrichtigungen](docs/help/benachrichtigungen/index.md) — lokale iOS-Benachrichtigungen und der OS-Hintergrundabruf im Detail
 
-**Wie funktioniert kommerzielle Lizenzierung?**
-Reporter wird dual lizenziert: nicht-kommerziell unter der PolyForm Noncommercial License 1.0.0, kommerziell ausschließlich über eine individuell mit dem Lizenzgeber vereinbarte kommerzielle Lizenz. Eine kommerzielle Lizenz gilt **nicht** automatisch — der Upgrade-Pfad führt über eine Anfrage an Martin Stromberg (<mstromberg84+github@gmail.com>), Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+**Betrieb und Entwicklung**
 
-**Was ist erlaubt, was ist verboten?**
-Erlaubt: Nutzung, Vervielfältigung, Weitergabe und Änderung der Software für nicht-kommerzielle Zwecke — unter der Bedingung, dass jede Kopie die Lizenzbedingungen (bzw. deren URL) und etwaige `Required Notice:`-Zeilen enthält. Verboten: jede kommerzielle Nutzung ohne separate Genehmigung sowie die Unterlizenzierung oder Übertragung der Lizenzrechte auf Dritte.
+- [iOS-Deployment](docs/help/ios-deployment/index.md) — lokaler Buildlauf, Signing, Gerät/Simulator, TestFlight und App Store
+- [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien und Asset-Reparatur
+- [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
+- [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen
+- [Contributing](CONTRIBUTING.md) — Richtlinien für Beiträge
+- [Release Notes](docs/RELEASE_NOTES.md) — Versionshinweise der Releases

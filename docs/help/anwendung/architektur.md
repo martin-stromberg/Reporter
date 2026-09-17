@@ -8,10 +8,11 @@
 
 | Komponente | Projekt | Rolle |
 |------------|---------|-------|
-| `Reporter` | `src/Reporter` | .NET MAUI-App mit UI und Navigation |
+| `Reporter` | `src/Reporter` | .NET MAUI-App mit UI und Navigation — Zielplattform iOS; der Windows-Build dient als Test-Host für die E2E-Suite |
 | `Reporter.Core` | `src/Reporter.Core` | Domänenmodelle, Schnittstellen, ViewModels, mehrsprachige RESX-Ressourcen und Anwendungs-Services |
 | `Reporter.Data` | `src/Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | `src/Reporter.Tests` | Unit- und Integrationstests |
+| `Reporter.E2ETests` | `src/Reporter.E2ETests` | FlaUI-UIA3-End-to-End-Smoke-Tests der Windows-App (nur Windows, interaktive Desktop-Session); Details siehe [Tests](../tests/index.md) |
 
 ## Abhängigkeiten
 

@@ -56,12 +56,12 @@
 | Eigenschaft | Typ | Beschreibung |
 |-------------|-----|--------------|
 | `Id` | `Guid` | Eindeutige Kennung (Singleton). |
-| `RetentionDays` | `int` | Aufbewahrungsdauer in Tagen. |
-| `AutoMarkReadMode` | `string?` | Modus für automatisches Als-gelesen-markieren. |
-| `AutoMarkReadDelaySeconds` | `int` | Verzögerung in Sekunden. |
-| `NotificationsEnabled` | `bool` | Gibt an, ob Benachrichtigungen aktiv sind. |
-| `QuietHoursStart` | `TimeSpan?` | Beginn der Ruhezeit. |
-| `QuietHoursEnd` | `TimeSpan?` | Ende der Ruhezeit. |
+| `RetentionDays` | `int` | Aufbewahrungsdauer in Tagen (Standard `30`, zulässig 1–365). |
+| `AutoMarkReadMode` | `string?` | Modus für automatisches Als-gelesen-markieren (`"off"` deaktiviert die Markierung, alle anderen Werte — Standard `"on_scroll"` — aktivieren sie). |
+| `AutoMarkReadDelaySeconds` | `int` | Verzögerung in Sekunden (Standard `5`; UI-Auswahl 0/1/3/5). |
+| `NotificationsEnabled` | `bool` | Gibt an, ob Benachrichtigungen aktiv sind (Standard `true`; nur unter iOS wirksam). |
+| `QuietHoursStart` | `TimeSpan?` | Beginn der Ruhezeit (Standard `null` = keine Ruhezeit). |
+| `QuietHoursEnd` | `TimeSpan?` | Ende der Ruhezeit (Standard `null`). |
 | `AutoRefreshEnabled` | `bool` | Gibt an, ob die automatische Hintergrund-Aktualisierung aktiv ist (Standard `true`). |
 | `RefreshIntervalMinutes` | `int` | Abruf-Intervall in Minuten (Standard `30`; UI-Auswahl 15/30/60/240). |
 | `Theme` | `string?` | Erscheinungsbild (`"system"`/`"light"`/`"dark"`, Standard `"system"`). |
