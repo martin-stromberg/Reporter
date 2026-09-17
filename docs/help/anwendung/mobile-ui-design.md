@@ -6,6 +6,10 @@ Diese Checkliste sichert ab, dass neue und bestehende UI-Features im
 .NET-MAUI-Client auf mobilen Bildschirmen funktionieren und dem
 Design-Entwurf folgen.
 
+> Hinweis: Die unten referenzierten `test-results/`-Artefakte und die
+> `test-results.md` wurden nach Abschluss der Verifikationen entfernt;
+> sie sind weiterhin über die Git-Historie verfügbar.
+
 ## Grundprinzipien
 
 - **Mobile first:** Layouts werden zuerst für ca. 390 × 844 pt (iPhone)
