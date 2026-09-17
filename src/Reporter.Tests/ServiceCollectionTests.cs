@@ -190,6 +190,28 @@ public class ServiceCollectionTests
         connection.Dispose();
     }
 
+    /// <summary>
+    /// Verifies that the backup exclusion service and the <see cref="DatabasePath"/>
+    /// carrier can be resolved, mirroring the <c>MauiProgram</c> registration, and
+    /// that the fake records the excluded paths like <c>App.OnStart</c> calls it.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesBackupExclusion()
+    {
+        var services = new ServiceCollection();
+        services
+            .AddSingleton(new DatabasePath(Path.Combine(Path.GetTempPath(), "reporter.db")))
+            .AddSingleton<IBackupExclusionService, FakeBackupExclusionService>();
+
+        var provider = services.BuildServiceProvider();
+
+        var service = Assert.IsType<FakeBackupExclusionService>(provider.GetRequiredService<IBackupExclusionService>());
+        var databasePath = provider.GetRequiredService<DatabasePath>();
+
+        service.ExcludeFromBackup(databasePath.FilePath);
+        Assert.Equal(databasePath.FilePath, Assert.Single(service.ExcludedPaths));
+    }
+
     private static void AddTestRepositories(ServiceCollection services, SqliteConnection connection)
     {
         services.AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite(connection))

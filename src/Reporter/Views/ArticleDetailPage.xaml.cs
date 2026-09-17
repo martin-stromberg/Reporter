@@ -71,12 +71,16 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
 
     private void OnWebViewNavigating(object? sender, WebNavigatingEventArgs e)
     {
-        if (_viewModel.IsOnline || !WebViewNavigationGuard.IsExternalUrl(e.Url))
+        switch (WebViewNavigationGuard.DecideAction(e.Url, _viewModel.IsOnline))
         {
-            return;
+            case WebViewNavigationAction.CancelAndOpenExternally:
+                e.Cancel = true;
+                _ = _viewModel.OpenLinkInBrowserAsync(e.Url);
+                break;
+            case WebViewNavigationAction.CancelAndShowOfflineHint:
+                e.Cancel = true;
+                _ = DisplayAlertAsync(AppResources.OfflineHint, AppResources.ArticleOfflineLinksDisabled, AppResources.ButtonOk);
+                break;
         }
-
-        e.Cancel = true;
-        _ = DisplayAlertAsync(AppResources.OfflineHint, AppResources.ArticleOfflineLinksDisabled, AppResources.ButtonOk);
     }
 }

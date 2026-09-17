@@ -2,7 +2,7 @@
 
 # iOS-Deployment
 
-Der lokale iOS-Buildlauf bringt Reporter vom Quellcode auf ein iPhone/iPad oder bis in den App Store bzw. TestFlight — gesteuert über `scripts/iOS-Deployment.ps1`, auf dem Mac direkt oder von Windows aus mit Build- und Upload-Delegation an einen Mac.
+Der lokale iOS-Buildlauf bringt Reporter vom Quellcode auf ein iPhone oder bis in den App Store bzw. TestFlight — gesteuert über `scripts/iOS-Deployment.ps1`, auf dem Mac direkt oder von Windows aus mit Build- und Upload-Delegation an einen Mac. Die App ist derzeit nur für iPhone deklariert (iPad ist kein Target — Entscheidung und Begründung in [`docs/app-store-review.md`](../../app-store-review.md)).
 
 ## Inhalt
 

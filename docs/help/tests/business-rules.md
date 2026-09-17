@@ -18,6 +18,21 @@
 
 **Umsetzung:** `StubFeedServer.InitializeAsync` — `MapGet("/directory")` mit Query-Auswertung (`src/Reporter.E2ETests/StubFeedServer.cs`).
 
+## Dedizierte Feed-Fixture vor Template-Fallback
+
+**Beschreibung:** Die Route `/feeds/{name}.xml` des `StubFeedServer` liefert bevorzugt eine gleichnamige Fixture-Datei `Fixtures/{name}.xml` aus; erst wenn keine existiert, greift das generische `stub-feed.xml`-Template. So können Tests Feed-Inhalte gezielt formen, ohne das Template für alle anderen Tests zu verändern.
+
+**Bedingungen:**
+- `File.Exists(Fixtures/{name}.xml)` → dedizierte Datei (z. B. `link-feed.xml` mit einem externen `<a href="{baseUrl}/external-link">`-Link im Artikel-HTML).
+- Sonst → `Fixtures/stub-feed.xml` als Fallback.
+- In beiden Fällen werden die Platzhalter `{name}` und `{baseUrl}` substituiert.
+
+**Verhalten:**
+- Tests mit speziellen Inhalten (hier: ein Artikel mit externem Link für `ArticleLinkTests`) bekommen eine eigene Fixture-Datei; alle übrigen Tests nutzen unverändert das Template.
+- `{baseUrl}` erlaubt Fixtures, absolute Links zurück auf den Stub-Server zu setzen, ohne den dynamisch vergebenen Port zu kennen.
+
+**Umsetzung:** `StubFeedServer.InitializeAsync` — `MapGet("/feeds/{name}.xml")` mit Fixture-Auflösung und doppelter Platzhalter-Substitution (`src/Reporter.E2ETests/StubFeedServer.cs`).
+
 ## Testisolation ohne Reihenfolge-Abhängigkeit
 
 **Beschreibung:** Alle E2E-Tests teilen einen App-Prozess und eine Datenbank. xunit garantiert keine Methodenreihenfolge — die Tests müssen daher in beliebiger Reihenfolge korrekt sein.

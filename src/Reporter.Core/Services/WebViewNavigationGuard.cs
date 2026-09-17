@@ -25,4 +25,24 @@ public static class WebViewNavigationGuard
         return url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// Decides how the WebView should handle a navigation request: local
+    /// content loads proceed, external links are cancelled — online they are
+    /// handed to the system browser, offline the hint dialog is shown.
+    /// </summary>
+    /// <param name="url">The navigation URL reported by the WebView.</param>
+    /// <param name="isOnline">The current connectivity state.</param>
+    /// <returns>The <see cref="WebViewNavigationAction"/> for the request.</returns>
+    public static WebViewNavigationAction DecideAction(string? url, bool isOnline)
+    {
+        if (!IsExternalUrl(url))
+        {
+            return WebViewNavigationAction.Proceed;
+        }
+
+        return isOnline
+            ? WebViewNavigationAction.CancelAndOpenExternally
+            : WebViewNavigationAction.CancelAndShowOfflineHint;
+    }
 }

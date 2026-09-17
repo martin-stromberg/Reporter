@@ -92,17 +92,25 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 **Lösung:** Alte Artefakte löschen oder mit `-IpaPath` gezielt eine Datei wählen.
 
-## `altool`: „duplicate bundle version" / Build schon hochgeladen
+## `iTMSTransporter`: „duplicate bundle version" / Build schon hochgeladen
 
 **Ursache:** Jede `CFBundleVersion` darf bei Apple nur einmal vorkommen.
 
 **Lösung:** `store` erhöht `ApplicationVersion` automatisch — der Fehler tritt typischerweise bei `upload` einer bereits hochgeladenen IPA oder bei `-NoBumpBuildNumber` auf. Neuen `store`-Lauf ohne Opt-out ausführen.
 
-## `altool --validate-app`: „Invalid Signature" / Profil-Fehler
+## `iTMSTransporter -m verify`: „Invalid Signature" / Profil-Fehler
 
 **Ursache:** IPA ist mit Development-Profil oder falschem Zertifikat signiert; oder Profil gehört zu einer anderen Bundle-ID.
 
 **Lösung:** Sicherstellen, dass `-CodesignProvision` ein **App-Store-**Profil für `de.martinstromberg.reporter` ist (kein Ad-hoc-/Development-Profil). Der `get-task-allow`-Check des Skripts fängt Development-Profile bereits vor dem Upload ab.
+
+## Warnung „iTMSTransporter -m verify fehlgeschlagen oder nicht unterstuetzt"
+
+**Ursache:** Der Remote-Validierungsschritt `xcrun iTMSTransporter -m verify` ist fehlgeschlagen oder wird auf dem Ziel-Mac für iOS-IPAs nicht unterstützt. Das Skript läuft bewusst mit Warnung weiter — der Schritt ist optional.
+
+**Lösung:** Kein Eingriff nötig: Die lokale `codesign`-/`embedded.mobileprovision`-Prüfung ist bereits gelaufen, und der Upload (`-m upload`) validiert serverseitig. Soll die Remote-Validierung doch laufen, auf dem Mac `xcrun iTMSTransporter -m verify -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>` manuell ausführen und die Fehlermeldung prüfen (häufig fehlende/veraltete Transporter-Installation — siehe „`xcrun iTMSTransporter` nicht gefunden").
+
+> **Hinweis:** Der Upload selbst läuft unter `set -e` und bricht bei einem Fehler hart ab — eine fehlgeschlagene Remote-Validierung allein verhindert die Einreichung nicht.
 
 ## Build in TestFlight: „Fehlende Übereinstimmung" (Missing Compliance)
 
@@ -114,7 +122,7 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 **Ursache:** `NSAllowsArbitraryLoads` in `Info.plist` erlaubt unverschlüsselte Feed-URLs.
 
-**Lösung:** In den Review-Informationen begründen: Benutzer tragen beliebige Feed-URLs ein, die nicht zwingend HTTPS unterstützen. Das ist eine anerkannte Begründung, muss aber erklärt werden.
+**Lösung:** In den Review-Informationen begründen: Benutzer tragen beliebige Feed-URLs ein, die nicht zwingend HTTPS unterstützen. Das ist eine anerkannte Begründung, muss aber erklärt werden — der konsolidierte englische Wortlaut für den Review-Dialog steht in [`docs/app-store-review.md`](../../app-store-review.md) (Abschnitt „ATS-Begründung").
 
 ## App stürzt direkt nach dem Start ab (`ExecutionEngineException`, „aot-only mode")
 
@@ -122,8 +130,8 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 **Lösung:** `<UseInterpreter>true</UseInterpreter>` in der iOS-PropertyGroup der `Reporter.csproj` (gesetzt) — dynamisch erzeugte Delegates laufen dann interpretiert. Diagnose-Wege: `device` mit `-Console` streamt die Exception ins Terminal; alternativ `xcrun devicectl device console --device <udid>`.
 
-## `xcrun altool` nicht gefunden / deprecated
+## `xcrun iTMSTransporter` nicht gefunden
 
-**Ursache:** `altool` ist deprecated und könnte in künftigen Xcode-Versionen entfallen.
+**Ursache:** `iTMSTransporter` ersetzt das deprecated `xcrun altool`; es liegt bei Xcode bzw. der installierten Transporter-App bei. Ist beides nicht vorhanden, findet `xcrun` das Werkzeug nicht.
 
-**Lösung:** Als Ausweichweg steht `xcrun iTMSTransporter` bzw. die Transporter-App bereit; die Skript-Notizen (`scripts/iOS-Deployment.md`) dokumentieren den Wechsel.
+**Lösung:** Auf dem Ziel-Mac `xcrun iTMSTransporter --version` prüfen; bei Fehlanzeige die **Transporter-App** aus dem Mac App Store installieren oder Xcode nachinstallieren. Die Skript-Notizen (`scripts/iOS-Deployment.md`) dokumentieren den Wechsel von `altool`.

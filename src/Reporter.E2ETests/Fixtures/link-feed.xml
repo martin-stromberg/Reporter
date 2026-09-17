@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<rss version="2.0">
+  <channel>
+    <title>Stub Feed {name}</title>
+    <link>{baseUrl}/site</link>
+    <description>Stub feed whose item links back to the stub server.</description>
+    <item>
+      <title>{name} article</title>
+      <link>{baseUrl}/article/{name}-1</link>
+      <guid>{name}-article-1</guid>
+      <pubDate>Wed, 17 Sep 2025 10:00:00 GMT</pubDate>
+      <description><![CDATA[<p>Article body with an <a href="{baseUrl}/external-link">external link</a> that must open in the system browser.</p>]]></description>
+    </item>
+  </channel>
+</rss>

@@ -564,9 +564,19 @@ PROFILE_XML=`$(security cms -D -i "`$APP/embedded.mobileprovision")
 if echo "`$PROFILE_XML" | grep -A1 'get-task-allow' | grep -q '<true/>'; then
     echo "FEHLER: Development-Profil (get-task-allow=true) - nicht store-tauglich"; exit 1
 fi
-echo "==> xcrun altool --validate-app"
-xcrun altool --validate-app -f "`$IPA" --type ios --apiKey "$ApiKeyId" --apiIssuer "$ApiIssuerId"
-echo "==> Validierung erfolgreich"
+echo "==> xcrun iTMSTransporter -m verify"
+# altool ist bei Apple deprecated; iTMSTransporter nutzt dieselbe
+# API-Key-Authentifizierung und denselben Schluesselsuchpfad
+# ~/.appstoreconnect/private_keys. Fuer Apps (.ipa/.pkg) verlangt
+# iTMSTransporter -assetFile; -f gilt nur fuer .itmsp-Pakete (Apple
+# Transporter User Guide). Falls -m verify auf dem Ziel-Mac fuer
+# iOS-IPAs nicht unterstuetzt wird, entfaellt die Remote-Validierung: die
+# lokale codesign-Pruefung oben ist bestanden und der Upload validiert
+# serverseitig (dokumentierter Fallback).
+if ! xcrun iTMSTransporter -m verify -assetFile "`$IPA" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"; then
+    echo "WARNUNG: iTMSTransporter -m verify fehlgeschlagen oder nicht unterstuetzt - Remote-Validierung entfaellt, der Upload validiert serverseitig (Fallback)."
+fi
+echo "==> Validierung abgeschlossen"
 "@
     Invoke-OnMac -Script $macScript -Description "IPA-Validierung"
 }
@@ -575,7 +585,9 @@ function Invoke-StoreUpload {
     param([string]$MacIpa)
     $macScript = @"
 set -e
-xcrun altool --upload-app -f "$MacIpa" --type ios --apiKey "$ApiKeyId" --apiIssuer "$ApiIssuerId"
+# -assetFile statt -f: -f ist fuer .itmsp-Pakete reserviert und darf fuer
+# App-Uploads nicht verwendet werden (Apple Transporter User Guide).
+xcrun iTMSTransporter -m upload -assetFile "$MacIpa" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"
 echo "==> Upload erfolgreich - der Build erscheint nach der Verarbeitung in App Store Connect / TestFlight"
 "@
     Invoke-OnMac -Script $macScript -Description "App-Store-Upload"

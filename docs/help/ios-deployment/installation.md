@@ -63,3 +63,4 @@ Die getroffene Wahl wird pro Aktion in `.ios-deploy.user.json` (Repo-Root, gitig
 2. `-Action upload` ohne Parameter muss die fehlenden Pflichtparameter sauber auflisten (Exit 1)
 3. `ssh -o BatchMode=yes <macuser>@<mac> "echo ok"` liefert `ok` ohne Passwortabfrage
 4. Auf dem Mac: `security find-identity -v -p codesigning` zeigt das „Apple Distribution"-Zertifikat; `ls ~/Library/MobileDevice/Provisioning\ Profiles` zeigt das Store-Profil
+5. Auf dem Mac: `xcrun iTMSTransporter --version` liefert eine Versionszeile (Upload-Werkzeug für `store`/`upload`; liegt Xcode bzw. der Transporter-App bei)

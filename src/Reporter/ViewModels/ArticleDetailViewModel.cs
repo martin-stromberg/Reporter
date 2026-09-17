@@ -486,6 +486,24 @@ blockquote {{
         Item = CreateItemCopy(isRead: true, isSavedForLater: Item.IsSavedForLater, readAt: DateTime.UtcNow);
     }
 
+    /// <summary>
+    /// Opens an external link tapped inside the article WebView in the system
+    /// browser. The offline guard stays as defense in depth for a connectivity
+    /// change between the navigation decision and this call.
+    /// </summary>
+    /// <param name="url">The external URL to open.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task OpenLinkInBrowserAsync(string url)
+    {
+        if (!IsOnline)
+        {
+            ErrorMessage = AppResources.OfflineHint;
+            return;
+        }
+
+        await OpenUrlInBrowserAsync(url);
+    }
+
     private async Task OpenInBrowserAsync()
     {
         if (Item?.Link is null)
@@ -499,15 +517,20 @@ blockquote {{
             return;
         }
 
+        await OpenUrlInBrowserAsync(Item.Link);
+    }
+
+    private async Task OpenUrlInBrowserAsync(string url)
+    {
         ErrorMessage = string.Empty;
 
         try
         {
-            await Browser.OpenAsync(Item.Link, BrowserLaunchMode.SystemPreferred);
+            await Browser.OpenAsync(url, BrowserLaunchMode.SystemPreferred);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"OpenInBrowserAsync failed: {ex}");
+            Debug.WriteLine($"OpenUrlInBrowserAsync failed: {ex}");
             ErrorMessage = AppResources.ErrorOpenInBrowserFailed;
         }
     }
