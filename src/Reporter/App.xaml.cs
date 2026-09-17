@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Services;
 using Reporter.Data;
 
 namespace Reporter;
@@ -14,6 +15,7 @@ namespace Reporter;
 public partial class App : Application
 {
     private readonly IServiceProvider _services;
+    private IDebugLogService? _debugLogService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="App"/> class.
@@ -39,6 +41,25 @@ public partial class App : Application
         var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
         await context.Database.MigrateAsync();
 
+        var debugLogService = scope.ServiceProvider.GetRequiredService<IDebugLogService>();
+        _debugLogService = debugLogService;
+        await debugLogService.BeginSessionAsync();
+
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        try
+        {
+            var demoContentService = scope.ServiceProvider.GetRequiredService<IDemoContentService>();
+            await demoContentService.EnsureSeededAsync();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler beim Seeden des Demo-Inhalts darf den App-Start nicht verhindern.
+            Debug.WriteLine($"App.OnStart demo content seed failed: {ex}");
+            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Demo content seed failed", ex.ToString(), DebugLogLevel.Error);
+        }
+
         try
         {
             var cleanupService = scope.ServiceProvider.GetRequiredService<IRetentionCleanupService>();
@@ -48,6 +69,7 @@ public partial class App : Application
         {
             // Ein Fehler beim Aufraeumen darf den App-Start nicht verhindern.
             Debug.WriteLine($"App.OnStart retention cleanup failed: {ex}");
+            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Retention cleanup failed on start", ex.ToString(), DebugLogLevel.Error);
         }
 
         try
@@ -61,6 +83,7 @@ public partial class App : Application
         {
             // Ein Fehler beim Anwenden des Themes darf den App-Start nicht verhindern.
             Debug.WriteLine($"App.OnStart theme apply failed: {ex}");
+            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Theme apply failed on start", ex.ToString(), DebugLogLevel.Error);
         }
 
         try
@@ -72,6 +95,7 @@ public partial class App : Application
         {
             // Ein Fehler beim Starten der Netzwerk-Ueberwachung darf den App-Start nicht verhindern.
             Debug.WriteLine($"App.OnStart network status init failed: {ex}");
+            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Network status init failed on start", ex.ToString(), DebugLogLevel.Error);
         }
 
         try
@@ -83,7 +107,22 @@ public partial class App : Application
         {
             // Ein Fehler beim Starten der Hintergrund-Aktualisierung darf den App-Start nicht verhindern.
             Debug.WriteLine($"App.OnStart auto refresh start failed: {ex}");
+            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Auto refresh start failed", ex.ToString(), DebugLogLevel.Error);
         }
+    }
+
+    /// <inheritdoc />
+    protected override void OnSleep()
+    {
+        base.OnSleep();
+        _ = _debugLogService?.LogAsync(DebugLogCategory.Lifecycle, "App suspended", level: DebugLogLevel.Info);
+    }
+
+    /// <inheritdoc />
+    protected override void OnResume()
+    {
+        base.OnResume();
+        _ = _debugLogService?.LogAsync(DebugLogCategory.Lifecycle, "App resumed", level: DebugLogLevel.Info);
     }
 
     /// <summary>
@@ -104,5 +143,20 @@ public partial class App : Application
         }
 
         return window;
+    }
+
+    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        // Bewusste Einschraenkung: Das LogAsync laeuft fire-and-forget, weil ein
+        // blockierendes Warten im Absturzpfad riskanter waere — bei einem harten
+        // Absturz kann der letzte Eintrag verloren gehen.
+        var details = e.ExceptionObject is Exception exception ? exception.ToString() : e.ExceptionObject?.ToString();
+        _ = _debugLogService?.LogAsync(DebugLogCategory.Exception, "Unhandled exception", details, DebugLogLevel.Error);
+    }
+
+    private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        // Fire-and-forget wie in OnUnhandledException — siehe Kommentar dort.
+        _ = _debugLogService?.LogAsync(DebugLogCategory.Exception, "Unobserved task exception", e.Exception.ToString(), DebugLogLevel.Error);
     }
 }

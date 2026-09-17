@@ -1,6 +1,13 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Diagnostics;
+using BackgroundTasks;
+using CoreFoundation;
 using Foundation;
+using Microsoft.Extensions.DependencyInjection;
+using Reporter.Core.Interfaces;
+using Reporter.Core.Services;
+using Reporter.Services;
 using UIKit;
 using UserNotifications;
 
@@ -23,9 +30,89 @@ public class AppDelegate : MauiUIApplicationDelegate
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 
     /// <inheritdoc />
-    public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
+    public override bool FinishedLaunching(UIApplication application, NSDictionary? launchOptions)
     {
         UNUserNotificationCenter.Current.Delegate = _notificationDelegate;
-        return base.FinishedLaunching(application, launchOptions);
+        var result = base.FinishedLaunching(application, launchOptions);
+        // Die Registrierung wird auf den naechsten Main-Queue-Durchlauf verlagert:
+        // Ein synchroner Aufruf waehrend FinishedLaunching kollidiert mit dem
+        // internen Launch-Handling von BGTaskScheduler (_os_unfair_lock_recursive_abort).
+        DispatchQueue.MainQueue.DispatchAsync(RegisterBackgroundFetchTask);
+        return result;
+    }
+
+    private void RegisterBackgroundFetchTask()
+    {
+        var debugLogService = IPlatformApplication.Current?.Services?.GetService<IDebugLogService>();
+        var registered = false;
+        try
+        {
+            registered = BGTaskScheduler.Shared.Register(BackgroundRefreshService.RefreshTaskIdentifier, null, task =>
+            {
+                if (task is BGAppRefreshTask refreshTask)
+                {
+                    _ = HandleRefreshTaskAsync(refreshTask);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Z. B. wenn der Identifier nicht in BGTaskSchedulerPermittedIdentifiers
+            // steht — darf den App-Start nicht abstuerzen lassen.
+            Debug.WriteLine($"AppDelegate background task registration threw: {ex}");
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background task registration failed", ex.ToString(), DebugLogLevel.Warning);
+        }
+
+        // Submit-Aufrufe duerfen erst nach abgeschlossener Registrierung laufen
+        // (sonst NSInternalInconsistencyException) — siehe BackgroundRefreshService.
+        BackgroundRefreshService.NotifyTaskRegistered(registered);
+
+        if (!registered)
+        {
+            Debug.WriteLine($"AppDelegate background task registration failed: {BackgroundRefreshService.RefreshTaskIdentifier}");
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background task registration failed", $"Identifier: {BackgroundRefreshService.RefreshTaskIdentifier}", DebugLogLevel.Warning);
+        }
+        else
+        {
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background task registered", $"Identifier: {BackgroundRefreshService.RefreshTaskIdentifier}", DebugLogLevel.Info);
+        }
+    }
+
+    private async Task HandleRefreshTaskAsync(BGAppRefreshTask task)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        using var cts = new CancellationTokenSource();
+        task.ExpirationHandler = cts.Cancel;
+
+        var success = false;
+        IDebugLogService? debugLogService = null;
+        try
+        {
+            var services = IPlatformApplication.Current?.Services;
+            debugLogService = services?.GetService<IDebugLogService>();
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh task started", $"Identifier: {task.Identifier}", DebugLogLevel.Info);
+            var scheduledSyncRunner = services?.GetService<IScheduledSyncRunner>();
+            if (scheduledSyncRunner is not null)
+            {
+                success = await scheduledSyncRunner.RunAsync(cts.Token).ConfigureAwait(false);
+            }
+            else
+            {
+                Debug.WriteLine("AppDelegate scheduled sync runner not resolved");
+                _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Scheduled sync runner not resolved", null, DebugLogLevel.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler im Hintergrund-Task darf den App-Lebenszyklus nicht beeintraechtigen.
+            Debug.WriteLine($"AppDelegate refresh task failed: {ex}");
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh task failed", ex.ToString(), DebugLogLevel.Warning);
+            success = false;
+        }
+        finally
+        {
+            _ = debugLogService?.LogAsync(DebugLogCategory.Sync, "Background refresh task completed", $"Success: {success}, elapsed: {stopwatch.ElapsedMilliseconds} ms", DebugLogLevel.Info);
+            task.SetTaskCompleted(success);
+        }
     }
 }

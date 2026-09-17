@@ -24,6 +24,8 @@ public class FeedSyncService : IFeedSyncService
     private readonly INetworkStatusService _networkStatusService;
     private readonly IKeywordFilter _keywordFilter;
     private readonly IFeedIconService _feedIconService;
+    private readonly IDebugLogService? _debugLogService;
+    private readonly SemaphoreSlim _syncAllLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -36,6 +38,7 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
     /// <param name="feedIconService">The service used to backfill the favicon of feeds that have none.</param>
+    /// <param name="debugLogService">The optional session debug log service used to record sync failures.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
         IItemRepository itemRepository,
@@ -44,7 +47,8 @@ public class FeedSyncService : IFeedSyncService
         INotificationService notificationService,
         INetworkStatusService networkStatusService,
         IKeywordFilter keywordFilter,
-        IFeedIconService feedIconService)
+        IFeedIconService feedIconService,
+        IDebugLogService? debugLogService = null)
     {
         _feedRepository = feedRepository;
         _itemRepository = itemRepository;
@@ -54,6 +58,7 @@ public class FeedSyncService : IFeedSyncService
         _networkStatusService = networkStatusService;
         _keywordFilter = keywordFilter;
         _feedIconService = feedIconService;
+        _debugLogService = debugLogService;
     }
 
     /// <inheritdoc />
@@ -88,8 +93,14 @@ public class FeedSyncService : IFeedSyncService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             var message = $"Synchronization failed: {ex.Message}";
-            await UpdateFeedHealthAsync(feed, FeedHealth.Error).ConfigureAwait(false);
+            var errorKind = FeedSyncErrorKind.Classify(ex, feed.Url);
+            await UpdateFeedHealthAsync(feed, FeedHealth.Error, new FeedHealthUpdate(ErrorKind: errorKind, ErrorMessage: message)).ConfigureAwait(false);
             await UpdateLogAsync(log, FeedHealth.Error, message).ConfigureAwait(false);
+            _ = _debugLogService?.LogAsync(
+                DebugLogCategory.Sync,
+                $"Synchronization failed for feed '{feed.Title}'",
+                ex.ToString(),
+                DebugLogLevel.Error);
             return new SyncResult(FeedHealth.Error, 0, message);
         }
     }
@@ -97,40 +108,51 @@ public class FeedSyncService : IFeedSyncService
     /// <inheritdoc />
     public async Task<SyncResult> SyncAllAsync(CancellationToken cancellationToken = default)
     {
-        if (!_networkStatusService.IsOnline)
+        // Parallele Gesamt-Syncs (z. B. Start-Abruf gleichzeitig mit einem
+        // OS-Hintergrundabruf) wuerden dieselben neuen Artikel doppelt
+        // einspielen und doppelt benachrichtigen.
+        await _syncAllLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
-        }
-
-        var feeds = await _feedRepository.GetAllAsync().ConfigureAwait(false);
-        if (feeds.Count == 0)
-        {
-            return new SyncResult(FeedHealth.Ok, 0, "No feeds configured.");
-        }
-
-        var totalNew = 0;
-        var hasError = false;
-        var hasWarning = false;
-        var messages = new List<string>();
-
-        foreach (var feed in feeds)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var result = await SyncFeedAsync(feed.Id, cancellationToken).ConfigureAwait(false);
-            totalNew += result.NewItems;
-            hasError = hasError || result.Status == FeedHealth.Error;
-            hasWarning = hasWarning || result.Status == FeedHealth.Warning;
-
-            if (!string.IsNullOrEmpty(result.Message))
+            if (!_networkStatusService.IsOnline)
             {
-                messages.Add($"{feed.Title}: {result.Message}");
+                return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
             }
-        }
 
-        var status = hasError ? FeedHealth.Error : hasWarning ? FeedHealth.Warning : FeedHealth.Ok;
-        var combinedMessage = messages.Count > 0 ? string.Join("; ", messages) : null;
-        return new SyncResult(status, totalNew, combinedMessage);
+            var feeds = await _feedRepository.GetAllAsync().ConfigureAwait(false);
+            if (feeds.Count == 0)
+            {
+                return new SyncResult(FeedHealth.Ok, 0, "No feeds configured.");
+            }
+
+            var totalNew = 0;
+            var hasError = false;
+            var hasWarning = false;
+            var messages = new List<string>();
+
+            foreach (var feed in feeds)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var result = await SyncFeedAsync(feed.Id, cancellationToken).ConfigureAwait(false);
+                totalNew += result.NewItems;
+                hasError = hasError || result.Status == FeedHealth.Error;
+                hasWarning = hasWarning || result.Status == FeedHealth.Warning;
+
+                if (!string.IsNullOrEmpty(result.Message))
+                {
+                    messages.Add($"{feed.Title}: {result.Message}");
+                }
+            }
+
+            var status = hasError ? FeedHealth.Error : hasWarning ? FeedHealth.Warning : FeedHealth.Ok;
+            var combinedMessage = messages.Count > 0 ? string.Join("; ", messages) : null;
+            return new SyncResult(status, totalNew, combinedMessage);
+        }
+        finally
+        {
+            _syncAllLock.Release();
+        }
     }
 
     private async Task<SyncResult> RunSyncAsync(Feed feed, SyncLog log, CancellationToken cancellationToken)
@@ -146,7 +168,8 @@ public class FeedSyncService : IFeedSyncService
         await using var stream = await _httpClient.GetStreamAsync(feed.Url, cancellationToken).ConfigureAwait(false);
         var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore };
         using var reader = XmlReader.Create(stream, settings);
-        var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(reader), cancellationToken).ConfigureAwait(false);
+        using var feedReader = PrepareFeedReader(reader);
+        var syndicationFeed = await Task.Run(() => SyndicationFeed.Load(feedReader), cancellationToken).ConfigureAwait(false);
 
         var feedItems = syndicationFeed.Items.ToList();
 
@@ -172,7 +195,7 @@ public class FeedSyncService : IFeedSyncService
         // strictly isolated inside the icon service.
         var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed, cancellationToken).ConfigureAwait(false);
 
-        await UpdateFeedHealthAsync(feed, status, resolvedTitle, faviconUrl).ConfigureAwait(false);
+        await UpdateFeedHealthAsync(feed, status, new FeedHealthUpdate(resolvedTitle, faviconUrl)).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
 
         if (newItemEntities.Count > 0)
@@ -185,6 +208,11 @@ public class FeedSyncService : IFeedSyncService
             {
                 // Ein Fehler im Benachrichtigungspfad darf das Sync-Ergebnis nicht verfaelschen.
                 Debug.WriteLine($"FeedSyncService notification failed: {ex}");
+                _ = _debugLogService?.LogAsync(
+                    DebugLogCategory.Sync,
+                    $"Notification failed for feed '{feed.Title}'",
+                    ex.ToString(),
+                    DebugLogLevel.Warning);
             }
         }
 
@@ -282,7 +310,7 @@ public class FeedSyncService : IFeedSyncService
         return FeedHealth.Ok;
     }
 
-    private async Task UpdateFeedHealthAsync(Feed feed, string status, string? resolvedTitle = null, string? faviconUrl = null)
+    private async Task UpdateFeedHealthAsync(Feed feed, string status, FeedHealthUpdate update)
     {
         var healthLastChange = feed.HealthLastChange;
         if (FeedHealth.Changed(feed.HealthStatus, status))
@@ -294,13 +322,15 @@ public class FeedSyncService : IFeedSyncService
         {
             Id = feed.Id,
             Url = feed.Url,
-            Title = resolvedTitle ?? feed.Title,
+            Title = update.ResolvedTitle ?? feed.Title,
             CategoryId = feed.CategoryId,
             LastCheckedAt = DateTime.UtcNow,
             HealthStatus = status,
             HealthLastChange = healthLastChange,
             NotificationsEnabled = feed.NotificationsEnabled,
-            FaviconUrl = faviconUrl ?? feed.FaviconUrl,
+            FaviconUrl = update.FaviconUrl ?? feed.FaviconUrl,
+            LastErrorKind = update.ErrorKind,
+            LastErrorMessage = update.ErrorMessage,
         }).ConfigureAwait(false);
     }
 
@@ -357,5 +387,16 @@ public class FeedSyncService : IFeedSyncService
         var value = $"{title}|{link}|{publishedAt:O}";
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return Convert.ToBase64String(hash);
+    }
+
+    // Atom 0.3 documents are normalized to Atom 1.0 on the fly so that
+    // SyndicationFeed.Load remains the single parse entry point; the peek only
+    // consumes preamble/whitespace and works on the non-seekable HTTP stream.
+    private static XmlReader PrepareFeedReader(XmlReader reader)
+    {
+        reader.MoveToContent();
+        return reader.LocalName == "feed" && reader.NamespaceURI == Atom03NormalizingXmlReader.NamespaceUri
+            ? new Atom03NormalizingXmlReader(reader)
+            : reader;
     }
 }

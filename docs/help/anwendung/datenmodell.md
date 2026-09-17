@@ -26,6 +26,8 @@
 | `HealthLastChange` | `DateTime?` | Zeitpunkt der letzten Statusänderung. |
 | `NotificationsEnabled` | `bool` | Pro-Feed-Schalter für Benachrichtigungen (Standard `true`). |
 | `FaviconUrl` | `string?` | URL des Favicons der Feed-Website (optional). |
+| `LastErrorKind` | `string?` | Kategorie des letzten Sync-Fehlers (ein `FeedSyncErrorKind`-Wert); `null`, wenn der letzte Abruf erfolgreich war. |
+| `LastErrorMessage` | `string?` | Technische Rohmeldung des letzten Sync-Fehlers; `null`, wenn der letzte Abruf erfolgreich war. |
 
 ### `Item`
 
@@ -54,12 +56,12 @@
 | Eigenschaft | Typ | Beschreibung |
 |-------------|-----|--------------|
 | `Id` | `Guid` | Eindeutige Kennung (Singleton). |
-| `RetentionDays` | `int` | Aufbewahrungsdauer in Tagen. |
-| `AutoMarkReadMode` | `string?` | Modus für automatisches Als-gelesen-markieren. |
-| `AutoMarkReadDelaySeconds` | `int` | Verzögerung in Sekunden. |
-| `NotificationsEnabled` | `bool` | Gibt an, ob Benachrichtigungen aktiv sind. |
-| `QuietHoursStart` | `TimeSpan?` | Beginn der Ruhezeit. |
-| `QuietHoursEnd` | `TimeSpan?` | Ende der Ruhezeit. |
+| `RetentionDays` | `int` | Aufbewahrungsdauer in Tagen (Standard `30`, zulässig 1–365). |
+| `AutoMarkReadMode` | `string?` | Modus für automatisches Als-gelesen-markieren (`"off"` deaktiviert die Markierung, alle anderen Werte — Standard `"on_scroll"` — aktivieren sie). |
+| `AutoMarkReadDelaySeconds` | `int` | Verzögerung in Sekunden (Standard `5`; UI-Auswahl 0/1/3/5). |
+| `NotificationsEnabled` | `bool` | Gibt an, ob Benachrichtigungen aktiv sind (Standard `true`; nur unter iOS wirksam). |
+| `QuietHoursStart` | `TimeSpan?` | Beginn der Ruhezeit (Standard `null` = keine Ruhezeit). |
+| `QuietHoursEnd` | `TimeSpan?` | Ende der Ruhezeit (Standard `null`). |
 | `AutoRefreshEnabled` | `bool` | Gibt an, ob die automatische Hintergrund-Aktualisierung aktiv ist (Standard `true`). |
 | `RefreshIntervalMinutes` | `int` | Abruf-Intervall in Minuten (Standard `30`; UI-Auswahl 15/30/60/240). |
 | `Theme` | `string?` | Erscheinungsbild (`"system"`/`"light"`/`"dark"`, Standard `"system"`). |
@@ -67,6 +69,7 @@
 | `NotificationSummaryEnabled` | `bool` | Benachrichtigungsmodus: `false` = eine Benachrichtigung pro Artikel (Standard), `true` = Sammel-Benachrichtigung pro Feed. |
 | `RefreshOnStartupEnabled` | `bool` | Gibt an, ob die Feeds beim Start der App einmalig abgerufen werden (Standard `true`). |
 | `UnreadSortOrder` | `string?` | Sortierrichtung der Ungelesen-Liste (`"desc"` = neueste zuerst, Standard; `"asc"` = älteste zuerst). |
+| `DebugCollectionEnabled` | `bool` | Opt-in-Schalter für die Sammlung von Debuginformationen / das Session-Debug-Log (Standard `false`). |
 
 ### `SyncLog`
 
@@ -79,11 +82,23 @@
 | `Status` | `string?` | Status der Synchronisation. |
 | `Message` | `string?` | Nachricht oder Fehlerdetails. |
 
+### `DebugLogEntry`
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `Id` | `Guid` | Eindeutige Kennung des Eintrags. |
+| `Timestamp` | `DateTime` | UTC-Zeitpunkt des Eintrags (indiziert). |
+| `Level` | `string?` | Schweregrad (`DebugLogLevel`: `Info`/`Warning`/`Error`). |
+| `Category` | `string?` | Kategorie (`DebugLogCategory`: `Lifecycle`/`Sync`/`Exception`/`Settings`/`Report`). |
+| `Message` | `string?` | Logmeldung. |
+| `Details` | `string?` | Optionale Details, z. B. `exception.ToString()`. |
+
 ## Beziehungen
 
 - Ein `Feed` gehört optional zu einer `Category` (`CategoryId`).
 - Ein `Item` gehört immer zu einem `Feed` (`FeedId`).
 - Ein `SyncLog` gehört optional zu einem `Feed` (`FeedId`).
+- `DebugLogEntry` hat keine Beziehungen — die Einträge sind sitzungsbezogen und werden beim App-Start bis auf `Error`-Einträge zurückgesetzt.
 
 ## Datenzugriff
 
@@ -99,3 +114,6 @@ Die App verwendet eine saubere Schichtung:
 - Die `settings`-Spalten `auto_refresh_enabled`, `refresh_interval_minutes` und `theme` wurden per Migration `AddSettingsAutoRefreshAndTheme` ergänzt; die Spalte `language` (Standard `"system"`, inkl. `UpdateData` des Singletons) per Migration `AddSettingsLanguage`.
 - Für die lokalen Benachrichtigungen wurden per Migration `AddFeedNotificationsEnabled` die Spalte `feeds.notifications_enabled` (Default `true`) und per `AddSettingsNotificationSummary` die Spalte `settings.notification_summary_enabled` (Default `false`, inkl. `UpdateData` des Singletons) ergänzt — Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 - Für die Feed-Symbole wurde per Migration `AddFeedFaviconUrl` die Spalte `feeds.favicon_url` ergänzt; für Start-Abruf und Ungelesen-Sortierung per `AddSettingsStartupRefreshAndSortOrder` die Spalten `settings.refresh_on_startup_enabled` (Default `true`, inkl. `UpdateData` des Singletons) und `settings.unread_sort_order` (Default `"desc"`, inkl. `UpdateData` des Singletons).
+- Für die Diagnose-Funktion wurden per Migration `AddSettingsDebugCollection` die Spalte `settings.debug_collection_enabled` (Default `false`) und per `AddDebugLogEntries` die Tabelle `debug_log_entries` (`id`, `timestamp` mit Index `IX_debug_log_entries_timestamp`, `level` max. 20, `category` max. 50, `message`, `details`) ergänzt — Details zum Session-Log siehe [Einstellungen](../einstellungen/index.md).
+- Für die Fehlerdetails-Anzeige hat die Migration `AddFeedLastError` die Spalten `feeds.last_error_kind` (max. 50 Zeichen, nullable — ein `FeedSyncErrorKind`-Wert wie `InsecureHttpBlocked`, `HttpStatus`, `Network`, `Parse` oder `Unknown`) und `feeds.last_error_message` (nullable — die technische Rohmeldung, identisch zum `SyncLog.Message`-Text des Fehlschlags) ergänzt. Beide werden bei jedem fehlgeschlagenen Abruf gesetzt und beim nächsten erfolgreichen Abruf auf `null` zurückgesetzt; `SyncLog` bleibt der Verlauf, die Feed-Spalten den aktuellen Stand — Details siehe [Feeds synchronisieren](synchronisation.md).
+- Beim allerersten Start — erkannt daran, dass die Datenbankdatei vor der Migration noch nicht existiert — legt `DemoContentService` einmalig die Kategorie „News" und den Feed `https://www.apple.com/newsroom/rss-feed.rss` (Titel „Apple Newsroom", `NotificationsEnabled = false`) über die regulären Repositories an. Das Seeden entfällt bei Bestandsdatenbanken, bei bereits vorhandenem Demo-Feed (`feeds.url`-Abgleich) sowie bei gesetzter Umgebungsvariable `REPORTER_DISABLE_DEMO_SEED` (E2E-/CI-Läufe); eine vorhandene Kategorie „News" wird wiederverwendet statt dupliziert.

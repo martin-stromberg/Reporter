@@ -8,13 +8,22 @@ namespace Reporter.Tests;
 /// </summary>
 public sealed class FakeHttpMessageHandler : HttpMessageHandler
 {
-    private readonly Func<HttpRequestMessage, HttpResponseMessage> _responseFactory;
+    private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _responseFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FakeHttpMessageHandler"/> class.
     /// </summary>
     /// <param name="responseFactory">The factory used to create responses.</param>
     public FakeHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
+        : this(request => Task.FromResult(responseFactory(request)))
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FakeHttpMessageHandler"/> class.
+    /// </summary>
+    /// <param name="responseFactory">The factory used to create responses, possibly faulted tasks.</param>
+    public FakeHttpMessageHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> responseFactory)
     {
         _responseFactory = responseFactory;
     }
@@ -22,6 +31,6 @@ public sealed class FakeHttpMessageHandler : HttpMessageHandler
     /// <inheritdoc />
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(_responseFactory(request));
+        return _responseFactory(request);
     }
 }

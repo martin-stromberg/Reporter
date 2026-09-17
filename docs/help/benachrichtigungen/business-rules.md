@@ -22,6 +22,23 @@
 
 **Umsetzung:** `NotificationService.NotifyNewItemsAsync` (Reihenfolge: Feed-Flag → globaler Schalter → Ruhezeit → Keywords → Modus-Verzweigung).
 
+## Sichtbarkeit nur aus dem OS-Hintergrundabruf
+
+**Beschreibung:** Eine erzeugte Mitteilung wird nur dann sichtbar dargestellt, wenn der auslösende Sync im OS-Hintergrund lief (`BGAppRefreshTask`). Alle Abrufe bei laufender App — manuell, `AutoRefreshService`-Timer, `RefreshOnStartupEnabled`-Start-Abruf — erzeugen zwar intern Benachrichtigungsrequests, deren Darstellung wird aber vollständig unterdrückt.
+
+**Bedingungen:**
+- iOS ruft `UNUserNotificationCenterDelegate.WillPresentNotification` ausschließlich bei Vordergrund-App auf — die Methode ist damit die exakte Unterdrückungsstelle, ohne dass eine Auslöser-Unterscheidung bis in `NotificationService` reichen muss.
+- Der `BGAppRefreshTask` ist an `AutoRefreshEnabled`/`RefreshIntervalMinutes` gekoppelt (kein eigener Schalter): `AutoRefreshEnabled == false` → `BGTaskScheduler.Shared.Cancel`; `true` → `Submit` mit `EarliestBeginDate = now + ClampRefreshIntervalMinutes(RefreshIntervalMinutes)`. Die Einplanung läuft über `AutoRefreshService.ApplySettingsAsync` → `IBackgroundRefreshService.ApplySettingsAsync`, abgesichert durch `IsSupported` (nur iOS `true`).
+- iOS behandelt `EarliestBeginDate` nur als Untergrenze — die tatsächliche Ausführungshäufigkeit ist systemgesteuert (Nutzungsverhalten, Energiestatus); bei deaktivierter System-Option „Hintergrundaktualisierung" läuft der Task nie.
+- `ScheduledSyncRunner.RunAsync` plant den Folgeabruf nach jedem Lauf aus den persistierten Settings neu — auch im Fehler- und Kancellierungsfall, damit sich der Abruf nicht „totläuft".
+
+**Verhalten:**
+- Sync bei Vordergrund-App → `WillPresentNotification` antwortet `UNNotificationPresentationOptions.None`: kein Banner, kein Sound, kein Eintrag im Mitteilungszentrum (bewusst `None`, nicht `List` — auch stille Einträge sind unerwünscht).
+- Sync aus dem `BGAppRefreshTask` → `WillPresentNotification` wird nicht aufgerufen; iOS zeigt die Mitteilung automatisch als Banner/List/Sound.
+- Auf Windows/Android/MacCatalyst ist `BackgroundRefreshService` ein No-Op — dort gibt es weder Hintergrundabruf noch Benachrichtigungen (`ILocalNotificationService.IsSupported == false`).
+
+**Umsetzung:** `NotificationDelegate.WillPresentNotification` (Unterdrückung), `AppDelegate.RegisterBackgroundFetchTask`/`HandleRefreshTaskAsync` (Task-Lebenszyklus), `BackgroundRefreshService.ApplySettingsAsync` (`Submit`/`Cancel`), `ScheduledSyncRunner.RunAsync` (Sync + Neuplanung), `AutoRefreshService.ApplySettingsAsync` (Weiterleitung der Settings).
+
 ## Ruhezeit-Auswertung (Wrap-around, leere und einseitige Intervalle)
 
 **Beschreibung:** `QuietHoursStart`/`QuietHoursEnd` werden unvalidiert gespeichert (vgl. [Einstellungen — Business Rules](../einstellungen/business-rules.md)); die Auswertung gegen die lokale Gerätezeit erfolgt hier. Eine aktive Ruhezeit **verwirft** Benachrichtigungen — es gibt kein Nachholen.

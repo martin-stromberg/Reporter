@@ -1573,5 +1573,230 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("ButtonDirectAdd", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Diagnostics &amp; support ähnelt.
+        /// </summary>
+        public static string SettingsSectionDebug {
+            get {
+                return ResourceManager.GetString("SettingsSectionDebug", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Collect debug information ähnelt.
+        /// </summary>
+        public static string SettingsDebugCollectionLabel {
+            get {
+                return ResourceManager.GetString("SettingsDebugCollectionLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Logs errors and app events of the current session ähnelt.
+        /// </summary>
+        public static string SettingsDebugCollectionHint {
+            get {
+                return ResourceManager.GetString("SettingsDebugCollectionHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Send debug report ähnelt.
+        /// </summary>
+        public static string SettingsDebugSendLabel {
+            get {
+                return ResourceManager.GetString("SettingsDebugSendLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Opens an e-mail draft containing the diagnostic data for you to review ähnelt.
+        /// </summary>
+        public static string SettingsDebugSendHint {
+            get {
+                return ResourceManager.GetString("SettingsDebugSendHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Send ähnelt.
+        /// </summary>
+        public static string SettingsDebugSendButton {
+            get {
+                return ResourceManager.GetString("SettingsDebugSendButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Enable &quot;Collect debug information&quot; first to send a debug report. ähnelt.
+        /// </summary>
+        public static string SettingsDebugCollectionRequiredHint {
+            get {
+                return ResourceManager.GetString("SettingsDebugCollectionRequiredHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No e-mail app is available on this device, so no debug report can be sent. ähnelt.
+        /// </summary>
+        public static string SettingsDebugEmailUnsupportedHint {
+            get {
+                return ResourceManager.GetString("SettingsDebugEmailUnsupportedHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Sending failed ähnelt.
+        /// </summary>
+        public static string DebugReportFailedTitle {
+            get {
+                return ResourceManager.GetString("DebugReportFailedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The debug report could not be sent. Make sure an e-mail app is set up on this device and try again. ähnelt.
+        /// </summary>
+        public static string DebugReportFailedMessage {
+            get {
+                return ResourceManager.GetString("DebugReportFailedMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} debug report ähnelt.
+        /// </summary>
+        public static string DebugReportEmailSubject {
+            get {
+                return ResourceManager.GetString("DebugReportEmailSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Application ähnelt.
+        /// </summary>
+        public static string DebugReportSectionAppInfo {
+            get {
+                return ResourceManager.GetString("DebugReportSectionAppInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Device ähnelt.
+        /// </summary>
+        public static string DebugReportSectionDevice {
+            get {
+                return ResourceManager.GetString("DebugReportSectionDevice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Network ähnelt.
+        /// </summary>
+        public static string DebugReportSectionNetwork {
+            get {
+                return ResourceManager.GetString("DebugReportSectionNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Settings ähnelt.
+        /// </summary>
+        public static string DebugReportSectionSettings {
+            get {
+                return ResourceManager.GetString("DebugReportSectionSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed health ähnelt.
+        /// </summary>
+        public static string DebugReportSectionFeedHealth {
+            get {
+                return ResourceManager.GetString("DebugReportSectionFeedHealth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Sync history ähnelt.
+        /// </summary>
+        public static string DebugReportSectionSyncLog {
+            get {
+                return ResourceManager.GetString("DebugReportSectionSyncLog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Session debug log ähnelt.
+        /// </summary>
+        public static string DebugReportSectionSessionLog {
+            get {
+                return ResourceManager.GetString("DebugReportSectionSessionLog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Sync error ähnelt.
+        /// </summary>
+        public static string FeedErrorDetailsTitle {
+            get {
+                return ResourceManager.GetString("FeedErrorDetailsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Show error details ähnelt.
+        /// </summary>
+        public static string ButtonShowErrorDetails {
+            get {
+                return ResourceManager.GetString("ButtonShowErrorDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed address uses unencrypted HTTP — the insecure connection was blocked or the server refused plaintext. Update the feed to HTTPS if possible. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindInsecureHttpBlocked {
+            get {
+                return ResourceManager.GetString("FeedErrorKindInsecureHttpBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed server reported an HTTP error. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindHttpStatus {
+            get {
+                return ResourceManager.GetString("FeedErrorKindHttpStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed could not be reached. Check the network connection and the feed address. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindNetwork {
+            get {
+                return ResourceManager.GetString("FeedErrorKindNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed format could not be read. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindParse {
+            get {
+                return ResourceManager.GetString("FeedErrorKindParse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The synchronization failed with an unexpected error. ähnelt.
+        /// </summary>
+        public static string FeedErrorKindUnknown {
+            get {
+                return ResourceManager.GetString("FeedErrorKindUnknown", resourceCulture);
+            }
+        }
     }
 }

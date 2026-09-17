@@ -2,6 +2,146 @@
 
 # Test- und Verifikationsergebnisse
 
+## Issue #96: Demo-Feed beim ersten Start
+
+Branch: `task/issue-96-531e8f1a79494f299fbcc3819e768229-demo`
+
+Umfang: Beim erstmaligen Start (frische SQLite-Datenbank — `!File.Exists(databasePath)`
+in `MauiProgram` vor `builder.Build()`) seedet der neue `DemoContentService`
+(`Reporter.Core`) einmalig die Kategorie „News" und den Feed
+`https://www.apple.com/newsroom/rss-feed.rss` (Titel „Apple Newsroom",
+`NotificationsEnabled = false`). Der `FirstRunState`-POCO transportiert das
+First-Run-Signal in die DI; `App.OnStart` ruft `EnsureSeededAsync` fehlerisoliert
+vor dem `IRetentionCleanupService`-Block auf. Die E2E-Fixture unterdrückt den
+Seed über die neue Umgebungsvariable `REPORTER_DISABLE_DEMO_SEED`.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests (Release) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --settings src/Reporter.Tests/coverlet.runsettings --collect:"XPlat Code Coverage"` | 513 bestanden, 0 fehlgeschlagen, 0 übersprungen (Baseline: 504) |
+| Tests (Release, Iteration 2) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj -c Release` | 514 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Skript-Tests | `npm test` | 36 bestanden, 0 fehlgeschlagen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+| Build (Debug, win-x64) | `dotnet build src/Reporter/Reporter.csproj -c Debug -f net10.0-windows10.0.19041.0` | Erfolgreich, 0 Warnungen, 0 Fehler |
+| E2E (Iteration 2) | `.\scripts\Run-E2ETests.ps1` | 8/8 bestanden (inkl. `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed`) |
+
+Neue Tests: `DemoContentServiceTests` (9 — First-Run legt Kategorie + Feed mit
+korrekten Defaults an, No-op bei `IsFirstRun = false` und
+`DemoSeedSuppressed = true`, Wiederverwendung vorhandener Kategorie „News",
+Idempotenz bei Zweitaufruf, Skip bei vorhandenem Demo-Feed, Info-Log-Eintrag
+„Demo content seeded" via `FakeDebugLogService`, abgebrochenes Token wirft
+`OperationCanceledException` ohne DB-Schreibzugriff),
+`ServiceCollectionTests.AddReporterServices_ResolvesDemoContentService`.
+Neu in E2E: `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed` (eigener
+`Reporter.exe`-Prozess auf frischer Temp-DB ohne Disable-Flag, prüft
+Feed-Zeile, Kategorie „News" und Feed-Karte per FlaUI) sowie
+`FeedDbAssertions.CategoryExistsAsync`. `ReporterAppFixture` setzt jetzt
+`REPORTER_DISABLE_DEMO_SEED=1`; `ResolveAppPath` ist `internal`.
+
+### Manuelle Verifikation (durchgeführt)
+
+Unpackaged `win-x64`-Debug-Build mit frischer `REPORTER_DB_PATH` im
+Temp-Verzeichnis gestartet und nach 20 s beendet; SQLite-Abfrage der DB:
+
+- [x] **Demo-Seed:** `feeds` enthält `https://www.apple.com/newsroom/rss-feed.rss`
+  mit `title='Apple Newsroom'`, `notifications_enabled=0`, `health_status='OK'`,
+  `category_id` zeigt auf die neue Zeile `categories` (`name='News'`) —
+  Kategorie und Feed exakt wie geplant angelegt
+
+### E2E-Verifikation
+
+Die FlaUI-Suite wurde in Iteration 2 in der interaktiven
+Windows-Desktop-Session ausgeführt (`.\scripts\Run-E2ETests.ps1`):
+**8/8 bestanden** — `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed`
+weist Feed-Zeile, Kategorie „News" und die sichtbare Feed-Karte auf frischer
+Temp-DB nach; die sieben `SmokeTests` bleiben durch
+`REPORTER_DISABLE_DEMO_SEED` hermetisch. Drei in einem früheren Lauf
+fehlgeschlagene Smoke-Tests (`NoClickablePointException` auf Karten-Gruppen)
+erwiesen sich als umgebungsbedingter UIA-Provider-Flake ohne Feature-Bezug
+(kein UI-Diff zu `b231a7c`) und sind im Wiederholungslauf bestanden — Details
+in `docs/features/task-issue-96-531e8f1a79494f299fbcc3819e768229-demo/test-results.md`.
+
+## Issue #81: Debuginformationen sammeln und per E-Mail versenden
+
+Umfang: Opt-in-Schalter `settings.debug_collection_enabled`, session-scoped
+Tabelle `debug_log_entries` (Reset bei jedem App-Start, Maximum 500 Einträge),
+`DebugLogService`/`DebugReportService` in `Reporter.Core`, Gateways
+`IEmailService`/`IDeviceInfoProvider` in `Reporter`, Instrumentierung in
+`FeedSyncService`/`AutoRefreshService`/`App.xaml.cs` (Lifecycle, Sync-Fehler,
+unbehandelte Exceptions), neuer Abschnitt „Diagnose & Support" auf der
+Einstellungsseite mit Senden-Aktion über den System-Mail-Client.
+
+### Build und Tests
+
+| Lauf | Befehl | Ergebnis |
+|------|--------|----------|
+| Tests (Release) | `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release` | 454 bestanden, 0 fehlgeschlagen, 0 übersprungen |
+| Static Checks | `.\scripts\Run-StaticChecks.ps1` | Exit-Code 0 (Format, Lizenzheader, Security, Static-Analysis-Release-Build inkl. MAUI-App ohne Befund) |
+| Migrationen | `dotnet ef migrations script` + `MigrateAsync` gegen Kopie der echten `reporter.db` | `debug_collection_enabled` (Default 0) und `debug_log_entries` + Index `IX_debug_log_entries_timestamp` angelegt |
+
+Befund während der Verifikation: die generierte Migration `AddSettingsDebugCollection`
+enthielt ein leeres `UpdateData` auf die Seed-Zeile `settings`, das SQLite mit
+„near \"WHERE\": syntax error" ablehnte — `MigrateAsync` scheiterte dadurch beim
+App-Start. Der leere `UpdateData`-Aufruf wurde entfernt (die `AddColumn`-Defaults
+decken Bestandszeilen ab); anschließend lief die Migration gegen eine Kopie der
+echten Datenbank fehlerfrei.
+
+Neue Tests u. a.: `DebugLogRepositoryTests` (Reihenfolge, `DeleteAll`, `TrimToLatest`),
+`DebugLogServiceTests` (Session-Reset, Enabled-State, Disabled-No-op, Schreiben,
+Trim auf 500, Repository-Fehler werfen nicht, Übergangseintrag),
+`DebugReportServiceTests` (Unsupported/Compose-false → `false`, Empfänger +
+lokalisierter Betreff, App-/Device-/Netzwerk-/Settings-/Feed-Health-/Sync-Log-/
+Session-Log-Inhalte, Limits 50/200, leere Logs),
+`FeedSyncServiceTests_DebugLog` + `AutoRefreshServiceTests_DebugLog`
+(Error-Level-Einträge bei Sync-Fehlern), `SettingsViewModelTests_Debug`
+(Laden, Persistieren, `SetEnabled`-Aufruf, `DebugSendEnabled`-Matrix,
+Senden über echten `DebugReportService` + `FakeEmailService`,
+`DebugReportFailed`-Event), `DebugReportTests_E2E` (Persistenz-Roundtrip,
+Report-Komposition über echte SQLite-Repositories, Session-Log Write/Reset),
+`ReporterDbContextTests_Persistence`/`_Schema` (Roundtrips + Tabellen-Mapping),
+`ServiceCollectionTests` (DI-Auflösung der neuen Services).
+Neue Fakes: `FakeEmailService`, `FakeDeviceInfoProvider`, `FakeDebugLogService`;
+`TestSettingsHelper.SaveAsync` um `debugCollectionEnabled` erweitert.
+
+### Manuelle UI-Verifikation (durchgeführt)
+
+Unpackaged `win-x64`-Debug-Build gestartet; Fenstergröße per `GetWindowRect`
+verifiziert: **390 × 844 pt**. Interaktion über UI Automation
+(`test-results/issue-59/uia.ps1`), deutsch lokalisierte UI. Screenshots unter
+`test-results/issue-81/manual-*.png`.
+
+- [x] **Migration beim App-Start:** `__EFMigrationsHistory` enthält nach dem
+  Start `20260914060413_AddSettingsDebugCollection` +
+  `20260914060416_AddDebugLogEntries`; `settings.debug_collection_enabled=0`,
+  `debug_log_entries` leer (Sammlung aus → kein Start-Eintrag)
+- [x] **Abschnitt „Diagnose & Support":** Section-Header, Switch-Zeile
+  „Debuginformationen sammeln" + Hint, „Debugbericht senden" + Hint,
+  Button **Senden** (286 × 44 pt) — `manual-02`
+- [x] **Opt-in-Schalter:** Toggle per UIA → `settings.debug_collection_enabled=1`
+  persistiert und `debug_log_entries` erhält sofort den Übergangseintrag
+  `Info | Lifecycle | Debug collection enabled` — `manual-03`
+- [x] **Senden:** Button **Senden** öffnet auf diesem Arbeitsplatz den
+  Windows-Systemdialog „kein E-Mail-Programm zugeordnet" (`mailto:` ohne
+  registrierten Client); danach ist im Session-Log `Info | Report | Debug
+  report composed` sowie `Info | Lifecycle | App resumed` (Resume-Logging)
+  sichtbar — `manual-04` (Systemdialog), `manual-05`
+- [x] **Session-Reset:** App-Neustart → `debug_log_entries` enthält nur noch
+  `Info | Lifecycle | Debug session started`; `debug_collection_enabled`
+  bleibt `1`
+- [x] **Dark Mode:** Abschnitt mit `AppThemeBinding`-Kartenfarben geprüft —
+  `manual-06`
+- [ ] **Mail-Entwurf mit echtem Client:** auf diesem Arbeitsplatz ist kein
+  Mail-Client registriert; der vorbefüllte Entwurf (Empfänger-Platzhalter,
+  lokalisierter Betreff, Plain-Text-Body mit allen sieben Sektionen) muss auf
+  einem Gerät mit eingerichtetem Mail-Client bzw. iOS-Simulator nachgeholt
+  werden. Body-Inhalt und Empfänger/Betreff sind durch
+  `DebugReportServiceTests`/`DebugReportTests_E2E` abgedeckt.
+
+### iOS-Verifikation
+
+Steht aus — nur auf macOS möglich (`net10.0-ios`, `scripts/iOS-Deployment.ps1`).
+
 ## Issue #77: Verbesserungen der App (Lesezeit, Favicons, Start-Abruf, Sortierung, Sprach-Hinweis, Icon/Splash)
 
 Branch: `task/issue-77-b1023d3d5f804e239e02f48af24b0ac3-verbesserungen-der-app`

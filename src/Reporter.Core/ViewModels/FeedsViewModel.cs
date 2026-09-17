@@ -507,6 +507,30 @@ public partial class FeedsViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    /// <summary>
+    /// Builds the localized error detail text for a feed's last sync failure:
+    /// the stored <see cref="FeedListItem.LastErrorKind"/> maps to a
+    /// <c>FeedErrorKind*</c> resource and the raw technical message is appended
+    /// as a second paragraph when present.
+    /// </summary>
+    /// <param name="feed">The feed whose error should be described.</param>
+    /// <returns>The localized error text, optionally followed by the raw message.</returns>
+    public string GetFeedErrorMessage(FeedListItem feed)
+    {
+        var kindText = feed.LastErrorKind switch
+        {
+            FeedSyncErrorKind.InsecureHttpBlocked => AppResources.FeedErrorKindInsecureHttpBlocked,
+            FeedSyncErrorKind.HttpStatus => AppResources.FeedErrorKindHttpStatus,
+            FeedSyncErrorKind.Network => AppResources.FeedErrorKindNetwork,
+            FeedSyncErrorKind.Parse => AppResources.FeedErrorKindParse,
+            _ => AppResources.FeedErrorKindUnknown,
+        };
+
+        return string.IsNullOrWhiteSpace(feed.LastErrorMessage)
+            ? kindText
+            : $"{kindText}\n\n{feed.LastErrorMessage}";
+    }
+
     // Rebuilds the stored feed from its list item for partial updates so the
     // untouched fields survive; url, title, category id and the notifications
     // flag are supplied by the caller.
@@ -523,6 +547,8 @@ public partial class FeedsViewModel : BaseViewModel
             HealthLastChange = feed.HealthLastChange,
             NotificationsEnabled = notificationsEnabled,
             FaviconUrl = feed.FaviconUrl,
+            LastErrorKind = feed.LastErrorKind,
+            LastErrorMessage = feed.LastErrorMessage,
         };
     }
 

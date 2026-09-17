@@ -67,7 +67,7 @@ public class FeedSyncServiceTests : IDisposable
 
     private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
-        var handler = new FakeHttpMessageHandler(_ => throw exception);
+        var handler = new FakeHttpMessageHandler(_ => Task.FromException<HttpResponseMessage>(exception));
         var httpClient = new HttpClient(handler);
         return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
     }
@@ -945,5 +945,229 @@ public class FeedSyncServiceTests : IDisposable
         Assert.Equal(FeedHealth.Ok, result.Status);
         var receivedToken = Assert.Single(_feedIconService.ReceivedCancellationTokens);
         Assert.Equal(cts.Token, receivedToken);
+    }
+
+    /// <summary>
+    /// Verifies that a failed sync persists the classified error kind and the
+    /// technical message on the feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Failure_PersistsErrorKindAndMessage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var service = CreateFailingService(new HttpRequestException("No connection"));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedSyncErrorKind.Network, feed.LastErrorKind);
+        Assert.Equal("Synchronization failed: No connection", feed.LastErrorMessage);
+    }
+
+    /// <summary>
+    /// Verifies that a successful sync clears the error fields persisted by a
+    /// previous failure.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Success_ClearsLastError()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var failingService = CreateFailingService(new HttpRequestException("No connection"));
+        await failingService.SyncFeedAsync(feedId);
+
+        var feedAfterFailure = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feedAfterFailure?.LastErrorKind);
+
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Ok, feed.HealthStatus);
+        Assert.Null(feed.LastErrorKind);
+        Assert.Null(feed.LastErrorMessage);
+    }
+
+    /// <summary>
+    /// Verifies that an <see cref="HttpRequestException"/> against an
+    /// <c>http</c> feed URL is classified as <see cref="FeedSyncErrorKind.InsecureHttpBlocked"/>,
+    /// covering the App Transport Security failure on iOS/MacCatalyst.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_HttpFeedNetworkFailure_ClassifiedAsInsecureHttpBlocked()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository, "http://example.com/feed");
+        var service = CreateFailingService(new HttpRequestException("Blocked by ATS"));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedSyncErrorKind.InsecureHttpBlocked, feed?.LastErrorKind);
+    }
+
+    /// <summary>
+    /// Verifies that a non-success HTTP response is classified as
+    /// <see cref="FeedSyncErrorKind.HttpStatus"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_HttpStatusError_ClassifiedAsHttpStatus()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var service = CreateService(string.Empty, statusCode: HttpStatusCode.InternalServerError);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedSyncErrorKind.HttpStatus, feed?.LastErrorKind);
+    }
+
+    /// <summary>
+    /// Verifies that an unparseable feed document is classified as
+    /// <see cref="FeedSyncErrorKind.Parse"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_InvalidXml_ClassifiedAsParse()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var service = CreateService("this is not xml");
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedSyncErrorKind.Parse, feed?.LastErrorKind);
+    }
+
+    /// <summary>
+    /// Verifies that an <see cref="HttpRequestException"/> without a status code
+    /// against an <c>https</c> feed URL is classified as
+    /// <see cref="FeedSyncErrorKind.Network"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_HttpsFeedNetworkFailure_ClassifiedAsNetwork()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var service = CreateFailingService(new HttpRequestException("No connection"));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedSyncErrorKind.Network, feed?.LastErrorKind);
+    }
+
+    /// <summary>
+    /// Verifies that an Atom 0.3 document (namespace
+    /// <c>http://purl.org/atom/ns#</c>) is synchronized like RSS/Atom 1.0:
+    /// items are persisted with title, link, publication date and identifier,
+    /// and feed health is set to OK.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Atom03_CreatesItems_AndSetsHealthOk()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var now = DateTime.UtcNow;
+        var xml = TestFeedXml.Atom03(
+        [
+            ("Item One", "https://example.com/1", "tag:example.com,2024:1", now.AddHours(-2), now.AddHours(-1), "&lt;p&gt;One&lt;/p&gt;"),
+            ("Item Two", "https://example.com/2", "tag:example.com,2024:2", now, now, null),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.True(result.Status == FeedHealth.Ok, $"Unexpected status {result.Status}: {result.Message}");
+        Assert.Equal(2, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Equal(2, items.Count);
+        Assert.Contains(items, i =>
+            i.Title == "Item One" && i.Link == "https://example.com/1" &&
+            i.GuidOrHash == "tag:example.com,2024:1" && i.PublishedAt.HasValue);
+        Assert.Contains(items, i =>
+            i.Title == "Item Two" && i.Link == "https://example.com/2" &&
+            i.GuidOrHash == "tag:example.com,2024:2" && i.PublishedAt.HasValue);
+
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Ok, feed.HealthStatus);
+
+        var logs = await _syncLogRepository.GetAllAsync();
+        var log = Assert.Single(logs);
+        Assert.Equal(FeedHealth.Ok, log.Status);
+        Assert.NotNull(log.FinishedAt);
+    }
+
+    /// <summary>
+    /// Verifies that the Atom 0.3 <c>issued</c> element of an entry is mapped to
+    /// <see cref="Item.PublishedAt"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Atom03_MapsIssuedToPublishedAt()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var issued = new DateTime(2024, 3, 1, 12, 0, 0, DateTimeKind.Utc);
+        var xml = TestFeedXml.Atom03(
+        [
+            ("Item One", "https://example.com/1", "tag:example.com,2024:1", issued, null, null),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        var item = Assert.Single(items);
+        Assert.Equal(issued, item.PublishedAt);
+    }
+
+    /// <summary>
+    /// Verifies that a placeholder title (the feed URL stored as title) is
+    /// replaced by the title of an Atom 0.3 feed document on the first sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_Atom03_PlaceholderTitle_UpdatesTitleFromFeedDocument()
+    {
+        const string url = "https://example.com/atom03";
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = url,
+            Title = url,
+            NotificationsEnabled = true,
+        });
+        var xml = TestFeedXml.Atom03(
+        [
+            ("Item One", "https://example.com/1", "tag:example.com,2024:1", DateTime.UtcNow, null, null),
+        ], feedTitle: "Resolved Atom03 Title");
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal("Resolved Atom03 Title", feed.Title);
     }
 }

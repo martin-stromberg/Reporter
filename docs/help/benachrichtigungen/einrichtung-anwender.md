@@ -17,7 +17,9 @@ Die Benachrichtigungen werden über drei Schalter gesteuert: einen globalen Scha
 | **Ruhezeit (Nicht stören)** mit **VON**/**BIS** | Einstellungen, Karte **Benachrichtigungen & Ruhezeiten** | Zeitraum ohne Benachrichtigungen; Bereiche über Mitternacht sind erlaubt. In der Ruhezeit anfallende Benachrichtigungen werden verworfen. |
 | **Benachrichtigungen** | Seite **Feeds**, Formular des Feeds (Anlegen und Bearbeiten) | Ein/Aus (Voreinstellung ein). Schaltet Benachrichtigungen nur für diesen Feed. Wirkt nur, wenn der globale Schalter ebenfalls eingeschaltet ist. Nur auf iOS bedienbar — sonst deaktiviert, mit Hinweis. |
 | **Schlagwort-Filter** | Einstellungen, Karte **Schlagwort-Filter** | Neue Artikel, deren Titel oder Inhalt ein Schlagwort enthält, werden bereits beim Abruf verworfen — sie erscheinen nicht in den Listen und lösen keine Benachrichtigung aus. |
+| **Automatische Hintergrund-Aktualisierung** mit **Abruf-Intervall** | Einstellungen, Karte **Synchronisation & Lesefluss** | Voraussetzung für den Hintergrund-Abgleich bei geschlossener App — nur dieser Abgleich erzeugt sichtbare Benachrichtigungen. Das Intervall gilt für iOS als Mindestpause; den tatsächlichen Zeitpunkt bestimmt das System. Ist der Schalter aus, kommen keine Benachrichtigungen. |
 | System-Berechtigung | iOS-Einstellungen des Geräts | Wird beim ersten Einschalten des Hauptschalters angefragt. War noch nie eine Anfrage erfolgt, erscheint eine neutrale Hinweiszeile mit **Benachrichtigungen erlauben** (öffnet den System-Dialog); bei Verweigerung eine Hinweiszeile mit **Einstellungen öffnen**. |
+| **Hintergrundaktualisierung** | iOS-Einstellungen des Geräts (Allgemein bzw. App-Eintrag) | Systemseitige Freigabe für den Abgleich bei geschlossener App. Ist sie für Reporter oder generell deaktiviert, läuft der Hintergrund-Abgleich nie — und es kommen keine Benachrichtigungen. |
 
 ## Vorgehen
 
@@ -29,6 +31,7 @@ Die Benachrichtigungen werden über drei Schalter gesteuert: einen globalen Scha
 ## Hinweise
 
 - Die iOS-Berechtigung wird nicht beim App-Start, sondern beim bewussten Einschalten in den Einstellungen angefragt; iOS zeigt den Dialog nur einmal. Ein späteres Verweigern oder Erlauben geschieht über die Systemeinstellungen — die Hinweiszeile in der App weist bei Bedarf darauf hin. Wurde die Berechtigung noch nie angefragt (z. B. weil der Schalter bereits voreingeschaltet war), führt die Zeile **Benachrichtigungen erlauben** direkt zum System-Dialog — in den iOS-Einstellungen gibt es vor der ersten Anfrage noch keinen Mitteilungen-Eintrag.
+- Benachrichtigungen erscheinen nur aus dem Hintergrund-Abgleich: Bei geöffneter App — etwa nach dem Herunterziehen der Liste oder dem Abgleich beim Programmstart — erscheint absichtlich keine Mitteilung; die neuen Artikel stehen in **Ungelesen** bereit.
 - Benachrichtigungen sind derzeit nur auf iOS verfügbar; auf anderen Plattformen sind die Schalter deaktiviert und ein entsprechender Hinweis wird eingeblendet.
 - Pro Artikel erscheint höchstens eine Benachrichtigung; derselbe Artikel wird bei wiederholten Abgleichen nicht erneut gemeldet.
 - Ein Moduswechsel (einzeln ↔ gesammelt) wirkt ab dem nächsten Abgleich; bereits im Mitteilungszentrum liegende Benachrichtigungen bleiben unverändert.

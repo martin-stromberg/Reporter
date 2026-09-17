@@ -40,6 +40,42 @@ namespace Reporter.Data.Migrations
                     b.ToTable("categories", (string)null);
                 });
 
+            modelBuilder.Entity("Reporter.Data.Entities.DebugLogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("category");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("details");
+
+                    b.Property<string>("Level")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("level");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("message");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("timestamp");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("debug_log_entries", (string)null);
+                });
+
             modelBuilder.Entity("Reporter.Data.Entities.Feed", b =>
                 {
                     b.Property<Guid>("Id")
@@ -68,6 +104,15 @@ namespace Reporter.Data.Migrations
                     b.Property<DateTime?>("LastCheckedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("last_checked_at");
+
+                    b.Property<string>("LastErrorKind")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("last_error_kind");
+
+                    b.Property<string>("LastErrorMessage")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("last_error_message");
 
                     b.Property<bool>("NotificationsEnabled")
                         .ValueGeneratedOnAdd()
@@ -195,6 +240,12 @@ namespace Reporter.Data.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("auto_refresh_enabled");
 
+                    b.Property<bool>("DebugCollectionEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false)
+                        .HasColumnName("debug_collection_enabled");
+
                     b.Property<string>("Language")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT")
@@ -255,6 +306,7 @@ namespace Reporter.Data.Migrations
                             AutoMarkReadDelaySeconds = 5,
                             AutoMarkReadMode = "on_scroll",
                             AutoRefreshEnabled = true,
+                            DebugCollectionEnabled = false,
                             Language = "system",
                             NotificationSummaryEnabled = false,
                             NotificationsEnabled = true,

@@ -13,6 +13,10 @@ auf einem Mac folgende Aktionen ermoeglichen:
 - `build`    : iOS-App bauen (optional mit Codesigning -> `.ipa`)
 - `simulator`: iOS-App bauen, im iOS-Simulator starten und Screenshot speichern
 - `device`   : iOS-App bauen und auf einem physischen Geraet starten
+- `store`    : signierten Release-Build erzeugen, validieren und zu
+               App Store Connect hochladen (TestFlight); erhoeht automatisch
+               `ApplicationVersion` im csproj (Opt-out: `-NoBumpBuildNumber`)
+- `upload`   : eine vorhandene `.ipa` validieren und hochladen (`-IpaPath`)
 
 ## Was aktuell funktioniert
 
@@ -27,7 +31,7 @@ Visual-Studio-Pair-to-Mac-Version zeigt:
 - Neuere Pair-to-Mac-Versionen (z. B. VS 2026):
   `/Users/<macOS-Kurzname>/Library/Caches/maui/PairToMac/SDKs/dotnet/`
 
-Der Pfad kann ueber `IOS_MAC_DOTNET_ROOT` oder `-DotNetRootRemoteDirectory`
+Der Pfad kann ueber `REPORTER_IOS_MAC_DOTNET_ROOT` oder `-DotNetRootRemoteDirectory`
 uebersteuert werden.
 
 Mit `-CodesignKey` und `-CodesignProvision` erzeugt `build` stattdessen
@@ -37,6 +41,53 @@ eine `.ipa` via `dotnet publish -p:ArchiveOnBuild=true`.
 
 Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 (außer Pair-to-Mac-Parameter natuerlich nicht noetig).
+
+## App Store / TestFlight (`store` und `upload`)
+
+### Voraussetzungen
+
+- Apple Developer Program-Account, App-Eintrag in App Store Connect
+  (Bundle-ID `de.martinstromberg.reporter`)
+- **Apple Distribution**-Zertifikat in der Mac-Keychain (`-CodesignKey`,
+  z. B. `Apple Distribution: Vorname Nachname (TEAMID)`)
+- App-Store-Provisioning-Profil fuer die Bundle-ID, installiert auf dem Mac
+  (`-CodesignProvision`, Profilname)
+- App Store Connect API Key (`.p8`) mit Rolle „App Manager" oder hoeher,
+  plus Key-ID und Issuer-ID (`-ApiKeyPath`/`-ApiKeyId`/`-ApiIssuerId` bzw.
+  `REPORTER_IOS_API_KEY_PATH`, `REPORTER_IOS_API_KEY_ID`, `REPORTER_IOS_API_ISSUER_ID`)
+- Die `.p8`-Datei muss **ausserhalb des Repository** liegen (wird vom
+  Skript erzwungen). Das Skript spiegelt sie nach
+  `~/.appstoreconnect/private_keys/AuthKey_<KeyId>.p8` auf dem Mac —
+  einer der festen Suchpfade von `xcrun altool`.
+- Auf Windows: zusaetzlich schluesselbasiertes SSH zum Mac
+  (`ssh <macuser>@<mac>` muss ohne Passwort funktionieren). Die von
+  Visual Studio Pair-to-Mac angelegten Keys liegen unter
+  `%LOCALAPPDATA%\Xamarin\MonoTouch` — ein eigenes `ssh-keygen` +
+  Eintrag in `~/.ssh/authorized_keys` auf dem Mac ist zuverlaessiger.
+
+### Ablauf `store`
+
+1. `Assert-StorePrerequisites` prueft alle Parameter, die Existenz der
+   `.p8`-Datei (ausserhalb Repo) und dass `CodesignKey` kein
+   Development-Zertifikat ist.
+2. `ApplicationVersion` im csproj wird um 1 erhoeht (Apple akzeptiert jede
+   `CFBundleVersion` nur einmal). Opt-out: `-NoBumpBuildNumber`.
+3. `dotnet publish -c Release -p:ArchiveOnBuild=true` mit
+   Distribution-Signing erzeugt die `.ipa`
+   (`src/Reporter/bin/Release/net10.0-ios/ios-arm64/`).
+4. Auf dem Mac (lokal bzw. per SSH von Windows): IPA wird entpackt,
+   `codesign --verify --deep --strict` und ein Check auf
+   `get-task-allow=false` im `embedded.mobileprovision` laufen,
+   anschliessend `xcrun altool --validate-app`.
+5. `xcrun altool --upload-app -f <ipa> --apiKey <id> --apiIssuer <issuer>`
+   laedt die IPA hoch. Nach der Verarbeitung (wenige Minuten) erscheint
+   der Build in App Store Connect unter TestFlight.
+
+`upload` startet bei Schritt 4 mit einer vorhandenen IPA (`-IpaPath`,
+sonst die neueste unter `bin/Release`).
+
+Alle Laeufe schreiben ein Transcript nach `logs/ios-deploy-<zeitstempel>.log`
+(gitignored).
 
 Fuer `simulator` wird die App per `xcrun simctl` gebootet, installiert,
 gestartet und ein Screenshot gespeichert. Der Screenshot liegt unter
@@ -78,6 +129,25 @@ vollstaendigen Anzeigenamen (z. B. `Martin Stromberg`).
 - `simulator`: sollte ohne Codesigning funktionieren.
 - `device` und `.ipa`-Erzeugung: erfordern ein gueltiges Signing-Zertifikat
   (`CodesignKey`) und ein Provisioning-Profil (`CodesignProvision`).
+- `store`/`upload`: erfordern zusaetzlich ein **Distribution**-Zertifikat
+  und App-Store-Profil sowie den API-Key; ein Development-`CodesignKey`
+  wird vom Skript abgelehnt.
+
+### `altool` ist deprecated
+
+`xcrun altool` ist bei Apple als deprecated markiert, funktioniert aber
+weiterhin und ist der dokumentierte CLI-Uploadweg ohne fastlane.
+Alternativen, falls Apple es entfernt: Transporter-App bzw.
+`iTMSTransporter` direkt (`xcrun iTMSTransporter`).
+
+### SSH-Delegation von Windows
+
+`store`/`upload` muessen `altool`, `codesign` und `security` auf dem Mac
+ausfuehren. Von Windows delegiert das Skript Bash-Skripte per
+`ssh -o BatchMode=yes` (schlaegt ohne schluesselbasierte Auth sofort fehl)
+und kopiert `.p8`/`.ipa` per `scp`. Bei einem SSH-Fehlschlag gibt das
+Skript die auszufuehrenden Mac-Befehle aus, damit sie manuell auf dem Mac
+laufen koennen.
 
 ### Sicherheit / Passwort
 
@@ -89,21 +159,19 @@ trotzdem erneuert werden.
 
 ### SSH-basiertes Deployment von Windows aus
 
-Damit `simulator` / `device` auch auf Windows funktionieren, koennte das
-Skript nach einem erfolgreichen `dotnet build` selbst per SSH auf den Mac
-wechseln und dort die gleichen `xcrun simctl`-Befehle ausfuehren, die
-`Invoke-SimulatorMac` bereits auf dem Mac nutzt:
+Fuer `store`/`upload` ist die SSH-Delegation umgesetzt (siehe oben);
+`device` laeuft von Windows ebenfalls ueber SSH (`Invoke-DeviceViaSsh`):
+`dotnet publish` via Pair-to-Mac erzeugt eine `.ipa` (das lokale
+`bin/.../Reporter.app` bleibt bei Pair-to-Mac leer), die per scp nach
+`~/ios-uploads/` geht, auf dem Mac mit `ditto` entpackt wird und deren
+`Payload/Reporter.app` per `xcrun devicectl device install app` +
+`devicectl device process launch` installiert/gestartet wird. `-Console` haengt `--console` an den Launch und streamt die
+App-Ausgabe (inkl. Managed-Exceptions bei Absturz) ins lokale Terminal.
+`list` fragt per SSH `devicectl list devices` + `simctl list` ab.
 
-1. `.app`-Bundle auf dem Mac finden
-2. Simulator booten: `xcrun simctl boot <udid>`
-3. App installieren: `xcrun simctl install <udid> <app-path>`
-4. App starten: `xcrun simctl launch <udid> <bundle-id>`
-5. Screenshot erstellen: `xcrun simctl io <udid> screenshot <pfad>`
-
-Voraussetzungen dafuer:
-- Passwortloser SSH vom Windows-Rechner zum Mac (Visual Studio legt beim
-  ersten Pair-to-Mac SSH-Keys an).
-- Oder ein Tool, um das Passwort an `ssh` zu uebergeben (`sshpass`, `plink`).
+Offen bleibt der SSH-Pfad fuer `simulator` — das Skript koennte nach dem
+Build dieselben `xcrun simctl`-Befehle remote ausfuehren, die
+`Invoke-SimulatorMac` lokal nutzt (boot/install/launch/screenshot).
 
 Dieser Workaround ist **nicht offiziell unterstuetzt** und koennte bei
 .NET-/Xcode-Updates wieder brechen.

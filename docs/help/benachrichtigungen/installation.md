@@ -6,9 +6,9 @@
 
 ## Voraussetzungen
 
-- iOS-Target (`net10.0-ios`): Das `UserNotifications`-Framework ist Teil des iOS-Workloads — kein NuGet-Paket erforderlich.
-- `Platforms/iOS/Info.plist` benötigt für lokale Benachrichtigungen **keine** zusätzlichen Schlüssel; die Berechtigung wird zur Laufzeit angefragt (`UNUserNotificationCenter.RequestAuthorizationAsync`).
-- `PrivacyInfo.xcprivacy` bleibt unverändert — `UserNotifications` ist keine Required-Reason-API.
+- iOS-Target (`net10.0-ios`): Die Frameworks `UserNotifications` und `BackgroundTasks` sind Teil des iOS-Workloads — kein NuGet-Paket erforderlich.
+- `Platforms/iOS/Info.plist` benötigt für den OS-seitigen Hintergrundabruf zwei Einträge: `UIBackgroundModes` mit `fetch` sowie `BGTaskSchedulerPermittedIdentifiers` mit `de.martinstromberg.reporter.feedrefresh` — letzterer muss exakt der Konstante `BackgroundRefreshService.RefreshTaskIdentifier` entsprechen, sonst schlagen `Register`/`Submit` fehl. Für die reine lokale Benachrichtigung selbst sind keine Schlüssel nötig; die Berechtigung wird zur Laufzeit angefragt (`UNUserNotificationCenter.RequestAuthorizationAsync`).
+- `PrivacyInfo.xcprivacy` bleibt unverändert — `UserNotifications`/`BackgroundTasks` sind keine Required-Reason-APIs.
 - Datenbank-Migrationen werden beim App-Start über `App.OnStart` → `Database.MigrateAsync()` angewendet.
 
 ## Installationsschritte
@@ -26,6 +26,15 @@
 | `settings.quiet_hours_start` / `settings.quiet_hours_end` | `TimeSpan?` | `null` | Ruhezeit in lokaler Gerätezeit; beide Werte müssen gesetzt sein, `Start == End` gilt als leeres Intervall (keine Ruhezeit). |
 | `feeds.notifications_enabled` | `bool` | `true` | Pro-Feed-Schalter; pflegbar im Feed-Formular auf `FeedsPage`. Bestehende Feeds erhalten per Migration `true`. |
 | `keywords`-Tabelle | — | — | Bestehender Keyword-Filter; Treffer auf `Title`/`ContentHtml` werden regulär bereits beim Feed-Abruf verworfen (Ingest-Filter in `FeedSyncService`) — der Check in `NotificationService` bleibt als Tiefenverteidigung. |
+| `settings.auto_refresh_enabled` | `bool` | `true` | Koppelt den OS-Hintergrundabruf an den Auto-Refresh-Schalter: `false` → `BGTaskScheduler.Shared.Cancel`, `true` → `Submit` mit `EarliestBeginDate` aus dem Intervall. |
+| `settings.refresh_interval_minutes` | `int` | `30` | Liefert über `SettingsValues.ClampRefreshIntervalMinutes` (1–1440) die `EarliestBeginDate` des `BGAppRefreshTask`; iOS behandelt sie nur als Untergrenze — der tatsächliche Ausführungszeitpunkt liegt beim System. |
+
+Plattform-Konfiguration (`Platforms/iOS/Info.plist`):
+
+| Eintrag | Typ | Zweck |
+|---------|-----|-------|
+| `UIBackgroundModes` → `fetch` | `array`/`string` | Deklariert die App für iOS-Hintergrundabrufe (Voraussetzung für `BGAppRefreshTask`). |
+| `BGTaskSchedulerPermittedIdentifiers` → `de.martinstromberg.reporter.feedrefresh` | `array`/`string` | Erlaubt die Registrierung des Tasks; muss exakt `BackgroundRefreshService.RefreshTaskIdentifier` entsprechen. |
 
 Migrationen:
 
@@ -40,8 +49,9 @@ Keine — das Feature liest keine Umgebungsvariablen.
 
 ## Überprüfung
 
-1. `MauiProgram.CreateMauiApp` registriert `INotificationService → NotificationService` und `ILocalNotificationService → LocalNotificationService` als Singletons — fehlt die Registrierung, schlägt die DI-Auflösung beim ersten Sync fehl.
+1. `MauiProgram.CreateMauiApp` registriert `INotificationService → NotificationService`, `ILocalNotificationService → LocalNotificationService`, `IBackgroundRefreshService → BackgroundRefreshService` und `IScheduledSyncRunner → ScheduledSyncRunner` als Singletons — fehlt die Registrierung, schlägt die DI-Auflösung beim ersten Sync bzw. beim Hintergrund-Task fehl.
 2. Auf iOS: Einstellungen öffnen, **Benachrichtigungen** einschalten → iOS-Berechtigungsdialog erscheint (nur beim ersten Mal).
-3. Sync mit neuen Artikeln auslösen → Benachrichtigung erscheint (auch im Vordergrund als Banner dank `NotificationDelegate.WillPresentNotification`).
-4. Datenbank prüfen: `feeds.notifications_enabled` und `settings.notification_summary_enabled` existieren mit den genannten Defaults.
-5. Tests: `dotnet test src/Reporter.Tests` — `NotificationServiceTests`, `FeedSyncServiceTests` u. a. decken die Entscheidungslogik ab; die iOS-Anzeige selbst ist nur manuell im Simulator verifizierbar (`scripts/iOS-Deployment.ps1`, nur macOS).
+3. Sync bei geöffneter App mit neuen Artikeln auslösen → **keine** Benachrichtigung erscheint (`NotificationDelegate.WillPresentNotification` → `UNNotificationPresentationOptions.None`).
+4. Hintergrundabruf verifizieren: Task per lldb simulieren (`_simulateLaunchForTaskWithIdentifier:@"de.martinstromberg.reporter.feedrefresh"`) → Sync läuft, neue Artikel erzeugen eine sichtbare Mitteilung; `_simulateExpirationForTaskWithIdentifier` prüft die Expiration-Behandlung.
+5. Datenbank prüfen: `feeds.notifications_enabled` und `settings.notification_summary_enabled` existieren mit den genannten Defaults.
+6. Tests: `dotnet test src/Reporter.Tests` — `NotificationServiceTests`, `FeedSyncServiceTests`, `ScheduledSyncRunnerTests` u. a. decken die Entscheidungslogik ab; die iOS-Anzeige und der `BGTaskScheduler` sind nur manuell auf Gerät/Simulator verifizierbar (`scripts/iOS-Deployment.ps1`, nur macOS).

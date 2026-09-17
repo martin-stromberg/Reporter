@@ -9,6 +9,16 @@
 
 ## What's New
 
+- Fresh installations now start with demo content: a "News" category containing the "Apple Newsroom" feed (`https://www.apple.com/newsroom/rss-feed.rss`) — notifications for the feed are off by default, its articles are loaded by the regular startup sync, and feed and category can be edited or deleted like normal entries. Existing installations are unaffected.
+- Internal tooling — no user-facing change: `scripts/iOS-Deployment.ps1` gained `store`/`upload` actions for signed release builds, IPA validation and upload to App Store Connect/TestFlight via the App Store Connect API, including automatic build-number bump, SSH delegation from Windows and step-by-step setup docs under `docs/help/ios-deployment/`.
+- Fixed: feeds published in the legacy Atom 0.3 format (e.g. sportschau.de) now synchronize — previously the refresh failed with an "invalid feed format" error.
+- Internal quality measure — no user-facing change: new end-to-end test suite for the Windows app (`src/Reporter.E2ETests`, invoked via `scripts/Run-E2ETests.ps1`) that launches the app against a local stub server and smoke-tests the main screens via FlaUI/UIA3 — enabled by compiled bindings on all views and the test-only environment variables `REPORTER_FEEDSEARCH_ENDPOINT` and `REPORTER_DB_PATH`.
+- iOS: feeds are now also refreshed while the app is closed, via an OS-scheduled background refresh task — the schedule follows the "Automatic background refresh" switch and the "Fetch interval" setting, and the task is cancelled when automatic refresh is disabled.
+- iOS: system notifications for new articles now only appear when the app is not in the foreground (the OS background refresh) — while the app is open (manual sync, refresh timer, refresh on start) no banner or sound is shown; Windows and Android are unchanged.
+- HTTP feeds (`http://` URLs) now also sync on iOS and Mac Catalyst — cleartext connections are permitted via App Transport Security.
+- Feeds page: for a feed with a sync error the action menu now offers "Show error details" — an alert names the cause (unencrypted connection blocked, HTTP error, network problem, invalid feed format or unknown) and shows the technical detail message; previously only "Error" was displayed.
+- Settings: new "Diagnostics & support" section with an opt-in switch "Collect debug information" — the setting is persisted, the session log is cleared on every app start, and crash entries from the previous session are kept so they can still be sent after a restart.
+- "Send debug report" in the same section opens a prefilled e-mail draft in the device's mail app containing app, device and OS information, the current settings, feed health, the sync log and the session debug log.
 - Reading time is no longer shown for articles with an estimated reading time of one minute or less — in the article lists and the article detail view.
 - Placeholder image cascade on article cards: article image → feed favicon → a circle with the feed's initial letter; the feeds page also shows each feed's favicon with the initial circle as fallback.
 - Favicon discovery: a feed's website favicon is detected when the feed is added and is backfilled automatically for existing feeds during sync.
@@ -43,6 +53,15 @@
 
 ## Neuerungen
 
+- Neuinstallationen starten jetzt mit Demo-Inhalt: eine Kategorie „News" mit dem Feed „Apple Newsroom" (`https://www.apple.com/newsroom/rss-feed.rss`) — Benachrichtigungen des Feeds sind standardmäßig aus, die Artikel lädt der reguläre Start-Abruf, und Feed wie Kategorie lassen sich wie normale Einträge bearbeiten oder löschen. Bestandsinstallationen bleiben unberührt.
+- Korrigiert: Feeds im veralteten Atom-0.3-Format (z. B. sportschau.de) werden jetzt synchronisiert — zuvor schlug der Abruf mit dem Fehler „ungültiges Feed-Format" fehl.
+- Interne Qualitätsmaßnahme — keine anwendersichtbare Änderung: neue End-to-End-Testsuite für die Windows-App (`src/Reporter.E2ETests`, Aufruf via `scripts/Run-E2ETests.ps1`), die die App gegen einen lokalen Stub-Server startet und die Hauptansichten per FlaUI/UIA3-Smoke-Tests prüft — ermöglicht durch Compiled Bindings auf allen Views und die nur für Testzwecke gedachten Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT` und `REPORTER_DB_PATH`.
+- iOS: Feeds werden jetzt auch bei geschlossener App aktualisiert — über einen vom System eingeplanten Hintergrundabruf, der den Einstellungen „Automatische Hintergrund-Aktualisierung" und „Abruf-Intervall" folgt und bei deaktiviertem automatischem Abruf abgemeldet wird.
+- iOS: Systembenachrichtigungen über neue Artikel erscheinen nur noch, wenn die App nicht im Vordergrund läuft (OS-Hintergrundabruf) — bei geöffneter App (manueller Abgleich, Abruf-Timer, Abruf beim Start) werden Banner und Ton unterdrückt; Windows und Android bleiben unverändert.
+- HTTP-Feeds (`http://`-URLs) werden jetzt auch unter iOS und Mac Catalyst abgeglichen — unverschlüsselte Verbindungen sind per App Transport Security freigegeben.
+- Feeds-Seite: Bei einem Feed mit Sync-Fehler bietet das Aktionsmenü jetzt „Fehlerdetails anzeigen" — ein Dialog nennt die Ursache (unverschlüsselte Verbindung blockiert, HTTP-Fehler, Netzwerkproblem, ungültiges Feed-Format oder unbekannt) und zeigt die technische Detailmeldung; bisher stand dort nur „Fehler".
+- Einstellungen: neue Sektion „Diagnose & Support" mit Opt-in-Schalter „Debuginformationen sammeln" — die Einstellung wird gespeichert, das Sitzungsprotokoll bei jedem App-Start zurückgesetzt; Absturz-Einträge der vorherigen Sitzung bleiben erhalten, damit sie nach einem Neustart noch versendet werden können.
+- „Debugbericht senden" in derselben Sektion öffnet einen vorbefüllten E-Mail-Entwurf in der Mail-App des Geräts — mit App-, Geräte- und OS-Informationen, den aktuellen Einstellungen, dem Feed-Status, dem Sync-Protokoll und dem Sitzungsprotokoll.
 - Die Lesezeit wird bei Artikeln mit einer geschätzten Lesezeit von einer Minute oder weniger nicht mehr angezeigt — in den Artikellisten und in der Artikeldetailansicht.
 - Platzhalterbild-Kaskade auf Artikelkarten: Artikelbild → Feed-Favicon → Kreis mit dem Anfangsbuchstaben des Feeds; die Feeds-Seite zeigt ebenfalls das Favicon jedes Feeds mit dem Initialen-Kreis als Ersatz.
 - Favicon-Ermittlung: Das Website-Favicon eines Feeds wird beim Hinzufügen erkannt und bei bestehenden Feeds beim Abgleich automatisch nachgerüstet.

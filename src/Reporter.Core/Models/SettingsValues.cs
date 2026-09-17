@@ -53,6 +53,16 @@ public static class SettingsValues
     public const string LanguageEnglish = "en";
 
     /// <summary>
+    /// The minimum auto-refresh interval in minutes.
+    /// </summary>
+    public const int MinRefreshIntervalMinutes = 1;
+
+    /// <summary>
+    /// The maximum auto-refresh interval in minutes (24 hours).
+    /// </summary>
+    public const int MaxRefreshIntervalMinutes = 1440;
+
+    /// <summary>
     /// The sort order value that lists the newest articles first.
     /// </summary>
     public const string SortOrderDescending = "desc";
@@ -70,5 +80,16 @@ public static class SettingsValues
     public static bool IsAutoMarkReadEnabled(string? autoMarkReadMode)
     {
         return autoMarkReadMode != AutoMarkReadOff;
+    }
+
+    /// <summary>
+    /// Clamps the given refresh interval to the supported range between
+    /// <see cref="MinRefreshIntervalMinutes"/> and <see cref="MaxRefreshIntervalMinutes"/>.
+    /// </summary>
+    /// <param name="minutes">The persisted refresh interval in minutes.</param>
+    /// <returns>The clamped refresh interval in minutes.</returns>
+    public static int ClampRefreshIntervalMinutes(int minutes)
+    {
+        return Math.Clamp(minutes, MinRefreshIntervalMinutes, MaxRefreshIntervalMinutes);
     }
 }

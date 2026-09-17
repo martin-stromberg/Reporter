@@ -9,6 +9,10 @@
         build     -> iOS-App bauen (mit Codesigning: .ipa)
         simulator -> App bauen, im iOS-Simulator starten und Screenshot speichern (nur auf macOS)
         device    -> App bauen und auf einem echten iOS-Geraet starten (nur auf macOS)
+        store     -> Signierten Release-Build erzeugen, validieren und zu App Store Connect
+                     hochladen (TestFlight). Erhoeht automatisch die Buildnummer
+                     (Opt-out: -NoBumpBuildNumber). Auf Windows per SSH an den Mac delegiert.
+        upload    -> Vorhandene .ipa validieren und zu App Store Connect hochladen
         list      -> Verfuegbare Simulatoren/Geraete anzeigen (nur macOS)
         menu      -> Interaktives Menue
 
@@ -18,18 +22,23 @@
             /Users/<user>/Library/Caches/Xamarin/XMA/SDKs/dotnet/
          (fuer VS 2026:
             /Users/<user>/Library/Caches/maui/PairToMac/SDKs/dotnet/)
+        Fuer store/upload von Windows aus wird zusaetzlich schluesselbasiertes SSH
+        zum Mac benoetigt (BatchMode, kein Passwort-Prompt).
 
     Umgebungsvariablen:
-        IOS_CODESIGN_KEY
-        IOS_PROVISIONING_PROFILE
-        IOS_MAC_SERVER_ADDRESS
-        IOS_MAC_SERVER_USER
-        IOS_MAC_SERVER_PASSWORD
-        IOS_MAC_DOTNET_ROOT
+        REPORTER_IOS_CODESIGN_KEY
+        REPORTER_IOS_PROVISIONING_PROFILE
+        REPORTER_IOS_MAC_SERVER_ADDRESS
+        REPORTER_IOS_MAC_SERVER_USER
+        REPORTER_IOS_MAC_SERVER_PASSWORD
+        REPORTER_IOS_MAC_DOTNET_ROOT
+        REPORTER_IOS_API_KEY_PATH    -> Pfad zum App Store Connect API Key (.p8, ausserhalb des Repo)
+        REPORTER_IOS_API_KEY_ID      -> Key-ID aus App Store Connect
+        REPORTER_IOS_API_ISSUER_ID   -> Issuer-ID aus App Store Connect
 #>
 
 param(
-    [ValidateSet("build", "simulator", "device", "list", "menu")]
+    [ValidateSet("build", "simulator", "device", "store", "upload", "list", "menu")]
     [string]$Action = "menu",
 
     [Parameter(HelpMessage = "UDID oder Name des Simulators / Geraets. Beispiel Simulator: E25BBE37-69BA-4720-B6FD-D54C97791E79")]
@@ -41,21 +50,33 @@ param(
     [Parameter(HelpMessage = "iossimulator-arm64 | iossimulator-x64 | ios-arm64")]
     [string]$RuntimeIdentifier = "",
 
-    [string]$ServerAddress = $env:IOS_MAC_SERVER_ADDRESS,
+    [string]$ServerAddress = $env:REPORTER_IOS_MAC_SERVER_ADDRESS,
     [Parameter(HelpMessage = "Der macOS-Kurzname (z. B. martin), nicht der volle Benutzername.")]
-    [string]$ServerUser = $env:IOS_MAC_SERVER_USER,
-    [string]$ServerPassword = $env:IOS_MAC_SERVER_PASSWORD,
+    [string]$ServerUser = $env:REPORTER_IOS_MAC_SERVER_USER,
+    [string]$ServerPassword = $env:REPORTER_IOS_MAC_SERVER_PASSWORD,
     [string]$TcpPort = "58181",
-    [string]$DotNetRootRemoteDirectory = $env:IOS_MAC_DOTNET_ROOT,
+    [string]$DotNetRootRemoteDirectory = $env:REPORTER_IOS_MAC_DOTNET_ROOT,
 
-    [string]$CodesignKey = $env:IOS_CODESIGN_KEY,
-    [string]$CodesignProvision = $env:IOS_PROVISIONING_PROFILE,
+    [string]$CodesignKey = $env:REPORTER_IOS_CODESIGN_KEY,
+    [string]$CodesignProvision = $env:REPORTER_IOS_PROVISIONING_PROFILE,
     [string]$CodesignEntitlements = "",
+
+    [Parameter(HelpMessage = "Pfad zum App Store Connect API Key (.p8). Muss ausserhalb des Repository liegen.")]
+    [string]$ApiKeyPath = $env:REPORTER_IOS_API_KEY_PATH,
+    [string]$ApiKeyId = $env:REPORTER_IOS_API_KEY_ID,
+    [string]$ApiIssuerId = $env:REPORTER_IOS_API_ISSUER_ID,
+    [Parameter(HelpMessage = "Pfad zu einer vorhandenen .ipa (nur Aktion 'upload').")]
+    [string]$IpaPath = "",
+    [Parameter(HelpMessage = "Bei 'device' via SSH: App-Output (--console) nach dem Start streamen (Ctrl+C zum Loesen).")]
+    [switch]$Console,
+    [switch]$NoBumpBuildNumber,
+    [string]$LogDir = "logs",
 
     [switch]$NoPrompt
 )
 
-$projectPath = "src/Reporter/Reporter.csproj"
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$projectPath = Join-Path $repoRoot "src/Reporter/Reporter.csproj"
 $framework = "net10.0-ios"
 
 $isWindows = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
@@ -131,27 +152,459 @@ function Assert-PairToMacAvailable {
     if (-not $ServerAddress) {
         Write-Host "Fehler: Auf Windows wird ein Pair-to-Mac Build-Host benoetigt." -ForegroundColor Red
         Write-Host "Setze -ServerAddress / -ServerUser / -ServerPassword oder die Umgebungsvariablen:" -ForegroundColor Yellow
-        Write-Host "IOS_MAC_SERVER_ADDRESS, IOS_MAC_SERVER_USER, IOS_MAC_SERVER_PASSWORD" -ForegroundColor Yellow
+        Write-Host "REPORTER_IOS_MAC_SERVER_ADDRESS, REPORTER_IOS_MAC_SERVER_USER, REPORTER_IOS_MAC_SERVER_PASSWORD" -ForegroundColor Yellow
         exit 1
     }
     if ($ServerUser -match '\s') {
         Write-Host "Warnung: -ServerUser enthaelt ein Leerzeichen." -ForegroundColor Yellow
         Write-Host "Pair-to-Mac erwartet den macOS-Kurznamen (z. B. 'martin'), nicht den vollstaendigen Namen." -ForegroundColor Yellow
-        Write-Host "Wenn der Pfad _DotNetRootRemoteDirectory ($DotNetRootRemoteDirectory) falsch ist, setze IOS_MAC_DOTNET_ROOT." -ForegroundColor Yellow
+        Write-Host "Wenn der Pfad _DotNetRootRemoteDirectory ($DotNetRootRemoteDirectory) falsch ist, setze REPORTER_IOS_MAC_DOTNET_ROOT." -ForegroundColor Yellow
     }
+}
+
+function Invoke-MacCapture {
+    # Fuehrt ein Bash-Skript lokal (macOS) oder per SSH aus und gibt die stdout-Zeilen zurueck.
+    param([string]$Script)
+    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Script))
+    if ($isMacOS) {
+        return @(& /bin/bash -c "echo $b64 | base64 -d | bash")
+    }
+    return @(& ssh -o BatchMode=yes -o ConnectTimeout=15 "$ServerUser@$ServerAddress" "echo $b64 | base64 -d | bash")
+}
+
+function Get-RemoteIdentities {
+    $lines = Invoke-MacCapture -Script 'security find-identity -v -p codesigning | sed -n ''s/.*"\(.*\)".*/\1/p'''
+    return @($lines | Where-Object { $_ })
+}
+
+function Get-RemoteProfiles {
+    $script = @'
+for f in "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision; do
+  [ -e "$f" ] || continue
+  xml=$(security cms -D -i "$f" 2>/dev/null) || continue
+  name=$(printf '%s' "$xml" | plutil -extract Name raw -o - - 2>/dev/null)
+  [ -z "$name" ] && name=$(basename "$f" .mobileprovision)
+  gta=$(printf '%s' "$xml" | plutil -extract Entitlements.get-task-allow raw -o - - 2>/dev/null)
+  printf '%s|%s\n' "$name" "$gta"
+done
+'@
+    $lines = Invoke-MacCapture -Script $script
+    # Mehrere .mobileprovision-Dateien koennen denselben Namen tragen (jeder Download
+    # legt eine neue UUID-Datei an) -> nach Name deduplizieren.
+    return @($lines | Where-Object { $_ } | ForEach-Object {
+        $parts = $_ -split '\|', 2
+        [pscustomobject]@{ Name = $parts[0]; DevProfile = ($parts[1] -eq 'true') }
+    } | Sort-Object Name -Unique)
+}
+
+function Get-RemoteDevices {
+    $out = (Invoke-MacCapture -Script 'T=$(mktemp); xcrun devicectl list devices -j "$T" >/dev/null 2>&1 && cat "$T"; rm -f "$T"') -join "`n"
+    if (-not $out) { return @() }
+    try {
+        $devs = ($out | ConvertFrom-Json).result.devices
+    } catch { return @() }
+    return @($devs | ForEach-Object {
+        [pscustomobject]@{
+            Identifier = $_.identifier
+            Name = $_.deviceProperties.name
+            State = $_.connectionProperties.tunnelState
+        }
+    } | Where-Object { $_.Identifier })
+}
+
+function Select-FromList {
+    param([string]$Title, [array]$Options, [string]$Default = "")
+    if ($Options.Count -eq 0) { return $null }
+    Write-Host $Title -ForegroundColor Cyan
+    for ($i = 0; $i -lt $Options.Count; $i++) {
+        $marker = if ($Options[$i] -eq $Default) { " [Standard]" } else { "" }
+        Write-Host ("  [{0}] {1}{2}" -f ($i + 1), $Options[$i], $marker)
+    }
+    $hint = if ($Default) { "Enter uebernimmt Standard" } else { "" }
+    $sel = Read-Host ("Auswahl ({0}1-{1})" -f $(if ($hint) { "$hint, " } else { "" }), $Options.Count)
+    if ([string]::IsNullOrWhiteSpace($sel) -and $Default) { return $Default }
+    $idx = 0
+    if ([int]::TryParse($sel, [ref]$idx) -and $idx -ge 1 -and $idx -le $Options.Count) { return $Options[$idx - 1] }
+    Write-Host "Ungueltige Auswahl: '$sel'" -ForegroundColor Red
+    return Select-FromList -Title $Title -Options $Options -Default $Default
+}
+
+function Get-DeployPrefsPath { return (Join-Path $repoRoot ".ios-deploy.user.json") }
+
+function Get-DeployPrefs {
+    $p = Get-DeployPrefsPath
+    if (Test-Path $p) {
+        try { return Get-Content $p -Raw | ConvertFrom-Json } catch { return $null }
+    }
+    return $null
+}
+
+function Save-DeployPrefs {
+    param([string]$Action)
+    $prefs = Get-DeployPrefs
+    if (-not $prefs) { $prefs = [pscustomobject]@{} }
+    $entry = [pscustomobject]@{ CodesignKey = $CodesignKey; CodesignProvision = $CodesignProvision; Device = $Device }
+    if ($prefs.PSObject.Properties.Name -contains $Action) {
+        $prefs.$Action = $entry
+    }
+    else {
+        $prefs | Add-Member -NotePropertyName $Action -NotePropertyValue $entry
+    }
+    $prefs | ConvertTo-Json -Depth 5 | Set-Content (Get-DeployPrefsPath) -Encoding UTF8
+}
+
+function Resolve-CodesigningInteractive {
+    param([string]$Action)
+    if ($Action -eq "simulator" -or $Action -eq "list" -or $Action -eq "menu") { return }
+    if ($NoPrompt) { return }
+    if (-not $isMacOS -and -not ($ServerAddress -and $ServerUser)) { return }
+
+    $isStore = $Action -in @('store', 'upload')
+    $isDevice = $Action -eq 'device'
+
+    # Ein fuer die Aktion unpassender vorgegebener Schluessel (z. B. Distribution bei 'device')
+    # wird verworfen und stattdessen interaktiv gewaehlt.
+    if ($isDevice -and $CodesignKey -like 'Apple Distribution:*') {
+        Write-Host "Hinweis: '$CodesignKey' kann nicht auf Geraeten installiert werden - Auswahl wird angeboten." -ForegroundColor Yellow
+        $script:CodesignKey = ""
+        $script:CodesignProvision = ""
+    }
+
+    $prefs = Get-DeployPrefs
+    $saved = if ($prefs -and ($prefs.PSObject.Properties.Name -contains $Action)) { $prefs.$Action } else { $null }
+
+    if ($isDevice -and -not $Device) {
+        $devs = @(Get-RemoteDevices)
+        if ($devs.Count -eq 0) {
+            Write-Host "Warnung: Keine angebundenen Geraete auf dem Mac gefunden (devicectl)." -ForegroundColor Yellow
+        }
+        else {
+            $options = @($devs | ForEach-Object { "$($_.Name) ($($_.Identifier)) [$($_.State)]" })
+            $default = $null
+            if ($saved -and $saved.Device) {
+                for ($k = 0; $k -lt $devs.Count; $k++) {
+                    if ($devs[$k].Identifier -eq $saved.Device) { $default = $options[$k]; break }
+                }
+            }
+            if (-not $default) { $default = $options[0] }
+            $choice = Select-FromList -Title "Geraet waehlen:" -Options $options -Default $default
+            if ($choice) { $script:Device = $devs[$options.IndexOf($choice)].Identifier }
+        }
+        if (-not $Device) { return }
+    }
+    if ($CodesignKey -and $CodesignProvision) {
+        if ($isDevice -or -not $saved) { Save-DeployPrefs -Action $Action }
+        return
+    }
+
+    if (-not $CodesignKey) {
+        $ids = @(Get-RemoteIdentities)
+        if ($isStore) { $ids = @($ids | Where-Object { $_ -like 'Apple Distribution:*' }) }
+        elseif ($isDevice) { $ids = @($ids | Where-Object { $_ -like 'Apple Development:*' }) }
+        if ($ids.Count -eq 0) {
+            Write-Host "Warnung: Keine passenden Signaturidentitaeten auf dem Mac gefunden." -ForegroundColor Yellow
+        }
+        else {
+            $default = if ($saved -and $saved.CodesignKey -and ($ids -contains $saved.CodesignKey)) { $saved.CodesignKey } else { $ids[0] }
+            $script:CodesignKey = Select-FromList -Title "Signaturzertifikat waehlen:" -Options $ids -Default $default
+        }
+    }
+    if (-not $CodesignProvision) {
+        $profs = @(Get-RemoteProfiles)
+        if ($isStore) { $profs = @($profs | Where-Object { -not $_.DevProfile }) }
+        elseif ($isDevice) { $profs = @($profs | Where-Object { $_.DevProfile }) }
+        $names = @($profs | ForEach-Object { $_.Name })
+        if ($names.Count -eq 0) {
+            Write-Host "Warnung: Keine passenden Provisioning-Profile auf dem Mac gefunden." -ForegroundColor Yellow
+        }
+        else {
+            $default = if ($saved -and $saved.CodesignProvision -and ($names -contains $saved.CodesignProvision)) { $saved.CodesignProvision } else { $names[0] }
+            $script:CodesignProvision = Select-FromList -Title "Bereitstellungsprofil waehlen:" -Options $names -Default $default
+        }
+    }
+    if ($CodesignKey -and $CodesignProvision) { Save-DeployPrefs -Action $Action }
 }
 
 function Assert-CodesigningForAction {
     param([string]$Action)
     if ($Action -eq "simulator" -or $Action -eq "build") { return }
+    Resolve-CodesigningInteractive -Action $Action
     if (-not $CodesignKey) {
-        Write-Host "Fehler: -CodesignKey bzw. IOS_CODESIGN_KEY ist nicht gesetzt." -ForegroundColor Red
+        Write-Host "Fehler: -CodesignKey bzw. REPORTER_IOS_CODESIGN_KEY ist nicht gesetzt." -ForegroundColor Red
         exit 1
     }
     if (-not $CodesignProvision) {
-        Write-Host "Fehler: -CodesignProvision bzw. IOS_PROVISIONING_PROFILE ist nicht gesetzt." -ForegroundColor Red
+        Write-Host "Fehler: -CodesignProvision bzw. REPORTER_IOS_PROVISIONING_PROFILE ist nicht gesetzt." -ForegroundColor Red
         exit 1
     }
+}
+
+$script:TranscriptStarted = $false
+
+function Start-DeployLog {
+    if ($script:TranscriptStarted) { return }
+    try {
+        $dir = if ([IO.Path]::IsPathRooted($LogDir)) { $LogDir } else { Join-Path $repoRoot $LogDir }
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
+        $logPath = Join-Path $dir "ios-deploy-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
+        Start-Transcript -Path $logPath -Append | Out-Null
+        $script:TranscriptStarted = $true
+        Write-Host "Log: $logPath" -ForegroundColor Gray
+    }
+    catch {
+        Write-Host "Warnung: Transcript-Logging nicht verfuegbar: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
+function Stop-DeployLog {
+    if ($script:TranscriptStarted) {
+        try { Stop-Transcript | Out-Null } catch { }
+    }
+}
+
+function Assert-StorePrerequisites {
+    param([string]$Action)
+    Resolve-CodesigningInteractive -Action $Action
+    $missing = @()
+    if (-not $CodesignKey) { $missing += "-CodesignKey / REPORTER_IOS_CODESIGN_KEY" }
+    if (-not $CodesignProvision) { $missing += "-CodesignProvision / REPORTER_IOS_PROVISIONING_PROFILE" }
+    if (-not $ApiKeyPath) { $missing += "-ApiKeyPath / REPORTER_IOS_API_KEY_PATH" }
+    if (-not $ApiKeyId) { $missing += "-ApiKeyId / REPORTER_IOS_API_KEY_ID" }
+    if (-not $ApiIssuerId) { $missing += "-ApiIssuerId / REPORTER_IOS_API_ISSUER_ID" }
+    if ($missing) {
+        Write-Host "Fehler: Fehlende Pflichtparameter fuer den Store-Upload:" -ForegroundColor Red
+        foreach ($m in $missing) { Write-Host "  $m" -ForegroundColor Red }
+        exit 1
+    }
+    if ($CodesignKey -match 'Development') {
+        Write-Host "Fehler: -CodesignKey ('$CodesignKey') ist ein Development-Zertifikat." -ForegroundColor Red
+        Write-Host "Fuer App Store/TestFlight wird ein 'Apple Distribution'-Zertifikat benoetigt." -ForegroundColor Yellow
+        exit 1
+    }
+    try {
+        $resolvedKey = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ApiKeyPath)
+    } catch {
+        Write-Host "Fehler: API-Key-Pfad ungueltig: $ApiKeyPath ($($_.Exception.Message))" -ForegroundColor Red
+        exit 1
+    }
+    if (-not (Test-Path $resolvedKey)) {
+        Write-Host "Fehler: API-Key-Datei nicht gefunden: $resolvedKey" -ForegroundColor Red
+        exit 1
+    }
+    if ($resolvedKey -notlike "*.p8") {
+        Write-Host "Fehler: -ApiKeyPath muss auf eine .p8-Datei zeigen: $resolvedKey" -ForegroundColor Red
+        exit 1
+    }
+    $repoRootWithSep = $repoRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    if ($resolvedKey.StartsWith($repoRootWithSep, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-Host "Fehler: Der .p8-API-Key darf nicht innerhalb des Repository liegen ($repoRoot)." -ForegroundColor Red
+        Write-Host "Lege die Datei z. B. unter `$HOME/.appstoreconnect/private_keys/ ab." -ForegroundColor Yellow
+        exit 1
+    }
+    if ($isWindows -and (-not $ServerAddress -or -not $ServerUser)) {
+        Write-Host "Fehler: Unter Windows wird fuer store/upload ein SSH-Zugang zum Mac benoetigt." -ForegroundColor Red
+        Write-Host "Setze -ServerAddress / -ServerUser bzw. REPORTER_IOS_MAC_SERVER_ADDRESS / REPORTER_IOS_MAC_SERVER_USER." -ForegroundColor Yellow
+        Write-Host "Voraussetzung: schluesselbasiertes SSH (kein Passwort-Prompt)." -ForegroundColor Yellow
+        exit 1
+    }
+}
+
+function Update-BuildNumber {
+    $csprojPath = $projectPath
+    $content = [System.IO.File]::ReadAllText($csprojPath)
+    $m = [regex]::Match($content, '<ApplicationVersion>(\d+)</ApplicationVersion>')
+    if (-not $m.Success) {
+        Write-Host "Warnung: <ApplicationVersion> nicht in $csprojPath gefunden - kein Buildnummer-Bump." -ForegroundColor Yellow
+        return
+    }
+    $old = [int]$m.Groups[1].Value
+    $new = $old + 1
+    $content = $content.Replace($m.Value, "<ApplicationVersion>$new</ApplicationVersion>")
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($csprojPath, $content, $utf8NoBom)
+    Write-Host "Buildnummer erhoeht (CFBundleVersion): $old -> $new" -ForegroundColor Green
+}
+
+function Get-LatestIpa {
+    if ($IpaPath) {
+        try {
+            $resolved = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($IpaPath)
+        } catch {
+            Write-Host "Fehler: -IpaPath ungueltig: $IpaPath ($($_.Exception.Message))" -ForegroundColor Red
+            exit 1
+        }
+        if (-not (Test-Path $resolved)) {
+            Write-Host "Fehler: -IpaPath nicht gefunden: $resolved" -ForegroundColor Red
+            exit 1
+        }
+        return $resolved
+    }
+    $config = Get-Configuration -Action "store"
+    $rid = Get-RuntimeIdentifier -Action "store"
+    $dir = Join-Path $repoRoot "src/Reporter/bin/$config/$framework/$rid"
+    $ipas = Get-ChildItem -Path $dir -Recurse -Filter "*.ipa" -ErrorAction SilentlyContinue
+    if (-not $ipas) {
+        Write-Host "Fehler: Keine .ipa unter $dir gefunden." -ForegroundColor Red
+        exit 1
+    }
+    $names = $ipas | ForEach-Object { $_.Name } | Sort-Object -Unique
+    if ($names.Count -gt 1) {
+        Write-Host "Fehler: Mehrere verschiedene .ipa-Dateien unter ${dir}:" -ForegroundColor Red
+        $names | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+        exit 1
+    }
+    $preferred = $ipas | Where-Object { $_.FullName -match 'publish' } | Select-Object -First 1
+    if (-not $preferred) { $preferred = $ipas | Sort-Object LastWriteTime -Descending | Select-Object -First 1 }
+    return $preferred.FullName
+}
+
+function Invoke-OnMac {
+    param(
+        [string]$Script,
+        [string]$Description,
+        [switch]$ReturnExitCode
+    )
+    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Script))
+    if ($isMacOS) {
+        & /bin/bash -c "echo $b64 | base64 -d | bash"
+        $exitCode = $LASTEXITCODE
+    }
+    else {
+        & ssh -o BatchMode=yes -o ConnectTimeout=10 "$ServerUser@$ServerAddress" "echo $b64 | base64 -d | bash"
+        $exitCode = $LASTEXITCODE
+    }
+    if ($ReturnExitCode) { return $exitCode }
+    if ($exitCode -ne 0) {
+        Write-Host "Fehler: $Description fehlgeschlagen (Exit-Code: $exitCode)." -ForegroundColor Red
+        if (-not $isMacOS) {
+            Write-Host "SSH-Ausfuehrung auf $ServerUser@$ServerAddress nicht moeglich oder Befehl fehlgeschlagen." -ForegroundColor Yellow
+            Write-Host "Fuehre auf dem Mac manuell aus:" -ForegroundColor Yellow
+            Write-Host $Script -ForegroundColor Gray
+        }
+        exit 1
+    }
+}
+
+function Get-RemoteHome {
+    if ($script:RemoteHome) { return $script:RemoteHome }
+    $out = & ssh -o BatchMode=yes -o ConnectTimeout=10 "$ServerUser@$ServerAddress" 'printf %s "$HOME"'
+    if ($LASTEXITCODE -ne 0 -or -not $out) {
+        Write-Host "Fehler: Remote-Home-Verzeichnis auf ${ServerUser}@${ServerAddress} konnte nicht ermittelt werden." -ForegroundColor Red
+        exit 1
+    }
+    $script:RemoteHome = $out.Trim()
+    return $script:RemoteHome
+}
+
+function Copy-FileToMac {
+    param(
+        [string]$LocalPath,
+        [string]$RemotePath
+    )
+    if ($isMacOS) { return }
+    # Windows-scp nutzt SFTP-Backend: kein Remote-Shell-Expand von $HOME/~ -> absoluten Pfad aufloesen
+    if ($RemotePath -like '`$HOME/*' -or $RemotePath -like '~/*') {
+        $RemotePath = (Get-RemoteHome) + $RemotePath.Substring($RemotePath.IndexOf('/'))
+    }
+    $scpArgs = @("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
+    if (Test-Path $LocalPath -PathType Container) { $scpArgs += "-r" }
+    & scp @scpArgs $LocalPath "${ServerUser}@${ServerAddress}:$RemotePath"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fehler: scp nach ${ServerUser}@${ServerAddress}:$RemotePath fehlgeschlagen." -ForegroundColor Red
+        exit 1
+    }
+}
+
+function Copy-ApiKeyToMac {
+    $remoteDir = '$HOME/.appstoreconnect/private_keys'
+    $remoteKey = "$remoteDir/AuthKey_$ApiKeyId.p8"
+    $check = Invoke-OnMac -Script "test -f $remoteKey" -Description "API-Key-Existenz pruefen" -ReturnExitCode
+    if ($check -eq 0) {
+        Write-Host "API-Key bereits auf dem Mac vorhanden: $remoteKey" -ForegroundColor Gray
+        return $remoteKey
+    }
+    Invoke-OnMac -Script 'mkdir -p "$HOME/.appstoreconnect/private_keys" && chmod 700 "$HOME/.appstoreconnect/private_keys"' -Description "Anlegen des API-Key-Verzeichnisses"
+    $localKey = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ApiKeyPath)
+    if ($isMacOS) {
+        Copy-Item $localKey "$HOME/.appstoreconnect/private_keys/AuthKey_$ApiKeyId.p8" -Force
+    }
+    else {
+        Copy-FileToMac -LocalPath $localKey -RemotePath $remoteKey
+    }
+    Write-Host "API-Key bereitgestellt: $remoteKey" -ForegroundColor Green
+    return $remoteKey
+}
+
+function Get-MacIpaPath {
+    param([string]$LocalIpa)
+    if ($isMacOS) { return $LocalIpa }
+    $name = Split-Path $LocalIpa -Leaf
+    $remote = '$HOME/ios-uploads/' + $name
+    Invoke-OnMac -Script 'mkdir -p "$HOME/ios-uploads"' -Description "Anlegen des Upload-Verzeichnisses"
+    Write-Host "Kopiere IPA auf den Mac: $remote" -ForegroundColor Cyan
+    Copy-FileToMac -LocalPath $LocalIpa -RemotePath $remote
+    return $remote
+}
+
+function Invoke-IpaValidation {
+    param([string]$MacIpa)
+    $macScript = @"
+set -e
+IPA="$MacIpa"
+echo "==> Entpacke IPA zur Signaturpruefung"
+TMP=`$(mktemp -d)
+trap 'rm -rf "`$TMP"' EXIT
+ditto -x -k "`$IPA" "`$TMP" 2>/dev/null || unzip -q "`$IPA" -d "`$TMP"
+APP=`$(find "`$TMP/Payload" -maxdepth 1 -name '*.app' | head -1)
+if [ -z "`$APP" ]; then echo "Kein .app-Bundle in der IPA gefunden"; exit 1; fi
+echo "==> codesign --verify"
+codesign --verify --deep --strict -vvv "`$APP"
+echo "==> Pruefe embedded.mobileprovision"
+PROFILE_XML=`$(security cms -D -i "`$APP/embedded.mobileprovision")
+if echo "`$PROFILE_XML" | grep -A1 'get-task-allow' | grep -q '<true/>'; then
+    echo "FEHLER: Development-Profil (get-task-allow=true) - nicht store-tauglich"; exit 1
+fi
+echo "==> xcrun altool --validate-app"
+xcrun altool --validate-app -f "`$IPA" --type ios --apiKey "$ApiKeyId" --apiIssuer "$ApiIssuerId"
+echo "==> Validierung erfolgreich"
+"@
+    Invoke-OnMac -Script $macScript -Description "IPA-Validierung"
+}
+
+function Invoke-StoreUpload {
+    param([string]$MacIpa)
+    $macScript = @"
+set -e
+xcrun altool --upload-app -f "$MacIpa" --type ios --apiKey "$ApiKeyId" --apiIssuer "$ApiIssuerId"
+echo "==> Upload erfolgreich - der Build erscheint nach der Verarbeitung in App Store Connect / TestFlight"
+"@
+    Invoke-OnMac -Script $macScript -Description "App-Store-Upload"
+}
+
+function Invoke-Store {
+    Assert-StorePrerequisites -Action "store"
+    Assert-CodesigningForAction -Action "store"
+    if (-not $NoBumpBuildNumber) { Update-BuildNumber }
+    Invoke-Build
+    $ipa = Get-LatestIpa
+    Write-Host "IPA: $ipa" -ForegroundColor Green
+    Copy-ApiKeyToMac | Out-Null
+    $macIpa = Get-MacIpaPath -LocalIpa $ipa
+    Invoke-IpaValidation -MacIpa $macIpa
+    Invoke-StoreUpload -MacIpa $macIpa
+    Write-Host "Store-Lauf abgeschlossen." -ForegroundColor Green
+}
+
+function Invoke-Upload {
+    Assert-StorePrerequisites -Action "upload"
+    Assert-CodesigningForAction -Action "upload"
+    $ipa = Get-LatestIpa
+    Write-Host "IPA: $ipa" -ForegroundColor Green
+    Copy-ApiKeyToMac | Out-Null
+    $macIpa = Get-MacIpaPath -LocalIpa $ipa
+    Invoke-IpaValidation -MacIpa $macIpa
+    Invoke-StoreUpload -MacIpa $macIpa
+    Write-Host "Upload abgeschlossen." -ForegroundColor Green
 }
 
 function Add-PropertyLine {
@@ -182,7 +635,7 @@ function Add-MaskedDisplay {
 function New-ResponseFile {
     param([string[]]$Lines)
     $rspName = ".ios-deploy-$([Guid]::NewGuid().ToString('n')).rsp"
-    $rspPath = Join-Path (Get-Location).Path $rspName
+    $rspPath = Join-Path $repoRoot $rspName
     [System.IO.File]::WriteAllLines($rspPath, $Lines)
     return $rspPath
 }
@@ -246,7 +699,7 @@ function Invoke-Build {
         }
 
         if ($hasCodesigning) {
-            $ipa = Get-ChildItem -Path "src/Reporter/bin/$config/$framework/$rid" -Recurse -Filter "*.ipa" | Select-Object -First 1
+            $ipa = Get-ChildItem -Path (Join-Path $repoRoot "src/Reporter/bin/$config/$framework/$rid") -Recurse -Filter "*.ipa" | Select-Object -First 1
             if (-not $ipa) {
                 Write-Host "Keine IPA-Datei gefunden." -ForegroundColor Red
                 exit 1
@@ -266,8 +719,8 @@ function Invoke-SimulatorMac {
     $rid = Get-RuntimeIdentifier -Action "simulator"
     $config = Get-Configuration -Action "simulator"
     $udid = Get-SimulatorUdid
-    $appPath = Join-Path (Get-Location).Path "src/Reporter/bin/$config/$framework/$rid/Reporter.app"
-    $screenshotDir = Join-Path (Get-Location).Path "src/Reporter/bin/$config/$framework/$rid"
+    $appPath = Join-Path $repoRoot "src/Reporter/bin/$config/$framework/$rid/Reporter.app"
+    $screenshotDir = Join-Path $repoRoot "src/Reporter/bin/$config/$framework/$rid"
     $screenshotPath = Join-Path $screenshotDir "simulator-screenshot-$(Get-Date -Format 'yyyyMMdd-HHmmss').png"
 
     if (-not (Test-Path $appPath)) {
@@ -420,14 +873,96 @@ function Invoke-Run {
     }
 }
 
+function Get-LocalBundleId {
+    $plist = Join-Path $repoRoot "src/Reporter/Platforms/iOS/Info.plist"
+    $m = [regex]::Match([IO.File]::ReadAllText($plist), '<key>CFBundleIdentifier</key>\s*<string>([^<]+)</string>')
+    if (-not $m.Success) {
+        Write-Host "Fehler: CFBundleIdentifier konnte nicht aus $plist gelesen werden." -ForegroundColor Red
+        exit 1
+    }
+    return $m.Groups[1].Value
+}
+
+function Invoke-DeviceViaSsh {
+    if (-not $Device) {
+        Write-Host "Fehler: Fuer Device-Deployment muss -Device (UDID) angegeben werden." -ForegroundColor Red
+        Write-Host "UDID per SSH anzeigen: -Action list" -ForegroundColor Yellow
+        exit 1
+    }
+    $rid = "ios-arm64"
+    $config = Get-Configuration -Action "device"
+
+    $rspLines = New-Object System.Collections.Generic.List[string]
+    Add-PropertyLine -List $rspLines -Name "RuntimeIdentifier" -Value $rid
+    Add-PropertyLine -List $rspLines -Name "ServerAddress" -Value $ServerAddress
+    Add-PropertyLine -List $rspLines -Name "ServerUser" -Value $ServerUser
+    Add-PropertyLine -List $rspLines -Name "TcpPort" -Value $TcpPort
+    Add-PropertyLine -List $rspLines -Name "ServerPassword" -Value $ServerPassword
+    Add-PropertyLine -List $rspLines -Name "_DotNetRootRemoteDirectory" -Value $DotNetRootRemoteDirectory
+    Add-PropertyLine -List $rspLines -Name "CodesignKey" -Value $CodesignKey
+    Add-PropertyLine -List $rspLines -Name "CodesignProvision" -Value $CodesignProvision
+
+    $rspPath = New-ResponseFile -Lines $rspLines
+    try {
+        Write-Host "Baue iOS-App via Pair-to-Mac ($config/$rid) ..." -ForegroundColor Cyan
+        & dotnet publish $projectPath -f $framework -c $config "@$rspPath"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Build fehlgeschlagen (Exit-Code: $LASTEXITCODE)." -ForegroundColor Red
+            exit 1
+        }
+    }
+    finally {
+        Remove-Item -Path $rspPath -ErrorAction SilentlyContinue
+    }
+
+    # Die .ipa enthaelt die signierte .app und wird zuverlaessig nach Windows zurueckkopiert;
+    # das lokale bin/.../Reporter.app bleibt bei Pair-to-Mac-Builds leer.
+    $publishDir = Join-Path $repoRoot "src/Reporter/bin/$config/$framework/$rid/publish"
+    $ipa = Get-ChildItem -Path $publishDir -Filter "*.ipa" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $ipa) {
+        Write-Host "Fehler: Keine .ipa unter $publishDir gefunden." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "IPA: $($ipa.FullName)" -ForegroundColor Cyan
+
+    Invoke-OnMac -Script 'mkdir -p "$HOME/ios-uploads"' -Description "Anlegen des Upload-Verzeichnisses"
+    Write-Host "Kopiere IPA auf den Mac ..." -ForegroundColor Cyan
+    Copy-FileToMac -LocalPath $ipa.FullName -RemotePath "`$HOME/ios-uploads/$($ipa.Name)"
+
+    Write-Host "Installiere auf Geraet $Device ..." -ForegroundColor Cyan
+    $installScript = @"
+set -e
+TMP=`$(mktemp -d)
+trap 'rm -rf "`$TMP"' EXIT
+ditto -x -k "`$HOME/ios-uploads/$($ipa.Name)" "`$TMP" 2>/dev/null || unzip -q "`$HOME/ios-uploads/$($ipa.Name)" -d "`$TMP"
+APP=`$(find "`$TMP/Payload" -maxdepth 1 -name '*.app' | head -1)
+if [ -z "`$APP" ]; then echo "Kein .app-Bundle in der IPA gefunden"; exit 1; fi
+xcrun devicectl device install app --device "$Device" "`$APP"
+"@
+    Invoke-OnMac -Script $installScript -Description "Installation auf dem Geraet"
+
+    $bundleId = Get-LocalBundleId
+    if ($Console) {
+        Write-Host "Starte App mit Console-Streaming (Ctrl+C loest die Verbindung, die App laeuft weiter) ..." -ForegroundColor Cyan
+        Invoke-OnMac -Script "xcrun devicectl device process launch --device `"$Device`" --console $bundleId" -Description "App-Start mit Console" -ReturnExitCode | Out-Null
+        return
+    }
+    Invoke-OnMac -Script "xcrun devicectl device process launch --device `"$Device`" $bundleId" -Description "App-Start auf dem Geraet"
+    Write-Host "App gestartet. Tipp: -Console streamt die App-Ausgabe (inkl. Crash-Details) ins Terminal." -ForegroundColor Green
+}
+
 function Invoke-List {
     if ($isMacOS) {
         Write-Host "Verfuegbare iOS-Simulatoren:" -ForegroundColor Cyan
         & xcrun simctl list devices
     }
+    elseif ($ServerAddress -and $ServerUser) {
+        Write-Host "Geraete auf $ServerAddress (via SSH):" -ForegroundColor Cyan
+        Invoke-OnMac -Script 'xcrun devicectl list devices; echo "--- Simulatoren ---"; xcrun simctl list devices available' -Description "Geraete auflisten"
+    }
     else {
         Write-Host "Auflistung von Simulatoren/Geraeten ist nur auf macOS verfuegbar." -ForegroundColor Yellow
-        Write-Host "Auf Windows koennen die Geraete im Xcode-Fenster des Pair-to-Mac Build-Hosts eingesehen werden." -ForegroundColor Yellow
+        Write-Host "Auf Windows: -ServerAddress/-ServerUser setzen, dann fragt 'list' den Mac per SSH ab." -ForegroundColor Yellow
     }
 }
 
@@ -440,14 +975,18 @@ function Show-Menu {
     Write-Host "2) Build + iOS-Simulator starten"
     Write-Host "3) Build + echtes Geraet deployen"
     Write-Host "4) Simulatoren/Geraete anzeigen"
+    Write-Host "5) Release-Build + Upload zu App Store Connect (TestFlight)"
+    Write-Host "6) Vorhandene .ipa validieren + hochladen"
     Write-Host "==============================="
-    $choice = Read-Host "Bitte waehlen (1-4)"
+    $choice = Read-Host "Bitte waehlen (1-6)"
 
     switch ($choice) {
         "1" { $script:Action = "build" }
         "2" { $script:Action = "simulator" }
         "3" { $script:Action = "device" }
         "4" { $script:Action = "list" }
+        "5" { $script:Action = "store" }
+        "6" { $script:Action = "upload" }
         default {
             Write-Host "Ungueltige Auswahl." -ForegroundColor Red
             exit 1
@@ -457,25 +996,50 @@ function Show-Menu {
 
 if ($Action -eq "menu" -and -not $NoPrompt) { Show-Menu }
 
-switch ($Action) {
-    "build" {
-        Assert-PairToMacAvailable
-        Invoke-Build
+if ($Action -in @("build", "simulator", "device", "store", "upload")) { Start-DeployLog }
+
+try {
+    switch ($Action) {
+        "build" {
+            Assert-PairToMacAvailable
+            Invoke-Build
+        }
+        "simulator" {
+            Assert-PairToMacAvailable
+            Invoke-Run -Action "simulator"
+        }
+        "device" {
+            if ($isWindows -and $ServerAddress -and $ServerUser) {
+                Assert-CodesigningForAction -Action "device"
+                if (-not $Device) {
+                    Write-Host "Fehler: Fuer Device-Deployment muss -Device (UDID oder Geraetename) angegeben werden." -ForegroundColor Red
+                    Write-Host "Geraete anzeigen: -Action list" -ForegroundColor Yellow
+                    exit 1
+                }
+                Invoke-DeviceViaSsh
+            }
+            else {
+                Assert-PairToMacAvailable
+                Assert-CodesigningForAction -Action "device"
+                Invoke-Run -Action "device"
+            }
+        }
+        "store" {
+            Assert-PairToMacAvailable
+            Invoke-Store
+        }
+        "upload" {
+            Invoke-Upload
+        }
+        "list" { Invoke-List }
+        default {
+            Write-Host "Unbekannte Aktion: $Action" -ForegroundColor Red
+            exit 1
+        }
     }
-    "simulator" {
-        Assert-PairToMacAvailable
-        Invoke-Run -Action "simulator"
-    }
-    "device" {
-        Assert-PairToMacAvailable
-        Assert-CodesigningForAction -Action "device"
-        Invoke-Run -Action "device"
-    }
-    "list" { Invoke-List }
-    default {
-        Write-Host "Unbekannte Aktion: $Action" -ForegroundColor Red
-        exit 1
-    }
+}
+finally {
+    Stop-DeployLog
 }
 
 exit 0

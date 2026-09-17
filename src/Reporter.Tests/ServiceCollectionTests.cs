@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Data;
 using Reporter.Data.Repositories;
@@ -35,6 +36,7 @@ public class ServiceCollectionTests
         Assert.NotNull(provider.GetRequiredService<IKeywordRepository>());
         Assert.NotNull(provider.GetRequiredService<ISettingsRepository>());
         Assert.NotNull(provider.GetRequiredService<ISyncLogRepository>());
+        Assert.NotNull(provider.GetRequiredService<IDebugLogRepository>());
 
         connection.Dispose();
     }
@@ -75,12 +77,115 @@ public class ServiceCollectionTests
             .AddSingleton<IKeywordFilter, KeywordFilter>()
             .AddSingleton<INotificationService, NotificationService>()
             .AddSingleton<ILocalNotificationService, FakeLocalNotificationService>()
-            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>();
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>()
+            .AddSingleton<IDebugLogService, FakeDebugLogService>();
 
         var provider = services.BuildServiceProvider();
 
         Assert.NotNull(provider.GetRequiredService<IFeedSyncService>());
         Assert.NotNull(provider.GetRequiredService<IFeedIconService>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the debug log and debug report services can be resolved with their
+    /// full constructor dependency set, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesDebugServices()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<IDebugLogService, DebugLogService>()
+            .AddSingleton<IEmailService, FakeEmailService>()
+            .AddSingleton<IDeviceInfoProvider, FakeDeviceInfoProvider>()
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>()
+            .AddSingleton<IDebugReportService, DebugReportService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IDebugLogService>());
+        Assert.NotNull(provider.GetRequiredService<IDebugReportService>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the auto refresh service can be resolved with its full
+    /// constructor dependency set including the background refresh gateway,
+    /// mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesAutoRefreshService()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<IFeedSyncService, FakeFeedSyncService>()
+            .AddSingleton<INetworkStatusService, FakeNetworkStatusService>()
+            .AddSingleton<IBackgroundRefreshService, FakeBackgroundRefreshService>()
+            .AddSingleton<IAutoRefreshService, AutoRefreshService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IAutoRefreshService>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the scheduled sync runner can be resolved with its full
+    /// constructor dependency set, mirroring the <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesScheduledSyncRunner()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton<IFeedSyncService, FakeFeedSyncService>()
+            .AddSingleton<IBackgroundRefreshService, FakeBackgroundRefreshService>()
+            .AddSingleton<IScheduledSyncRunner, ScheduledSyncRunner>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IScheduledSyncRunner>());
+
+        connection.Dispose();
+    }
+
+    /// <summary>
+    /// Verifies that the demo content service can be resolved with a registered
+    /// <see cref="FirstRunState"/> and the repository set, mirroring the
+    /// <c>MauiProgram</c> registration.
+    /// </summary>
+    [Fact]
+    public void AddReporterServices_ResolvesDemoContentService()
+    {
+        var services = new ServiceCollection();
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        AddTestRepositories(services, connection);
+        services
+            .AddSingleton(new FirstRunState { IsFirstRun = false, DemoSeedSuppressed = false })
+            .AddSingleton<IDemoContentService, DemoContentService>()
+            .AddSingleton<IDebugLogService, FakeDebugLogService>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<IDemoContentService>());
 
         connection.Dispose();
     }
@@ -93,6 +198,7 @@ public class ServiceCollectionTests
             .AddSingleton<IItemRepository, ItemRepository>()
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
-            .AddSingleton<ISyncLogRepository, SyncLogRepository>();
+            .AddSingleton<ISyncLogRepository, SyncLogRepository>()
+            .AddSingleton<IDebugLogRepository, DebugLogRepository>();
     }
 }

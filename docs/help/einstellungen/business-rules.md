@@ -65,11 +65,23 @@
 **Beschreibung:** Die UI bietet nur die vier benannten Intervalle 15/30/60/240 Minuten an (`RefreshIntervalOption`); persistiert wird der `int`-Minutenwert (`RefreshIntervalMinutes`, Default 30).
 
 **Verhalten:**
-- `AutoRefreshService.ApplySettingsAsync` clampet den gelesenen Wert defensiv auf `[1, 1440]` Minuten (`MinRefreshIntervalMinutes`/`MaxRefreshIntervalMinutes`), falls die DB einen anderen Wert enthält.
-- `AutoRefreshEnabled == false` → kein Timer-Loop; `ApplySettingsAsync` stoppt einen laufenden Loop.
-- Änderungen am Toggle oder Intervall starten den Timer sofort neu (Aufruf aus `SettingsViewModel.PersistAsync`).
+- `AutoRefreshService.ApplySettingsAsync` clampet den gelesenen Wert defensiv auf `[1, 1440]` Minuten über `SettingsValues.ClampRefreshIntervalMinutes` (Konstanten `MinRefreshIntervalMinutes`/`MaxRefreshIntervalMinutes`, zentral in `Reporter.Core.Models` — gemeinsam genutzt vom Timer-Loop und der `EarliestBeginDate` des iOS-Hintergrundabrufs), falls die DB einen anderen Wert enthält.
+- `AutoRefreshEnabled == false` → kein Timer-Loop; `ApplySettingsAsync` stoppt einen laufenden Loop und meldet zusätzlich den OS-Hintergrundabruf ab (`IBackgroundRefreshService.ApplySettingsAsync` → `BGTaskScheduler.Shared.Cancel` unter iOS).
+- Änderungen am Toggle oder Intervall starten den Timer sofort neu und planen den OS-Hintergrundabruf mit (Aufruf aus `SettingsViewModel.PersistAsync`).
 
-**Umsetzung:** `AutoRefreshService`, `SettingsViewModel.RefreshIntervalOptions`.
+**Umsetzung:** `AutoRefreshService`, `BackgroundRefreshService` (iOS-`BGAppRefreshTask`-Scheduling), `SettingsValues.ClampRefreshIntervalMinutes`, `SettingsViewModel.RefreshIntervalOptions`.
+
+## OS-Hintergrundabruf an Auto-Refresh gekoppelt
+
+**Beschreibung:** Der iOS-`BGAppRefreshTask` besitzt keinen eigenen Schalter und kein eigenes Intervall — er folgt vollständig `AutoRefreshEnabled`/`RefreshIntervalMinutes`. Damit steuert ein einziger Schalter beide Abrufmechanismen konsistent: den In-App-`PeriodicTimer` und den OS-Task.
+
+**Bedingungen:**
+- `IBackgroundRefreshService.IsSupported` ist nur unter iOS `true` — die Weiterleitung aus `AutoRefreshService.ApplySettingsAsync` greift nur dort; auf Windows/Android/MacCatalyst ist das Gateway ein No-Op.
+- Die Weiterleitung läuft **vor** der `AutoRefreshEnabled`-Prüfung — nur so meldet ein deaktivierter Schalter den Task zuverlässig ab (`Cancel` statt `Submit`).
+- Der Task wird einmalig in `AppDelegate.FinishedLaunching` beim `BGTaskScheduler` registriert (`RegisterBackgroundFetchTask`) und nach jedem ausgeführten Lauf von `ScheduledSyncRunner.RunAsync` aus den persistierten Settings neu eingeplant — auch im Fehler- und Kancellierungsfall, damit sich der Abruf nicht „totläuft".
+- `EarliestBeginDate` ist für iOS nur eine Untergrenze — die tatsächliche Ausführungshäufigkeit ist systemgesteuert und nicht garantiert; die Systemoption „Hintergrundaktualisierung" kann den Task zusätzlich komplett verhindern (wird nicht ausgewertet).
+
+**Umsetzung:** `IBackgroundRefreshService`/`BackgroundRefreshService` (`ApplySettingsAsync` → `BGAppRefreshTaskRequest` mit `EarliestBeginDate` bzw. `Cancel`, Konstante `RefreshTaskIdentifier`), `IScheduledSyncRunner`/`ScheduledSyncRunner.RunAsync` (Sync + Neuplanung), `AutoRefreshService.ApplySettingsAsync` (fehlerisolierte Weiterleitung, `IsSupported`-Gate), `AppDelegate` (Registrierung, `ExpirationHandler`, `SetTaskCompleted`), `Info.plist` (`UIBackgroundModes`/`fetch`, `BGTaskSchedulerPermittedIdentifiers`).
 
 ## Start-Abruf ist opt-out und fehlerisoliert
 
@@ -81,6 +93,17 @@
 - Der Start-Abruf läuft zusätzlich zum Intervall-Loop — ein anschließender Timer-Tick ruft regulär erneut ab.
 
 **Umsetzung:** `AutoRefreshService.StartAsync`/`RunStartupSyncAsync`, `SettingsViewModel.RefreshOnStartupEnabled` (Schalter **Beim Programmstart abrufen**, `SettingsRefreshOnStartupLabel`/`SettingsRefreshOnStartupHint`).
+
+## Atom-0.3-Erkennung und Normalisierung beim Feed-Abruf
+
+**Beschreibung:** Der Sync akzeptiert neben RSS 2.0 und Atom 1.0 zusätzlich das veraltete Atom-0.3-Format. Statt einer eigenen Parse-Logik wird ein erkanntes Atom-0.3-Dokument beim Lesen on-the-fly als Atom 1.0 präsentiert — `SyndicationFeed.Load` bleibt die einzige Parse-Stelle und liefert weiterhin `SyndicationFeed`/`SyndicationItem` für die gesamte nachgelagerte Pipeline.
+
+**Bedingungen:**
+- Die Erkennung hängt ausschließlich am Root-Element `feed` im Namespace `http://purl.org/atom/ns#` — das `version`-Attribut wird bewusst nicht geprüft, damit fehlende oder abweichende Angaben den Abruf nicht verhindern. Alle anderen Dokumente laufen unverändert in `SyndicationFeed.Load` (RSS 2.0, Atom 1.0) bzw. in den bestehenden `Parse`-Fehlerpfad.
+- Element-Umbenennungen: `tagline`→`subtitle`, `issued`→`published`, `modified`→`updated`, `copyright`→`rights`. `created` wird bewusst **nicht** auf `published` abgebildet: In der Atom-0.3-Elementreihenfolge folgt `created` auf `issued`, und bei Mehrfachvorkommen gewinnt der letzte Wert — ein Fallback würde das fachlich korrekte `issued` überschreiben. Einträge ohne `issued` erhalten `PublishedAt = null` (bestehendes `DateTimeOffset.MinValue`→`null`-Verhalten); der SHA256-Fallback für `GuidOrHash` funktioniert auch mit `null`.
+- `type`-Attributwerte werden nur auf den Text-/Content-Konstrukten `title`, `tagline`, `copyright`, `summary`, `content` übersetzt (`text/plain`→`text`, `text/html`→`html`, `application/xhtml+xml`→`xhtml`) — ohne Übersetzung würde `text/html` als generischer MIME-Typ kein lesbares `TextSyndicationContent` erzeugen. `link@type` ist in beiden Formaten ein MIME-Typ und bleibt unangetastet (Favicon-Lookup über den `alternate`-Link); Elemente mit `mode="base64"` sind ebenfalls ausgenommen.
+
+**Umsetzung:** `FeedSyncService.PrepareFeedReader` (Root-Peek via `MoveToContent` — konsumiert nur Präambel/Whitespace und funktioniert auf dem nicht seekbaren HTTP-Stream), `Atom03NormalizingXmlReader` (delegierender `XmlReader`; öffentliche Konstante `NamespaceUri`).
 
 ## `UnreadSortOrder`-String-Konvention
 
@@ -127,3 +150,39 @@
 - Die `TimePicker` sind per `IsEnabled`-Binding an den Schalter gekoppelt und bei ausgeschalteter Ruhezeit auf `Opacity` 0,4 abgedunkelt.
 
 **Umsetzung:** `SettingsViewModel.QuietHoursEnabled`/`QuietHoursStart`/`QuietHoursEnd` (`TimePicker`-Bindung, `null`-Mapping in `PersistAsync`), `SettingsRepository.SaveAsync`.
+
+## Session-Debug-Log ist Opt-in und sitzungsbezogen
+
+**Beschreibung:** `Settings.DebugCollectionEnabled` (`bool`, Default `false`, Spalte `settings.debug_collection_enabled`) schaltet die Protokollierung in `debug_log_entries`. Das Log ist bewusst kein Langzeit-Protokoll: Es wird bei jedem App-Start zurückgesetzt, damit der Bericht nur relevante, aktuelle Daten enthält.
+
+**Bedingungen:**
+- `BeginSessionAsync` läuft in `App.OnStart` nach der Migration — der Reset erfolgt auch bei ausgeschalteter Sammlung, sodass die Tabelle immer genau eine Session plus übernommene Fehler enthält.
+- `DeleteAllExceptErrorsAsync` erhält Einträge mit `DebugLogLevel.Error` (u. a. `UnhandledException`/`UnobservedTaskException` der Kategorie `Exception` sowie Sync-Fehler) — ein Absturz der Vor-Session bleibt nach dem Neustart meldbar; `Info`/`Warning`-Einträge werden gelöscht.
+- Bei `IsEnabled == false` ist `LogAsync` ein sofortiger No-op — es werden keine Einträge geschrieben und kein DB-Zugriff ausgelöst.
+- `SetEnabled` schaltet zur Laufzeit ohne App-Neustart um; bei der Aktivierung wird ein `Lifecycle`-Übergangseintrag („Debug collection enabled") geschrieben.
+- `MaxStoredEntries = 500` begrenzt das Tabellenwachstum innerhalb einer Session (Fehlerschleifen-Schutz).
+
+**Umsetzung:** `DebugLogService` (`_enabled`-Flag, `BeginSessionAsync`, `SetEnabled`, `LogAsync`), `DebugLogRepository.DeleteAllExceptErrorsAsync`/`TrimToLatestAsync`, `SettingsViewModel.DebugCollectionEnabled`-Setter.
+
+## Senden erfordert aktive Sammlung und Mail-Unterstützung
+
+**Beschreibung:** Die Senden-Aktion im Abschnitt **Diagnose & Support** ist nur bedienbar, wenn die Sammlung eingeschaltet ist **und** das Gerät einen Mail-Compose-Client anbietet.
+
+**Verhalten:**
+- `DebugSendEnabled = DebugEmailSupported && DebugCollectionEnabled` steuert `IsEnabled`/`Opacity` des Senden-`Border`; bei `false` zeigt ein Hinweis-`Border` die Ursache (`SettingsDebugCollectionRequiredHint` bzw. `SettingsDebugEmailUnsupportedHint`).
+- Der eigentliche Guard sitzt zusätzlich in `SendDebugReportAsync` selbst (`_debugReportService is null || !DebugCollectionEnabled` → sofortige Rückkehr ohne Event) — bewusst nicht per `CanExecute`, da `IAsyncRelayCommand.ExecuteAsync` `CanExecute` nicht auswertet und Tests/programmatische Aufrufe ihn sonst umgehen würden.
+- `IsSupported == false` bei eingeschalteter Sammlung wird bewusst **nicht** weggeguardet: `SendReportAsync` läuft → `false` → `DebugReportFailed`-Alert — der gewünschte sichtbare Fehlerpfad.
+
+**Umsetzung:** `SettingsViewModel.DebugSendEnabled`/`DebugEmailSupported`/`SendDebugReportAsync`, `IDebugReportService.IsSupported` (delegiert an `IEmailService.IsSupported` → `Email.Default.IsComposeSupported`).
+
+## Report-Umfang, Begrenzungen und Platzhalter-Empfänger
+
+**Beschreibung:** Der Debugbericht ist ein Plain-Text-E-Mail-Entwurf mit fest umrissenem Inhalt — keine Anhänge, keine Artikeldaten.
+
+**Bedingungen:**
+- Sektionen (lokalisierte Header aus `AppResources.DebugReportSection*`): Anwendung (`AppDeviceInfo` + Report-Zeitstempel), Gerät, Netzwerk (`IsOnline`), Einstellungen (vollständiger `Settings`-Snapshot inkl. `DebugCollectionEnabled`), Feed-Status (`Title`, `Url`, `HealthStatus`, `LastCheckedAt`, `HealthLastChange` je Feed), Sync-Verlauf (jüngste `MaxSyncLogEntries = 50` `SyncLog`-Einträge), Session-Debug-Log (jüngste `MaxDebugLogEntries = 200` Einträge inkl. übernommener `Error`-Einträge der Vor-Session).
+- Artikelinhalte (`Item.Title`, `ContentHtml`) sind ausdrücklich nicht Teil des Berichts; es gibt kein `EmailAttachment`.
+- Empfänger ist die MSBuild-Property `DebugReportRecipient` (Default `"debug@example.com"` in `Directory.Build.props`, als `AssemblyMetadata` eingebettet und von `DebugReportService.DebugReportRecipient` gelesen) — dokumentierter Platzhalter, den der Maintainer vor der Auslieferung in `Directory.Build.props` durch die tatsächliche Support-Adresse ersetzt; Forks müssen die Property auf ihre eigene Adresse setzen; nicht benutzerkonfigurierbar.
+- Die App versendet nichts selbst: `Email.ComposeAsync` öffnet nur den vorbefüllten Entwurf; der Anwender prüft und sendet aus dem Mail-Client.
+
+**Umsetzung:** `DebugReportService.SendReportAsync`/`BuildBody`, `EmailService.ComposeAsync` (`EmailBodyFormat.PlainText`).

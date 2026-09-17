@@ -2,7 +2,7 @@
 
 # Benachrichtigungen
 
-Reporter informiert auf iOS-Geräten per lokaler Benachrichtigung über neue Artikel: Nach jedem Feed-Abgleich wird geprüft, ob neue Artikel eingetroffen sind, und — abhängig von Schaltern, Ruhezeit und Schlagwort-Filtern — eine Benachrichtigung angezeigt. Pro Artikel oder gesammelt pro Feed, wahlweise.
+Reporter informiert auf iOS-Geräten per lokaler Benachrichtigung über neue Artikel: Nach jedem Feed-Abgleich wird geprüft, ob neue Artikel eingetroffen sind, und — abhängig von Schaltern, Ruhezeit und Schlagwort-Filtern — eine Benachrichtigung erzeugt. Sichtbar wird sie nur aus dem automatischen Hintergrund-Abgleich durch das System (gekoppelt an die Auto-Refresh-Einstellungen); Abgleiche bei geöffneter App bleiben bewusst still. Pro Artikel oder gesammelt pro Feed, wahlweise.
 
 ## Inhalt
 

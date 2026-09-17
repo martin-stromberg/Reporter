@@ -4,7 +4,10 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
              x:Class="Reporter.Views.CategoriesPage"
+             x:DataType="vm:CategoriesViewModel"
              Title="{x:Static strings:AppResources.PageTitleCategories}"
              Shell.NavBarIsVisible="False">
     <Grid RowDefinitions="Auto,*"
@@ -37,7 +40,7 @@
                         ItemsSource="{Binding Categories}"
                         EmptyView="{x:Static strings:AppResources.PlaceholderCategories}">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="models:CategoryWithCount">
                     <Border Padding="16"
                             Margin="0,6"
                             StrokeShape="RoundRectangle 12"

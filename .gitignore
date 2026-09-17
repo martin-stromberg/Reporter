@@ -436,3 +436,11 @@ issue.md
 AGENTS.md
 .agents/*
 coverage-report/
+# iOS signing artifacts and local deploy logs - never commit credentials/profiles
+*.p12
+*.p8
+*.cer
+*.mobileprovision
+*.ipa
+logs/
+.ios-deploy.user.json

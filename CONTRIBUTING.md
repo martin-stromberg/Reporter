@@ -19,8 +19,10 @@ Für eine kommerzielle Nutzung der Software (unabhängig von Beiträgen) ist ein
 ## Entwicklung
 
 - Build: `dotnet build Reporter.sln`
-- Tests: `dotnet test Reporter.sln` und `npm test`
+- Tests: `dotnet test Reporter.sln --filter "Category!=E2E"` und `npm test`
+- E2E-Smoke-Tests (nur Windows, benötigt eine interaktive Desktop-Session): `.\scripts\Run-E2ETests.ps1`
 - Lokale statische Prüfungen vor Abschluss: `.\scripts\Run-StaticChecks.ps1`
 - Neue öffentliche APIs benötigen XML-Dokumentation (`CS1591` ist als Fehler konfiguriert).
+- Git-Hooks (lokale Checks, Schutz der Branches `main`/`staging`): Aktivierung und Details siehe [docs/help/entwicklung/git-hooks.md](docs/help/entwicklung/git-hooks.md).
 - Neue Dateien erhalten den kurzen Lizenzheader (siehe vorhandene Dateien bzw. `scripts/add-license-headers.mjs`).
 - Mobile-UI-Regeln und weitere Projektkonventionen siehe [AGENTS.md](AGENTS.md).

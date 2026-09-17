@@ -63,6 +63,17 @@ public class FeedListItem
     public string? FaviconUrl { get; init; }
 
     /// <summary>
+    /// Gets the category of the last sync error (a <see cref="Services.FeedSyncErrorKind"/> value),
+    /// or <c>null</c> when the last sync succeeded.
+    /// </summary>
+    public string? LastErrorKind { get; init; }
+
+    /// <summary>
+    /// Gets the technical message of the last sync error, or <c>null</c> when the last sync succeeded.
+    /// </summary>
+    public string? LastErrorMessage { get; init; }
+
+    /// <summary>
     /// Gets the first letter of the feed title in upper case for the fallback avatar,
     /// or <c>"?"</c> when the title is empty.
     /// </summary>

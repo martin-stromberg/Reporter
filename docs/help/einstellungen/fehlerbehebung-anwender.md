@@ -39,12 +39,25 @@
 
 **Symptom:** Neue Artikel erscheinen erst nach manuellem Aktualisieren.
 
-**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — die automatische Aktualisierung läuft nur bei geöffneter App. Sollen die Feeds bereits beim Öffnen der App abgerufen werden, ist zusätzlich der Schalter **Beim Programmstart abrufen** zuständig; ohne Internetverbindung wird dieser Abruf übersprungen.
+**Ursache:** Der Schalter **Automatische Hintergrund-Aktualisierung** ist aus, oder die App wurde zwischenzeitlich geschlossen — der periodische Abgleich innerhalb der App läuft nur bei geöffneter App. Auf iOS kann zwar auch das System bei geschlossener App abgleichen, legt den Zeitpunkt aber selbst fest und benötigt die Freigabe **Hintergrundaktualisierung** in den iOS-Einstellungen. Sollen die Feeds bereits beim Öffnen der App abgerufen werden, ist zusätzlich der Schalter **Beim Programmstart abrufen** zuständig; ohne Internetverbindung wird dieser Abruf übersprungen.
 
 **Lösung:**
 1. In den **Einstellungen** den Schalter **Automatische Hintergrund-Aktualisierung** einschalten.
 2. Das gewünschte **Abruf-Intervall** wählen; für einen Abruf beim App-Start **Beim Programmstart abrufen** einschalten.
-3. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
+3. Auf iOS zusätzlich in den Systemeinstellungen unter **Allgemein** → **Hintergrundaktualisierung** prüfen, ob die Funktion für Reporter freigegeben ist — sonst läuft der Abgleich bei geschlossener App nie. Das **Abruf-Intervall** ist dabei nur eine Mindestpause; iOS kann den Abgleich deutlich später ausführen.
+4. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
+
+## Feed zeigt Status „Fehler“ — „Unlesbares Feed-Format"
+
+**Symptom:** Eine Feed-Karte trägt das rote Badge **Fehler**; der Dialog **Synchronisierungsfehler** (über **Fehlerdetails anzeigen** im Menü **Feed-Aktionen**) nennt als Grund „Unlesbares Feed-Format".
+
+**Ursache:** Die hinterlegte Adresse liefert Daten, die die App nicht als Feed lesen kann — etwa eine normale Webseite statt eines Feeds oder ein Feed-Format, das die App nicht kennt. Gelesen werden Feeds im RSS- und Atom-Format, einschließlich des älteren Atom-Formats (Atom 0.3).
+
+**Lösung:**
+1. Prüfe im Dialog **Synchronisierungsfehler** die technische Meldung im zweiten Absatz — sie verrät, wo das Lesen scheiterte.
+2. Vergewissere dich, dass die Adresse wirklich einen Feed liefert: Öffne sie im Browser — ein Feed zeigt Daten im XML-Stil, keine normale Webseite.
+3. Hast du eine Website-Adresse statt der eigentlichen Feed-Adresse eingetragen, korrigiere sie über **Feed-Aktionen** → **Bearbeiten** — oder lösche den Feed und füge ihn über **Suchen** neu hinzu: Die App findet die richtige Feed-Adresse meist selbst.
+4. Bleibt der Fehler bestehen, nutzt der Anbieter möglicherweise ein nicht unterstütztes Format — notiere die Feed-Adresse und wende dich an den Support bzw. die Entwicklung.
 
 ## Ungelesene Artikel erscheinen in unerwünschter Reihenfolge
 
@@ -60,12 +73,13 @@
 
 **Symptom:** Neue Artikel erscheinen, aber es gibt keine Benachrichtigung.
 
-**Ursache:** Der Schalter **Benachrichtigungen** ist aus, die iOS-Berechtigung wurde verweigert (Hinweiszeile mit **Einstellungen öffnen** sichtbar) oder noch nie angefragt (Zeile mit **Benachrichtigungen erlauben** sichtbar), eine **Ruhezeit** läuft gerade, der Feed ist einzeln stummgeschaltet oder ein Schlagwort-Filter greift.
+**Ursache:** Der Schalter **Benachrichtigungen** ist aus, die iOS-Berechtigung wurde verweigert (Hinweiszeile mit **Einstellungen öffnen** sichtbar) oder noch nie angefragt (Zeile mit **Benachrichtigungen erlauben** sichtbar), eine **Ruhezeit** läuft gerade, der Feed ist einzeln stummgeschaltet oder ein Schlagwort-Filter greift. Außerdem erscheinen Mitteilungen nur aus dem Hintergrund-Abgleich bei geschlossener App — dafür muss die **Automatische Hintergrund-Aktualisierung** eingeschaltet und die iOS-Option **Hintergrundaktualisierung** freigegeben sein; Abgleiche bei geöffneter App erzeugen bewusst keine Mitteilung.
 
 **Lösung:**
 1. In den **Einstellungen** unter **Benachrichtigungen & Ruhezeiten** den Schalter **Benachrichtigungen** prüfen; bei sichtbarer Hinweiszeile **Benachrichtigungen erlauben** tippen (öffnet den iOS-Dialog) bzw. **Einstellungen öffnen** tippen und die Berechtigung in iOS freischalten.
 2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed antippen → **Bearbeiten**) prüfen.
-3. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
+3. Unter **Synchronisation & Lesefluss** die **Automatische Hintergrund-Aktualisierung** prüfen und in den iOS-Einstellungen (**Allgemein** → **Hintergrundaktualisierung**) die Freigabe für Reporter sicherstellen.
+4. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
 
 ## Erscheinungsbild wechselt nicht
 
@@ -87,6 +101,28 @@
 1. App vollständig schließen und neu starten.
 2. Prüfen, ob die gewünschte Option (*Deutsch* oder *Englisch*) unter **Sprache** ausgewählt ist — bei *System* gilt die Gerätesprache.
 3. Steht die Gerätesprache auf einer anderen Sprache als Deutsch oder Englisch, zeigt die App bei *System* Englisch an; für Deutsch dann *Deutsch* wählen.
+
+## Schaltfläche „Senden“ für den Debugbericht ist abgedunkelt
+
+**Symptom:** Unter **Diagnose & Support** lässt sich die Schaltfläche **Senden** nicht antippen; darunter steht ein Hinweistext.
+
+**Ursache:** Der Versand ist nur möglich, wenn **Debuginformationen sammeln** eingeschaltet ist — der Hinweis „Aktiviere zuerst …" erklärt das. Steht stattdessen „Auf diesem Gerät ist keine E-Mail-App verfügbar …", ist auf dem Gerät keine E-Mail-App eingerichtet.
+
+**Lösung:**
+1. Den Schalter **Debuginformationen sammeln** einschalten — danach wird **Senden** aktiv.
+2. Beachten: Das Protokoll umfasst die aktuelle Sitzung (plus übernommene Absturzinformationen der vorherigen). Ein Problem, das vor dem Einschalten passiert ist, muss für den Bericht erneut auftreten.
+3. Fehlt eine E-Mail-App, richte auf dem Gerät eine E-Mail-App mit einem Konto ein.
+
+## Dialog „Senden fehlgeschlagen“ beim Debugbericht
+
+**Symptom:** Nach dem Tippen auf **Senden** erscheint der Dialog **Senden fehlgeschlagen** statt des E-Mail-Entwurfs.
+
+**Ursache:** Die E-Mail-App des Geräts konnte nicht geöffnet werden — typischerweise ist keine E-Mail-App eingerichtet oder dem System ist kein Mail-Programm zugeordnet.
+
+**Lösung:**
+1. Prüfen, ob auf dem Gerät eine E-Mail-App mit eingerichtetem Konto vorhanden ist.
+2. E-Mail-App einmal manuell öffnen und erneut **Senden** tippen.
+3. Funktioniert es weiterhin nicht, den Vorgang notieren und den Support informieren (siehe unten).
 
 ## Wann Hilfe nötig ist
 

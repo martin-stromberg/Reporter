@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<rss version="2.0">
+  <channel>
+    <title>Stub Feed {name}</title>
+    <link>http://127.0.0.1/{name}</link>
+    <description>Stub feed served by the E2E test web server.</description>
+    <item>
+      <title>{name} article</title>
+      <link>http://127.0.0.1/articles/{name}-1</link>
+    </item>
+  </channel>
+</rss>
