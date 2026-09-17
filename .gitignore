@@ -433,9 +433,10 @@ reporter.db
 *.msm
 *.msp
 issue.md
-AGENTS.md
 .agents/*
 coverage-report/
+# Tracked top-level files that would otherwise match generic patterns above
+!changes.log
 # iOS signing artifacts and local deploy logs - never commit credentials/profiles
 *.p12
 *.p8

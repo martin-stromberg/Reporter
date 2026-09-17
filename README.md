@@ -10,6 +10,10 @@
 
 Lokaler RSS-/Feed-Reader als .NET MAUI-App für iOS. Der Windows-Build dient als Umgebung für Entwicklung und automatisierte Tests.
 
+![App-Demo (iOS-Simulator): Ungelesen-Übersicht, Feed-Suche nach „zdf.de“ und Abonnieren von ZDFheute](docs/help/anwendung/screenshots/readme-demo-ios/app-demo-ios.gif)
+
+Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem automatisch angelegten Demo-Feed sowie das Suchen und Abonnieren eines Feeds. Einzelne Screenshots liegen in [docs/help/anwendung/screenshots/readme-demo-ios/](docs/help/anwendung/screenshots/readme-demo-ios/).
+
 ## Features
 
 - Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
@@ -81,6 +85,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - **Private und nicht-kommerzielle Nutzung ist erlaubt:** persönliche Nutzung, Hobby-Projekte, Forschung und Lehre sowie die Nutzung durch gemeinnützige Organisationen, Bildungseinrichtungen und staatliche Stellen.
 - **Kommerzielle Nutzung ist untersagt:** Jede Nutzung mit kommerziellem Zweck erfordert eine separate, individuell vereinbarte kommerzielle Lizenz — Anfragen an Martin Stromberg (<mstromberg84+reporter@gmail.com>), Details siehe [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
 - **Beiträge (Contributions)** werden unter derselben Lizenz angenommen — Details siehe [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Sicherheitslücken** bitte vertraulich melden — Details siehe [SECURITY.md](SECURITY.md).
 
 ## Weitere Informationen
 
