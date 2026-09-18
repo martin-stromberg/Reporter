@@ -58,7 +58,10 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 - Die `.p8`-Datei muss **ausserhalb des Repository** liegen (wird vom
   Skript erzwungen). Das Skript spiegelt sie nach
   `~/.appstoreconnect/private_keys/AuthKey_<KeyId>.p8` auf dem Mac —
-  dem festen Suchpfad von `xcrun iTMSTransporter` (identisch zu `altool`).
+  dem festen Suchpfad von `iTMSTransporter` (identisch zu `altool`).
+- Fuer `store`/`upload`: die **Transporter-App** aus dem Mac App Store
+  auf dem Ziel-Mac installiert (liefert `iTMSTransporter` — seit
+  Xcode 16 nicht mehr in Xcode enthalten).
 - Auf Windows: zusaetzlich schluesselbasiertes SSH zum Mac
   (`ssh <macuser>@<mac>` muss ohne Passwort funktionieren). Die von
   Visual Studio Pair-to-Mac angelegten Keys liegen unter
@@ -77,11 +80,16 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
    (`src/Reporter/bin/Release/net10.0-ios/ios-arm64/`).
 4. Auf dem Mac (lokal bzw. per SSH von Windows): IPA wird entpackt,
    `codesign --verify --deep --strict` und ein Check auf
-   `get-task-allow=false` im `embedded.mobileprovision` laufen,
-   anschliessend `xcrun iTMSTransporter -m verify` (Remote-Validierung;
-   entfaellt mit Warnung, falls `-m verify` auf dem Ziel-Mac fuer
-   iOS-IPAs nicht unterstuetzt wird — der Upload validiert serverseitig).
-5. `xcrun iTMSTransporter -m upload -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>`
+   `get-task-allow=false` im `embedded.mobileprovision` laufen. Dazu
+   kommen Bundle-Gates: `PrivacyInfo.xcprivacy` im Bundle-Root +
+   plist-Lint, `Info.plist`-Invarianten (`UIDeviceFamily` iPhone-only,
+   `CFBundleLocalizations` en+de, `ITSAppUsesNonExemptEncryption=false`)
+   und das Icon-Encoding aus `Assets.car` (nur Info) — Verletzungen
+   brechen ab, anschliessend `iTMSTransporter -m verify`
+   (Remote-Validierung; entfaellt mit Warnung, falls das Werkzeug fehlt
+   oder `-m verify` auf dem Ziel-Mac fuer iOS-IPAs nicht unterstuetzt
+   wird — der Upload validiert serverseitig).
+5. `iTMSTransporter -m upload -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>`
    laedt die IPA hoch (`-assetFile` statt `-f` — `-f` ist fuer
    `.itmsp`-Pakete reserviert). Nach der Verarbeitung (wenige Minuten)
    erscheint der Build in App Store Connect unter TestFlight.
@@ -139,16 +147,20 @@ vollstaendigen Anzeigenamen (z. B. `Martin Stromberg`).
 ### `altool` wurde durch `iTMSTransporter` ersetzt
 
 `xcrun altool` ist bei Apple deprecated; das Skript nutzt daher
-`xcrun iTMSTransporter` (`-m verify` zur Remote-Validierung, `-m upload`
+`iTMSTransporter` (`-m verify` zur Remote-Validierung, `-m upload`
 fuer den Upload — beide mit `-assetFile`, da `-f` nur fuer
 `.itmsp`-Pakete gilt). Authentifizierung und Schluesselsuchpfad
 (`~/.appstoreconnect/private_keys/`) sind identisch — `Copy-ApiKeyToMac`
-bleibt kompatibel. Vorab pruefbar auf dem Ziel-Mac:
-`xcrun iTMSTransporter --version` (bei Xcode bzw. installierter
-Transporter-App vorhanden). Falls `-m verify` fuer iOS-IPAs nicht
-unterstuetzt wird, entfaellt der Remote-Schritt dokumentiert (Warnung im
-Lauf) — die lokale `codesign`-Pruefung bleibt und der Upload validiert
-serverseitig. Ausweichweg bleibt die Transporter-App.
+bleibt kompatibel. Seit Xcode 16 liefert Xcode `iTMSTransporter`
+nicht mehr mit: das Skript loest das Binary aus der
+**Transporter-App** (Mac App Store) unter
+`/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter`
+auf, mit `xcrun -f iTMSTransporter` als Fallback fuer aeltere
+Xcode-Versionen. Fehlt das Werkzeug beim Upload, bricht das Skript
+mit Installationshinweis ab; `-m verify` entfaellt dann dokumentiert
+mit Warnung (lokale `codesign`-Pruefung + serverseitige Validierung).
+Vorab pruefbar auf dem Ziel-Mac:
+`/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter --version`.
 
 ### SSH-Delegation von Windows
 
