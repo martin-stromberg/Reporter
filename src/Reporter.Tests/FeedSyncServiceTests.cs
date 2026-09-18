@@ -16,6 +16,7 @@ namespace Reporter.Tests;
 public class FeedSyncServiceTests : IDisposable
 {
     private readonly TestDbContextFactory _factory;
+    private readonly FakeItemContentStore _contentStore;
     private readonly FeedRepository _feedRepository;
     private readonly ItemRepository _itemRepository;
     private readonly SyncLogRepository _syncLogRepository;
@@ -30,8 +31,9 @@ public class FeedSyncServiceTests : IDisposable
     public FeedSyncServiceTests()
     {
         _factory = new TestDbContextFactory();
-        _feedRepository = new FeedRepository(_factory);
-        _itemRepository = new ItemRepository(_factory);
+        _contentStore = new FakeItemContentStore();
+        _feedRepository = new FeedRepository(_factory, _contentStore);
+        _itemRepository = new ItemRepository(_factory, _contentStore);
         _syncLogRepository = new SyncLogRepository(_factory);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
@@ -62,14 +64,14 @@ public class FeedSyncServiceTests : IDisposable
             };
         });
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService, _contentStore);
     }
 
     private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler(_ => Task.FromException<HttpResponseMessage>(exception));
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService, _contentStore);
     }
 
     private NotificationService CreateNotificationService(FakeLocalNotificationService localNotificationService)
@@ -1169,5 +1171,80 @@ public class FeedSyncServiceTests : IDisposable
         var feed = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(feed);
         Assert.Equal("Resolved Atom03 Title", feed.Title);
+    }
+
+    /// <summary>
+    /// Verifies that an existing item without stored content (e.g. after a
+    /// restore without the content database) is not duplicated but gets the
+    /// freshly downloaded content backfilled into the content store.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_BackfillsMissingContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var existing = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item One",
+            Link = "https://example.com/1",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _itemRepository.AddAsync(existing);
+
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Restored description"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(0, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        var item = Assert.Single(items);
+        Assert.Equal("Restored description", item.ContentHtml);
+        Assert.Equal("Restored description", await _contentStore.GetAsync(existing.Id));
+    }
+
+    /// <summary>
+    /// Verifies that an existing item that already has stored content is left
+    /// untouched: the deduplication skips it and the backfill does not
+    /// overwrite the stored content.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_KeepsExistingContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var existing = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item One",
+            Link = "https://example.com/1",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>stored</p>",
+        };
+        await _itemRepository.AddAsync(existing);
+
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Changed description"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal("<p>stored</p>", await _contentStore.GetAsync(existing.Id));
     }
 }

@@ -60,6 +60,12 @@ public static class MauiProgram
         // migrates — and thereby creates — the database file.
         var isFirstRun = !File.Exists(databasePath);
 
+        // Die Content-Datenbank liegt neben reporter.db im selben Verzeichnis;
+        // ein REPORTER_DB_PATH-Override verlagert damit beide Dateien (E2E-Hermetik).
+        var contentDatabasePath = Path.Combine(
+            Path.GetDirectoryName(Path.GetFullPath(databasePath))!,
+            "reporter-content.db");
+
         // REPORTER_FEEDSEARCH_ENDPOINT points the feed search at a stub server
         // during E2E runs; invalid values fall back to the built-in default.
         var feedSearchEndpoint = ResolveFeedSearchEndpoint(Environment.GetEnvironmentVariable("REPORTER_FEEDSEARCH_ENDPOINT"));
@@ -71,9 +77,12 @@ public static class MauiProgram
 
         builder.Services
             .AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite($"Data Source={databasePath}"))
+            .AddDbContextFactory<ContentDbContext>(options => options.UseSqlite($"Data Source={contentDatabasePath}"))
             .AddSingleton<IFeedRepository, FeedRepository>()
             .AddSingleton<ICategoryRepository, CategoryRepository>()
             .AddSingleton<IItemRepository, ItemRepository>()
+            .AddSingleton<IItemContentStore, ItemContentRepository>()
+            .AddSingleton<IContentMigrationService, ItemContentMigrationService>()
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()
@@ -85,6 +94,8 @@ public static class MauiProgram
             .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<IRetentionCleanupService, RetentionCleanupService>()
             .AddSingleton(new FirstRunState { IsFirstRun = isFirstRun, DemoSeedSuppressed = demoSeedSuppressed })
+            .AddSingleton(new DatabasePath(databasePath))
+            .AddSingleton(new ContentDatabasePath(contentDatabasePath))
             .AddSingleton<IDemoContentService, DemoContentService>()
             .AddSingleton<IKeywordMatcher, KeywordMatcher>()
             .AddSingleton<IKeywordFilter, KeywordFilter>()
@@ -94,6 +105,7 @@ public static class MauiProgram
             .AddSingleton<ILocalNotificationService, LocalNotificationService>()
             .AddSingleton<INetworkStatusService, NetworkStatusService>()
             .AddSingleton<IBackgroundRefreshService, BackgroundRefreshService>()
+            .AddSingleton<IBackupExclusionService, BackupExclusionService>()
             .AddSingleton<IScheduledSyncRunner, ScheduledSyncRunner>()
             .AddSingleton<IDebugLogService, DebugLogService>()
             .AddSingleton<IEmailService, EmailService>()
@@ -118,6 +130,7 @@ public static class MauiProgram
 #endif
 
         var app = builder.Build();
+        MigrateContentStoreAndLegacyData(app);
         ApplyPersistedLanguage(app);
         return app;
     }
@@ -148,6 +161,30 @@ public static class MauiProgram
         return !string.IsNullOrWhiteSpace(value) &&
             !string.Equals(value, "0", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Migrates the content database schema and copies legacy
+    /// <c>items.content_html</c> values into the content store. Must run before
+    /// <see cref="ApplyPersistedLanguage"/>, which migrates <c>reporter.db</c>
+    /// and thereby drops the legacy column. A failure is logged but never
+    /// blocks the start; <c>App.OnStart</c> retries the content migration as
+    /// its own startup step.
+    /// </summary>
+    /// <param name="app">The built <see cref="MauiApp"/> whose services are used.</param>
+    private static void MigrateContentStoreAndLegacyData(MauiApp app)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var migrationService = scope.ServiceProvider.GetRequiredService<IContentMigrationService>();
+            migrationService.MigrateLegacyContentAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            // Ein Fehler bei der Content-Migration darf den App-Start nicht verhindern.
+            Debug.WriteLine($"MauiProgram.MigrateContentStoreAndLegacyData failed: {ex}");
+        }
     }
 
     /// <summary>

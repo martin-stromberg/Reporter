@@ -8,7 +8,7 @@ Tippe auf einen Artikel in der Liste (z. B. unter **Ungelesen** oder **Später**
 
 ## Bedienelemente
 
-- **Artikelbereich**: Zeigt den Artikelinhalt. Du kannst innerhalb des Artikels scrollen; die Darstellung folgt dem Farbschema des Geräts.
+- **Artikelbereich**: Zeigt den Artikelinhalt. Du kannst innerhalb des Artikels scrollen; die Darstellung folgt dem Farbschema des Geräts. Tippe auf einen Link im Artikeltext, wird die Verknüpfung nicht in der App geöffnet, sondern an den externen Browser (Safari bzw. den Standard-Browser) übergeben — die Detailansicht bleibt dabei geöffnet. Links funktionieren nur bei bestehender Internetverbindung (siehe [Offline-Verhalten](#offline-verhalten)).
 - **Status-Pille**: Zeigt an, ob der Artikel bereits gelesen wurde. Der Schalter **Auto-Gelesen** steuert, ob der Artikel nach einer kurzen Verzögerung automatisch als gelesen markiert wird. Deaktivierst du den Schalter, bleibt der Lesestatus unverändert. Ist die automatische Markierung in den **Einstellungen** ausgeschaltet, ist der Schalter abgedunkelt und nicht bedienbar; die Beschriftung lautet dann *Auto-Gelesen (in den Einstellungen deaktiviert)*.
 - **Schwebende Aktionsleiste**: Am unteren Rand schwebt eine abgerundete, leicht durchscheinende Leiste über dem Inhalt. Sie bündelt sechs Symbole — von links: **Zurück**, **Lesezeichen**, **Schriftgröße**, **Gelesen-Markierung**, **Teilen** und **Im Browser öffnen**.
 - **Lesezeichen**: Tippe auf das Lesezeichen-Symbol in der schwebenden Leiste, um den Artikel für später zu merken (**Lesezeichen setzen**) bzw. die Markierung zu entfernen (**Lesezeichen entfernen**). Gespeicherte Artikel findest du unter **Später**.

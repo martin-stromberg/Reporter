@@ -8,7 +8,7 @@
 [![Release](https://img.shields.io/github/v/release/martin-stromberg/Reporter?include_prereleases)](https://github.com/martin-stromberg/Reporter/releases)
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm--Noncommercial--1.0.0-blue)](LICENSE)
 
-Lokaler RSS-/Feed-Reader als .NET MAUI-App für iOS. Der Windows-Build dient als Umgebung für Entwicklung und automatisierte Tests.
+Lokaler RSS-/Feed-Reader als .NET MAUI-App für iOS (derzeit nur iPhone). Der Windows-Build dient als Umgebung für Entwicklung und automatisierte Tests.
 
 ![App-Demo (iOS-Simulator): Ungelesen-Übersicht, Feed-Suche nach „zdf.de“ und Abonnieren von ZDFheute](docs/help/anwendung/screenshots/readme-demo-ios/app-demo-ios.gif)
 
@@ -19,10 +19,10 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 - Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
 - RSS-/Atom-Feed-Abruf (RSS 2.0, Atom 1.0 und Atom 0.3) mit Feed-Health-Status und Sync-Protokoll
 - Feeds per Suche (feedsearch.dev plus Autodiscovery) oder direkter URL-Eingabe hinzufügen; Verwaltung per Kontextmenü auf der **Feeds**-Seite
-- Artikeldetailansicht mit WebView-Volltext, automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser
+- Artikeldetailansicht mit WebView-Volltext, automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser — externe Links im Artikeltext werden an den System-Browser übergeben
 - Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und konfigurierbare Sortierung der ungelesenen Artikel
 - Automatische Hintergrund-Aktualisierung (In-App-Timer; unter iOS zusätzlich OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit Ruhezeiten
-- Vollständig offline lesbar dank lokaler SQLite-Datenhaltung
+- Vollständig offline lesbar dank lokaler SQLite-Datenhaltung; unter iOS sind die Nutzerdaten (Abonnements, Einstellungen, Lesestatus) im iCloud-Backup enthalten, während die re-downloadbaren Artikelinhalte in einer separaten, ausgeschlossenen Datei liegen und nach einer Wiederherstellung automatisch nachgeladen werden
 - Light/Dark-Theme, lokalisierte UI (Deutsch/Englisch), durchgängige Barrierefreiheit und ein Design-System mit eigenem App-Icon
 - Beim ersten Start legt die App einmalig die Kategorie „News" mit einem Demo-Feed an
 
@@ -70,6 +70,8 @@ npm test                                          # node:test-Suite der Release-
 .\scripts\Run-E2ETests.ps1                        # E2E-Smoke-Tests (nur Windows, interaktive Desktop-Session)
 ```
 
+Die E2E-Suite hinterlässt keine verwaisten App-Prozesse: Die gestartete `Reporter.exe` ist per Windows-Job-Objekt an den Test-Host gebunden und endet auch bei dessen hartem Abbruch; das Skript beendet im `finally` zusätzlich verbliebene Prozesse aus dem Build-Output — eine parallel installierte App bleibt unberührt. Details und Fehlerbehebung siehe [Tests](docs/help/tests/index.md).
+
 ## CI/CD
 
 GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md).
@@ -98,6 +100,8 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 **Betrieb und Entwicklung**
 
 - [iOS-Deployment](docs/help/ios-deployment/index.md) — lokaler Buildlauf, Signing, Gerät/Simulator, TestFlight und App Store
+- [Datenschutzerklärung](docs/privacy-policy.md) — öffentlich referenzierbare Privacy-Policy (deutsch/englisch) für App Store Connect
+- [App-Store-Review](docs/app-store-review.md) — Review-Notizen zur Einreichung: App-Privacy-Antworten, ATS-Begründung, Altersfreigabe, iPad-Entscheidung
 - [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien und Asset-Reparatur
 - [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
 - [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen

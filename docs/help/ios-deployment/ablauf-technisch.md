@@ -6,13 +6,13 @@
 
 ## Übersicht
 
-`scripts/iOS-Deployment.ps1` orchestriert `dotnet build/publish` für `net10.0-ios` und — für Store-Läufe — die macOS-Werkzeuge `codesign`, `security` und `xcrun altool`. Unter Windows delegiert es Remote-Schritte per `ssh`/`scp` an den Pair-to-Mac-Host.
+`scripts/iOS-Deployment.ps1` orchestriert `dotnet build/publish` für `net10.0-ios` und — für Store-Läufe — die macOS-Werkzeuge `codesign`, `security` und `iTMSTransporter`. Unter Windows delegiert es Remote-Schritte per `ssh`/`scp` an den Pair-to-Mac-Host.
 
 ## Ablauf `store`
 
 ### 1. Voraussetzungen prüfen
 
-`Assert-PairToMacAvailable` (nur Windows: `ServerAddress` nötig), `Assert-StorePrerequisites` (Pflichtparameter `CodesignKey`, `CodesignProvision`, `ApiKeyPath`, `ApiKeyId`, `ApiIssuerId`; `.p8` muss existieren und außerhalb des Repo-Roots liegen; `CodesignKey` darf nicht `Development` enthalten; unter Windows werden SSH-Zugangsdaten verlangt), `Assert-CodesigningForAction`.
+`Assert-PairToMacAvailable` (nur Windows: `ServerAddress` nötig), `Assert-StorePrerequisites` (Pflichtparameter `CodesignKey`, `CodesignProvision`, `ApiKeyPath`, `ApiKeyId`, `ApiIssuerId`; `.p8` muss existieren und außerhalb des Repo-Roots liegen; `CodesignKey` darf nicht `Development` enthalten; unter Windows werden SSH-Zugangsdaten verlangt), `Assert-CodesigningForAction`, `Assert-TransporterAvailable` (Remote-Check: `iTMSTransporter` aus der Transporter-App bzw. via `xcrun -f` vorhanden — schlägt sonst vor dem Build mit Installationshinweis fehl).
 
 ### 2. Buildnummer erhöhen
 
@@ -24,7 +24,7 @@
 
 ### 4. API-Key auf den Mac spiegeln
 
-`Copy-ApiKeyToMac` prüft per Remote-`test -f`, ob `$HOME/.appstoreconnect/private_keys/AuthKey_<ApiKeyId>.p8` existiert; falls nicht, wird das Verzeichnis angelegt (`chmod 700`) und die lokale `.p8` dorthin kopiert (macOS: `Copy-Item`, Windows: `scp`). `altool` sucht den Schlüssel automatisch in diesem Pfad.
+`Copy-ApiKeyToMac` prüft per Remote-`test -f`, ob `$HOME/.appstoreconnect/private_keys/AuthKey_<ApiKeyId>.p8` existiert; falls nicht, wird das Verzeichnis angelegt (`chmod 700`) und die lokale `.p8` dorthin kopiert (macOS: `Copy-Item`, Windows: `scp`). `iTMSTransporter` sucht den Schlüssel automatisch in diesem Pfad (identisch zu `altool`).
 
 ### 5. IPA auf den Mac bringen
 
@@ -37,11 +37,14 @@
 1. `ditto -x -k` (Fallback `unzip`) entpackt die IPA in ein Temp-Verzeichnis
 2. `codesign --verify --deep --strict -vvv Payload/Reporter.app`
 3. `security cms -D -i embedded.mobileprovision` → Abbruch, wenn `get-task-allow` auf `true` steht (Development-Profil)
-4. `xcrun altool --validate-app -f <ipa> --type ios --apiKey <id> --apiIssuer <issuer>`
+4. `PrivacyInfo.xcprivacy` muss im Bundle-Root liegen und als plist linten — Abbruch sonst (Packaging-Fehler; die App deklariert Required-Reason-APIs → ITMS-91053)
+5. `Info.plist`-Invarianten via `plutil -extract`: `UIDeviceFamily` muss iPhone (`1`) enthalten und darf iPad (`2`) nicht enthalten, `CFBundleLocalizations` muss `en`+`de` enthalten, `ITSAppUsesNonExemptEncryption` muss `false` sein — Abbruch sonst (Regressions-Gate gegen Änderungen an der Store-Konfiguration)
+6. `xcrun assetutil --info Assets.car` liest das Encoding des Marketing-Icons (`appiconItunesArtwork`) — reine Information/Warnung: ARGB mit opaken Pixeln ist der MAUI-Normalzustand, ITMS-90717 würde erst bei echter Transparenz greifen
+7. `iTMSTransporter -m verify -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>` — das Binary wird aus der Transporter-App (`/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter`, seit Xcode 16 nicht mehr Teil von Xcode) mit `xcrun -f`-Fallback für ältere Xcode-Versionen aufgelöst. Für Apps verlangt iTMSTransporter `-assetFile` (`-f` gilt nur für `.itmsp`-Pakete); fehlt das Werkzeug, schlägt der Aufruf fehl oder wird `-m verify` für iOS-IPAs nicht unterstützt, läuft die Validierung mit Warnung weiter (dokumentierter Fallback: lokale `codesign`-Prüfung + serverseitige Validierung beim Upload)
 
 ### 7. Upload
 
-`Invoke-StoreUpload`: `xcrun altool --upload-app -f <ipa> --type ios --apiKey <id> --apiIssuer <issuer>`. Danach verarbeitet Apple den Build; er erscheint in App Store Connect unter TestFlight.
+`Invoke-StoreUpload`: `iTMSTransporter -m upload -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>` (gleiche Binary-Auflösung wie bei der Validierung; fehlt das Werkzeug, bricht der Schritt mit Installationshinweis ab — harter Fehler, kein Fallback). Danach verarbeitet Apple den Build; er erscheint in App Store Connect unter TestFlight.
 
 ### 8. Protokoll
 

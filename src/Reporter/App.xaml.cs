@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
+using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Data;
 
@@ -38,77 +39,24 @@ public partial class App : Application
         base.OnStart();
 
         using var scope = _services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
-        await context.Database.MigrateAsync();
-
         var debugLogService = scope.ServiceProvider.GetRequiredService<IDebugLogService>();
         _debugLogService = debugLogService;
+
+        await RunStartupStepAsync(() => MigrateContentAsync(scope), "Content migration failed on start", debugLogService);
+        await RunStartupStepAsync(() => MigrateDatabaseAsync(scope), "Database migration failed on start", debugLogService);
+
         await debugLogService.BeginSessionAsync();
+
+        RunStartupStep(() => ApplyBackupHandling(scope), "Backup handling failed on start", debugLogService);
 
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
-        try
-        {
-            var demoContentService = scope.ServiceProvider.GetRequiredService<IDemoContentService>();
-            await demoContentService.EnsureSeededAsync();
-        }
-        catch (Exception ex)
-        {
-            // Ein Fehler beim Seeden des Demo-Inhalts darf den App-Start nicht verhindern.
-            Debug.WriteLine($"App.OnStart demo content seed failed: {ex}");
-            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Demo content seed failed", ex.ToString(), DebugLogLevel.Error);
-        }
-
-        try
-        {
-            var cleanupService = scope.ServiceProvider.GetRequiredService<IRetentionCleanupService>();
-            await cleanupService.CleanupAsync();
-        }
-        catch (Exception ex)
-        {
-            // Ein Fehler beim Aufraeumen darf den App-Start nicht verhindern.
-            Debug.WriteLine($"App.OnStart retention cleanup failed: {ex}");
-            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Retention cleanup failed on start", ex.ToString(), DebugLogLevel.Error);
-        }
-
-        try
-        {
-            var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
-            var settings = await settingsRepository.GetAsync();
-            var themeService = scope.ServiceProvider.GetRequiredService<IAppThemeService>();
-            themeService.ApplyTheme(settings.Theme);
-        }
-        catch (Exception ex)
-        {
-            // Ein Fehler beim Anwenden des Themes darf den App-Start nicht verhindern.
-            Debug.WriteLine($"App.OnStart theme apply failed: {ex}");
-            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Theme apply failed on start", ex.ToString(), DebugLogLevel.Error);
-        }
-
-        try
-        {
-            // Den Netzwerkstatus-Service frueh aufloesen, damit das Monitoring startet.
-            _ = scope.ServiceProvider.GetRequiredService<INetworkStatusService>();
-        }
-        catch (Exception ex)
-        {
-            // Ein Fehler beim Starten der Netzwerk-Ueberwachung darf den App-Start nicht verhindern.
-            Debug.WriteLine($"App.OnStart network status init failed: {ex}");
-            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Network status init failed on start", ex.ToString(), DebugLogLevel.Error);
-        }
-
-        try
-        {
-            var autoRefreshService = scope.ServiceProvider.GetRequiredService<IAutoRefreshService>();
-            await autoRefreshService.StartAsync();
-        }
-        catch (Exception ex)
-        {
-            // Ein Fehler beim Starten der Hintergrund-Aktualisierung darf den App-Start nicht verhindern.
-            Debug.WriteLine($"App.OnStart auto refresh start failed: {ex}");
-            _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, "Auto refresh start failed", ex.ToString(), DebugLogLevel.Error);
-        }
+        await RunStartupStepAsync(() => SeedDemoContentAsync(scope), "Demo content seed failed", debugLogService);
+        await RunStartupStepAsync(() => CleanupRetainedDataAsync(scope), "Retention cleanup failed on start", debugLogService);
+        await RunStartupStepAsync(() => ApplyThemeAsync(scope), "Theme apply failed on start", debugLogService);
+        RunStartupStep(() => StartNetworkMonitoring(scope), "Network status init failed on start", debugLogService);
+        await RunStartupStepAsync(() => StartAutoRefreshAsync(scope), "Auto refresh start failed", debugLogService);
     }
 
     /// <inheritdoc />
@@ -158,5 +106,114 @@ public partial class App : Application
     {
         // Fire-and-forget wie in OnUnhandledException — siehe Kommentar dort.
         _ = _debugLogService?.LogAsync(DebugLogCategory.Exception, "Unobserved task exception", e.Exception.ToString(), DebugLogLevel.Error);
+    }
+
+    private static async Task MigrateDatabaseAsync(IServiceScope scope)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
+        await context.Database.MigrateAsync();
+    }
+
+    private static async Task MigrateContentAsync(IServiceScope scope)
+    {
+        // Idempotenter Sicherheitsnetz-Aufruf: faengt den Fall ab, dass die
+        // Content-Migration in MauiProgram scheiterte. Muss vor
+        // MigrateDatabaseAsync laufen, weil die reporter.db-Migration die
+        // Legacy-Spalte items.content_html entfernt — danach waere der
+        // Retry ein No-op und die Inhalte verloren (dieselbe Reihenfolge
+        // wie MigrateContentStoreAndLegacyData vor ApplyPersistedLanguage
+        // in MauiProgram.CreateMauiApp). Der rohe SQL-Zugriff benoetigt
+        // kein migriertes Schema: Ohne items-Tabelle ist die
+        // PRAGMA-Sonde leer und der Aufruf eine harmlose No-op.
+        var migrationService = scope.ServiceProvider.GetRequiredService<IContentMigrationService>();
+        await migrationService.MigrateLegacyContentAsync();
+    }
+
+    private static void ApplyBackupHandling(IServiceScope scope)
+    {
+        var databasePath = scope.ServiceProvider.GetRequiredService<DatabasePath>();
+        var contentDatabasePath = scope.ServiceProvider.GetRequiredService<ContentDatabasePath>();
+        var backupExclusionService = scope.ServiceProvider.GetRequiredService<IBackupExclusionService>();
+
+        // reporter.db traegt die Nutzerdaten und gehoert ins Backup; der von
+        // aelteren App-Versionen gesetzte Ausschluss wird aktiv entfernt
+        // (bei Neuinstallation eine harmlose No-op).
+        foreach (var path in BackupExclusionPlan.IncludedPaths(databasePath))
+        {
+            backupExclusionService.IncludeInBackup(path);
+        }
+
+        // reporter-content.db haelt nur re-downloadbare Artikelinhalte und
+        // bleibt aus dem Backup ausgeschlossen; fehlende Dateien behandelt
+        // der Service als No-op.
+        foreach (var path in BackupExclusionPlan.ExcludedPaths(contentDatabasePath))
+        {
+            backupExclusionService.ExcludeFromBackup(path);
+        }
+    }
+
+    private static async Task SeedDemoContentAsync(IServiceScope scope)
+    {
+        var demoContentService = scope.ServiceProvider.GetRequiredService<IDemoContentService>();
+        await demoContentService.EnsureSeededAsync();
+    }
+
+    private static async Task CleanupRetainedDataAsync(IServiceScope scope)
+    {
+        var cleanupService = scope.ServiceProvider.GetRequiredService<IRetentionCleanupService>();
+        await cleanupService.CleanupAsync();
+    }
+
+    private static async Task ApplyThemeAsync(IServiceScope scope)
+    {
+        var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
+        var settings = await settingsRepository.GetAsync();
+        var themeService = scope.ServiceProvider.GetRequiredService<IAppThemeService>();
+        themeService.ApplyTheme(settings.Theme);
+    }
+
+    private static void StartNetworkMonitoring(IServiceScope scope)
+    {
+        // Den Netzwerkstatus-Service frueh aufloesen, damit das Monitoring startet.
+        _ = scope.ServiceProvider.GetRequiredService<INetworkStatusService>();
+    }
+
+    private static async Task StartAutoRefreshAsync(IServiceScope scope)
+    {
+        var autoRefreshService = scope.ServiceProvider.GetRequiredService<IAutoRefreshService>();
+        await autoRefreshService.StartAsync();
+    }
+
+    // Ein Fehler in einem einzelnen Start-Schritt darf den App-Start nicht verhindern.
+    private static async Task RunStartupStepAsync(Func<Task> step, string failureMessage, IDebugLogService debugLogService)
+    {
+        try
+        {
+            await step();
+        }
+        catch (Exception ex)
+        {
+            LogStartupFailure(failureMessage, ex, debugLogService);
+        }
+    }
+
+    private static void RunStartupStep(Action step, string failureMessage, IDebugLogService debugLogService)
+    {
+        // Delegiert an den Async-Overload; das Task.CompletedTask-Wrapper ist
+        // bereits abgeschlossen, daher blockiert GetResult() nicht.
+        RunStartupStepAsync(
+            () =>
+            {
+                step();
+                return Task.CompletedTask;
+            },
+            failureMessage,
+            debugLogService).GetAwaiter().GetResult();
+    }
+
+    private static void LogStartupFailure(string failureMessage, Exception ex, IDebugLogService debugLogService)
+    {
+        Debug.WriteLine($"App.OnStart {failureMessage}: {ex}");
+        _ = debugLogService.LogAsync(DebugLogCategory.Lifecycle, failureMessage, ex.ToString(), DebugLogLevel.Error);
     }
 }

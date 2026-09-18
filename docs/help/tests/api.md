@@ -47,7 +47,7 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 
 ### `GET /feeds/{name}.xml`
 
-**Beschreibung:** Liefert das RSS-2.0-Template `Fixtures/stub-feed.xml` mit `application/rss+xml`; `{name}` wird im Channel-`<title>` („Stub Feed {name}") und `<link>` substituiert → eindeutiger Feed-Titel je Stub-URL für die Testisolation. Die Route `/feeds/site-feed.xml` ist vor dem Template registriert und liefert das statische `Fixtures/site-feed.xml` („Stub Site Feed").
+**Beschreibung:** Liefert einen RSS-2.0-Feed mit `application/rss+xml`. Existiert eine dedizierte Fixture-Datei `Fixtures/{name}.xml` (z. B. `link-feed.xml`), wird sie ausgeliefert — so können Tests den Feed-Inhalt formen (der `link-feed`-Artikel enthält z. B. einen externen `<a href="{baseUrl}/external-link">`-Link); sonst greift das generische Template `Fixtures/stub-feed.xml`. In beiden Fällen werden die Platzhalter `{name}` (Channel-`<title>` „Stub Feed {name}") und `{baseUrl}` (`BaseUrl` des Stubs) substituiert → eindeutiger Feed-Titel je Stub-URL für die Testisolation. Die Route `/feeds/site-feed.xml` ist vor dem Template registriert und liefert das statische `Fixtures/site-feed.xml` („Stub Site Feed").
 
 **Parameter:**
 
@@ -62,6 +62,10 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 ### `GET /empty`
 
 **Beschreibung:** Liefert `Fixtures/empty.html` (`text/html`) — eine Seite ohne Feed-Verweise; dient als negativer Discovery-Pfad.
+
+### `GET /external-link`
+
+**Beschreibung:** Liefert eine kleine statische HTML-Seite (`text/html`) und inkrementiert dabei `StubFeedServer.ExternalLinkHitCount` (`Interlocked`-gezählt). Die Route ist das Ziel des externen Links im `link-feed`-Artikel: Da der System-Browser die URL nach `Browser.OpenAsync` abruft, belegt der Zähler im Test `ArticleLinkTests.ExternalLinkInArticle_OpensSystemBrowser`, dass die Navigation die App verlassen hat statt im WebView zu laufen.
 
 ### Übrige Pfade
 
@@ -80,11 +84,22 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 | `InvalidDataException` | Directory-Antwort ist kein JSON-Array (`SearchDirectoryAsync`) |
 | `FeedSearchUnavailableException` | Directory **und** Autodiscovery fehlgeschlagen (`SearchAsync`) |
 
+### `E2EProcessGuard` (intern, `src/Reporter.E2ETests/E2EProcessGuard.cs`)
+
+**Beschreibung:** Statische Hilfsklasse für den Lebenszyklus der von der Suite gestarteten `Reporter.exe`-Instanzen. Alle Methoden sind bewusst nie-werfend ausgelegt — der Guard ist die letzte Verteidigungslinie im Teardown und darf das eigentliche Testergebnis nicht maskieren; Probleme werden als `[E2E]`-Meldungen auf die Konsole geschrieben. Gedeckt durch `E2EProcessGuardTests` im selben Projekt (bewusst ohne `Category=E2E`-Trait → laufen im regulären `dotnet test` mit).
+
+|| Methode | Rückgabe | Verhalten |
+||---------|----------|-----------|
+|| `TrackProcess(Process)` | `void` | Weist den Prozess einem prozessweiten Windows-Job-Objekt mit `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` zu (lazy erzeugt via kernel32-P/Invoke `CreateJobObject`/`SetInformationJobObject`/`AssignProcessToJobObject`). Best-effort: Scheitert die Zuweisung (z. B. Test-Host läuft selbst in einem restriktiven Job), wird eine `[E2E]`-Warnung geschrieben — Teardown und Skript-`finally` bleiben zweite Linie. Das Job-Handle bleibt absichtlich offen: Es schließt erst beim Test-Host-Exit — genau dann wirkt `KILL_ON_JOB_CLOSE`. |
+|| `KillAndWaitAsync(Process, TimeSpan? = null)` | `Task<bool>` | `Kill(entireProcessTree: true)` (nur wenn `!HasExited`), dann `WaitForExitAsync` begrenzt auf `timeout` (Default 30 s). `true` = Exit bestätigt; Timeout/Fehler → `[E2E]`-Warnung + `false`. |
+|| `KillAndWaitAsync(int processId, TimeSpan? = null)` | `Task<bool>` | Wie oben, löst die PID vorher per `Process.GetProcessById` auf — nicht (mehr) existierende PIDs gelten als bestätigter Exit. Wird verwendet, wenn nur die PID zuverlässig ist (FlaUI kann das `Process`-Objekt beim Attach ersetzen). |
+|| `TryDeleteDirectoryAsync(string)` | `Task` | Rekursives `Directory.Delete` mit bis zu fünf Versuchen à 200 ms — eine frisch gekillte App kann Dateien (z. B. die SQLite-DB) kurz nach dem bestätigten Exit noch sperren. Wirft nie; ein verbleibender Leichnam ist toleriert. |
+
 ## Umgebungsvariablen (Prozess-Schnittstelle)
 
 | Variable | Gelesen von | Validierung | Wirkung |
 |----------|-------------|-------------|---------|
 | `REPORTER_FEEDSEARCH_ENDPOINT` | `MauiProgram.CreateMauiApp` → `ResolveFeedSearchEndpoint` | Nur absolute `http`/`https`-URIs (`Uri.TryCreate`, `UriKind.Absolute`); ungültig/leer → `null` → Default-Endpunkt | Feed-Verzeichnis-Anfragen gehen an den Override statt `feedsearch.dev` |
-| `REPORTER_DB_PATH` | `MauiProgram.CreateMauiApp` | Nur `IsNullOrWhiteSpace`; `Directory.CreateDirectory` legt das Verzeichnis an | Vollständiger Dateipfad der SQLite-DB statt `FileSystem.AppDataDirectory/reporter.db` |
+| `REPORTER_DB_PATH` | `MauiProgram.CreateMauiApp` | Nur `IsNullOrWhiteSpace`; `Directory.CreateDirectory` legt das Verzeichnis an | Vollständiger Dateipfad der SQLite-Nutzerdaten-DB statt `FileSystem.AppDataDirectory/reporter.db`; die Content-DB `reporter-content.db` wird aus dem absoluten Verzeichnis dieses Pfads abgeleitet und liegt damit daneben |
 | `REPORTER_DISABLE_DEMO_SEED` | `MauiProgram.CreateMauiApp` → `ResolveDemoSeedSuppressed` | Gesetzt und weder `"0"` noch `"false"` (`OrdinalIgnoreCase`) → unterdrückt; leer/`0`/`false` → Seed aktiv | Macht `IDemoContentService.EnsureSeededAsync` zum No-op — die App legt auf der frischen DB keine Demo-Kategorie/keinen Demo-Feed an |
 | `REPORTER_APP_PATH` | `ReporterAppFixture.ResolveAppPath` | Muss auf eine existierende Datei zeigen, sonst Konventionspfad `src/Reporter/bin/Debug/net10.0-windows10.0.19041.0/win-x64/Reporter.exe` (Vorfahren-Suche ab `AppContext.BaseDirectory`) | Pfad zur zu testenden `Reporter.exe` |

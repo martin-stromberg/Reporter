@@ -21,12 +21,20 @@ namespace Reporter.E2ETests;
 public sealed class StubFeedServer : IAsyncLifetime
 {
     private WebApplication? _app;
+    private int _externalLinkHitCount;
 
     /// <summary>
     /// Gets the base URL of the stub server (<c>http://127.0.0.1:{port}</c>), valid
     /// after <see cref="InitializeAsync"/> has completed.
     /// </summary>
     public string BaseUrl { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the number of GET requests received on <c>/external-link</c> — the
+    /// target of the external article link whose hits prove that the system
+    /// browser (not the in-app WebView) fetched the URL.
+    /// </summary>
+    public int ExternalLinkHitCount => _externalLinkHitCount;
 
     /// <summary>
     /// Gets the directory endpoint URL the app under test is pointed at via
@@ -69,14 +77,31 @@ public sealed class StubFeedServer : IAsyncLifetime
             return Results.Content(content, "application/json");
         });
 
-        app.MapGet("/feeds/site-feed.xml", () =>
-            Results.Content(File.ReadAllText(Path.Combine(fixturesDir, "site-feed.xml")), "application/rss+xml"));
-
+        // A dedicated fixture file (e.g. link-feed.xml, site-feed.xml) wins
+        // over the generic stub-feed.xml template so tests can shape the feed
+        // content; the {name} and {baseUrl} placeholders are filled either way.
         app.MapGet("/feeds/{name}.xml", (string name) =>
-            Results.Content(
-                File.ReadAllText(Path.Combine(fixturesDir, "stub-feed.xml"))
-                    .Replace("{name}", name, StringComparison.Ordinal),
-                "application/rss+xml"));
+        {
+            var namedFixture = Path.Combine(fixturesDir, $"{name}.xml");
+            var source = File.Exists(namedFixture)
+                ? namedFixture
+                : Path.Combine(fixturesDir, "stub-feed.xml");
+            return Results.Content(
+                File.ReadAllText(source)
+                    .Replace("{name}", name, StringComparison.Ordinal)
+                    .Replace("{baseUrl}", BaseUrl, StringComparison.Ordinal),
+                "application/rss+xml");
+        });
+
+        // Target of the external article link: hits are counted so the test can
+        // prove the system browser fetched this URL instead of the WebView.
+        app.MapGet("/external-link", () =>
+        {
+            Interlocked.Increment(ref _externalLinkHitCount);
+            return Results.Content(
+                "<!DOCTYPE html><html><body><p>External link target</p></body></html>",
+                "text/html");
+        });
 
         app.MapGet("/site", () =>
             Results.Content(File.ReadAllText(Path.Combine(fixturesDir, "site.html")), "text/html"));

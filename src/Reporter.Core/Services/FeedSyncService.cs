@@ -24,6 +24,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly INetworkStatusService _networkStatusService;
     private readonly IKeywordFilter _keywordFilter;
     private readonly IFeedIconService _feedIconService;
+    private readonly IItemContentStore _contentStore;
     private readonly IDebugLogService? _debugLogService;
     private readonly SemaphoreSlim _syncAllLock = new(1, 1);
 
@@ -38,6 +39,7 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
     /// <param name="feedIconService">The service used to backfill the favicon of feeds that have none.</param>
+    /// <param name="contentStore">The store used to backfill missing item contents.</param>
     /// <param name="debugLogService">The optional session debug log service used to record sync failures.</param>
     public FeedSyncService(
         IFeedRepository feedRepository,
@@ -48,6 +50,7 @@ public class FeedSyncService : IFeedSyncService
         INetworkStatusService networkStatusService,
         IKeywordFilter keywordFilter,
         IFeedIconService feedIconService,
+        IItemContentStore contentStore,
         IDebugLogService? debugLogService = null)
     {
         _feedRepository = feedRepository;
@@ -58,6 +61,7 @@ public class FeedSyncService : IFeedSyncService
         _networkStatusService = networkStatusService;
         _keywordFilter = keywordFilter;
         _feedIconService = feedIconService;
+        _contentStore = contentStore;
         _debugLogService = debugLogService;
     }
 
@@ -174,12 +178,17 @@ public class FeedSyncService : IFeedSyncService
         var feedItems = syndicationFeed.Items.ToList();
 
         var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
-        var (newItemEntities, filteredCount) = CollectNewItems(feed, feedItems, existingItems, keywordTexts, cancellationToken);
+        var (newItemEntities, filteredCount, contentBackfill) = CollectNewItems(feed, feedItems, existingItems, keywordTexts, cancellationToken);
 
         var newItems = newItemEntities.Count;
         if (newItems > 0)
         {
             await _itemRepository.AddRangeAsync(newItemEntities).ConfigureAwait(false);
+        }
+
+        if (contentBackfill.Count > 0)
+        {
+            await _contentStore.SetRangeAsync(contentBackfill).ConfigureAwait(false);
         }
 
         var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
@@ -219,7 +228,7 @@ public class FeedSyncService : IFeedSyncService
         return new SyncResult(status, newItems, message);
     }
 
-    private (List<Item> NewItems, int FilteredCount) CollectNewItems(
+    private (List<Item> NewItems, int FilteredCount, List<ItemContentEntry> ContentBackfill) CollectNewItems(
         Feed feed,
         IReadOnlyList<SyndicationItem> feedItems,
         IReadOnlyList<Item> existingItems,
@@ -227,10 +236,20 @@ public class FeedSyncService : IFeedSyncService
         CancellationToken cancellationToken)
     {
         var newItemEntities = new List<Item>();
+        var contentBackfill = new List<ItemContentEntry>();
         var filteredCount = 0;
         var knownKeys = new HashSet<string>(
             existingItems.Select(i => i.GuidOrHash),
             StringComparer.Ordinal);
+
+        // Items ohne gespeicherten Inhalt (z. B. nach einem Restore ohne
+        // Content-Datenbank) erhalten den frisch gelesenen Inhalt nachgeladen;
+        // die Keyword-Filterung entfaellt, weil das Item den Filter beim
+        // urspruenglichen Speichern bereits passiert hat.
+        var backfillCandidates = existingItems
+            .Where(i => i.ContentHtml is null)
+            .GroupBy(i => i.GuidOrHash, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.Ordinal);
 
         foreach (var feedItem in feedItems)
         {
@@ -244,6 +263,12 @@ public class FeedSyncService : IFeedSyncService
 
             if (!knownKeys.Add(guidOrHash))
             {
+                if (backfillCandidates.Remove(guidOrHash, out var existingItemId) &&
+                    GetContentHtml(feedItem) is { } backfillContent)
+                {
+                    contentBackfill.Add(new ItemContentEntry(existingItemId, backfillContent));
+                }
+
                 continue;
             }
 
@@ -270,7 +295,7 @@ public class FeedSyncService : IFeedSyncService
             });
         }
 
-        return (newItemEntities, filteredCount);
+        return (newItemEntities, filteredCount, contentBackfill);
     }
 
     private static string? ResolveFeedTitle(Feed feed, SyndicationFeed syndicationFeed)

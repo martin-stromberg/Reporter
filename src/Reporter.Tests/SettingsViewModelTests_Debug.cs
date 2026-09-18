@@ -36,7 +36,7 @@ public class SettingsViewModelTests_Debug : IDisposable
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
         _syncLogRepository = new SyncLogRepository(_factory);
-        _feedRepository = new FeedRepository(_factory);
+        _feedRepository = new FeedRepository(_factory, new FakeItemContentStore());
         _debugLogRepository = new DebugLogRepository(_factory);
         _autoRefreshService = new FakeAutoRefreshService();
         _appThemeService = new FakeAppThemeService();

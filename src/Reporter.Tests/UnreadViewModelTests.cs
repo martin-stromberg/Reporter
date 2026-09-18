@@ -29,7 +29,7 @@ public class UnreadViewModelTests : IDisposable
     public UnreadViewModelTests()
     {
         _factory = new TestDbContextFactory();
-        _itemRepository = new ItemRepository(_factory);
+        _itemRepository = new ItemRepository(_factory, new FakeItemContentStore());
         _categoryRepository = new CategoryRepository(_factory);
         _settingsRepository = new SettingsRepository(_factory);
         _feedSyncService = new FakeFeedSyncService();

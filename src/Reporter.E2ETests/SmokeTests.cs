@@ -20,6 +20,7 @@ public sealed class SmokeTests
     private static readonly TimeSpan ShortWait = TimeSpan.FromSeconds(2);
 
     private readonly ReporterAppFixture _fixture;
+    private readonly E2EPageHelpers _page;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SmokeTests"/> class.
@@ -28,6 +29,7 @@ public sealed class SmokeTests
     public SmokeTests(ReporterAppFixture fixture)
     {
         _fixture = fixture;
+        _page = new E2EPageHelpers(fixture);
     }
 
     // The window is re-resolved for every call: UIA proxies can go stale when
@@ -58,62 +60,19 @@ public sealed class SmokeTests
                 : cf.ByName(name).And(cf.ByControlType(controlType.Value)),
             timeout ?? ShortWait);
 
-    // Finds the URL/search entry of the add sheet. MAUI does not propagate
-    // x:Name as automation id on Windows, so the entry is located by its
-    // accessible name (SemanticProperties.Description) or as the sheet's edit
-    // control.
-    private AutomationElement WaitForUrlEntry()
-        => UiRetry.WaitForElement(
-            Window,
-            cf => cf.ByName(AppResources.PlaceholderFeedSearch).Or(cf.ByControlType(ControlType.Edit)),
-            description: "URL entry");
-
-    // Selects a tab (also via its text label) and waits for a stable anchor of
-    // the target page so the active page is really rendered. On the narrow
-    // window only the first tabs render in the Shell tab strip; the rest live
-    // behind the NavigationView overflow button ("Mehr"/"More") and only enter
-    // the UIA tree once that flyout is opened.
-    private void SelectTab(string tabTitle)
-    {
-        var selected = UiRetry.SelectTab(Window, tabTitle);
-        Assert.True(
-            selected,
-            $"Tab '{tabTitle}' was not found. App running: {!_fixture.App.HasExited}");
-
-        var anchor = tabTitle switch
-        {
-            var t when t == AppResources.TabFeeds => AppResources.ActionAddFeed,
-            var t when t == AppResources.TabCategories => AppResources.LabelCategoryName,
-            var t when t == AppResources.TabUnread => AppResources.ButtonMarkAllRead,
-            _ => null,
-        };
-        if (anchor is not null)
-        {
-            WaitForElementByName(anchor);
-        }
-    }
-
-    // Opens the add sheet by tapping the "+" button and waits for the URL entry.
-    private void OpenAddSheet()
-    {
-        var addButton = WaitForElementByName(AppResources.ActionAddFeed, ControlType.Button);
-        UiRetry.InvokeOrClick(addButton);
-        WaitForUrlEntry();
-    }
-
     // Types a URL into the sheet's entry. The fallback SetText path focuses the
     // entry first and types keystrokes.
     private void EnterUrl(string url)
     {
-        UiRetry.SetText(WaitForUrlEntry(), url);
+        UiRetry.SetText(_page.WaitForUrlEntry(), url);
     }
 
     // Adds a feed via the UI: opens the sheet, types the stub feed URL and taps
     // the direct-add button. Returns the feed title used for later assertions.
     private string AddFeedViaUi(string stubName)
     {
-        SelectTab(AppResources.TabFeeds);
-        OpenAddSheet();
+        _page.SelectTab(AppResources.TabFeeds);
+        _page.OpenAddSheet();
         var feedUrl = $"{_fixture.Server.BaseUrl}/feeds/{stubName}.xml";
         EnterUrl(feedUrl);
         var directAdd = WaitForElementByName(AppResources.ButtonDirectAdd, ControlType.Button);
@@ -129,10 +88,25 @@ public sealed class SmokeTests
     private AutomationElement WaitForCard(string title)
         => UiRetry.WaitForCard(Window, title, TimeSpan.FromSeconds(5));
 
-    // Taps a feed card by its title (SemanticProperties.Description -> UIA name).
-    private void OpenFeedActions(string feedTitle)
+    // Taps a feed card by its title (SemanticProperties.Description -> UIA
+    // name) and waits until the action sheet exposes the expected entry. The
+    // card is activated by a real mouse click that can be swallowed while the
+    // add sheet is still closing or the card re-renders, so the whole open
+    // sequence is retried before the test gives up.
+    private void OpenFeedActions(string feedTitle, string expectedEntryName)
     {
-        UiRetry.InvokeOrClick(WaitForCard(feedTitle));
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            UiRetry.InvokeOrClick(WaitForCard(feedTitle));
+            if (TryFindElementInScopeByName(expectedEntryName, timeout: TimeSpan.FromSeconds(6)) is not null)
+            {
+                return;
+            }
+        }
+
+        // Same failure signature as before: the regular scope wait reports the
+        // missing sheet entry after the last retry.
+        WaitForElementInScopeByName(expectedEntryName);
     }
 
     // Waits until an element has keyboard focus.
@@ -189,7 +163,7 @@ public sealed class SmokeTests
             UiRetry.InvokeOrClick(dismiss);
         }
 
-        SelectTab(AppResources.TabFeeds);
+        _page.SelectTab(AppResources.TabFeeds);
     }
 
     /// <summary>
@@ -201,7 +175,7 @@ public sealed class SmokeTests
     [Trait("Category", "E2E")]
     public void AppStarts_FeedListRenders()
     {
-        SelectTab(AppResources.TabFeeds);
+        _page.SelectTab(AppResources.TabFeeds);
         var rendered = UiRetry.WaitFor(
             () => Window.FindFirstDescendant(cf =>
                 cf.ByHelpText(AppResources.AccessibilityTapForActions)
@@ -216,9 +190,9 @@ public sealed class SmokeTests
     [Trait("Category", "E2E")]
     public void AddButton_OpensSheet_FocusesUrlEntry()
     {
-        SelectTab(AppResources.TabFeeds);
-        OpenAddSheet();
-        WaitForFocus(WaitForUrlEntry(), "NewUrlEntry");
+        _page.SelectTab(AppResources.TabFeeds);
+        _page.OpenAddSheet();
+        WaitForFocus(_page.WaitForUrlEntry(), "NewUrlEntry");
         ResetUiState();
     }
 
@@ -247,7 +221,7 @@ public sealed class SmokeTests
     public void FeedActionSheet_Rename_UpdatesTitle()
     {
         var oldTitle = AddFeedViaUi("rename-target");
-        OpenFeedActions(oldTitle);
+        OpenFeedActions(oldTitle, AppResources.ButtonRename);
 
         // Action sheet options render as list items inside a popup, not buttons.
         var rename = WaitForElementInScopeByName(AppResources.ButtonRename);
@@ -270,13 +244,13 @@ public sealed class SmokeTests
     // and waits for its card before returning to the Feeds tab.
     private void AddCategoryViaUi(string categoryName)
     {
-        SelectTab(AppResources.TabCategories);
+        _page.SelectTab(AppResources.TabCategories);
         var entry = UiRetry.WaitForElementByName(Window, AppResources.LabelCategoryName, ControlType.Edit);
         UiRetry.SetText(entry, categoryName);
         var save = WaitForElementByName(AppResources.ButtonSave, ControlType.Button);
         UiRetry.InvokeOrClick(save);
         WaitForCard(categoryName);
-        SelectTab(AppResources.TabFeeds);
+        _page.SelectTab(AppResources.TabFeeds);
     }
 
     // Whether the feed card currently shows the given category name. The card is
@@ -288,7 +262,7 @@ public sealed class SmokeTests
     // the given entry — a real category or the built-in "None" pseudo entry.
     private void ChangeFeedCategoryViaActionSheet(string feedTitle, string optionName)
     {
-        OpenFeedActions(feedTitle);
+        OpenFeedActions(feedTitle, AppResources.ButtonChangeCategory);
         var changeCategory = WaitForElementInScopeByName(AppResources.ButtonChangeCategory);
         UiRetry.InvokeOrClick(changeCategory);
 
@@ -331,8 +305,8 @@ public sealed class SmokeTests
     [Trait("Category", "E2E")]
     public async Task Search_SubscribesResult_PersistsFeed()
     {
-        SelectTab(AppResources.TabFeeds);
-        OpenAddSheet();
+        _page.SelectTab(AppResources.TabFeeds);
+        _page.OpenAddSheet();
         EnterUrl(_fixture.Server.BaseUrl);
 
         var search = WaitForElementByName(AppResources.ButtonSearch, ControlType.Button);
@@ -361,8 +335,8 @@ public sealed class SmokeTests
     [Trait("Category", "E2E")]
     public void Search_SiteUrl_DiscoversFeedViaLinkTag()
     {
-        SelectTab(AppResources.TabFeeds);
-        OpenAddSheet();
+        _page.SelectTab(AppResources.TabFeeds);
+        _page.OpenAddSheet();
         EnterUrl($"{_fixture.Server.BaseUrl}/site");
 
         var search = WaitForElementByName(AppResources.ButtonSearch, ControlType.Button);

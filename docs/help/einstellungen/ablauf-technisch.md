@@ -88,9 +88,11 @@ Beteiligte Komponenten:
 
 **Format-Erkennung beim Feed-Abruf:** `FeedSyncService.RunSyncAsync` liest den Response-Stream über `XmlReader.Create` (`DtdProcessing.Ignore`) und positioniert per `MoveToContent` auf dem Root-Element — der Peek konsumiert nur Präambel/Whitespace und funktioniert auf dem nicht seekbaren HTTP-Stream. Liegt das Root-Element `feed` im Atom-0.3-Namespace `http://purl.org/atom/ns#` vor, wird der Reader in `Atom03NormalizingXmlReader` gewrappt: Der delegierende Reader biegt den Namespace auf Atom 1.0 (`http://www.w3.org/2005/Atom`) um, benennt die Elemente `tagline`→`subtitle`, `issued`→`published`, `modified`→`updated` und `copyright`→`rights` um und übersetzt `type`-Attributwerte auf den Atom-0.3-Text-/Content-Konstrukten von MIME-Typen in die Atom-1.0-Kürzel (`text/plain`→`text`, `text/html`→`html`, `application/xhtml+xml`→`xhtml`; `link`-`type` und Elemente mit `mode="base64"` bleiben unverändert). `SyndicationFeed.Load` bleibt damit die einzige Parse-Stelle und akzeptiert RSS 2.0, Atom 1.0 und Atom 0.3; nicht lesbare Dokumente laufen unverändert in den `Parse`-Fehlerpfad (`XmlException` im `catch` von `SyncFeedAsync`).
 
-**Ingest-Filter beim Feed-Abruf:** `FeedSyncService.RunSyncAsync` lädt nach `SyndicationFeed.Load` und vor der Item-Schleife die Keyword-Liste via `IKeywordFilter.GetKeywordTextsAsync` als `keywordTexts` und übergibt sie an die ausgelagerte Sammelschleife `CollectNewItems` (Rückgabe: `newItemEntities` + `filteredCount`). Pro neuem `SyndicationItem` — nach der `knownKeys`-Dedup-Prüfung — ruft `CollectNewItems` `IKeywordFilter.MatchesAny(title, contentHtml, keywordTexts)` auf (`title` = `feedItem.Title?.Text`, `contentHtml` = `GetContentHtml(feedItem)`). Treffer werden nicht in `newItemEntities` aufgenommen: Sie werden weder per `IItemRepository.AddRangeAsync` gespeichert noch über `INotificationService.NotifyNewItemsAsync` benachrichtigt und erscheinen in keiner Liste. Die Anzahl verworfener Treffer wird in `filteredCount` mitgezählt und bei `filteredCount > 0` an die `SyncLog.Message`/`SyncResult.Message` angehängt (z. B. „Synchronized 6 items, 5 new, 1 filtered."). `DetermineStatus` zählt die Abrufmenge weiterhin inklusive gefilterter Items — kein Health-False-Positive. Da gefilterte Items nicht persistiert werden, werden sie bei jedem Folge-Sync erneut gematcht (deterministisch und gewollt — die Keyword-Liste kann sich geändert haben). Ein Fehler beim Keyword-Laden läuft in den bestehenden `catch` in `SyncFeedAsync` → `FeedHealth.Error` + `SyncLog`.
+**Ingest-Filter beim Feed-Abruf:** `FeedSyncService.RunSyncAsync` lädt nach `SyndicationFeed.Load` und vor der Item-Schleife die Keyword-Liste via `IKeywordFilter.GetKeywordTextsAsync` als `keywordTexts` und übergibt sie an die ausgelagerte Sammelschleife `CollectNewItems` (Rückgabe: `newItemEntities` + `filteredCount` + `contentBackfill`). Pro neuem `SyndicationItem` — nach der `knownKeys`-Dedup-Prüfung — ruft `CollectNewItems` `IKeywordFilter.MatchesAny(title, contentHtml, keywordTexts)` auf (`title` = `feedItem.Title?.Text`, `contentHtml` = `GetContentHtml(feedItem)`). Treffer werden nicht in `newItemEntities` aufgenommen: Sie werden weder per `IItemRepository.AddRangeAsync` gespeichert noch über `INotificationService.NotifyNewItemsAsync` benachrichtigt und erscheinen in keiner Liste. Die Anzahl verworfener Treffer wird in `filteredCount` mitgezählt und bei `filteredCount > 0` an die `SyncLog.Message`/`SyncResult.Message` angehängt (z. B. „Synchronized 6 items, 5 new, 1 filtered."). `DetermineStatus` zählt die Abrufmenge weiterhin inklusive gefilterter Items — kein Health-False-Positive. Da gefilterte Items nicht persistiert werden, werden sie bei jedem Folge-Sync erneut gematcht (deterministisch und gewollt — die Keyword-Liste kann sich geändert haben). Ein Fehler beim Keyword-Laden läuft in den bestehenden `catch` in `SyncFeedAsync` → `FeedHealth.Error` + `SyncLog`.
 
-**Cleanup für Bestandstreffer:** `App.OnStart` ruft nach `Database.MigrateAsync()` `IRetentionCleanupService.CleanupAsync()` fehlerisoliert auf (`try/catch` + `Debug.WriteLine`). Der Keyword-Zweig bleibt bestehen und bereinigt Artikel, die vor Anlage des Schlagworts gespeichert wurden, fristbasiert — für Neuzugänge ist er durch den Ingest-Filter gegenstandslos.
+**Content-Backfill beim Feed-Abruf:** Bereits bekannte Items (Dedup-Treffer über `knownKeys`) werden auf Inhaltslosigkeit geprüft: `CollectNewItems` sammelt vorab alle `existingItems` mit `ContentHtml is null` als Backfill-Kandidaten (`GuidOrHash` → `Item.Id`) und nimmt bei einem erneuten Auftreten des Items im Feed — sofern `GetContentHtml(feedItem)` Inhalt liefert — einen `ItemContentEntry(existingItemId, content)` in `contentBackfill` auf. `RunSyncAsync` schreibt die Einträge anschließend per `IItemContentStore.SetRangeAsync` in den Content-Speicher (`reporter-content.db`). Damit werden Inhalte nachgeladen, die z. B. nach einem Geräte-Restore fehlen (die Nutzerdatenbank kommt aus dem iCloud-Backup zurück, die ausgeschlossene Content-Datei nicht). Der Keyword-Filter greift auf diesem Pfad bewusst nicht — das Item hat den Filter beim ursprünglichen Speichern bereits passiert — und vorhandener Inhalt wird nicht überschrieben, da nur `ContentHtml is null`-Kandidaten berücksichtigt werden. Neue Items speichern ihren Inhalt direkt beim `AddRangeAsync` über den Content-Speicher (zweistufige Persistenz im `ItemRepository`, siehe [Datenmodell](../anwendung/datenmodell.md)).
+
+**Cleanup für Bestandstreffer:** `App.OnStart` ruft nach der idempotenten Content-Migration (`MigrateContentAsync` → `IContentMigrationService` — bewusst vor `Database.MigrateAsync()`, weil diese die Legacy-Spalte `items.content_html` entfernt) und der Haupt-Datenbankmigration `IRetentionCleanupService.CleanupAsync()` fehlerisoliert auf (`try/catch` + `Debug.WriteLine`). Der Keyword-Zweig bleibt bestehen und bereinigt Artikel, die vor Anlage des Schlagworts gespeichert wurden, fristbasiert — für Neuzugänge ist er durch den Ingest-Filter gegenstandslos.
 
 `RetentionCleanupService.CleanupAsync`:
 
@@ -101,6 +103,7 @@ Beteiligte Komponenten:
 5. `IItemRepository.GetExpiredKeywordCandidatesAsync(cutoff)` lädt Kandidaten: `IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff` (Fristbasis = Veröffentlichungsdatum, siehe [Business Rules](business-rules.md)).
 6. `IKeywordFilter.MatchesAny(item.Title, item.ContentHtml, keywordTexts)` filtert Treffer im Speicher (`Contains`, `OrdinalIgnoreCase`).
 7. `IItemRepository.DeleteRangeAsync(matchedIds)` löscht per `ExecuteDeleteAsync` auf IDs; Rückgabewert = Summe beider Löschungen.
+8. Waisen-Sweep im Content-Speicher: `IItemContentStore.GetItemIdsAsync` × `IItemRepository.GetAllIdsAsync` — `IItemContentStore.DeleteRangeAsync` entfernt `item_contents`-Zeilen ohne zugehöriges `items`-Item (Sicherheitsnetz, fließt nicht in den Rückgabewert ein); Details siehe [Aufbewahrung](../anwendung/aufbewahrung.md).
 
 ```mermaid
 flowchart TD
@@ -110,22 +113,23 @@ flowchart TD
     C -- Ja --> D[cutoff = UtcNow - RetentionDays]
     D --> E[DeleteExpiredAsync:<br/>IsRead && !IsSavedForLater &&<br/>ReadAt ?? PublishedAt < cutoff]
     E --> F{Keywords vorhanden?}
-    F -- Nein --> G[Ende]
+    F -- Nein --> O[Waisen-Sweep item_contents]
     F -- Ja --> H[GetExpiredKeywordCandidatesAsync:<br/>IsRead && !IsSavedForLater &&<br/>PublishedAt ?? ReadAt < cutoff]
     H --> I[KeywordFilter.MatchesAny<br/>Titel + ContentHtml]
     I --> J{Treffer?}
-    J -- Nein --> G
+    J -- Nein --> O
     J -- Ja --> K[DeleteRangeAsync auf Treffer-IDs]
-    K --> G
+    K --> O
+    O --> G[Ende]
     Z --> G
 ```
 
 Beteiligte Komponenten:
-- `FeedSyncService.RunSyncAsync` / `FeedSyncService.CollectNewItems` — Ingest-Filter beim Feed-Abruf
+- `FeedSyncService.RunSyncAsync` / `FeedSyncService.CollectNewItems` — Ingest-Filter und Content-Backfill beim Feed-Abruf
 - `Atom03NormalizingXmlReader` — normalisierender `XmlReader`-Wrapper für Atom-0.3-Dokumente
 - `App.OnStart` — Aufrufpunkt mit Fehlerisolierung
-- `RetentionCleanupService.CleanupAsync` — Orchestrierung
-- `ISettingsRepository`, `IItemRepository`, `IKeywordFilter`
+- `RetentionCleanupService.CleanupAsync` — Orchestrierung inkl. Content-Waisen-Sweep
+- `ISettingsRepository`, `IItemRepository`, `IKeywordFilter`, `IItemContentStore`
 
 ### 5. Hintergrund-Aktualisierung
 

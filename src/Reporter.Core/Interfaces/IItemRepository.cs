@@ -149,4 +149,11 @@ public interface IItemRepository
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the number of deleted items.</returns>
     Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the identifiers of all stored items asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains all item identifiers.</returns>
+    Task<IReadOnlyList<Guid>> GetAllIdsAsync(CancellationToken cancellationToken = default);
 }

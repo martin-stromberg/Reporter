@@ -48,5 +48,24 @@ $env:REPORTER_APP_PATH = $appOutput
 Write-Host "==> REPORTER_APP_PATH = $env:REPORTER_APP_PATH" -ForegroundColor Cyan
 
 Write-Host "==> dotnet test src/Reporter.E2ETests" -ForegroundColor Cyan
-dotnet test "src/Reporter.E2ETests/Reporter.E2ETests.csproj" -c $configuration -f $tfm
-exit $LASTEXITCODE
+$testExitCode = 1
+try {
+    dotnet test "src/Reporter.E2ETests/Reporter.E2ETests.csproj" -c $configuration -f $tfm
+    $testExitCode = $LASTEXITCODE
+}
+finally {
+    # Aufraeumen: verbliebene Reporter-Prozesse aus dem Build-Output beenden -
+    # eingegrenzt auf $appOutput, damit eine parallel laufende Nutzer-
+    # Installation aus einem anderen Verzeichnis nicht getroffen wird.
+    $leftover = @(Get-Process -Name Reporter -ErrorAction SilentlyContinue | Where-Object {
+        try { $_.Path -ieq $appOutput } catch { $false }
+    })
+    if ($leftover.Count -gt 0) {
+        Write-Host "==> Beende verbliebene Reporter-Prozesse unter $appOutput" -ForegroundColor Yellow
+        foreach ($proc in $leftover) {
+            Write-Host "    Stoppe Reporter.exe (PID $($proc.Id))"
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+exit $testExitCode

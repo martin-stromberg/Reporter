@@ -12,6 +12,8 @@ namespace Reporter.Tests;
 public class ItemRepositoryTests : IDisposable
 {
     private readonly TestDbContextFactory _factory;
+    private readonly TestContentDbContextFactory _contentFactory;
+    private readonly ItemContentRepository _contentStore;
     private readonly ItemRepository _repository;
 
     /// <summary>
@@ -20,15 +22,18 @@ public class ItemRepositoryTests : IDisposable
     public ItemRepositoryTests()
     {
         _factory = new TestDbContextFactory();
-        _repository = new ItemRepository(_factory);
+        _contentFactory = new TestContentDbContextFactory();
+        _contentStore = new ItemContentRepository(_contentFactory);
+        _repository = new ItemRepository(_factory, _contentStore);
     }
 
     /// <summary>
-    /// Disposes the test factory.
+    /// Disposes the test factories.
     /// </summary>
     public void Dispose()
     {
         _factory.Dispose();
+        _contentFactory.Dispose();
     }
 
     /// <summary>
@@ -1062,7 +1067,7 @@ public class ItemRepositoryTests : IDisposable
     [Fact]
     public async Task GetUnreadByDateAsync_ProjectsFeedFaviconUrl()
     {
-        var feedRepository = new FeedRepository(_factory);
+        var feedRepository = new FeedRepository(_factory, _contentStore);
         var feedId = Guid.NewGuid();
         await feedRepository.AddAsync(new Feed
         {
@@ -1187,5 +1192,311 @@ public class ItemRepositoryTests : IDisposable
         Assert.Equal(2, result.Count);
         Assert.Equal("Undated", result[0].Title);
         Assert.Equal("Dated", result[1].Title);
+    }
+
+    /// <summary>
+    /// Verifies that the content supplied with <see cref="ItemRepository.AddAsync"/>
+    /// is stored in the content store and hydrated back by <see cref="ItemRepository.GetByIdAsync"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_ThenGetByIdAsync_ReturnsContentHtml()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "With Content",
+            GuidOrHash = "with-content",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>Article body</p>",
+        };
+        await _repository.AddAsync(item);
+
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal("<p>Article body</p>", result.ContentHtml);
+        Assert.Equal("<p>Article body</p>", await _contentStore.GetAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that items without a supplied content get no content store entry
+    /// and hydrate <see cref="Item.ContentHtml"/> as <c>null</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_WithoutContent_StoresNoContentEntry()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "No Content",
+            GuidOrHash = "no-content",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _repository.AddAsync(item);
+
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.Null(result.ContentHtml);
+        Assert.Null(await _contentStore.GetAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that list reads hydrate <see cref="Item.ContentHtml"/> from the
+    /// content store in a batch lookup.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_HydratesContentFromStore()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddRangeAsync(new List<Item>
+        {
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "With",
+                GuidOrHash = "with",
+                IsRead = false,
+                IsSavedForLater = false,
+                ContentHtml = "<p>body</p>",
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Without",
+                GuidOrHash = "without",
+                IsRead = false,
+                IsSavedForLater = false,
+            },
+        });
+
+        var result = await _repository.GetByFeedAsync(feedId);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("<p>body</p>", result.Single(i => i.Title == "With").ContentHtml);
+        Assert.Null(result.Single(i => i.Title == "Without").ContentHtml);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.UpdateAsync"/> writes the new
+    /// content into the content store.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_UpdatesStoredContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>old</p>",
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.UpdateAsync(new Item
+        {
+            Id = item.Id,
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>new</p>",
+        });
+
+        Assert.Equal("<p>new</p>", await _contentStore.GetAsync(item.Id));
+        Assert.Equal("<p>new</p>", (await _repository.GetByIdAsync(item.Id))!.ContentHtml);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.UpdateAsync"/> removes the stored
+    /// content when the updated item carries a <c>null</c> content.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_NullContent_RemovesStoredContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>old</p>",
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.UpdateAsync(new Item
+        {
+            Id = item.Id,
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = null,
+        });
+
+        Assert.Null(await _contentStore.GetAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.DeleteAsync"/> also removes the
+    /// stored content of the item.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesStoredContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>body</p>",
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.DeleteAsync(item.Id);
+
+        Assert.Null(await _repository.GetByIdAsync(item.Id));
+        Assert.Null(await _contentStore.GetAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.DeleteExpiredAsync"/> removes the
+    /// stored contents of the deleted items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_RemovesStoredContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var expired = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Expired",
+            GuidOrHash = "expired",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            ContentHtml = "<p>expired</p>",
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            ContentHtml = "<p>kept</p>",
+        };
+        await _repository.AddRangeAsync(new List<Item> { expired, kept });
+
+        var deleted = await _repository.DeleteExpiredAsync(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal(1, deleted);
+        Assert.Null(await _contentStore.GetAsync(expired.Id));
+        Assert.Equal("<p>kept</p>", await _contentStore.GetAsync(kept.Id));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.DeleteRangeAsync"/> removes the
+    /// stored contents of the deleted items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteRangeAsync_RemovesStoredContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var first = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "First",
+            GuidOrHash = "first",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>first</p>",
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>kept</p>",
+        };
+        await _repository.AddRangeAsync(new List<Item> { first, kept });
+
+        var deleted = await _repository.DeleteRangeAsync(new List<Guid> { first.Id });
+
+        Assert.Equal(1, deleted);
+        Assert.Null(await _contentStore.GetAsync(first.Id));
+        Assert.Equal("<p>kept</p>", await _contentStore.GetAsync(kept.Id));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.GetAllIdsAsync"/> returns the
+    /// identifiers of all stored items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetAllIdsAsync_ReturnsAllItemIds()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var first = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "First",
+            GuidOrHash = "first",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        var second = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Second",
+            GuidOrHash = "second",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _repository.AddRangeAsync(new List<Item> { first, second });
+
+        var ids = await _repository.GetAllIdsAsync();
+
+        Assert.Equal(2, ids.Count);
+        Assert.Contains(first.Id, ids);
+        Assert.Contains(second.Id, ids);
     }
 }

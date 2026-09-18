@@ -149,10 +149,6 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("id");
 
-                    b.Property<string>("ContentHtml")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("content_html");
-
                     b.Property<Guid>("FeedId")
                         .HasColumnType("TEXT")
                         .HasColumnName("feed_id");
