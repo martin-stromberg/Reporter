@@ -46,6 +46,14 @@ Bei jedem dieser Abrufe erhält der jeweilige Fremdserver zwangsläufig deine
 IP-Adresse — wie bei jedem Besuch dieser Server in einem Browser. Reporter
 übermittelt darüber hinaus keine personenbezogenen Daten an diese Server.
 
+**Hinweis zum ersten Start:** Bei der erstmaligen Ausführung richtet die App
+ein Demo-Abonnement ein — den Feed „Apple Newsroom"
+(`https://www.apple.com/newsroom/rss-feed.rss`, Kategorie „News") — und ruft
+dessen Inhalte beim regulären Start-Abruf automatisch von `apple.com` ab.
+Dabei geht wie bei jedem Feed-Abruf deine IP-Adresse an Apple. Du kannst den
+Feed und die Kategorie wie jeden anderen Eintrag bearbeiten oder löschen;
+danach kontaktiert die App nur noch Server, die du selbst ausgewählt hast.
+
 ## 4. Debugbericht (nur auf deine ausdrückliche Anfrage)
 
 Auf der Seite **Einstellungen → Diagnose & Support** kannst du einen
@@ -123,6 +131,14 @@ feed selection:
 Each of these requests inevitably exposes your IP address to the respective
 third-party server — exactly as visiting those servers in a browser would.
 Reporter transmits no personal data beyond that.
+
+**Note on first launch:** On its very first run the app sets up a demo
+subscription — the “Apple Newsroom” feed
+(`https://www.apple.com/newsroom/rss-feed.rss`, category “News”) — and
+automatically fetches its content from `apple.com` during the regular
+startup sync. As with any feed fetch, your IP address is exposed to Apple.
+You can edit or delete the feed and the category like any other entry;
+afterwards the app only contacts servers you selected yourself.
 
 ## 4. Debug report (only on your explicit request)
 
