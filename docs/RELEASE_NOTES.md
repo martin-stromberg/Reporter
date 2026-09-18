@@ -4,11 +4,17 @@
 
 ## Important Notes Before Update
 
+- iOS: the app is now iPhone-only — iPad support has been removed for this App Store submission (`UIDeviceFamily` reduced to iPhone), so the app can no longer be installed on iPad devices.
 - License change: the project is now licensed under the PolyForm Noncommercial License 1.0.0 — free for noncommercial use only; commercial use requires a separate commercial license (see `LICENSE` and `COMMERCIAL-LICENSE.md`).
 - GitHub release notes are no longer generated automatically from commits — `docs/RELEASE_NOTES.md` is used as the release body for stable releases and RC pre-releases and must be maintained before each release.
 
 ## What's New
 
+- Article view: external links now open in the system browser when online instead of navigating inside the article view; when offline the existing hint dialog is still shown.
+- Startup hardening: a database migration error on app start no longer prevents the app from launching — the failure is logged to the session debug log.
+- iOS: the local database (`reporter.db` including its WAL/SHM files) is now excluded from iCloud backup, per App Store data-storage requirements.
+- iOS metadata completed for App Store submission: the privacy manifest now declares the used UserDefaults API, no tracking and no collected data; the app declares English and German localizations.
+- Internal tooling — no user-facing change: `scripts/iOS-Deployment.ps1` now uses `xcrun iTMSTransporter` for upload and remote validation instead of the deprecated `xcrun altool`.
 - Fresh installations now start with demo content: a "News" category containing the "Apple Newsroom" feed (`https://www.apple.com/newsroom/rss-feed.rss`) — notifications for the feed are off by default, its articles are loaded by the regular startup sync, and feed and category can be edited or deleted like normal entries. Existing installations are unaffected.
 - Internal tooling — no user-facing change: `scripts/iOS-Deployment.ps1` gained `store`/`upload` actions for signed release builds, IPA validation and upload to App Store Connect/TestFlight via the App Store Connect API, including automatic build-number bump, SSH delegation from Windows and step-by-step setup docs under `docs/help/ios-deployment/`.
 - Fixed: feeds published in the legacy Atom 0.3 format (e.g. sportschau.de) now synchronize — previously the refresh failed with an "invalid feed format" error.
@@ -48,11 +54,17 @@
 
 ## Wichtige Hinweise vor dem Update
 
+- iOS: Die App ist jetzt nur noch für das iPhone freigegeben — die iPad-Unterstützung wurde für diese App-Store-Einreichung entfernt (`UIDeviceFamily` auf iPhone reduziert); die App kann auf iPad-Geräten nicht mehr installiert werden.
 - Lizenzwechsel: Das Projekt steht jetzt unter der PolyForm Noncommercial License 1.0.0 — kostenlos nur für nicht-kommerzielle Nutzung; für kommerzielle Nutzung ist eine separate kommerzielle Lizenz erforderlich (siehe `LICENSE` und `COMMERCIAL-LICENSE.md`).
 - GitHub-Release-Notes werden nicht mehr automatisch aus Commits generiert — als Release-Text für stabile Releases und RC-Pre-Releases dient `docs/RELEASE_NOTES.md`, die vor jedem Release gepflegt werden muss.
 
 ## Neuerungen
 
+- Artikelansicht: Externe Links öffnen bei bestehender Verbindung jetzt den System-Browser statt innerhalb der Artikelansicht zu navigieren; offline erscheint weiterhin der bekannte Hinweisdialog.
+- Start-Absicherung: Ein Fehler bei der Datenbankmigration verhindert den App-Start nicht mehr — der Fehler wird im Sitzungs-Debugprotokoll festgehalten.
+- iOS: Die lokale Datenbank (`reporter.db` inklusive ihrer WAL-/SHM-Dateien) ist jetzt vom iCloud-Backup ausgenommen — gemäß den App-Store-Vorgaben zur Datenablage.
+- iOS-Metadaten für die App-Store-Einreichung vervollständigt: Das Privacy-Manifest deklariert nun die genutzte UserDefaults-API, kein Tracking und keine erhobenen Daten; die App deklariert die Sprachen Englisch und Deutsch.
+- Internes Tooling — keine anwendersichtbare Änderung: `scripts/iOS-Deployment.ps1` nutzt für Upload und Remote-Validierung jetzt `xcrun iTMSTransporter` statt des abgekündigten `xcrun altool`.
 - Neuinstallationen starten jetzt mit Demo-Inhalt: eine Kategorie „News" mit dem Feed „Apple Newsroom" (`https://www.apple.com/newsroom/rss-feed.rss`) — Benachrichtigungen des Feeds sind standardmäßig aus, die Artikel lädt der reguläre Start-Abruf, und Feed wie Kategorie lassen sich wie normale Einträge bearbeiten oder löschen. Bestandsinstallationen bleiben unberührt.
 - Korrigiert: Feeds im veralteten Atom-0.3-Format (z. B. sportschau.de) werden jetzt synchronisiert — zuvor schlug der Abruf mit dem Fehler „ungültiges Feed-Format" fehl.
 - Interne Qualitätsmaßnahme — keine anwendersichtbare Änderung: neue End-to-End-Testsuite für die Windows-App (`src/Reporter.E2ETests`, Aufruf via `scripts/Run-E2ETests.ps1`), die die App gegen einen lokalen Stub-Server startet und die Hauptansichten per FlaUI/UIA3-Smoke-Tests prüft — ermöglicht durch Compiled Bindings auf allen Views und die nur für Testzwecke gedachten Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT` und `REPORTER_DB_PATH`.

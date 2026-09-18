@@ -57,7 +57,7 @@ dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -f net10.0-windows10.
 
 ## Überprüfung
 
-- `.\scripts\Run-E2ETests.ps1` endet mit Exit-Code `0` und acht grünen Tests.
+- `.\scripts\Run-E2ETests.ps1` endet mit Exit-Code `0` und neun grünen Tests.
 - Beim Lauf öffnet sich das App-Fenster sichtbar; die Suite steuert es automatisch und schließt es am Ende.
 - Die App-Datenbank unter `FileSystem.AppDataDirectory` bleibt unverändert — die Suite arbeitet ausschließlich in `%TEMP%/reporter-e2e-*`, das im Teardown gelöscht wird.
 - Unit-Tests bleiben unverändert lauffähig: `dotnet test Reporter.sln --filter "Category!=E2E"`.

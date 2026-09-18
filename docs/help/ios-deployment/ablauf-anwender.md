@@ -82,11 +82,11 @@ Wenn TestFlight stabil läuft:
 
 1. App Store Connect → App → **+ Version oder Plattform** → iOS, Versionsnummer `1.0` (entspricht `ApplicationDisplayVersion`)
 2. Pflichtinhalte ausfüllen:
-   - **Screenshots:** iPhone 6,9″ (z. B. iPhone 16 Pro Max) **und** iPad 13″ — die App läuft auf beiden Geräteklassen. Screenshots aus dem Simulator (`simulator`-Aktion) oder vom Gerät
+   - **Screenshots:** nur iPhone 6,9″ (z. B. iPhone 16 Pro Max) — die App läuft ausschließlich auf iPhone (`UIDeviceFamily` = `[1]`, iPad ist kein deklariertes Target; Beschluss „Variante B" in [`docs/app-store-review.md`](../../app-store-review.md)). Screenshots aus dem Simulator (`simulator`-Aktion) oder vom Gerät
    - **Beschreibung, Keywords, Support-URL, Marketing-URL (optional)**
-   - **App-Datenschutz** (Fragebogen): Reporter sammelt keine Daten — alle Antworten entsprechend setzen; eine **Datenschutzerklärungs-URL** wird dennoch verlangt
-   - **Altersfreigabe** ausfüllen
-   - **App-Review-Informationen:** Kontaktdaten; Hinweis eintragen, dass die App RSS/Atom-Feeds auch über unverschlüsseltes HTTP lädt (erklärt die ATS-Ausnahme `NSAllowsArbitraryLoads`), falls danach gefragt wird
+   - **App-Datenschutz** (Fragebogen): Reporter sammelt keine Daten — alle Antworten entsprechend setzen; eine **Datenschutzerklärungs-URL** wird dennoch verlangt → die GitHub-URL von [`docs/privacy-policy.md`](../../privacy-policy.md) auf dem Default-Branch hinterlegen (Antworten im Einzelnen: [`docs/app-store-review.md`](../../app-store-review.md))
+   - **Altersfreigabe** ausfüllen — Empfehlung 12+ (ggf. 17+), Fragen zu nicht kontrollierbaren Feed-Inhalten wahrheitsgemäß bejahen (siehe [`docs/app-store-review.md`](../../app-store-review.md))
+   - **App-Review-Informationen:** Kontaktdaten; aus [`docs/app-store-review.md`](../../app-store-review.md) übernehmen: die ATS-Begründung für `NSAllowsArbitraryLoads` (anwenderdefinierte Feeds/Bilder teils nur per HTTP) sowie den Hinweis **„kein Login erforderlich — beim ersten Start wird ein Demo-Feed angelegt"**
    - **Versionsfreigabe:** manuell oder automatisch wählen
 3. Build auswählen (der aus TestFlight hochgeladene) → **Zur Prüfung einreichen**
 4. Nach Apples Review (typisch 24–48 h) erscheint die App im Store bzw. wird zum gewählten Zeitpunkt freigegeben

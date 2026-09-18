@@ -6,7 +6,7 @@
 
 ## Übersicht
 
-Die E2E-Suite läuft in drei Phasen: `scripts/Run-E2ETests.ps1` übersetzt die App und startet `dotnet test`; das xunit-Collection-Fixture `ReporterAppFixture` fährt den Kestrel-Stubserver `StubFeedServer` und die zuvor gebaute `Reporter.exe` mit den Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT`, `REPORTER_DB_PATH` und `REPORTER_DISABLE_DEMO_SEED` hoch und attacht per FlaUI (UIA3) aufs Hauptfenster; die sieben `SmokeTests` steuern diese App-Instanz seriell über UIA und verifizieren UI-Zustände sowie die isolierte SQLite-Datenbank, während `DemoSeedTests` eine eigene `Reporter.exe`-Instanz mit frischer Temp-DB und bewusst ohne `REPORTER_DISABLE_DEMO_SEED` startet, um den Demo-Seed des allerersten Starts nachzuweisen. Am Ende killt das Fixture den App-Prozess, stoppt den Server und löscht das Temp-Verzeichnis.
+Die E2E-Suite läuft in drei Phasen: `scripts/Run-E2ETests.ps1` übersetzt die App und startet `dotnet test`; das xunit-Collection-Fixture `ReporterAppFixture` fährt den Kestrel-Stubserver `StubFeedServer` und die zuvor gebaute `Reporter.exe` mit den Umgebungsvariablen `REPORTER_FEEDSEARCH_ENDPOINT`, `REPORTER_DB_PATH` und `REPORTER_DISABLE_DEMO_SEED` hoch und attacht per FlaUI (UIA3) aufs Hauptfenster; die sieben `SmokeTests` und der Test in `ArticleLinkTests` steuern diese App-Instanz seriell über UIA und verifizieren UI-Zustände sowie die isolierte SQLite-Datenbank, während `DemoSeedTests` eine eigene `Reporter.exe`-Instanz mit frischer Temp-DB und bewusst ohne `REPORTER_DISABLE_DEMO_SEED` startet, um den Demo-Seed des allerersten Starts nachzuweisen. Am Ende killt das Fixture den App-Prozess, stoppt den Server und löscht das Temp-Verzeichnis.
 
 ## Ablauf
 
@@ -24,7 +24,7 @@ Beteiligte Komponenten:
 Beteiligte Komponenten:
 - `StubFeedServer.InitializeAsync` / `DisposeAsync` — Lebenszyklus des Servers
 - `StubFeedServer.BaseUrl` / `DirectoryUrl` — Basis- und Directory-Endpunkt des Stubs
-- `Fixtures/stub-feed.xml`, `site-feed.xml`, `site.html`, `empty.html` — statische Antwortkörper
+- `Fixtures/stub-feed.xml`, `site-feed.xml`, `site.html`, `empty.html`, `link-feed.xml` — statische Antwortkörper bzw. Feed-Templates
 
 ### 3. App-Start mit E2E-Overrides (`ReporterAppFixture.InitializeAsync`)
 
@@ -37,11 +37,11 @@ Beteiligte Komponenten:
 - `MauiProgram.CreateMauiApp` / `ResolveFeedSearchEndpoint` / `ResolveDemoSeedSuppressed` — Env-Override-Auswertung und DI-Registrierung
 - `FeedSearchService(HttpClient, string?)` — übernimmt den Directory-Endpoint (`_directoryEndpoint`), `SearchDirectoryAsync` baut die Request-URI daraus
 
-### 4. Testausführung (`SmokeTests` und `DemoSeedTests` in `E2ETestCollection`)
+### 4. Testausführung (`SmokeTests`, `ArticleLinkTests` und `DemoSeedTests` in `E2ETestCollection`)
 
-Alle acht Tests liegen in der einen xunit-`E2ETestCollection` und laufen daher seriell; es gibt keinen `ITestCaseOrderer`. Die `SmokeTests` teilen sich den Fixture-App-Prozess; `DemoSeedTests` startet für den Seed-Nachweis eine eigene `Reporter.exe`-Instanz. Elemente werden über den UIA-Namen gefunden — MAUI propagiert `SemanticProperties.Description` als UIA-`Name` — oder über AutomationIds; lokalisierte Beschriftungen lösen die Tests über `AppResources.*` auf. `UiRetry` kapselt das Polling (Standard-Timeout 20 s, Intervall 200 ms), `InvokeOrClick` nutzt Invoke- → SelectionItem-Pattern → echten Mausklick, `SetText` das Value-Pattern bzw. Tastatureingabe; die Tab-Auswahl (`SelectTab`, inkl. `TopNavOverflowButton`-Overflow) und die Karten-Suche (`WaitForCard`, Group-first mit Fallback) sind geteilte `UiRetry`-Helfer. Dialoge (`DisplayActionSheetAsync`, `DisplayPromptAsync`, `DisplayAlertAsync`) werden über `WaitForElementInScope` gesucht, das pro Poll das Hauptfenster neu auflöst und alle Top-Level-Elemente des Prozesses am Desktop durchsucht (Popup-Roots). Da die App auf dem Unread-Tab startet, aktiviert jeder Feeds-Test den Feeds-Tab als Arrange-Schritt über `SelectTab(AppResources.TabFeeds)` — liegen Tab-Einträge im Overflow (`TopNavOverflowButton`), wird das Flyout geöffnet. `ResetUiState` räumt am Testende Popups, Dialoge und das Add-Sheet auf.
+Alle neun Tests liegen in der einen xunit-`E2ETestCollection` und laufen daher seriell; es gibt keinen `ITestCaseOrderer`. Die `SmokeTests` und `ArticleLinkTests` teilen sich den Fixture-App-Prozess; `DemoSeedTests` startet für den Seed-Nachweis eine eigene `Reporter.exe`-Instanz. Elemente werden über den UIA-Namen gefunden — MAUI propagiert `SemanticProperties.Description` als UIA-`Name` — oder über AutomationIds; lokalisierte Beschriftungen lösen die Tests über `AppResources.*` auf. `UiRetry` kapselt das Polling (Standard-Timeout 20 s, Intervall 200 ms), `InvokeOrClick` nutzt Invoke- → SelectionItem-Pattern → echten Mausklick, `SetText` das Value-Pattern bzw. Tastatureingabe; die Tab-Auswahl (`SelectTab`, inkl. `TopNavOverflowButton`-Overflow) und die Karten-Suche (`WaitForCard`, Group-first mit Fallback) sind geteilte `UiRetry`-Helfer. Die Seiten-Helfer `SelectTab` (inkl. Anker-Warte auf dem Ziel-Tab), `OpenAddSheet` und `WaitForUrlEntry` liegen in `E2EPageHelpers`, damit `SmokeTests` und `ArticleLinkTests` denselben Ablauf teilen. Dialoge (`DisplayActionSheetAsync`, `DisplayPromptAsync`, `DisplayAlertAsync`) werden über `WaitForElementInScope` gesucht, das pro Poll das Hauptfenster neu auflöst und alle Top-Level-Elemente des Prozesses am Desktop durchsucht (Popup-Roots). Da die App auf dem Unread-Tab startet, aktiviert jeder Feeds-Test den Feeds-Tab als Arrange-Schritt über `SelectTab(AppResources.TabFeeds)` — liegen Tab-Einträge im Overflow (`TopNavOverflowButton`), wird das Flyout geöffnet. `ResetUiState` räumt am Testende Popups, Dialoge und das Add-Sheet auf.
 
-Die acht Tests im Einzelnen:
+Die neun Tests im Einzelnen:
 
 - `AppStarts_FeedListRenders` — Feeds-Tab aktivieren; zustandsagnostisch auf Feed-Karten (`AccessibilityTapForActions`-HelpText) **oder** den `EmptyView`-Platzhalter (`PlaceholderFeeds`) warten.
 - `AddButton_OpensSheet_FocusesUrlEntry` — „+"-Button (`ActionAddFeed`) → Add-Sheet; `WaitForUrlEntry` findet das Adressfeld per `PlaceholderFeedSearch`-Name bzw. `ControlType.Edit`; `WaitForFocus` prüft den Tastaturfokus.
@@ -51,12 +51,15 @@ Die acht Tests im Einzelnen:
 - `Search_SubscribesResult_PersistsFeed` — `NewUrlEntry` = `{BaseUrl}` → `ButtonSearch` → Directory-Treffer „Stub Search Hit" (`/feeds/search-hit.xml`); Karten-Tap → `DisplayAlertAsync`-Bestätigung `ButtonYes` → Karte in der Liste und `feeds`-Zeile in der Test-DB.
 - `Search_SiteUrl_DiscoversFeedViaLinkTag` — `NewUrlEntry` = `{BaseUrl}/site` → `ButtonSearch` → Directory liefert `[]` → Autodiscovery lädt `/site`, wertet das `<link rel="alternate">` im `<head>` aus → Ergebniskarte „Stub Site Feed" sichtbar.
 - `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed` — Startet eine eigene `Reporter.exe` mit frischer Temp-DB (`REPORTER_DB_PATH` auf `%TEMP%/reporter-e2e-demo-{guid}/reporter.db`), `REPORTER_FEEDSEARCH_ENDPOINT` auf den Stub und `REPORTER_DISABLE_DEMO_SEED` gezielt aus dem Prozess-Environment entfernt. `FeedDbAssertions.FeedExistsAsync`/`CategoryExistsAsync` pollen die `feeds`-/`categories`-Zeilen des Seeds; danach attacht FlaUI, aktiviert `UiRetry.SelectTab` den Feeds-Tab und `UiRetry.WaitForCard` findet die Karte „Apple Newsroom". Die Assertions hängen nicht am Sync-Erfolg — der Start-Abruf darf apple.com real erreichen oder offline scheitern. Prozess-Kill und Temp-Verzeichnis-Löschung laufen im `finally`.
+- `ArticleLinkTests.ExternalLinkInArticle_OpensSystemBrowser` — Nachweis, dass ein externer Link im Artikel-WebView nicht in der App navigiert, sondern den System-Browser öffnet: Der `link-feed`-Stub-Feed (eigene `Fixtures/link-feed.xml`, deren Artikel-HTML einen `<a href="{baseUrl}/external-link">`-Link enthält) wird per UI direkt hinzugefügt, über den Refresh-Button auf `Ungelesen` synchronisiert (`FeedDbAssertions.ItemExistsAsync` pollt die `items`-Zeile) und die Artikelkarte angetippt. Im WebView2-UIA-Subtree wird das `Hyperlink`-Element aktiviert; Assert ist `StubFeedServer.ExternalLinkHitCount > 0` (der System-Browser hat die Stub-URL abgerufen) plus die geöffnet bleibende Detailansicht (Anker `ArticleOpenInBrowser`). Karten-Tap und Link-Aktivierung laufen in Retry-Schleifen, weil die `CollectionView` nach dem Sync neu rendert und Proxies veralten können.
 
 Beteiligte Komponenten:
 - `E2ETestCollection` (`CollectionDefinition("E2E")`, `ICollectionFixture<ReporterAppFixture>`) — geteiltes Fixture, serielle Ausführung
 - `UiRetry` (`WaitForElement*`, `TryFindElement*`, `WaitFor`, `InvokeOrClick`, `SetText`, `SelectTab`, `WaitForCard`) — Polling und Interaktion
-- `FeedDbAssertions.FeedExistsAsync` / `CategoryExistsAsync` — lesende SQLite-Verifikation (`PollUntilExistsAsync` + parametrisierbare `ExistsCoreAsync`-COUNT-Abfrage)
-- `SmokeTests` (`OpenAddSheet`, `EnterUrl`, `AddFeedViaUi`, `ResetUiState` u. a.) — Testflüsse und private Helfer
+- `E2EPageHelpers` (`SelectTab` mit Seiten-Anker, `OpenAddSheet`, `WaitForUrlEntry`) — geteilte Seiten-Helfer von `SmokeTests` und `ArticleLinkTests`
+- `FeedDbAssertions.FeedExistsAsync` / `CategoryExistsAsync` / `ItemExistsAsync` — lesende SQLite-Verifikation (`PollUntilExistsAsync` + parametrisierbare `ExistsCoreAsync`-COUNT-Abfrage)
+- `SmokeTests` (`EnterUrl`, `AddFeedViaUi`, `ResetUiState` u. a.) — Testflüsse und private Helfer
+- `ArticleLinkTests` — externer-Link-Nachweis gegen den geteilten Fixture-App-Prozess; `DescribeLinkState` protokolliert im Fehlerfall UIA-Zustand des Links sowie die Sichtbarkeit von Offline-Alert und Fehlerzeile
 - `DemoSeedTests` — Seed-Nachweis über eine eigene App-Instanz; nutzt `ReporterAppFixture.ResolveAppPath` (jetzt `internal`) und `fixture.Server.DirectoryUrl`
 
 ### 5. Teardown (`ReporterAppFixture.DisposeAsync`)
@@ -74,7 +77,7 @@ flowchart TD
     E --> F{Hauptfenster innerhalb 2 min?}
     F -- Ja --> G[UIA3-Attach + 3 s Pause + SetForeground]
     F -- Nein --> H[Fixture bricht mit Fehlermeldung ab]
-    G --> I[SmokeTests + DemoSeedTests: 8 serielle UIA-Tests]
+    G --> I[SmokeTests + ArticleLinkTests + DemoSeedTests: 9 serielle UIA-Tests]
     I --> J[FeedDbAssertions: lesende SQLite-Prüfung]
     I --> K[Teardown: Prozess killen, Server stoppen, Temp-DB löschen]
     J --> K

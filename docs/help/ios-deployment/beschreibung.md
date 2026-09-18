@@ -34,3 +34,4 @@ Auf Windows läuft der Build über Pair-to-Mac auf dem verbundenen Mac; Validier
 - Simulator-Deployment ist nur direkt auf dem Mac möglich — Microsoft unterstützt `dotnet build -t:Run` für iOS auf Windows nicht. Geräte-Deployment (`device`) läuft von Windows über SSH/`devicectl` mit.
 - Ein App-Store-Upload verlangt einen bezahlten Apple-Developer-Account, ein Distribution-Zertifikat, ein App-Store-Profil und einen API-Schlüssel — die Einrichtung ist in [Einrichtung](einrichtung-anwender.md) beschrieben.
 - Jede hochgeladene Buildnummer darf bei Apple nur einmal vorkommen; `store` erhöht sie deshalb automatisch (abschaltbar über `-NoBumpBuildNumber`).
+- Die App ist in dieser Einreichung nur für iPhone deklariert — iPad ist kein Target; Entscheidung und Begründung stehen in den [App-Store-Review-Notizen](../../app-store-review.md).

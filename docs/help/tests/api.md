@@ -47,7 +47,7 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 
 ### `GET /feeds/{name}.xml`
 
-**Beschreibung:** Liefert das RSS-2.0-Template `Fixtures/stub-feed.xml` mit `application/rss+xml`; `{name}` wird im Channel-`<title>` („Stub Feed {name}") und `<link>` substituiert → eindeutiger Feed-Titel je Stub-URL für die Testisolation. Die Route `/feeds/site-feed.xml` ist vor dem Template registriert und liefert das statische `Fixtures/site-feed.xml` („Stub Site Feed").
+**Beschreibung:** Liefert einen RSS-2.0-Feed mit `application/rss+xml`. Existiert eine dedizierte Fixture-Datei `Fixtures/{name}.xml` (z. B. `link-feed.xml`), wird sie ausgeliefert — so können Tests den Feed-Inhalt formen (der `link-feed`-Artikel enthält z. B. einen externen `<a href="{baseUrl}/external-link">`-Link); sonst greift das generische Template `Fixtures/stub-feed.xml`. In beiden Fällen werden die Platzhalter `{name}` (Channel-`<title>` „Stub Feed {name}") und `{baseUrl}` (`BaseUrl` des Stubs) substituiert → eindeutiger Feed-Titel je Stub-URL für die Testisolation. Die Route `/feeds/site-feed.xml` ist vor dem Template registriert und liefert das statische `Fixtures/site-feed.xml` („Stub Site Feed").
 
 **Parameter:**
 
@@ -62,6 +62,10 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 ### `GET /empty`
 
 **Beschreibung:** Liefert `Fixtures/empty.html` (`text/html`) — eine Seite ohne Feed-Verweise; dient als negativer Discovery-Pfad.
+
+### `GET /external-link`
+
+**Beschreibung:** Liefert eine kleine statische HTML-Seite (`text/html`) und inkrementiert dabei `StubFeedServer.ExternalLinkHitCount` (`Interlocked`-gezählt). Die Route ist das Ziel des externen Links im `link-feed`-Artikel: Da der System-Browser die URL nach `Browser.OpenAsync` abruft, belegt der Zähler im Test `ArticleLinkTests.ExternalLinkInArticle_OpensSystemBrowser`, dass die Navigation die App verlassen hat statt im WebView zu laufen.
 
 ### Übrige Pfade
 

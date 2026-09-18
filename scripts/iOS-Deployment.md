@@ -58,7 +58,7 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 - Die `.p8`-Datei muss **ausserhalb des Repository** liegen (wird vom
   Skript erzwungen). Das Skript spiegelt sie nach
   `~/.appstoreconnect/private_keys/AuthKey_<KeyId>.p8` auf dem Mac —
-  einer der festen Suchpfade von `xcrun altool`.
+  dem festen Suchpfad von `xcrun iTMSTransporter` (identisch zu `altool`).
 - Auf Windows: zusaetzlich schluesselbasiertes SSH zum Mac
   (`ssh <macuser>@<mac>` muss ohne Passwort funktionieren). Die von
   Visual Studio Pair-to-Mac angelegten Keys liegen unter
@@ -78,10 +78,13 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 4. Auf dem Mac (lokal bzw. per SSH von Windows): IPA wird entpackt,
    `codesign --verify --deep --strict` und ein Check auf
    `get-task-allow=false` im `embedded.mobileprovision` laufen,
-   anschliessend `xcrun altool --validate-app`.
-5. `xcrun altool --upload-app -f <ipa> --apiKey <id> --apiIssuer <issuer>`
-   laedt die IPA hoch. Nach der Verarbeitung (wenige Minuten) erscheint
-   der Build in App Store Connect unter TestFlight.
+   anschliessend `xcrun iTMSTransporter -m verify` (Remote-Validierung;
+   entfaellt mit Warnung, falls `-m verify` auf dem Ziel-Mac fuer
+   iOS-IPAs nicht unterstuetzt wird — der Upload validiert serverseitig).
+5. `xcrun iTMSTransporter -m upload -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>`
+   laedt die IPA hoch (`-assetFile` statt `-f` — `-f` ist fuer
+   `.itmsp`-Pakete reserviert). Nach der Verarbeitung (wenige Minuten)
+   erscheint der Build in App Store Connect unter TestFlight.
 
 `upload` startet bei Schritt 4 mit einer vorhandenen IPA (`-IpaPath`,
 sonst die neueste unter `bin/Release`).
@@ -133,16 +136,23 @@ vollstaendigen Anzeigenamen (z. B. `Martin Stromberg`).
   und App-Store-Profil sowie den API-Key; ein Development-`CodesignKey`
   wird vom Skript abgelehnt.
 
-### `altool` ist deprecated
+### `altool` wurde durch `iTMSTransporter` ersetzt
 
-`xcrun altool` ist bei Apple als deprecated markiert, funktioniert aber
-weiterhin und ist der dokumentierte CLI-Uploadweg ohne fastlane.
-Alternativen, falls Apple es entfernt: Transporter-App bzw.
-`iTMSTransporter` direkt (`xcrun iTMSTransporter`).
+`xcrun altool` ist bei Apple deprecated; das Skript nutzt daher
+`xcrun iTMSTransporter` (`-m verify` zur Remote-Validierung, `-m upload`
+fuer den Upload — beide mit `-assetFile`, da `-f` nur fuer
+`.itmsp`-Pakete gilt). Authentifizierung und Schluesselsuchpfad
+(`~/.appstoreconnect/private_keys/`) sind identisch — `Copy-ApiKeyToMac`
+bleibt kompatibel. Vorab pruefbar auf dem Ziel-Mac:
+`xcrun iTMSTransporter --version` (bei Xcode bzw. installierter
+Transporter-App vorhanden). Falls `-m verify` fuer iOS-IPAs nicht
+unterstuetzt wird, entfaellt der Remote-Schritt dokumentiert (Warnung im
+Lauf) — die lokale `codesign`-Pruefung bleibt und der Upload validiert
+serverseitig. Ausweichweg bleibt die Transporter-App.
 
 ### SSH-Delegation von Windows
 
-`store`/`upload` muessen `altool`, `codesign` und `security` auf dem Mac
+`store`/`upload` muessen `iTMSTransporter`, `codesign` und `security` auf dem Mac
 ausfuehren. Von Windows delegiert das Skript Bash-Skripte per
 `ssh -o BatchMode=yes` (schlaegt ohne schluesselbasierte Auth sofort fehl)
 und kopiert `.p8`/`.ipa` per `scp`. Bei einem SSH-Fehlschlag gibt das

@@ -49,6 +49,25 @@ public static class FeedDbAssertions
                 "$name",
                 name));
 
+    /// <summary>
+    /// Polls the <c>items</c> table until a row with the given title exists or
+    /// the timeout elapses. Mirrors the polling structure of
+    /// <see cref="FeedExistsAsync"/>.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="title">The item title to look for.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether an item row with the title exists.</returns>
+    public static Task<bool> ItemExistsAsync(string databasePath, string title, TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => ExistsCoreAsync(
+                path,
+                "SELECT COUNT(*) FROM items WHERE title = $title",
+                "$title",
+                title));
+
     // Polls the check until it reports the row or the timeout elapses; the
     // polling absorbs the delay between the UI action and the asynchronous
     // persistence inside the app.
