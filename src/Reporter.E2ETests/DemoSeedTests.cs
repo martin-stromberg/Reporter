@@ -57,10 +57,12 @@ public sealed class DemoSeedTests
         startInfo.Environment.Remove("REPORTER_DISABLE_DEMO_SEED");
         var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException($"Could not start '{appPath}'.");
+        var processId = process.Id;
+        E2EProcessGuard.TrackProcess(process);
 
-        using var automation = new UIA3Automation();
         try
         {
+            using var automation = new UIA3Automation();
             Assert.True(
                 await FeedDbAssertions.FeedExistsAsync(databasePath, DemoContentService.DemoFeedUrl),
                 $"No feed row with URL '{DemoContentService.DemoFeedUrl}' found in {databasePath}.");
@@ -84,28 +86,14 @@ public sealed class DemoSeedTests
         }
         finally
         {
-            try
-            {
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                }
-            }
-            catch (Exception)
-            {
-                // The process may already have exited.
-            }
-
+            // PID-based tree kill with exit confirmation: FlaUI may have
+            // disposed/replaced the Process object during Application.Attach,
+            // so only the recorded PID stays reliable here.
+            await E2EProcessGuard.KillAndWaitAsync(processId);
             process.Dispose();
 
-            try
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-            catch (Exception)
-            {
-                // A leftover temp directory is tolerable; failing teardown is not.
-            }
+            // A leftover temp directory is tolerable; failing teardown is not.
+            await E2EProcessGuard.TryDeleteDirectoryAsync(tempDirectory);
         }
     }
 

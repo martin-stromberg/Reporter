@@ -17,6 +17,7 @@ namespace Reporter.E2ETests;
 public sealed class ReporterAppFixture : IAsyncLifetime
 {
     private string? _tempDirectory;
+    private int? _appProcessId;
 
     /// <summary>
     /// Gets the stub web server the app under test talks to.
@@ -48,74 +49,29 @@ public sealed class ReporterAppFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await Server.InitializeAsync().ConfigureAwait(false);
+        var process = StartAppProcess();
 
-        _tempDirectory = Path.Combine(Path.GetTempPath(), $"reporter-e2e-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_tempDirectory);
-        DatabasePath = Path.Combine(_tempDirectory, "reporter.db");
-
-        var appPath = ResolveAppPath();
-        var startInfo = new ProcessStartInfo(appPath) { UseShellExecute = false };
-        startInfo.Environment["REPORTER_FEEDSEARCH_ENDPOINT"] = Server.DirectoryUrl;
-        startInfo.Environment["REPORTER_DB_PATH"] = DatabasePath;
-        // The fresh temp database would trigger the first-run demo seed: the
-        // extra "News" category and feed card plus the real apple.com request
-        // would break the hermetic smoke tests, so the seed is disabled here.
-        startInfo.Environment["REPORTER_DISABLE_DEMO_SEED"] = "1";
-        var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException($"Could not start '{appPath}'.");
-
-        Automation = new UIA3Automation();
-        // NB: FlaUI replaces the Process object inside Application when waiting
-        // for the main window, so the process is only managed through App.
         try
         {
-            App = Application.Attach(process);
+            await AttachAndWaitForMainWindowAsync(process).ConfigureAwait(false);
         }
         catch (Exception)
         {
-            // Attach failed before App was assigned, so DisposeAsync cannot see
-            // the process — it is stopped here, best effort.
+            // Every failure after Process.Start must not leave the app behind —
+            // on paths before the App assignment DisposeAsync cannot see the
+            // process at all.
             try
             {
-                process.Kill();
+                await KillAppProcessAsync().ConfigureAwait(false);
             }
             catch (Exception)
             {
-                // The process may already have exited.
+                // Best effort — the original failure must not be masked.
             }
 
             process.Dispose();
             throw;
         }
-
-        // Records when and how the app process exits — the app should never exit
-        // on its own during a suite, so this marker pinpoints unexpected exits.
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                using var watcher = Process.GetProcessById(App.ProcessId);
-                await watcher.WaitForExitAsync().ConfigureAwait(false);
-                Console.WriteLine($"[E2E] Reporter.exe exited at {DateTime.Now:HH:mm:ss.fff} with code {watcher.ExitCode}");
-            }
-            catch (Exception)
-            {
-                // The process object may already be gone.
-            }
-        });
-
-        // The first start runs the database migration, so the wait is generous.
-        MainWindow = App.GetMainWindow(Automation, TimeSpan.FromMinutes(2))
-            ?? throw new InvalidOperationException(
-                "Reporter.exe did not show a main window within two minutes. " +
-                "The suite requires an interactive Windows desktop session.");
-
-        // Fixed pause after the successful attach: gives the user a moment to
-        // stop any ongoing interaction before the UIA automation takes over
-        // focus and input.
-        await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
-
-        MainWindow.SetForeground();
     }
 
     /// <summary>
@@ -145,37 +101,18 @@ public sealed class ReporterAppFixture : IAsyncLifetime
     /// <inheritdoc />
     public async Task DisposeAsync()
     {
-        if (App is not null)
-        {
-            try
-            {
-                if (!App.HasExited)
-                {
-                    App.Kill();
-                }
-            }
-            catch (Exception)
-            {
-                // Best effort — the process may already be gone.
-            }
+        await KillAppProcessAsync().ConfigureAwait(false);
 
-            App.Dispose();
-        }
-
+        App?.Dispose();
         Automation?.Dispose();
 
         await Server.DisposeAsync().ConfigureAwait(false);
 
-        if (_tempDirectory is not null && Directory.Exists(_tempDirectory))
+        if (_tempDirectory is not null)
         {
-            try
-            {
-                Directory.Delete(_tempDirectory, recursive: true);
-            }
-            catch (Exception)
-            {
-                // A leftover temp directory is tolerable; failing teardown is not.
-            }
+            // Best effort with brief retries — a just-killed app can keep the
+            // database file locked for a moment after its confirmed exit.
+            await E2EProcessGuard.TryDeleteDirectoryAsync(_tempDirectory).ConfigureAwait(false);
         }
     }
 
@@ -209,5 +146,92 @@ public sealed class ReporterAppFixture : IAsyncLifetime
             "Reporter.exe not found. Build the app first (see scripts/Run-E2ETests.ps1) " +
             "or set REPORTER_APP_PATH to a built executable.",
             overridePath);
+    }
+
+    // Creates the isolated temp directory plus database path and launches
+    // Reporter.exe against them. Records the started PID in _appProcessId and
+    // assigns the process to the kill-on-close job.
+    private Process StartAppProcess()
+    {
+        _tempDirectory = Path.Combine(Path.GetTempPath(), $"reporter-e2e-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_tempDirectory);
+        DatabasePath = Path.Combine(_tempDirectory, "reporter.db");
+
+        var appPath = ResolveAppPath();
+        var startInfo = new ProcessStartInfo(appPath) { UseShellExecute = false };
+        startInfo.Environment["REPORTER_FEEDSEARCH_ENDPOINT"] = Server.DirectoryUrl;
+        startInfo.Environment["REPORTER_DB_PATH"] = DatabasePath;
+        // The fresh temp database would trigger the first-run demo seed: the
+        // extra "News" category and feed card plus the real apple.com request
+        // would break the hermetic smoke tests, so the seed is disabled here.
+        startInfo.Environment["REPORTER_DISABLE_DEMO_SEED"] = "1";
+        var process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException($"Could not start '{appPath}'.");
+        _appProcessId = process.Id;
+        E2EProcessGuard.TrackProcess(process);
+        return process;
+    }
+
+    // Attaches FlaUI to the started app, registers the exit watcher and waits
+    // for the main window including the post-attach settle pause.
+    private async Task AttachAndWaitForMainWindowAsync(Process process)
+    {
+        Automation = new UIA3Automation();
+        // NB: FlaUI replaces the Process object inside Application when
+        // waiting for the main window, so the process is only managed
+        // through App.
+        App = Application.Attach(process);
+
+        // Records when and how the app process exits — the app should
+        // never exit on its own during a suite, so this marker pinpoints
+        // unexpected exits.
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var watcher = Process.GetProcessById(App.ProcessId);
+                await watcher.WaitForExitAsync().ConfigureAwait(false);
+                Console.WriteLine($"[E2E] Reporter.exe exited at {DateTime.Now:HH:mm:ss.fff} with code {watcher.ExitCode}");
+            }
+            catch (Exception)
+            {
+                // The process object may already be gone.
+            }
+        });
+
+        // The first start runs the database migration, so the wait is generous.
+        MainWindow = App.GetMainWindow(Automation, TimeSpan.FromMinutes(2))
+            ?? throw new InvalidOperationException(
+                "Reporter.exe did not show a main window within two minutes. " +
+                "The suite requires an interactive Windows desktop session.");
+
+        // Fixed pause after the successful attach: gives the user a moment
+        // to stop any ongoing interaction before the UIA automation takes
+        // over focus and input.
+        await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+
+        MainWindow.SetForeground();
+    }
+
+    // Tree kill with exit confirmation — the guard reports a surviving
+    // process on the console instead of it being swallowed silently. The PID
+    // recorded at Process.Start is the fallback for the cases where FlaUI
+    // replaced its internal Process object or App was never assigned.
+    private async Task KillAppProcessAsync()
+    {
+        int? processId;
+        try
+        {
+            processId = App?.ProcessId ?? _appProcessId;
+        }
+        catch (Exception)
+        {
+            processId = _appProcessId;
+        }
+
+        if (processId is not null)
+        {
+            await E2EProcessGuard.KillAndWaitAsync(processId.Value).ConfigureAwait(false);
+        }
     }
 }

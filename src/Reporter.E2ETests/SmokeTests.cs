@@ -88,10 +88,25 @@ public sealed class SmokeTests
     private AutomationElement WaitForCard(string title)
         => UiRetry.WaitForCard(Window, title, TimeSpan.FromSeconds(5));
 
-    // Taps a feed card by its title (SemanticProperties.Description -> UIA name).
-    private void OpenFeedActions(string feedTitle)
+    // Taps a feed card by its title (SemanticProperties.Description -> UIA
+    // name) and waits until the action sheet exposes the expected entry. The
+    // card is activated by a real mouse click that can be swallowed while the
+    // add sheet is still closing or the card re-renders, so the whole open
+    // sequence is retried before the test gives up.
+    private void OpenFeedActions(string feedTitle, string expectedEntryName)
     {
-        UiRetry.InvokeOrClick(WaitForCard(feedTitle));
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            UiRetry.InvokeOrClick(WaitForCard(feedTitle));
+            if (TryFindElementInScopeByName(expectedEntryName, timeout: TimeSpan.FromSeconds(6)) is not null)
+            {
+                return;
+            }
+        }
+
+        // Same failure signature as before: the regular scope wait reports the
+        // missing sheet entry after the last retry.
+        WaitForElementInScopeByName(expectedEntryName);
     }
 
     // Waits until an element has keyboard focus.
@@ -206,7 +221,7 @@ public sealed class SmokeTests
     public void FeedActionSheet_Rename_UpdatesTitle()
     {
         var oldTitle = AddFeedViaUi("rename-target");
-        OpenFeedActions(oldTitle);
+        OpenFeedActions(oldTitle, AppResources.ButtonRename);
 
         // Action sheet options render as list items inside a popup, not buttons.
         var rename = WaitForElementInScopeByName(AppResources.ButtonRename);
@@ -247,7 +262,7 @@ public sealed class SmokeTests
     // the given entry — a real category or the built-in "None" pseudo entry.
     private void ChangeFeedCategoryViaActionSheet(string feedTitle, string optionName)
     {
-        OpenFeedActions(feedTitle);
+        OpenFeedActions(feedTitle, AppResources.ButtonChangeCategory);
         var changeCategory = WaitForElementInScopeByName(AppResources.ButtonChangeCategory);
         UiRetry.InvokeOrClick(changeCategory);
 

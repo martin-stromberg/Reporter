@@ -74,10 +74,16 @@
 
 ## Verwaiste Prozesse oder Temp-Verzeichnisse
 
-**Symptom:** Nach abgebrochenen Läufen bleiben `Reporter.exe`-Prozesse oder `%TEMP%/reporter-e2e-*`-Ordner zurück.
+**Symptom:** Nach E2E-Läufen bleiben `Reporter.exe`-Prozesse oder `%TEMP%/reporter-e2e-*`-Ordner zurück; im Extremfall sind Dateien des Build-Outputs blockiert.
 
-**Ursache:** Harter Abbruch des Testprozesses, bevor `DisposeAsync` lief.
+**Ursache:** Mehrere Lücken im Prozess-Lebenszyklus bzw. beim Aufräumen, die nun alle abgesichert sind:
+1. Harter Abbruch des Testprozesses (`testhost.exe`-Kill, Crash), bevor `DisposeAsync` lief — die gestartete `Reporter.exe` blieb unbeaufsichtigt.
+2. Fehlerpfade in `InitializeAsync` nach `Process.Start`, die der frühere Attach-only-Catch nicht abdeckte (z. B. `UIA3Automation`-Konstruktor, `GetMainWindow`-Timeout, `SetForeground`) — vor der `App`-Zuweisung griff auch der `App is not null`-Guard in `DisposeAsync` nicht.
+3. `App.Kill()` ohne `WaitForExit`-Nachweis — ein überlebender Prozess wurde still geschluckt.
+4. Temp-Verzeichnisse konnten trotz beendetem Prozess nicht gelöscht werden: Eine gepoolte `Microsoft.Data.Sqlite`-Verbindung der `FeedDbAssertions` hielt `reporter.db` im Test-Host nach `Dispose` offen, und eine frisch gekillte App gibt ihre Dateien erst einen Moment nach dem bestätigten Exit frei — das einmalige `Directory.Delete` scheiterte dann still.
 
-**Lösung:**
+**Eingebaute Absicherung:** Der Lebenszyklus ist dreifach abgesichert — `E2EProcessGuard` weist jede gestartete `Reporter.exe` einem Windows-Job-Objekt mit `KILL_ON_JOB_CLOSE` zu (endet der Test-Host, beendet das OS die App automatisch); `DisposeAsync`, der `InitializeAsync`-Backstop und das `finally` in `DemoSeedTests` töten per `Kill(entireProcessTree: true)` mit `WaitForExit`-Timeout und melden einen überlebenden Prozess per `[E2E]`-Warnung auf der Konsole; `scripts/Run-E2ETests.ps1` räumt im `finally` verbliebene `Reporter`-Prozesse auf, eingegrenzt auf den Build-Output-Pfad `$appOutput`, damit eine parallel laufende Nutzer-Installation nicht getroffen wird. Gegen die Dateisperren hilft `Pooling=False` im `FeedDbAssertions`-Connection-String (keine gepoolte Verbindung hält die DB-Datei offen) plus `E2EProcessGuard.TryDeleteDirectoryAsync` mit bis zu fünf Versuchen à 200 ms. Verbleibende Einschränkung: Bei einem harten Test-Host-Tod ist kein Teardown mehr möglich — das Job-Objekt schließt das Prozess-Leck, doch ein `reporter-e2e-*`-Temp-Leichnam kann zurückbleiben.
+
+**Manuelle Bereinigung (Fallback):**
 1. Prozess `Reporter` (aus dem Build-Output) manuell beenden.
 2. `%TEMP%/reporter-e2e-*`-Ordner löschen — enthalten nur die isolierten Test-DBs (`reporter.db` und die abgeleitete `reporter-content.db` samt SQLite-Sidecars).
