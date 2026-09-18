@@ -165,7 +165,9 @@ function Assert-PairToMacAvailable {
 function Invoke-MacCapture {
     # Fuehrt ein Bash-Skript lokal (macOS) oder per SSH aus und gibt die stdout-Zeilen zurueck.
     param([string]$Script)
-    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Script))
+    # CRLF aus den Here-Strings wuerde das Remote-Bash brechen
+    # (set -e\r, trap EXIT\r, \r in Pfaden) - auf LF normalisieren.
+    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(($Script -replace "`r`n", "`n")))
     if ($isMacOS) {
         return @(& /bin/bash -c "echo $b64 | base64 -d | bash")
     }
@@ -409,6 +411,17 @@ function Assert-StorePrerequisites {
     }
 }
 
+function Assert-TransporterAvailable {
+    $check = 'ITMS="/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"; [ -x "$ITMS" ] || xcrun -f iTMSTransporter >/dev/null 2>&1'
+    $code = Invoke-OnMac -Script $check -Description "iTMSTransporter-Verfuegbarkeit" -ReturnExitCode
+    if ($code -ne 0) {
+        Write-Host "Fehler: iTMSTransporter auf dem Mac nicht gefunden." -ForegroundColor Red
+        Write-Host "Seit Xcode 16 gehoert es zur Transporter-App - aus dem Mac App Store installieren:" -ForegroundColor Yellow
+        Write-Host "https://apps.apple.com/us/app/transporter/id1450874784" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
 function Update-BuildNumber {
     $csprojPath = $projectPath
     $content = [System.IO.File]::ReadAllText($csprojPath)
@@ -464,7 +477,9 @@ function Invoke-OnMac {
         [string]$Description,
         [switch]$ReturnExitCode
     )
-    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Script))
+    # CRLF aus den Here-Strings wuerde das Remote-Bash brechen
+    # (set -e\r, trap EXIT\r, \r in Pfaden) - auf LF normalisieren.
+    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(($Script -replace "`r`n", "`n")))
     if ($isMacOS) {
         & /bin/bash -c "echo $b64 | base64 -d | bash"
         $exitCode = $LASTEXITCODE
@@ -564,16 +579,56 @@ PROFILE_XML=`$(security cms -D -i "`$APP/embedded.mobileprovision")
 if echo "`$PROFILE_XML" | grep -A1 'get-task-allow' | grep -q '<true/>'; then
     echo "FEHLER: Development-Profil (get-task-allow=true) - nicht store-tauglich"; exit 1
 fi
-echo "==> xcrun iTMSTransporter -m verify"
+echo "==> Pruefe PrivacyInfo.xcprivacy"
+# Die App deklariert Required-Reason-APIs; fehlt das Manifest im Bundle-Root,
+# meldet die Verarbeitung ITMS-91053 - das ist ein Packaging-Fehler.
+if [ ! -f "`$APP/PrivacyInfo.xcprivacy" ]; then
+    echo "FEHLER: PrivacyInfo.xcprivacy fehlt im Bundle-Root"; exit 1
+fi
+plutil -lint "`$APP/PrivacyInfo.xcprivacy" >/dev/null 2>&1 || { echo "FEHLER: PrivacyInfo.xcprivacy ist kein gueltiges plist"; exit 1; }
+echo "==> Pruefe Bundle-Metadaten (Info.plist)"
+# Invarianten der Store-Konfiguration: iPhone-only, en+de, keine
+# nicht-freigestellte Verschluesselung. Abweichungen deuten auf eine
+# Regression in der Projekt-Info.plist hin.
+FAMILY=`$(plutil -extract UIDeviceFamily json -o - "`$APP/Info.plist" 2>/dev/null || echo '[]')
+echo "`$FAMILY" | grep -q '1' || { echo "FEHLER: UIDeviceFamily ohne iPhone (1): `$FAMILY"; exit 1; }
+if echo "`$FAMILY" | grep -q '2'; then
+    echo "FEHLER: UIDeviceFamily enthaelt iPad (2) - App ist iPhone-only deklariert"; exit 1
+fi
+LOCS=`$(plutil -extract CFBundleLocalizations json -o - "`$APP/Info.plist" 2>/dev/null || echo '[]')
+{ echo "`$LOCS" | grep -q '"en"' && echo "`$LOCS" | grep -q '"de"'; } || { echo "FEHLER: CFBundleLocalizations fehlt oder enthaelt nicht en+de: `$LOCS"; exit 1; }
+ENC=`$(plutil -extract ITSAppUsesNonExemptEncryption raw -o - "`$APP/Info.plist" 2>/dev/null || echo '?')
+[ "`$ENC" = "false" ] || [ "`$ENC" = "0" ] || { echo "FEHLER: ITSAppUsesNonExemptEncryption nicht false: `$ENC"; exit 1; }
+echo "==> Pruefe App-Icon-Kodierung"
+# ITMS-90717 lehnt Icons mit Transparenz ab. Der Resizetizer erzeugt
+# grundsaetzlich RGBA; actool kodiert ARGB - das ist bei vollstaendig
+# opaken Pixeln (Quell-Icon mit opakem Hintergrund) der Normalzustand
+# und wird von Apple toleriert. Nur eine Warnung ausgeben.
+ICON_ENC=`$(xcrun assetutil --info "`$APP/Assets.car" 2>/dev/null | grep -A8 'appiconItunesArtwork' | grep -i '"Encoding"' | head -1 || true)
+if [ -n "`$ICON_ENC" ]; then
+    echo "Marketing-Icon-Encoding:`$ICON_ENC"
+else
+    echo "WARNUNG: Assets.car/appicon konnte nicht gelesen werden - Icon-Check uebersprungen"
+fi
+echo "==> iTMSTransporter -m verify"
 # altool ist bei Apple deprecated; iTMSTransporter nutzt dieselbe
 # API-Key-Authentifizierung und denselben Schluesselsuchpfad
-# ~/.appstoreconnect/private_keys. Fuer Apps (.ipa/.pkg) verlangt
-# iTMSTransporter -assetFile; -f gilt nur fuer .itmsp-Pakete (Apple
-# Transporter User Guide). Falls -m verify auf dem Ziel-Mac fuer
-# iOS-IPAs nicht unterstuetzt wird, entfaellt die Remote-Validierung: die
-# lokale codesign-Pruefung oben ist bestanden und der Upload validiert
-# serverseitig (dokumentierter Fallback).
-if ! xcrun iTMSTransporter -m verify -assetFile "`$IPA" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"; then
+# ~/.appstoreconnect/private_keys. Seit Xcode 16 liefert Xcode das
+# Werkzeug nicht mehr mit: es gehoert zur Transporter-App aus dem
+# Mac App Store und liegt dann unter
+# /Applications/Transporter.app/Contents/itms/bin/iTMSTransporter.
+# xcrun -f dient als Fallback fuer aeltere Xcode-Versionen. Fuer Apps
+# (.ipa/.pkg) verlangt iTMSTransporter -assetFile; -f gilt nur fuer
+# .itmsp-Pakete (Apple Transporter User Guide). Falls das Werkzeug
+# fehlt oder -m verify fuer iOS-IPAs nicht unterstuetzt wird,
+# entfaellt die Remote-Validierung: die lokale codesign-Pruefung oben
+# ist bestanden und der Upload validiert serverseitig
+# (dokumentierter Fallback).
+ITMS="/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
+if [ ! -x "`$ITMS" ]; then ITMS=`$(xcrun -f iTMSTransporter 2>/dev/null || true); fi
+if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then
+    echo "WARNUNG: iTMSTransporter nicht gefunden - Transporter-App aus dem Mac App Store installieren. Remote-Validierung entfaellt, der Upload validiert serverseitig (Fallback)."
+elif ! "`$ITMS" -m verify -assetFile "`$IPA" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"; then
     echo "WARNUNG: iTMSTransporter -m verify fehlgeschlagen oder nicht unterstuetzt - Remote-Validierung entfaellt, der Upload validiert serverseitig (Fallback)."
 fi
 echo "==> Validierung abgeschlossen"
@@ -587,7 +642,15 @@ function Invoke-StoreUpload {
 set -e
 # -assetFile statt -f: -f ist fuer .itmsp-Pakete reserviert und darf fuer
 # App-Uploads nicht verwendet werden (Apple Transporter User Guide).
-xcrun iTMSTransporter -m upload -assetFile "$MacIpa" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"
+# iTMSTransporter wird seit Xcode 16 nicht mehr mit Xcode geliefert:
+# es gehoert zur Transporter-App aus dem Mac App Store.
+ITMS="/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
+if [ ! -x "`$ITMS" ]; then ITMS=`$(xcrun -f iTMSTransporter 2>/dev/null || true); fi
+if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then
+    echo "FEHLER: iTMSTransporter nicht gefunden - Transporter-App aus dem Mac App Store installieren."
+    exit 1
+fi
+"`$ITMS" -m upload -assetFile "$MacIpa" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"
 echo "==> Upload erfolgreich - der Build erscheint nach der Verarbeitung in App Store Connect / TestFlight"
 "@
     Invoke-OnMac -Script $macScript -Description "App-Store-Upload"
@@ -596,6 +659,7 @@ echo "==> Upload erfolgreich - der Build erscheint nach der Verarbeitung in App 
 function Invoke-Store {
     Assert-StorePrerequisites -Action "store"
     Assert-CodesigningForAction -Action "store"
+    Assert-TransporterAvailable
     if (-not $NoBumpBuildNumber) { Update-BuildNumber }
     Invoke-Build
     $ipa = Get-LatestIpa
@@ -610,6 +674,7 @@ function Invoke-Store {
 function Invoke-Upload {
     Assert-StorePrerequisites -Action "upload"
     Assert-CodesigningForAction -Action "upload"
+    Assert-TransporterAvailable
     $ipa = Get-LatestIpa
     Write-Host "IPA: $ipa" -ForegroundColor Green
     Copy-ApiKeyToMac | Out-Null

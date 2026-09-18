@@ -104,11 +104,11 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 **Lösung:** Sicherstellen, dass `-CodesignProvision` ein **App-Store-**Profil für `de.martinstromberg.reporter` ist (kein Ad-hoc-/Development-Profil). Der `get-task-allow`-Check des Skripts fängt Development-Profile bereits vor dem Upload ab.
 
-## Warnung „iTMSTransporter -m verify fehlgeschlagen oder nicht unterstuetzt"
+## Warnung „iTMSTransporter -m verify fehlgeschlagen oder nicht unterstuetzt" / „nicht gefunden"
 
-**Ursache:** Der Remote-Validierungsschritt `xcrun iTMSTransporter -m verify` ist fehlgeschlagen oder wird auf dem Ziel-Mac für iOS-IPAs nicht unterstützt. Das Skript läuft bewusst mit Warnung weiter — der Schritt ist optional.
+**Ursache:** Der Remote-Validierungsschritt `iTMSTransporter -m verify` ist fehlgeschlagen, das Werkzeug wurde nicht gefunden oder `-m verify` wird auf dem Ziel-Mac für iOS-IPAs nicht unterstützt. Das Skript läuft bewusst mit Warnung weiter — der Schritt ist optional.
 
-**Lösung:** Kein Eingriff nötig: Die lokale `codesign`-/`embedded.mobileprovision`-Prüfung ist bereits gelaufen, und der Upload (`-m upload`) validiert serverseitig. Soll die Remote-Validierung doch laufen, auf dem Mac `xcrun iTMSTransporter -m verify -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>` manuell ausführen und die Fehlermeldung prüfen (häufig fehlende/veraltete Transporter-Installation — siehe „`xcrun iTMSTransporter` nicht gefunden").
+**Lösung:** Kein Eingriff nötig: Die lokale `codesign`-/`embedded.mobileprovision`-Prüfung ist bereits gelaufen, und der Upload (`-m upload`) validiert serverseitig. Soll die Remote-Validierung doch laufen, auf dem Mac `/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter -m verify -assetFile <ipa> -apiKey <id> -apiIssuer <issuer>` manuell ausführen und die Fehlermeldung prüfen (häufig fehlende/veraltete Transporter-Installation — siehe „`iTMSTransporter` nicht gefunden").
 
 > **Hinweis:** Der Upload selbst läuft unter `set -e` und bricht bei einem Fehler hart ab — eine fehlgeschlagene Remote-Validierung allein verhindert die Einreichung nicht.
 
@@ -130,8 +130,14 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 **Lösung:** `<UseInterpreter>true</UseInterpreter>` in der iOS-PropertyGroup der `Reporter.csproj` (gesetzt) — dynamisch erzeugte Delegates laufen dann interpretiert. Diagnose-Wege: `device` mit `-Console` streamt die Exception ins Terminal; alternativ `xcrun devicectl device console --device <udid>`.
 
-## `xcrun iTMSTransporter` nicht gefunden
+## Remote-Bash bricht: `set: -: invalid option`, `trap: EXIT: invalid signal`, `\r` in Pfaden
 
-**Ursache:** `iTMSTransporter` ersetzt das deprecated `xcrun altool`; es liegt bei Xcode bzw. der installierten Transporter-App bei. Ist beides nicht vorhanden, findet `xcrun` das Werkzeug nicht.
+**Ursache:** Die PowerShell-Here-Strings übernehmen die CRLF-Zeilenenden der `.ps1`-Datei; das per Base64 übertragene Remote-Bash bricht dann an `set -e\r`, `trap ... EXIT\r` und `\r` in Pfaden.
 
-**Lösung:** Auf dem Ziel-Mac `xcrun iTMSTransporter --version` prüfen; bei Fehlanzeige die **Transporter-App** aus dem Mac App Store installieren oder Xcode nachinstallieren. Die Skript-Notizen (`scripts/iOS-Deployment.md`) dokumentieren den Wechsel von `altool`.
+**Lösung:** Seit dem Fix normalisieren `Invoke-OnMac`/`Invoke-MacCapture` die Zeilenenden vor dem Base64-Encoding auf LF — das Problem kann nicht mehr auftreten. Bei einer älteren Skriptversion: Datei aktualisieren.
+
+## `iTMSTransporter` nicht gefunden
+
+**Ursache:** `iTMSTransporter` ersetzt das deprecated `xcrun altool`. Seit Xcode 16 liefert Xcode das Werkzeug nicht mehr mit — `xcrun iTMSTransporter` meldet dann „iTMSTransporter is now part of Transporter". Es gehört zur **Transporter-App** aus dem Mac App Store und liegt unter `/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter`. Das Skript löst diesen Pfad automatisch auf (`xcrun -f` nur als Fallback für ältere Xcode-Versionen); `xcrun iTMSTransporter` direkt aufzurufen funktioniert auf aktuellem Xcode nicht mehr.
+
+**Lösung:** **Transporter-App** aus dem Mac App Store installieren, dann `/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter --version` prüfen. Die Skript-Notizen (`scripts/iOS-Deployment.md`) dokumentieren den Wechsel von `altool`.

@@ -122,7 +122,7 @@ $env:REPORTER_IOS_API_ISSUER_ID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Issu
 
 ## 7. SSH-Zugang zum Mac (nur für Windows-Läufe)
 
-`store`/`upload` führen `codesign`, `security` und `xcrun iTMSTransporter` auf dem Mac aus — von Windows per SSH. Führe die Schritte genau in dieser Reihenfolge aus:
+`store`/`upload` führen `codesign`, `security` und `iTMSTransporter` auf dem Mac aus — von Windows per SSH. Führe die Schritte genau in dieser Reihenfolge aus:
 
 1. **Auf dem Mac:** Systemeinstellungen → **Allgemein** → **Teilen** → **Entfernte Anmeldung** aktivieren
 2. **Auf Windows (PowerShell):**
@@ -149,10 +149,10 @@ $env:REPORTER_IOS_API_ISSUER_ID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Issu
 5. **Auf dem Mac das Upload-Werkzeug prüfen** (für `store`/`upload`):
 
    ```powershell
-   ssh <macuser>@<mac> "xcrun iTMSTransporter --version"
+   ssh <macuser>@<mac> "/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter --version"
    ```
 
-   muss eine Versionszeile liefern — `iTMSTransporter` liegt Xcode bzw. der Transporter-App bei und ersetzt das deprecated `altool`. Bei Fehlanzeige die **Transporter-App** aus dem Mac App Store installieren oder Xcode nachinstallieren → [Fehlerbehebung](troubleshooting.md).
+   muss eine Versionszeile liefern — `iTMSTransporter` gehört seit Xcode 16 zur **Transporter-App** aus dem Mac App Store (wird nicht mehr mit Xcode installiert) und ersetzt das deprecated `altool`. Bei Fehlanzeige die Transporter-App installieren → [Fehlerbehebung](troubleshooting.md).
 
 **Umgebungsvariablen:** die SSH-/Pair-to-Mac-Zugangsdaten setzen —
 

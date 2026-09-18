@@ -116,11 +116,15 @@ Abschlussprüfung am generierten PNG ist dokumentiert als macOS-Folgeschritt.
 ## Upload-Tooling (`iTMSTransporter`)
 
 `xcrun altool` (deprecated) wurde in `scripts/iOS-Deployment.ps1` durch
-`xcrun iTMSTransporter` ersetzt: Upload per `-m upload`, Remote-Validierung
+`iTMSTransporter` ersetzt: Upload per `-m upload`, Remote-Validierung
 per `-m verify`. Beide nutzen dieselbe API-Key-Authentifizierung
 (`-apiKey`/`-apiIssuer`) und denselben Schlüsselsuchpfad
 `~/.appstoreconnect/private_keys/` — `Copy-ApiKeyToMac` bleibt unverändert.
-Falls `-m verify` für iOS-IPAs auf dem Ziel-Mac nicht unterstützt wird,
-entfällt der Remote-Schritt dokumentiert: Die lokale
-`codesign`-/`embedded.mobileprovision`-Prüfung läuft weiter, und der Upload
-validiert serverseitig.
+Seit Xcode 16 liefert Xcode `iTMSTransporter` nicht mehr mit; das Skript
+löst das Binary aus der Transporter-App
+(`/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter`) mit
+`xcrun -f`-Fallback für ältere Xcode-Versionen auf. Fehlt das Werkzeug,
+bricht der Upload mit Installationshinweis ab; `-m verify` entfällt dann
+dokumentiert mit Warnung — die lokale
+`codesign`-/`embedded.mobileprovision`-Prüfung läuft weiter, und der
+Upload validiert serverseitig.
