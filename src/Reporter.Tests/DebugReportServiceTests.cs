@@ -31,7 +31,7 @@ public class DebugReportServiceTests : IDisposable
         _factory = new TestDbContextFactory();
         _settingsRepository = new SettingsRepository(_factory);
         _syncLogRepository = new SyncLogRepository(_factory);
-        _feedRepository = new FeedRepository(_factory);
+        _feedRepository = new FeedRepository(_factory, new FakeItemContentStore());
         _debugLogRepository = new DebugLogRepository(_factory);
         _deviceInfoProvider = new FakeDeviceInfoProvider();
         _networkStatusService = new FakeNetworkStatusService();

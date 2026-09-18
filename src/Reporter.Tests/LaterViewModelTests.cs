@@ -24,7 +24,7 @@ public class LaterViewModelTests : IDisposable
     public LaterViewModelTests()
     {
         _factory = new TestDbContextFactory();
-        _itemRepository = new ItemRepository(_factory);
+        _itemRepository = new ItemRepository(_factory, new FakeItemContentStore());
         _networkStatusService = new FakeNetworkStatusService();
         _viewModel = new LaterViewModel(_itemRepository, _networkStatusService);
     }

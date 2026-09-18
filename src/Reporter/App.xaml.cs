@@ -42,11 +42,12 @@ public partial class App : Application
         var debugLogService = scope.ServiceProvider.GetRequiredService<IDebugLogService>();
         _debugLogService = debugLogService;
 
+        await RunStartupStepAsync(() => MigrateContentAsync(scope), "Content migration failed on start", debugLogService);
         await RunStartupStepAsync(() => MigrateDatabaseAsync(scope), "Database migration failed on start", debugLogService);
 
         await debugLogService.BeginSessionAsync();
 
-        RunStartupStep(() => ExcludeDatabaseFilesFromBackup(scope), "Backup exclusion failed on start", debugLogService);
+        RunStartupStep(() => ApplyBackupHandling(scope), "Backup handling failed on start", debugLogService);
 
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
@@ -113,17 +114,42 @@ public partial class App : Application
         await context.Database.MigrateAsync();
     }
 
-    private static void ExcludeDatabaseFilesFromBackup(IServiceScope scope)
+    private static async Task MigrateContentAsync(IServiceScope scope)
+    {
+        // Idempotenter Sicherheitsnetz-Aufruf: faengt den Fall ab, dass die
+        // Content-Migration in MauiProgram scheiterte. Muss vor
+        // MigrateDatabaseAsync laufen, weil die reporter.db-Migration die
+        // Legacy-Spalte items.content_html entfernt — danach waere der
+        // Retry ein No-op und die Inhalte verloren (dieselbe Reihenfolge
+        // wie MigrateContentStoreAndLegacyData vor ApplyPersistedLanguage
+        // in MauiProgram.CreateMauiApp). Der rohe SQL-Zugriff benoetigt
+        // kein migriertes Schema: Ohne items-Tabelle ist die
+        // PRAGMA-Sonde leer und der Aufruf eine harmlose No-op.
+        var migrationService = scope.ServiceProvider.GetRequiredService<IContentMigrationService>();
+        await migrationService.MigrateLegacyContentAsync();
+    }
+
+    private static void ApplyBackupHandling(IServiceScope scope)
     {
         var databasePath = scope.ServiceProvider.GetRequiredService<DatabasePath>();
+        var contentDatabasePath = scope.ServiceProvider.GetRequiredService<ContentDatabasePath>();
         var backupExclusionService = scope.ServiceProvider.GetRequiredService<IBackupExclusionService>();
-        backupExclusionService.ExcludeFromBackup(databasePath.FilePath);
 
-        // Die WAL-/SHM-Sidecar-Dateien gehoeren zur Datenbank und duerfen
-        // ebenfalls nicht ins iCloud-Backup laufen; fehlende Dateien
-        // behandelt der Service als No-op.
-        backupExclusionService.ExcludeFromBackup(databasePath.FilePath + "-wal");
-        backupExclusionService.ExcludeFromBackup(databasePath.FilePath + "-shm");
+        // reporter.db traegt die Nutzerdaten und gehoert ins Backup; der von
+        // aelteren App-Versionen gesetzte Ausschluss wird aktiv entfernt
+        // (bei Neuinstallation eine harmlose No-op).
+        foreach (var path in BackupExclusionPlan.IncludedPaths(databasePath))
+        {
+            backupExclusionService.IncludeInBackup(path);
+        }
+
+        // reporter-content.db haelt nur re-downloadbare Artikelinhalte und
+        // bleibt aus dem Backup ausgeschlossen; fehlende Dateien behandelt
+        // der Service als No-op.
+        foreach (var path in BackupExclusionPlan.ExcludedPaths(contentDatabasePath))
+        {
+            backupExclusionService.ExcludeFromBackup(path);
+        }
     }
 
     private static async Task SeedDemoContentAsync(IServiceScope scope)

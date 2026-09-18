@@ -16,14 +16,17 @@ namespace Reporter.Data.Repositories;
 public class ItemRepository : IItemRepository
 {
     private readonly IDbContextFactory<ReporterDbContext> _factory;
+    private readonly IItemContentStore _contentStore;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ItemRepository"/> class.
     /// </summary>
     /// <param name="factory">The database context factory.</param>
-    public ItemRepository(IDbContextFactory<ReporterDbContext> factory)
+    /// <param name="contentStore">The store holding the item contents.</param>
+    public ItemRepository(IDbContextFactory<ReporterDbContext> factory, IItemContentStore contentStore)
     {
         _factory = factory;
+        _contentStore = contentStore;
     }
 
     /// <inheritdoc />
@@ -34,7 +37,8 @@ public class ItemRepository : IItemRepository
             .AsNoTracking()
             .OrderByDescending(i => i.PublishedAt)
             .ToListAsync();
-        return entities.Select(MapToModel).ToList();
+        var contents = await GetContentsAsync(entities, e => e.Id);
+        return entities.Select(e => MapToModel(e, contents.GetValueOrDefault(e.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -44,7 +48,13 @@ public class ItemRepository : IItemRepository
         var entity = await context.Items
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id);
-        return entity is null ? null : MapToModel(entity);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        var contentHtml = await _contentStore.GetAsync(id);
+        return MapToModel(entity, contentHtml);
     }
 
     /// <inheritdoc />
@@ -53,6 +63,11 @@ public class ItemRepository : IItemRepository
         await using var context = await _factory.CreateDbContextAsync();
         context.Items.Add(MapToEntity(item));
         await context.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(item.ContentHtml))
+        {
+            await _contentStore.SetAsync(item.Id, item.ContentHtml);
+        }
     }
 
     /// <inheritdoc />
@@ -73,8 +88,9 @@ public class ItemRepository : IItemRepository
         entity.IsRead = item.IsRead;
         entity.IsSavedForLater = item.IsSavedForLater;
         entity.ReadAt = item.ReadAt;
-        entity.ContentHtml = item.ContentHtml;
         await context.SaveChangesAsync();
+
+        await _contentStore.SetAsync(item.Id, item.ContentHtml);
     }
 
     /// <inheritdoc />
@@ -89,6 +105,7 @@ public class ItemRepository : IItemRepository
 
         context.Items.Remove(entity);
         await context.SaveChangesAsync();
+        await _contentStore.DeleteAsync(id);
     }
 
     /// <inheritdoc />
@@ -100,7 +117,8 @@ public class ItemRepository : IItemRepository
             .Where(i => !i.IsRead)
             .OrderByDescending(i => i.PublishedAt)
             .ToListAsync();
-        return entities.Select(MapToModel).ToList();
+        var contents = await GetContentsAsync(entities, e => e.Id);
+        return entities.Select(e => MapToModel(e, contents.GetValueOrDefault(e.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -124,12 +142,13 @@ public class ItemRepository : IItemRepository
             ? query.OrderBy(i => i.PublishedAt).ThenByDescending(i => i.Id)
             : query.OrderByDescending(i => i.PublishedAt).ThenBy(i => i.Id);
 
-        var entities = await SelectListItemRows(ordered
+        var rows = await SelectListItemRows(ordered
                 .Skip(page * pageSize)
                 .Take(pageSize))
             .ToListAsync();
 
-        return entities.Select(MapToListItem).ToList();
+        var contents = await GetContentsAsync(rows, r => r.Id);
+        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -209,7 +228,8 @@ public class ItemRepository : IItemRepository
             .Where(i => i.FeedId == feedId)
             .OrderByDescending(i => i.PublishedAt)
             .ToListAsync();
-        return entities.Select(MapToModel).ToList();
+        var contents = await GetContentsAsync(entities, e => e.Id);
+        return entities.Select(e => MapToModel(e, contents.GetValueOrDefault(e.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -224,14 +244,15 @@ public class ItemRepository : IItemRepository
             .Where(i => feedIds.Contains(i.FeedId))
             .OrderByDescending(i => i.PublishedAt)
             .ToListAsync();
-        return entities.Select(MapToModel).ToList();
+        var contents = await GetContentsAsync(entities, e => e.Id);
+        return entities.Select(e => MapToModel(e, contents.GetValueOrDefault(e.Id))).ToList();
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
     {
         await using var context = await _factory.CreateDbContextAsync();
-        var entities = await SelectListItemRows(context.Items
+        var rows = await SelectListItemRows(context.Items
                 .AsNoTracking()
                 .Where(i => i.IsSavedForLater)
                 .OrderByDescending(i => i.PublishedAt)
@@ -240,7 +261,8 @@ public class ItemRepository : IItemRepository
                 .Take(pageSize))
             .ToListAsync();
 
-        return entities.Select(MapToListItem).ToList();
+        var contents = await GetContentsAsync(rows, r => r.Id);
+        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -254,15 +276,32 @@ public class ItemRepository : IItemRepository
         await using var context = await _factory.CreateDbContextAsync();
         context.Items.AddRange(items.Select(MapToEntity));
         await context.SaveChangesAsync();
+
+        var contentEntries = items
+            .Where(i => !string.IsNullOrEmpty(i.ContentHtml))
+            .Select(i => new ItemContentEntry(i.Id, i.ContentHtml))
+            .ToList();
+        await _contentStore.SetRangeAsync(contentEntries);
     }
 
     /// <inheritdoc />
     public async Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default)
     {
         await using var context = await _factory.CreateDbContextAsync(cancellationToken);
-        return await context.Items
+        var ids = await context.Items
             .Where(i => i.IsRead && !i.IsSavedForLater && (i.ReadAt ?? i.PublishedAt) < cutoff)
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
+        if (ids.Count == 0)
+        {
+            return 0;
+        }
+
+        var deleted = await context.Items
+            .Where(i => ids.Contains(i.Id))
             .ExecuteDeleteAsync(cancellationToken);
+        await _contentStore.DeleteRangeAsync(ids, cancellationToken);
+        return deleted;
     }
 
     /// <inheritdoc />
@@ -273,7 +312,8 @@ public class ItemRepository : IItemRepository
             .AsNoTracking()
             .Where(i => i.IsRead && !i.IsSavedForLater && (i.PublishedAt ?? i.ReadAt) < cutoff)
             .ToListAsync(cancellationToken);
-        return entities.Select(MapToModel).ToList();
+        var contents = await GetContentsAsync(entities, e => e.Id, cancellationToken);
+        return entities.Select(e => MapToModel(e, contents.GetValueOrDefault(e.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -285,9 +325,21 @@ public class ItemRepository : IItemRepository
         }
 
         await using var context = await _factory.CreateDbContextAsync(cancellationToken);
-        return await context.Items
+        var deleted = await context.Items
             .Where(i => ids.Contains(i.Id))
             .ExecuteDeleteAsync(cancellationToken);
+        await _contentStore.DeleteRangeAsync(ids, cancellationToken);
+        return deleted;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Guid>> GetAllIdsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        return await context.Items
+            .AsNoTracking()
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -307,7 +359,6 @@ public class ItemRepository : IItemRepository
             PublishedAt = i.PublishedAt,
             IsRead = i.IsRead,
             IsSavedForLater = i.IsSavedForLater,
-            ContentHtml = i.ContentHtml,
             FeedTitle = i.Feed.Title,
             FeedFaviconUrl = i.Feed.FaviconUrl,
             CategoryId = i.Feed.CategoryId,
@@ -315,7 +366,7 @@ public class ItemRepository : IItemRepository
         });
     }
 
-    private static ItemListItem MapToListItem(ItemListRow row)
+    private static ItemListItem MapToListItem(ItemListRow row, string? contentHtml)
     {
         return new ItemListItem
         {
@@ -330,9 +381,9 @@ public class ItemRepository : IItemRepository
             FeedFaviconUrl = row.FeedFaviconUrl,
             CategoryId = row.CategoryId,
             CategoryName = row.CategoryName,
-            ImageUrl = ExtractImageUrl(row.ContentHtml),
-            Summary = ExtractSummary(row.ContentHtml),
-            ReadingTimeText = ReadingTimeEstimator.EstimateText(row.ContentHtml),
+            ImageUrl = ExtractImageUrl(contentHtml),
+            Summary = ExtractSummary(contentHtml),
+            ReadingTimeText = ReadingTimeEstimator.EstimateText(contentHtml),
         };
     }
 
@@ -367,7 +418,12 @@ public class ItemRepository : IItemRepository
         return plain.Length <= MaxLength ? plain : plain[..MaxLength] + "…";
     }
 
-    private static Item MapToModel(ItemEntity entity)
+    private async Task<IReadOnlyDictionary<Guid, string>> GetContentsAsync<T>(IReadOnlyList<T> items, Func<T, Guid> idSelector, CancellationToken cancellationToken = default)
+    {
+        return await _contentStore.GetRangeAsync(items.Select(idSelector).ToList(), cancellationToken);
+    }
+
+    private static Item MapToModel(ItemEntity entity, string? contentHtml)
     {
         return new Item
         {
@@ -380,7 +436,7 @@ public class ItemRepository : IItemRepository
             IsRead = entity.IsRead,
             IsSavedForLater = entity.IsSavedForLater,
             ReadAt = entity.ReadAt,
-            ContentHtml = entity.ContentHtml,
+            ContentHtml = contentHtml,
         };
     }
 
@@ -397,7 +453,6 @@ public class ItemRepository : IItemRepository
             IsRead = model.IsRead,
             IsSavedForLater = model.IsSavedForLater,
             ReadAt = model.ReadAt,
-            ContentHtml = model.ContentHtml,
         };
     }
 
@@ -419,8 +474,6 @@ public class ItemRepository : IItemRepository
         public bool IsRead { get; set; }
 
         public bool IsSavedForLater { get; set; }
-
-        public string? ContentHtml { get; set; }
 
         public string FeedTitle { get; set; } = string.Empty;
 

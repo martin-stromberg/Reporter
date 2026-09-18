@@ -80,4 +80,4 @@
 
 **Lösung:**
 1. Prozess `Reporter` (aus dem Build-Output) manuell beenden.
-2. `%TEMP%/reporter-e2e-*`-Ordner löschen — enthalten nur die isolierte Test-DB.
+2. `%TEMP%/reporter-e2e-*`-Ordner löschen — enthalten nur die isolierten Test-DBs (`reporter.db` und die abgeleitete `reporter-content.db` samt SQLite-Sidecars).

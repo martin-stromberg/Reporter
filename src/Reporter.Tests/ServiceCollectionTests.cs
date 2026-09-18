@@ -33,6 +33,8 @@ public class ServiceCollectionTests
         Assert.NotNull(provider.GetRequiredService<IFeedRepository>());
         Assert.NotNull(provider.GetRequiredService<ICategoryRepository>());
         Assert.NotNull(provider.GetRequiredService<IItemRepository>());
+        Assert.NotNull(provider.GetRequiredService<IItemContentStore>());
+        Assert.NotNull(provider.GetRequiredService<IContentMigrationService>());
         Assert.NotNull(provider.GetRequiredService<IKeywordRepository>());
         Assert.NotNull(provider.GetRequiredService<ISettingsRepository>());
         Assert.NotNull(provider.GetRequiredService<ISyncLogRepository>());
@@ -192,8 +194,9 @@ public class ServiceCollectionTests
 
     /// <summary>
     /// Verifies that the backup exclusion service and the <see cref="DatabasePath"/>
-    /// carrier can be resolved, mirroring the <c>MauiProgram</c> registration, and
-    /// that the fake records the excluded paths like <c>App.OnStart</c> calls it.
+    /// and <see cref="ContentDatabasePath"/> carriers can be resolved, mirroring the
+    /// <c>MauiProgram</c> registration, and that the fake records the included and
+    /// excluded paths like <c>App.OnStart</c> calls it.
     /// </summary>
     [Fact]
     public void AddReporterServices_ResolvesBackupExclusion()
@@ -201,23 +204,30 @@ public class ServiceCollectionTests
         var services = new ServiceCollection();
         services
             .AddSingleton(new DatabasePath(Path.Combine(Path.GetTempPath(), "reporter.db")))
+            .AddSingleton(new ContentDatabasePath(Path.Combine(Path.GetTempPath(), "reporter-content.db")))
             .AddSingleton<IBackupExclusionService, FakeBackupExclusionService>();
 
         var provider = services.BuildServiceProvider();
 
         var service = Assert.IsType<FakeBackupExclusionService>(provider.GetRequiredService<IBackupExclusionService>());
         var databasePath = provider.GetRequiredService<DatabasePath>();
+        var contentDatabasePath = provider.GetRequiredService<ContentDatabasePath>();
 
-        service.ExcludeFromBackup(databasePath.FilePath);
-        Assert.Equal(databasePath.FilePath, Assert.Single(service.ExcludedPaths));
+        service.IncludeInBackup(databasePath.FilePath);
+        service.ExcludeFromBackup(contentDatabasePath.FilePath);
+        Assert.Equal(databasePath.FilePath, Assert.Single(service.IncludedPaths));
+        Assert.Equal(contentDatabasePath.FilePath, Assert.Single(service.ExcludedPaths));
     }
 
     private static void AddTestRepositories(ServiceCollection services, SqliteConnection connection)
     {
         services.AddDbContextFactory<ReporterDbContext>(options => options.UseSqlite(connection))
+            .AddDbContextFactory<ContentDbContext>(options => options.UseSqlite("DataSource=:memory:"))
             .AddSingleton<IFeedRepository, FeedRepository>()
             .AddSingleton<ICategoryRepository, CategoryRepository>()
             .AddSingleton<IItemRepository, ItemRepository>()
+            .AddSingleton<IItemContentStore, ItemContentRepository>()
+            .AddSingleton<IContentMigrationService, ItemContentMigrationService>()
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()

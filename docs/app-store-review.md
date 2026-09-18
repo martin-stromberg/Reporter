@@ -36,6 +36,24 @@ Anwender selbst — er fällt unter Apples Ausnahme für „optionaler, vom
 Anwender initiierter Kontakt" und ändert die Antwort „keine Datensammlung"
 nicht. Inhalt des Berichts siehe Datenschutzerklärung.
 
+## Datenspeicherung / iCloud-Backup (iOS Data Storage Guidelines)
+
+Die App hält ihre lokale SQLite-Ablage in zwei Dateien getrennt:
+
+- `reporter.db` — Nutzerdaten (Abonnements, Kategorien, Stichwort-Filter,
+  Einstellungen, Lese- und Merkstatus). **Nicht** vom iCloud-Backup
+  ausgeschlossen: Diese Daten sind nicht wiederherstellbar und müssen eine
+  Geräte-Wiederherstellung überstehen.
+- `reporter-content.db` — re-downloadbare Artikelinhalte
+  (`item_contents`-Tabelle). Vom iCloud-Backup ausgeschlossen
+  (`NSUrl.IsExcludedFromBackupKey` inkl. `-wal`-/`-shm`-Sidecars, gesetzt
+  durch `BackupExclusionService` in `App.OnStart`): Die Inhalte sind online
+  erneut abrufbar und würden sonst nur die iCloud-Quota belasten — das
+  entspricht den iOS Data Storage Guidelines (nur nicht reproduzierbare
+  Nutzerdaten gehören ins Backup). Nach einem Restore ohne Content-Datei
+  lädt der Sync fehlende Inhalte automatisch nach (Content-Backfill im
+  `FeedSyncService`).
+
 ## ATS-Begründung (`NSAllowsArbitraryLoads`)
 
 `Platforms/iOS/Info.plist` setzt `NSAppTransportSecurity →

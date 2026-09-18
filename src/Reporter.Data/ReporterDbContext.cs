@@ -114,7 +114,6 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.IsRead).HasColumnName("is_read");
         entity.Property(e => e.IsSavedForLater).HasColumnName("is_saved_for_later");
         entity.Property(e => e.ReadAt).HasColumnName("read_at");
-        entity.Property(e => e.ContentHtml).HasColumnName("content_html");
 
         entity.HasOne(e => e.Feed).WithMany().HasForeignKey(e => e.FeedId).IsRequired().OnDelete(DeleteBehavior.Cascade);
         entity.HasIndex(e => new { e.FeedId, e.GuidOrHash }).IsUnique();

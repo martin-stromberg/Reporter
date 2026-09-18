@@ -62,6 +62,7 @@
 - Gültiger Endpoint → `IFeedSearchService`-Factory übergibt ihn an `FeedSearchService(HttpClient, string?)`.
 - Ungültiger/leerer Endpoint → `null` → Konstruktor-Fallback auf `https://feedsearch.dev/api/v1/search` (kein Fehler, keine Meldung).
 - Ungültiger DB-Pfad → sichtbare Ausnahme beim App-Start (bewusst, da reiner Test-Override).
+- Gültiger DB-Pfad → verlagert beide SQLite-Dateien: `reporter-content.db` wird aus dem absoluten Verzeichnis des aufgelösten Hauptpfads abgeleitet, die Isolation eines Temp-Verzeichnisses erfasst also Nutzerdaten- und Content-Datenbank gleichermaßen.
 - Unterdrückungs-Flag gesetzt → `FirstRunState.DemoSeedSuppressed = true` → `IDemoContentService.EnsureSeededAsync` ist ein No-op; `0`/`false`/nicht gesetzt lassen den Seed unverändert aktiv.
 
 **Umsetzung:** `MauiProgram.CreateMauiApp` / `ResolveFeedSearchEndpoint` / `ResolveDemoSeedSuppressed` (`src/Reporter/MauiProgram.cs`), `FeedSearchService`-Konstruktor (`src/Reporter.Core/Services/FeedSearchService.cs`), `DemoContentService` (`src/Reporter.Core/Services/DemoContentService.cs`).

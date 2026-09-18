@@ -22,10 +22,14 @@ Kontaktadresse:
 
 Reporter ist ein lokaler Feed-Reader **ohne eigenes Backend und ohne
 Benutzerkonto**. Alle abonnierten Feeds, Kategorien, Artikel, Stichwort-Filter
-und Einstellungen liegen ausschließlich in einer lokalen SQLite-Datenbank
-(`reporter.db`) auf deinem Gerät. Unter iOS ist die Datenbankdatei vom
-iCloud-Backup ausgeschlossen — die Inhalte verlassen dein Gerät dadurch auch
-nicht indirekt über ein Cloud-Backup.
+und Einstellungen liegen ausschließlich in lokalen SQLite-Datenbanken
+auf deinem Gerät: Die Nutzerdaten (Abonnements, Kategorien, Stichwort-Filter,
+Einstellungen sowie Lese- und Merkstatus der Artikel) stecken in `reporter.db`
+und sind ins iCloud-Backup eingeschlossen, damit sie eine
+Geräte-Wiederherstellung überstehen. Die re-downloadbaren Artikelinhalte
+liegen dagegen in einer zweiten Datei (`reporter-content.db`), die unter iOS
+vom iCloud-Backup ausgeschlossen ist — sie werden bei Bedarf über die
+Synchronisation erneut abgerufen.
 
 Die App erhebt **keine** Telemetrie, enthält **kein** Tracking, **keine**
 Analyse-SDKs und **keine** Werbung. Es findet kein Profiling statt.
@@ -101,9 +105,13 @@ and can be reached at the contact address configured for debug reports:
 
 Reporter is a local feed reader **without its own backend and without a user
 account**. All subscribed feeds, categories, articles, keyword filters and
-settings are stored exclusively in a local SQLite database (`reporter.db`) on
-your device. On iOS the database file is excluded from iCloud backup, so your
-content does not leave your device via a cloud backup either.
+settings are stored exclusively in local SQLite databases on your device:
+the user data (subscriptions, categories, keyword filters, settings and the
+read/saved state of articles) lives in `reporter.db` and is included in
+iCloud backup so it survives a device restore. The re-downloadable article
+contents live in a second file (`reporter-content.db`), which is excluded
+from iCloud backup on iOS — they are fetched again through synchronization
+when needed.
 
 The app collects **no** telemetry, contains **no** tracking, **no** analytics
 SDKs and **no** advertising. No profiling takes place.

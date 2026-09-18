@@ -53,11 +53,6 @@ public class Item
     public DateTime? ReadAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the HTML content for offline reading.
-    /// </summary>
-    public string? ContentHtml { get; set; }
-
-    /// <summary>
     /// Gets or sets the feed the item belongs to.
     /// </summary>
     public Feed Feed { get; set; } = null!;

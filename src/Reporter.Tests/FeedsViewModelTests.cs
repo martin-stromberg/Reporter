@@ -28,7 +28,7 @@ public class FeedsViewModelTests : IDisposable
     public FeedsViewModelTests()
     {
         _factory = new TestDbContextFactory();
-        _feedRepository = new FeedRepository(_factory);
+        _feedRepository = new FeedRepository(_factory, new FakeItemContentStore());
         _categoryRepository = new CategoryRepository(_factory);
         _syncService = new FakeFeedSyncService();
         _searchService = new FakeFeedSearchService();

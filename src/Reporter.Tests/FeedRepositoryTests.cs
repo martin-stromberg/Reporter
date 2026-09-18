@@ -12,6 +12,7 @@ namespace Reporter.Tests;
 public class FeedRepositoryTests : IDisposable
 {
     private readonly TestDbContextFactory _factory;
+    private readonly FakeItemContentStore _contentStore;
     private readonly FeedRepository _repository;
 
     /// <summary>
@@ -20,7 +21,8 @@ public class FeedRepositoryTests : IDisposable
     public FeedRepositoryTests()
     {
         _factory = new TestDbContextFactory();
-        _repository = new FeedRepository(_factory);
+        _contentStore = new FakeItemContentStore();
+        _repository = new FeedRepository(_factory, _contentStore);
     }
 
     /// <summary>
@@ -252,7 +254,7 @@ public class FeedRepositoryTests : IDisposable
     {
         var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed", NotificationsEnabled = true };
         await _repository.AddAsync(feed);
-        var itemRepository = new ItemRepository(_factory);
+        var itemRepository = new ItemRepository(_factory, _contentStore);
         var item = new Item
         {
             Id = Guid.NewGuid(),
@@ -268,5 +270,36 @@ public class FeedRepositoryTests : IDisposable
         var result = await itemRepository.GetByIdAsync(item.Id);
 
         Assert.Null(result);
+    }
+
+    /// <summary>
+    /// Verifies that deleting a feed also removes the stored contents of its
+    /// items: the item rows fall to the database cascade, but the content rows
+    /// live in the separate content database and must be deleted explicitly.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesItemContents()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed", NotificationsEnabled = true };
+        await _repository.AddAsync(feed);
+        var itemRepository = new ItemRepository(_factory, _contentStore);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feed.Id,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>body</p>",
+        };
+        await itemRepository.AddAsync(item);
+
+        await _repository.DeleteAsync(feed.Id);
+
+        Assert.Null(await itemRepository.GetByIdAsync(item.Id));
+        Assert.Null(await _contentStore.GetAsync(item.Id));
+        Assert.Empty(await _contentStore.GetItemIdsAsync());
     }
 }

@@ -16,9 +16,21 @@ public sealed class FakeBackupExclusionService : IBackupExclusionService
     /// <value>The recorded file paths.</value>
     public List<string> ExcludedPaths { get; } = new();
 
+    /// <summary>
+    /// Gets the recorded <see cref="IncludeInBackup"/> paths in call order.
+    /// </summary>
+    /// <value>The recorded file paths.</value>
+    public List<string> IncludedPaths { get; } = new();
+
     /// <inheritdoc />
     public void ExcludeFromBackup(string filePath)
     {
         ExcludedPaths.Add(filePath);
+    }
+
+    /// <inheritdoc />
+    public void IncludeInBackup(string filePath)
+    {
+        IncludedPaths.Add(filePath);
     }
 }
