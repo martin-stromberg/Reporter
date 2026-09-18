@@ -10,13 +10,14 @@ Beim App-Start entfernt Reporter gelesene Artikel, deren Aufbewahrungsfrist abge
 
 ### 1. App-Start
 
-`App.OnStart` führt in einem eigenen DI-Scope zunächst `Database.MigrateAsync()` aus und ruft danach `IRetentionCleanupService.CleanupAsync()` auf. Der Aufruf ist fehlerisoliert: Ein Fehler beim Aufräumen wird per `Debug.WriteLine` protokolliert und blockiert den App-Start nicht.
+`App.OnStart` führt in einem eigenen DI-Scope zunächst fehlerisoliert die Content-Migration aus (`MigrateContentAsync` → `IContentMigrationService.MigrateLegacyContentAsync` — bewusst vor der Haupt-Migration, weil diese die Legacy-Spalte `items.content_html` entfernt) und danach `Database.MigrateAsync()`; anschließend ruft es `IRetentionCleanupService.CleanupAsync()` auf. Der Aufruf ist fehlerisoliert: Ein Fehler beim Aufräumen wird per `Debug.WriteLine` protokolliert und blockiert den App-Start nicht.
 
 Beteiligte Komponenten:
 - `App.OnStart` — Aufrufpunkt, Fehlerisolierung
 - `IRetentionCleanupService` / `RetentionCleanupService` — Orchestrierung (`Reporter.Core`)
 - `ISettingsRepository` / `SettingsRepository` — Lesen der Singleton-Einstellungen
 - `IItemRepository` / `ItemRepository` — Ausführung der Löschung
+- `IItemContentStore` / `ItemContentRepository` — Content-Speicher (`reporter-content.db`) für den Waisen-Sweep
 
 ### 2. Frist prüfen und Stichtag berechnen
 
@@ -40,6 +41,18 @@ Anschließend läuft die Keyword-Löschregel:
 3. `IKeywordFilter.MatchesAny(item.Title, item.ContentHtml, keywordTexts)` filtert Treffer im Speicher: Teilwort-Vergleich per `Contains` mit `StringComparison.OrdinalIgnoreCase` auf Titel und HTML-Inhalt; `Link` wird nicht gematcht.
 4. `IItemRepository.DeleteRangeAsync(matchedIds)` löscht die Treffer per `ExecuteDeleteAsync` auf IDs; der Gesamtrückgabewert ist die Summe beider Löschungen.
 
+Die Kandidaten kommen hydratisiert aus dem `ItemRepository` — `item.ContentHtml` stammt dabei aus dem Content-Speicher (`reporter-content.db`, Tabelle `item_contents`), nicht aus der `items`-Tabelle.
+
+### 5. Content-Waisen aufräumen
+
+Der Artikelinhalt liegt getrennt von den Nutzerdaten in der Content-Datenbank `reporter-content.db` (siehe [Datenmodell](datenmodell.md)). Damit dort keine verwaisten Zeilen liegen bleiben, führt `RetentionCleanupService` am Ende von `CleanupAsync` zusätzlich einen Sweep durch (er läuft nur bei aktiver Aufbewahrungsfrist — bei `RetentionDays <= 0` endet `CleanupAsync` bereits vorher):
+
+1. `IItemContentStore.GetItemIdsAsync()` liest alle im Content-Speicher vorhandenen `item_id`-Werte.
+2. `IItemRepository.GetAllIdsAsync()` liefert die noch existierenden Artikel-IDs der Hauptdatenbank.
+3. `IItemContentStore.DeleteRangeAsync` löscht alle Content-IDs ohne zugehörigen Artikel.
+
+Der Sweep ist Sicherheitsnetz: Die expliziten Löschpfade räumen `item_contents` bereits unmittelbar mit — `DeleteAsync`, `DeleteExpiredAsync` und `DeleteRangeAsync` im `ItemRepository` sowie `FeedRepository.DeleteAsync`, das nach der Haupt-Datenbankkaskade die Inhalte aller Artikel des Feeds entfernt. Der Sweep entfernt Restbestände, die trotzdem zurückgeblieben sind (etwa aus einem früheren Zwischenstand). Der Rückgabewert von `CleanupAsync` zählt weiterhin nur gelöschte Artikel — Waisen-Zeilen fließen nicht in die Zahl ein.
+
 ```mermaid
 flowchart TD
     A[App-Start] --> B[Datenbank-Migration]
@@ -49,12 +62,13 @@ flowchart TD
     D -- Ja --> F[Stichtag = Jetzt - RetentionDays]
     F --> G[DeleteExpiredAsync: gelesene, nicht gemerkte<br/>Artikel älter als Stichtag - ReadAt ?? PublishedAt]
     G --> K{Keywords vorhanden?}
-    K -- Nein --> H[Anzahl gelöschter Artikel]
+    K -- Nein --> O[Waisen-Sweep: item_contents ohne items löschen]
     K -- Ja --> L[GetExpiredKeywordCandidatesAsync:<br/>PublishedAt ?? ReadAt älter als Stichtag]
     L --> M[KeywordFilter.MatchesAny: Teilwort-Match<br/>auf Titel + Inhalt]
     M --> N[DeleteRangeAsync auf Treffer-IDs]
-    N --> H
-    E --> H
+    N --> O
+    E --> H[Anzahl gelöschter Artikel]
+    O --> H
 ```
 
 ## Business Rules
@@ -89,7 +103,7 @@ flowchart TD
 ### Ausnahmen von der Invariante
 
 - `IItemRepository.DeleteAsync(Guid)` löscht einen einzelnen Artikel ohne `IsSavedForLater`-Prüfung; die Methode ist für explizite Einzellöschungen vorgesehen und hat aktuell keinen produktiven Aufrufer.
-- Das explizite, rückfragebestätigte Löschen eines Feeds entfernt dessen Artikel per `DeleteBehavior.Cascade` — inklusive gemerkter Artikel. Das gilt als bestätigte Nutzeraktion, nicht als automatische Löschung.
+- Das explizite, rückfragebestätigte Löschen eines Feeds entfernt dessen Artikel per `DeleteBehavior.Cascade` — inklusive gemerkter Artikel; `FeedRepository.DeleteAsync` löscht die zugehörigen `item_contents`-Zeilen im Content-Speicher anschließend explizit mit. Das gilt als bestätigte Nutzeraktion, nicht als automatische Löschung.
 
 ## Konfiguration
 

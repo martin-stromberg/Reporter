@@ -42,7 +42,16 @@
 | `IsRead` | `bool` | Gibt an, ob der Artikel gelesen wurde. |
 | `IsSavedForLater` | `bool` | Gibt an, ob der Artikel für später bewahrt wurde. |
 | `ReadAt` | `DateTime?` | Zeitpunkt, an dem der Artikel gelesen wurde. |
-| `ContentHtml` | `string?` | HTML-Inhalt für den Offline-Lesemodus. |
+| `ContentHtml` | `string?` | HTML-Inhalt für den Offline-Lesemodus; liegt nicht in der `items`-Tabelle, sondern in `item_contents` der separaten Content-Datenbank `reporter-content.db` (siehe `ItemContent`). |
+
+### `ItemContent` (Content-Datenbank `reporter-content.db`)
+
+Re-downloadbarer Artikelinhalt, getrennt von den Nutzerdaten in `reporter.db` gehalten, damit die Nutzerdatenbank ins iCloud-Backup eingeschlossen werden kann, während die Massendaten ausgeschlossen bleiben. Eigener `ContentDbContext` mit eigener Migrationshistorie; es gibt keinen datenbankübergreifenden Foreign Key — die Zuordnung läuft allein über `ItemId` = `items.id`.
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `ItemId` | `Guid` | Kennung des zugehörigen Artikels (`items.id` in `reporter.db`); Primärschlüssel (`item_id`). |
+| `ContentHtml` | `string?` | HTML-Inhalt des Artikels (`content_html`); nur nicht-leere Inhalte erhalten eine Zeile. |
 
 ### `Keyword`
 
@@ -107,7 +116,8 @@ Die App verwendet eine saubere Schichtung:
 - `Reporter.Core.Models` enthält die Domänenmodelle.
 - `Reporter.Core.Interfaces` definiert Repository-Schnittstellen für alle Entitäten.
 - `Reporter.Data.Repositories` implementiert die Schnittstellen mit Entity Framework Core und SQLite.
-- `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>`, um pro Operation einen neuen `DbContext` zu erzeugen.
+- Die Ablage ist auf zwei SQLite-Dateien aufgeteilt: `reporter.db` (Nutzerdaten: `feeds`, `categories`, `keywords`, `settings`, `sync_logs`, `debug_log_entries` sowie `items` ohne `content_html`) und `reporter-content.db` (re-downloadbare Artikelinhalte, Tabelle `item_contents`). `ItemRepository`/`FeedRepository` arbeiten zweistufig auf beiden Speichern: Der Artikelinhalt läuft über `IItemContentStore`/`ItemContentRepository` (`IDbContextFactory<ContentDbContext>`) — Lesepfade hydratisieren `ContentHtml` per Batch-Lookup, Schreib-/Löschpfade (inkl. der Feed-Kaskade, die die `items`-Zeilen entfernt) spiegeln die Änderungen in den Content-Speicher; verwaiste `item_contents`-Zeilen räumt der Retention-Cleanup beim Start weg (siehe [Aufbewahrung](aufbewahrung.md)). Die Migration `DropItemContentHtml` hat die Legacy-Spalte `items.content_html` entfernt; ihre Werte wurden vorab per `IContentMigrationService` in den Content-Speicher kopiert. Fehlende Inhalte (z. B. nach einem Restore ohne Content-Datei) lädt der Sync beim nächsten Abruf nach (Content-Backfill im `FeedSyncService`).
+- `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>` (bzw. `IDbContextFactory<ContentDbContext>` im `ItemContentRepository`), um pro Operation einen neuen `DbContext` zu erzeugen.
 - `Settings` wird als Singleton verwaltet; es existiert immer genau ein Datensatz.
 - `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie und gespeicherte Artikel (paged); die Dublettenerkennung pro Feed läuft im Sync über ein In-Memory-`HashSet` auf `GuidOrHash` mit Batch-Insert via `AddRangeAsync`.
 - `IItemRepository.DeleteExpiredAsync` entfernt abgelaufene Artikel für die automatische Aufbewahrungsfrist (`IsRead && !IsSavedForLater && (ReadAt ?? PublishedAt) < cutoff`); `GetExpiredKeywordCandidatesAsync` liefert die Kandidaten der Keyword-Löschregel (`IsRead && !IsSavedForLater && (PublishedAt ?? ReadAt) < cutoff`), `DeleteRangeAsync` löscht Treffer per IDs; Details siehe [Aufbewahrung und automatisches Aufräumen](aufbewahrung.md).

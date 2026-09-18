@@ -34,7 +34,7 @@ public class DebugReportTests_E2E : IDisposable
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
         _syncLogRepository = new SyncLogRepository(_factory);
-        _feedRepository = new FeedRepository(_factory);
+        _feedRepository = new FeedRepository(_factory, new FakeItemContentStore());
         _debugLogRepository = new DebugLogRepository(_factory);
         _emailService = new FakeEmailService();
         _deviceInfoProvider = new FakeDeviceInfoProvider();

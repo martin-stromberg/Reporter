@@ -13,14 +13,17 @@ namespace Reporter.Data.Repositories;
 public class FeedRepository : IFeedRepository
 {
     private readonly IDbContextFactory<ReporterDbContext> _factory;
+    private readonly IItemContentStore _contentStore;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedRepository"/> class.
     /// </summary>
     /// <param name="factory">The database context factory.</param>
-    public FeedRepository(IDbContextFactory<ReporterDbContext> factory)
+    /// <param name="contentStore">The store holding the item contents.</param>
+    public FeedRepository(IDbContextFactory<ReporterDbContext> factory, IItemContentStore contentStore)
     {
         _factory = factory;
+        _contentStore = contentStore;
     }
 
     /// <inheritdoc />
@@ -85,8 +88,16 @@ public class FeedRepository : IFeedRepository
             return;
         }
 
+        // Die items-Zeilen entfernt die DB-Kaskade; der Content liegt in der
+        // separaten Datenbank und muss explizit mitgeloescht werden.
+        var itemIds = await context.Items
+            .Where(i => i.FeedId == id)
+            .Select(i => i.Id)
+            .ToListAsync();
+
         context.Feeds.Remove(entity);
         await context.SaveChangesAsync();
+        await _contentStore.DeleteRangeAsync(itemIds);
     }
 
     /// <inheritdoc />

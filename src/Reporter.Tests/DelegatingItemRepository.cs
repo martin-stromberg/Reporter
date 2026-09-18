@@ -81,4 +81,8 @@ public class DelegatingItemRepository : IItemRepository
     /// <inheritdoc />
     public virtual Task<int> DeleteRangeAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default) =>
         _inner.DeleteRangeAsync(ids, cancellationToken);
+
+    /// <inheritdoc />
+    public virtual Task<IReadOnlyList<Guid>> GetAllIdsAsync(CancellationToken cancellationToken = default) =>
+        _inner.GetAllIdsAsync(cancellationToken);
 }

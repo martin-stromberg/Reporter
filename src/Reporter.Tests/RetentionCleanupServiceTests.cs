@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using Microsoft.EntityFrameworkCore;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Data.Repositories;
@@ -12,6 +13,7 @@ namespace Reporter.Tests;
 public class RetentionCleanupServiceTests : IDisposable
 {
     private readonly TestDbContextFactory _factory;
+    private readonly FakeItemContentStore _contentStore;
     private readonly ItemRepository _itemRepository;
     private readonly SettingsRepository _settingsRepository;
     private readonly KeywordRepository _keywordRepository;
@@ -23,10 +25,11 @@ public class RetentionCleanupServiceTests : IDisposable
     public RetentionCleanupServiceTests()
     {
         _factory = new TestDbContextFactory();
-        _itemRepository = new ItemRepository(_factory);
+        _contentStore = new FakeItemContentStore();
+        _itemRepository = new ItemRepository(_factory, _contentStore);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
-        _service = new RetentionCleanupService(_settingsRepository, _itemRepository, new KeywordFilter(_keywordRepository, new KeywordMatcher()));
+        _service = new RetentionCleanupService(_settingsRepository, _itemRepository, new KeywordFilter(_keywordRepository, new KeywordMatcher()), _contentStore);
     }
 
     /// <summary>
@@ -301,5 +304,102 @@ public class RetentionCleanupServiceTests : IDisposable
 
         Assert.Equal(1, deleted);
         Assert.Null(await _itemRepository.GetByIdAsync(matched.Id));
+    }
+
+    /// <summary>
+    /// Verifies that CleanupAsync removes content store entries whose item no
+    /// longer exists (e.g. left behind by the feed cascade or a partial
+    /// failure), keeps the contents of existing items and still returns only
+    /// the number of deleted items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CleanupAsync_RemovesOrphanedContent()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var orphan = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Orphaned",
+            GuidOrHash = "orphan",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>orphan</p>",
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>kept</p>",
+        };
+        await _itemRepository.AddRangeAsync(new List<Item> { orphan, kept });
+
+        // Das Item direkt in der Nutzerdatenbank loeschen, ohne den
+        // Content-Speicher zu bereinigen — so entsteht eine Waise.
+        await using (var context = _factory.CreateDbContext())
+        {
+            await context.Items.Where(i => i.Id == orphan.Id).ExecuteDeleteAsync();
+        }
+
+        var deleted = await _service.CleanupAsync();
+
+        Assert.Equal(0, deleted);
+        Assert.Null(await _contentStore.GetAsync(orphan.Id));
+        Assert.Equal("<p>kept</p>", await _contentStore.GetAsync(kept.Id));
+    }
+
+    /// <summary>
+    /// Verifies that CleanupAsync still removes orphaned content store entries
+    /// when the retention period is zero or negative, because the sweep is
+    /// independent of the retention deadline.
+    /// </summary>
+    /// <param name="retentionDays">The configured retention days.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public async Task CleanupAsync_ZeroOrNegativeRetentionDays_StillRemovesOrphanedContent(int retentionDays)
+    {
+        await SetRetentionDaysAsync(retentionDays);
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var orphan = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Orphaned",
+            GuidOrHash = "orphan",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>orphan</p>",
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>kept</p>",
+        };
+        await _itemRepository.AddRangeAsync(new List<Item> { orphan, kept });
+
+        // Das Item direkt in der Nutzerdatenbank loeschen, ohne den
+        // Content-Speicher zu bereinigen — so entsteht eine Waise.
+        await using (var context = _factory.CreateDbContext())
+        {
+            await context.Items.Where(i => i.Id == orphan.Id).ExecuteDeleteAsync();
+        }
+
+        var deleted = await _service.CleanupAsync();
+
+        Assert.Equal(0, deleted);
+        Assert.Null(await _contentStore.GetAsync(orphan.Id));
+        Assert.Equal("<p>kept</p>", await _contentStore.GetAsync(kept.Id));
     }
 }

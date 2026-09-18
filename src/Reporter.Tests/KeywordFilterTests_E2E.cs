@@ -16,6 +16,8 @@ namespace Reporter.Tests;
 public class KeywordFilterTests_E2E : IDisposable
 {
     private readonly TestDbContextFactory _factory;
+    private readonly TestContentDbContextFactory _contentFactory;
+    private readonly ItemContentRepository _contentStore;
     private readonly SettingsRepository _settingsRepository;
     private readonly KeywordRepository _keywordRepository;
     private readonly FeedRepository _feedRepository;
@@ -31,10 +33,12 @@ public class KeywordFilterTests_E2E : IDisposable
     public KeywordFilterTests_E2E()
     {
         _factory = new TestDbContextFactory();
+        _contentFactory = new TestContentDbContextFactory();
+        _contentStore = new ItemContentRepository(_contentFactory);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
-        _feedRepository = new FeedRepository(_factory);
-        _itemRepository = new ItemRepository(_factory);
+        _feedRepository = new FeedRepository(_factory, _contentStore);
+        _itemRepository = new ItemRepository(_factory, _contentStore);
         _syncLogRepository = new SyncLogRepository(_factory);
         _localNotificationService = new FakeLocalNotificationService();
         _keywordFilter = new KeywordFilter(_keywordRepository, new KeywordMatcher());
@@ -42,11 +46,12 @@ public class KeywordFilterTests_E2E : IDisposable
     }
 
     /// <summary>
-    /// Disposes the test factory.
+    /// Disposes the test factories.
     /// </summary>
     public void Dispose()
     {
         _factory.Dispose();
+        _contentFactory.Dispose();
     }
 
     private FeedSyncService CreateService(string content)
@@ -57,7 +62,7 @@ public class KeywordFilterTests_E2E : IDisposable
         });
         var httpClient = new HttpClient(handler);
         var notificationService = new NotificationService(_settingsRepository, _keywordFilter, _localNotificationService);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService, new FakeNetworkStatusService(), _keywordFilter, new FakeFeedIconService());
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService, new FakeNetworkStatusService(), _keywordFilter, new FakeFeedIconService(), _contentStore);
     }
 
     private async Task AddKeywordViaSettingsAsync(string keywordText)

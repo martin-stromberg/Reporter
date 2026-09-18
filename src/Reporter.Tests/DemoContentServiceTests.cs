@@ -23,7 +23,7 @@ public class DemoContentServiceTests : IDisposable
     {
         _factory = new TestDbContextFactory();
         _categoryRepository = new CategoryRepository(_factory);
-        _feedRepository = new FeedRepository(_factory);
+        _feedRepository = new FeedRepository(_factory, new FakeItemContentStore());
         _debugLogService = new FakeDebugLogService();
     }
 

@@ -11,6 +11,7 @@ namespace Reporter.Tests;
 public class FeedSyncServiceTests_DebugLog : IDisposable
 {
     private readonly TestDbContextFactory _factory;
+    private readonly FakeItemContentStore _contentStore;
     private readonly FeedRepository _feedRepository;
     private readonly ItemRepository _itemRepository;
     private readonly SyncLogRepository _syncLogRepository;
@@ -26,8 +27,9 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
     public FeedSyncServiceTests_DebugLog()
     {
         _factory = new TestDbContextFactory();
-        _feedRepository = new FeedRepository(_factory);
-        _itemRepository = new ItemRepository(_factory);
+        _contentStore = new FakeItemContentStore();
+        _feedRepository = new FeedRepository(_factory, _contentStore);
+        _itemRepository = new ItemRepository(_factory, _contentStore);
         _syncLogRepository = new SyncLogRepository(_factory);
         _settingsRepository = new SettingsRepository(_factory);
         _keywordRepository = new KeywordRepository(_factory);
@@ -63,6 +65,7 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
             new FakeNetworkStatusService(),
             _keywordFilter,
             _feedIconService,
+            _contentStore,
             _debugLogService);
 
         var result = await service.SyncFeedAsync(feedId);
@@ -92,7 +95,8 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
             new FakeNotificationService(),
             new FakeNetworkStatusService(),
             _keywordFilter,
-            _feedIconService);
+            _feedIconService,
+            _contentStore);
 
         var result = await service.SyncFeedAsync(feedId);
 

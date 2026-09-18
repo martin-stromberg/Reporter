@@ -16,4 +16,13 @@ public interface IBackupExclusionService
     /// </summary>
     /// <param name="filePath">The path of the file to exclude.</param>
     void ExcludeFromBackup(string filePath);
+
+    /// <summary>
+    /// Removes a previously set backup exclusion from the file at
+    /// <paramref name="filePath"/> so it is included in the cloud backup
+    /// again. Missing files are tolerated (no-op); implementations do
+    /// not throw for absent paths.
+    /// </summary>
+    /// <param name="filePath">The path of the file to include.</param>
+    void IncludeInBackup(string filePath);
 }

@@ -22,7 +22,7 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 - Artikeldetailansicht mit WebView-Volltext, automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser — externe Links im Artikeltext werden an den System-Browser übergeben
 - Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und konfigurierbare Sortierung der ungelesenen Artikel
 - Automatische Hintergrund-Aktualisierung (In-App-Timer; unter iOS zusätzlich OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit Ruhezeiten
-- Vollständig offline lesbar dank lokaler SQLite-Datenhaltung (unter iOS vom iCloud-Backup ausgeschlossen)
+- Vollständig offline lesbar dank lokaler SQLite-Datenhaltung; unter iOS sind die Nutzerdaten (Abonnements, Einstellungen, Lesestatus) im iCloud-Backup enthalten, während die re-downloadbaren Artikelinhalte in einer separaten, ausgeschlossenen Datei liegen und nach einer Wiederherstellung automatisch nachgeladen werden
 - Light/Dark-Theme, lokalisierte UI (Deutsch/Englisch), durchgängige Barrierefreiheit und ein Design-System mit eigenem App-Icon
 - Beim ersten Start legt die App einmalig die Kategorie „News" mit einem Demo-Feed an
 

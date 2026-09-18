@@ -33,6 +33,7 @@ Kehrt die Verbindung zurück, verschwinden alle Hinweise von selbst, und die ges
 ## Einschränkungen
 
 - **Neue Artikel** können offline nicht abgerufen werden — erst nach Netzrückkehr synchronisiert die App wieder.
+- **Nach einer Geräte-Wiederherstellung** können Artikel vorübergehend ohne Volltext erscheinen: Die Artikel-Metadaten (Titel, Lesestatus, Gemerkt-Status) gehören zu den gesicherten Nutzerdaten, die re-downloadbaren Artikelinhalte liegen dagegen in einer separaten Datei, die bewusst nicht ins iCloud-Backup eingeschlossen ist. Fehlende Inhalte lädt die App beim nächsten Abruf des betreffenden Feeds automatisch nach — bis dahin zeigt die Detailansicht des betroffenen Artikels Titel und Kopfzeilen, aber einen leeren Textbereich.
 - **Externe Bilder** im Artikelinhalt werden offline vollständig entfernt dargestellt. Artikel, deren Aussagekraft hauptsächlich auf Bildern beruht, erscheinen entsprechend gekürzt.
 - **Links im Artikeltext** führen offline nicht ins Netz; sie werden als normaler Text dargestellt.
 - **Im Browser öffnen** und die Synchronisation benötigen grundsätzlich eine Internetverbindung. **Teilen** bleibt dagegen verfügbar, da dafür kein Netz nötig ist.
