@@ -106,8 +106,11 @@ public static class FeedDbAssertions
             return false;
         }
 
+        // Pooling is disabled on purpose: a pooled connection keeps the
+        // database file open inside the test host after Dispose, which blocks
+        // the temp-directory cleanup in the teardown paths.
         await using var connection = new SqliteConnection(
-            $"Data Source={databasePath};Mode=ReadOnly;Default Timeout=5");
+            $"Data Source={databasePath};Mode=ReadOnly;Default Timeout=5;Pooling=False");
         await connection.OpenAsync().ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = commandText;

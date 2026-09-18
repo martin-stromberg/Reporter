@@ -25,7 +25,7 @@ Das Skript:
 2. baut `src/Reporter/Reporter.csproj` (`Debug`, `net10.0-windows10.0.19041.0`, `win-x64`),
 3. prüft, dass `src\Reporter\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Reporter.exe` erzeugt wurde,
 4. setzt `REPORTER_APP_PATH` auf diese Exe,
-5. führt `dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -c Debug -f net10.0-windows10.0.19041.0` aus und reicht den Exit-Code durch.
+5. führt `dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -c Debug -f net10.0-windows10.0.19041.0` aus und reicht den Exit-Code durch; das umschließende `finally` beendet danach verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output-Pfad eingegrenzt, damit eine parallel laufende Nutzer-Installation nicht getroffen wird.
 
 Alternativ kann das Testprojekt direkt getestet werden, wenn die App bereits gebaut ist (`REPORTER_APP_PATH` oder Konventionspfad, siehe unten).
 
@@ -57,7 +57,8 @@ dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -f net10.0-windows10.
 
 ## Überprüfung
 
-- `.\scripts\Run-E2ETests.ps1` endet mit Exit-Code `0` und neun grünen Tests.
+- `.\scripts\Run-E2ETests.ps1` endet mit Exit-Code `0` und neun grünen Tests (das Projekt führt zusätzlich die `E2EProcessGuardTests` ohne E2E-Trait mit aus).
 - Beim Lauf öffnet sich das App-Fenster sichtbar; die Suite steuert es automatisch und schließt es am Ende.
+- Nach dem Lauf — auch nach Fehlschlag oder Abbruch — ist kein `Reporter`-Prozess aus dem Build-Output mehr aktiv (`Get-Process Reporter` leer): Die App-Instanzen hängen an einem Windows-Job-Objekt, der Teardown bestätigt den Prozess-Exit, und das Skript-`finally` räumt Reste auf. Einzig bei einem harten Test-Host-Abbruch kann ein `%TEMP%/reporter-e2e-*`-Leichnam zurückbleiben (dann war kein Teardown mehr möglich).
 - Die App-Datenbank unter `FileSystem.AppDataDirectory` bleibt unverändert — die Suite arbeitet ausschließlich in `%TEMP%/reporter-e2e-*`, das im Teardown gelöscht wird.
 - Unit-Tests bleiben unverändert lauffähig: `dotnet test Reporter.sln --filter "Category!=E2E"`.

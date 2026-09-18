@@ -81,6 +81,37 @@
 
 **Umsetzung:** `ReporterAppFixture.InitializeAsync` und `DemoSeedTests.FirstStart_SeedsNewsCategoryAndDemoFeed` (`src/Reporter.E2ETests/`).
 
+## Prozess-Lebenszyklus dreifach abgesichert
+
+**Beschreibung:** Eine von der Suite gestartete `Reporter.exe` darf den Testlauf niemals überleben — ein verwaister Prozess blockiert Dateien des Build-Outputs und verfälscht Folgeläufe. Die Absicherung greift auf drei Ebenen, weil keine einzelne alle Fälle abdeckt.
+
+**Bedingungen:**
+- Erfolgreicher Lauf und Test-Fehlschlag: `DisposeAsync` bzw. die `finally`-Pfade laufen regulär.
+- Harter Abbruch des Test-Hosts (`testhost.exe`-Kill, Crash, Ctrl+C-Vollkill): `DisposeAsync` läuft **nicht** mehr.
+- Fehler in `InitializeAsync` nach `Process.Start`, aber vor der `App`-Zuweisung (Attach, Fenster-Wait, Bedienpause, `SetForeground`): Der `App is not null`-Guard im Teardown sieht den Prozess nicht.
+
+**Verhalten:**
+- Jede gestartete App-Instanz wird per `E2EProcessGuard.TrackProcess` einem Windows-Job-Objekt mit `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` zugewiesen — stirbt der Test-Host aus beliebigem Grund, beendet das Betriebssystem die App ohne Zutun des Testcodes.
+- Alle regulären Teardown-Pfade töten verifiziert: `Kill(entireProcessTree: true)` plus `WaitForExitAsync` mit 30-s-Timeout; ein Überlebender wird als `[E2E]`-Warnung gemeldet statt still geschluckt. PID-basiert, weil FlaUI das interne `Process`-Objekt beim Attach ersetzen kann.
+- `Run-E2ETests.ps1` beendet im `finally` verbliebene `Reporter`-Prozesse — **eingegrenzt per `Path`-Vergleich auf den Build-Output `$appOutput`**, damit eine parallel laufende Nutzer-Installation aus einem anderen Verzeichnis nicht getroffen wird. Konsequenz: Zwei gleichzeitige Suite-Läufe auf derselben Maschine räumen sich gegenseitig auf — die Suite ist ohnehin seriell ausgelegt.
+- Die Job-Zuweisung ist best-effort: Läuft der Test-Host selbst in einem restriktiven Job (CI-Agent, IDE-Runner), scheitert `AssignProcessToJobObject` — Warnung statt Fehler, Kill-Backstop und Skript-`finally` bleiben wirksam.
+
+**Umsetzung:** `E2EProcessGuard` (`TrackProcess`, `KillAndWaitAsync`), `ReporterAppFixture` (`StartAppProcess`, `InitializeAsync`-Backstop-`catch`, `KillAppProcessAsync`), `DemoSeedTests`-`finally`, `scripts/Run-E2ETests.ps1` (`try`/`finally`).
+
+## Lesende Testverbindungen ohne Connection-Pooling
+
+**Beschreibung:** `FeedDbAssertions` öffnet die isolierte `reporter.db` nur lesend — darf die Datei aber nach dem Ende der Abfrage nicht gesperrt halten, sonst scheitert die Temp-Verzeichnis-Löschung im Teardown.
+
+**Bedingungen:**
+- `Microsoft.Data.Sqlite` pooled Verbindungen standardmäßig: Ein `Dispose` der Verbindung gibt die Datei nicht frei, weil die gepoolte physische Verbindung im Test-Host offen bleibt.
+- Eine frisch gekillte App kann ihre Dateien (SQLite-DB, Sidecars) auch nach dem bestätigten Prozess-Exit noch kurz sperren.
+
+**Verhalten:**
+- Der Connection-String trägt `Pooling=False` — das `Dispose` schließt die Datei sofort.
+- `E2EProcessGuard.TryDeleteDirectoryAsync` löscht Temp-Verzeichnisse mit bis zu fünf Versuchen à 200 ms; scheitern alle, bleibt ein Leichnam toleriert (kein Wurf im Teardown).
+
+**Umsetzung:** `FeedDbAssertions` (Connection-String `Mode=ReadOnly;Pooling=False`), `E2EProcessGuard.TryDeleteDirectoryAsync` (`src/Reporter.E2ETests/`).
+
 ## Compiled Bindings: typisierte Kontexte und Runtime-Fallbacks
 
 **Beschreibung:** Alle Views tragen `x:DataType` — auf Seitenebene das jeweilige ViewModel, in `DataTemplate`s der Elementtyp — damit Binding-Fehler zur Compile-Zeit fehlschlagen. Eine Klasse von Bindings bleibt dabei bewusst **untypisiert**.

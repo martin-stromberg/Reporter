@@ -84,6 +84,17 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 | `InvalidDataException` | Directory-Antwort ist kein JSON-Array (`SearchDirectoryAsync`) |
 | `FeedSearchUnavailableException` | Directory **und** Autodiscovery fehlgeschlagen (`SearchAsync`) |
 
+### `E2EProcessGuard` (intern, `src/Reporter.E2ETests/E2EProcessGuard.cs`)
+
+**Beschreibung:** Statische Hilfsklasse für den Lebenszyklus der von der Suite gestarteten `Reporter.exe`-Instanzen. Alle Methoden sind bewusst nie-werfend ausgelegt — der Guard ist die letzte Verteidigungslinie im Teardown und darf das eigentliche Testergebnis nicht maskieren; Probleme werden als `[E2E]`-Meldungen auf die Konsole geschrieben. Gedeckt durch `E2EProcessGuardTests` im selben Projekt (bewusst ohne `Category=E2E`-Trait → laufen im regulären `dotnet test` mit).
+
+|| Methode | Rückgabe | Verhalten |
+||---------|----------|-----------|
+|| `TrackProcess(Process)` | `void` | Weist den Prozess einem prozessweiten Windows-Job-Objekt mit `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` zu (lazy erzeugt via kernel32-P/Invoke `CreateJobObject`/`SetInformationJobObject`/`AssignProcessToJobObject`). Best-effort: Scheitert die Zuweisung (z. B. Test-Host läuft selbst in einem restriktiven Job), wird eine `[E2E]`-Warnung geschrieben — Teardown und Skript-`finally` bleiben zweite Linie. Das Job-Handle bleibt absichtlich offen: Es schließt erst beim Test-Host-Exit — genau dann wirkt `KILL_ON_JOB_CLOSE`. |
+|| `KillAndWaitAsync(Process, TimeSpan? = null)` | `Task<bool>` | `Kill(entireProcessTree: true)` (nur wenn `!HasExited`), dann `WaitForExitAsync` begrenzt auf `timeout` (Default 30 s). `true` = Exit bestätigt; Timeout/Fehler → `[E2E]`-Warnung + `false`. |
+|| `KillAndWaitAsync(int processId, TimeSpan? = null)` | `Task<bool>` | Wie oben, löst die PID vorher per `Process.GetProcessById` auf — nicht (mehr) existierende PIDs gelten als bestätigter Exit. Wird verwendet, wenn nur die PID zuverlässig ist (FlaUI kann das `Process`-Objekt beim Attach ersetzen). |
+|| `TryDeleteDirectoryAsync(string)` | `Task` | Rekursives `Directory.Delete` mit bis zu fünf Versuchen à 200 ms — eine frisch gekillte App kann Dateien (z. B. die SQLite-DB) kurz nach dem bestätigten Exit noch sperren. Wirft nie; ein verbleibender Leichnam ist toleriert. |
+
 ## Umgebungsvariablen (Prozess-Schnittstelle)
 
 | Variable | Gelesen von | Validierung | Wirkung |
