@@ -593,16 +593,26 @@ public partial class FeedDetailViewModel : BaseViewModel
         }
     }
 
-    private async Task ReloadFeedAsync()
+    private async Task<bool> ReloadFeedAsync()
     {
-        Feed = (await _feedRepository.GetAllWithDetailsAsync()).FirstOrDefault(f => f.Id == _feedId);
+        try
+        {
+            Feed = (await _feedRepository.GetAllWithDetailsAsync()).FirstOrDefault(f => f.Id == _feedId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"ReloadFeedAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorLoadFailed;
+            return false;
+        }
     }
 
     private async Task RefreshAsync()
     {
-        if (await RunFeedSyncAsync(() => _feedSyncService.SyncFeedAsync(_feedId)))
+        if (await RunFeedSyncAsync(() => _feedSyncService.SyncFeedAsync(_feedId)) &&
+            await ReloadFeedAsync())
         {
-            await ReloadFeedAsync();
             await RestartListAsync();
         }
     }
@@ -643,19 +653,28 @@ public partial class FeedDetailViewModel : BaseViewModel
             return;
         }
 
-        var existing = await _feedRepository.GetByUrlAsync(url);
-        if (existing is not null && existing.Id != feed.Id)
+        try
         {
-            ErrorMessage = AppResources.ErrorFeedDuplicate;
+            var existing = await _feedRepository.GetByUrlAsync(url);
+            if (existing is not null && existing.Id != feed.Id)
+            {
+                ErrorMessage = AppResources.ErrorFeedDuplicate;
+                return;
+            }
+
+            await _feedRepository.UpdateAsync(ToFeed(
+                feed,
+                url: url,
+                title: feed.Title,
+                categoryId: feed.CategoryId,
+                notificationsEnabled: EditNotificationsEnabled));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"SaveEditAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorActionFailed;
             return;
         }
-
-        await _feedRepository.UpdateAsync(ToFeed(
-            feed,
-            url: url,
-            title: feed.Title,
-            categoryId: feed.CategoryId,
-            notificationsEnabled: EditNotificationsEnabled));
 
         ResetEditForm();
         await ReloadFeedAsync();

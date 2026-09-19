@@ -22,9 +22,9 @@ Branch: `task/issue-115-a7fb418d827f42a8adefd27c04bd3ad0-detailansicht-fuer-feed
 | [x] | 10 | Tests ausführen (Unteragent) | `test-results.md` |
 | [x] | – | Iteration oder Abschluss entscheiden | – |
 | [x] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
-| [ ] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
-| [ ] | 12b | README aktualisieren (Unteragent) | `README.md` |
-| [ ] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
+| [x] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
+| [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
+| [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
 | [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md`) | `continue-done.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | – | Commit durchführen | – |

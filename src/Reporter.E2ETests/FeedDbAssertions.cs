@@ -201,40 +201,8 @@ public static class FeedDbAssertions
     /// </summary>
     /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public static async Task MarkAllItemsReadAsync(string databasePath)
-    {
-        if (!File.Exists(databasePath))
-        {
-            return;
-        }
-
-        for (var attempt = 0; attempt < 5; attempt++)
-        {
-            try
-            {
-                // Pooling is disabled for the same reason as the read-only
-                // connection: the file must not stay open in the test host.
-                await using var connection = new SqliteConnection(
-                    $"Data Source={databasePath};Default Timeout=5;Pooling=False");
-                await connection.OpenAsync().ConfigureAwait(false);
-                await using var command = connection.CreateCommand();
-                command.CommandText = "UPDATE items SET is_read = 1 WHERE is_read = 0";
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-                return;
-            }
-            catch (SqliteException)
-            {
-                if (attempt == 4)
-                {
-                    // A permanently locked database file must not stay silent —
-                    // the cleanup caller tolerates the failure.
-                    throw;
-                }
-
-                await Task.Delay(500).ConfigureAwait(false);
-            }
-        }
-    }
+    public static Task MarkAllItemsReadAsync(string databasePath)
+        => ExecuteWriteWithRetryAsync(databasePath, "UPDATE items SET is_read = 1 WHERE is_read = 0");
 
     /// <summary>
     /// Deletes every feed row together with its items. Tests that add feeds
@@ -246,7 +214,18 @@ public static class FeedDbAssertions
     /// </summary>
     /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public static async Task DeleteAllFeedsAsync(string databasePath)
+    public static Task DeleteAllFeedsAsync(string databasePath)
+    {
+        // The items are removed explicitly instead of relying on the
+        // foreign-key cascade so the cleanup does not depend on the
+        // connection's FK enforcement.
+        return ExecuteWriteWithRetryAsync(databasePath, "DELETE FROM items; DELETE FROM feeds");
+    }
+
+    // Runs a single write statement against the app's database, retrying
+    // briefly because the app may hold a write lock while a sync is still
+    // finishing.
+    private static async Task ExecuteWriteWithRetryAsync(string databasePath, string commandText)
     {
         if (!File.Exists(databasePath))
         {
@@ -259,14 +238,11 @@ public static class FeedDbAssertions
             {
                 // Pooling is disabled for the same reason as the read-only
                 // connection: the file must not stay open in the test host.
-                // The items are removed explicitly instead of relying on the
-                // foreign-key cascade so the cleanup does not depend on the
-                // connection's FK enforcement.
                 await using var connection = new SqliteConnection(
                     $"Data Source={databasePath};Default Timeout=5;Pooling=False");
                 await connection.OpenAsync().ConfigureAwait(false);
                 await using var command = connection.CreateCommand();
-                command.CommandText = "DELETE FROM items; DELETE FROM feeds";
+                command.CommandText = commandText;
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 return;
             }

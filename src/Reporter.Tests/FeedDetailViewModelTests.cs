@@ -443,6 +443,28 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a repository failure while reloading the feed after a
+    /// successful sync reports the localized load error instead of letting the
+    /// exception fault the command task unobserved.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RefreshCommand_WhenReloadThrows_SetsLocalizedErrorMessage()
+    {
+        var feedId = await SeedFeedAsync();
+        var failing = new FailingReloadFeedRepository(_feedRepository);
+        var viewModel = CreateViewModel(feedRepository: failing);
+        await viewModel.LoadAsync(feedId);
+        failing.FailGetAllWithDetails = true;
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
+        Assert.False(viewModel.IsSyncing);
+    }
+
+    /// <summary>
     /// Verifies that renaming a feed persists the new title and reloads the
     /// header.
     /// </summary>
@@ -914,6 +936,30 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a repository failure while saving keeps the sheet open and
+    /// reports the localized action error instead of letting the exception
+    /// fault the command task unobserved.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SaveEditCommand_WhenRepositoryThrows_SetsErrorAndKeepsSheetOpen()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel(feedRepository: new FailingSaveFeedRepository(_feedRepository));
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.EditUrl = "https://example.com/new-feed";
+
+        await viewModel.SaveEditCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.ShowEditForm);
+        Assert.True(viewModel.HasError);
+        Assert.Equal(AppResources.ErrorActionFailed, viewModel.ErrorMessage);
+        var saved = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal("https://example.com/rss", saved?.Url);
+    }
+
+    /// <summary>
     /// Verifies that deleting the feed removes it from the repository.
     /// Navigation back to the feed list is covered by the E2E tests.
     /// </summary>
@@ -1032,6 +1078,58 @@ public class FeedDetailViewModelTests : IDisposable
             string? searchTerm = null)
         {
             return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingFeedRepository"/> that fails the feed-detail
+    /// query once <see cref="FailGetAllWithDetails"/> is set, to simulate a
+    /// repository failure on reload after a successful initial load.
+    /// </summary>
+    private sealed class FailingReloadFeedRepository : DelegatingFeedRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FailingReloadFeedRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public FailingReloadFeedRepository(IFeedRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether <c>GetAllWithDetailsAsync</c> fails.
+        /// </summary>
+        public bool FailGetAllWithDetails { get; set; }
+
+        /// <inheritdoc />
+        public override Task<IReadOnlyList<FeedListItem>> GetAllWithDetailsAsync()
+        {
+            return FailGetAllWithDetails
+                ? Task.FromException<IReadOnlyList<FeedListItem>>(new InvalidOperationException("Simulated reload failure."))
+                : base.GetAllWithDetailsAsync();
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingFeedRepository"/> that fails the URL lookup used
+    /// by the edit-sheet save path.
+    /// </summary>
+    private sealed class FailingSaveFeedRepository : DelegatingFeedRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FailingSaveFeedRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public FailingSaveFeedRepository(IFeedRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <inheritdoc />
+        public override Task<Feed?> GetByUrlAsync(string url)
+        {
+            return Task.FromException<Feed?>(new InvalidOperationException("Simulated save failure."));
         }
     }
 
