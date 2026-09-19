@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datenschutzerklärung — Reporter</title>
+  <meta name="description" content="Datenschutzerklärung der Reporter-App: lokale Datenspeicherung, keine Telemetrie, kein Tracking, keine Werbung.">
+  <link rel="icon" href="assets/img/appicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/img/appicon.svg" alt="Reporter-App-Icon">
+        Reporter
+      </a>
+      <nav class="site-nav" aria-label="Hauptnavigation">
+        <a href="index.html">Start</a>
+        <a href="privacypolicy.html" aria-current="page">Datenschutz</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="press.html">Presse</a>
+        <a href="https://github.com/martin-stromberg/Reporter">GitHub</a>
+      </nav>
+      <span class="lang-switch" lang="en"><a href="en/privacypolicy.html">English</a></span>
+    </div>
+  </header>
+
+  <main>
+    <h1>Datenschutzerklärung — Reporter</h1>
+    <p><strong>Stand:</strong> September 2026</p>
+
+    <p>Diese Datenschutzerklärung beschreibt, welche Daten die App „Reporter“
+       (RSS-/Atom-Feed-Reader) verarbeitet, wohin sie fließen und welche Rechte
+       du hast. Sie gilt für die iOS-App; sie ist öffentlich über die
+       <a href="https://github.com/martin-stromberg/Reporter/blob/main/docs/privacy-policy.md">GitHub-URL
+       des kanonischen Dokuments</a> auf dem Default-Branch des Repositories
+       erreichbar und in App Store Connect als Datenschutz-URL hinterlegt.</p>
+
+    <section aria-labelledby="verantwortlicher">
+      <h2 id="verantwortlicher">1. Verantwortlicher und Kontakt</h2>
+      <p>Verantwortlich für die Datenverarbeitung in der App ist der Betreiber
+         des Repositories, erreichbar über die in der App für Debugberichte
+         hinterlegte Kontaktadresse:</p>
+      <p><strong>E-Mail:</strong>
+         <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a></p>
+    </section>
+
+    <section aria-labelledby="lokale-speicherung">
+      <h2 id="lokale-speicherung">2. Grundsatz: Lokale Datenspeicherung</h2>
+      <p>Reporter ist ein lokaler Feed-Reader <strong>ohne eigenes Backend und
+         ohne Benutzerkonto</strong>. Alle abonnierten Feeds, Kategorien,
+         Artikel, Stichwort-Filter und Einstellungen liegen ausschließlich in
+         lokalen SQLite-Datenbanken auf deinem Gerät: Die Nutzerdaten
+         (Abonnements, Kategorien, Stichwort-Filter, Einstellungen sowie Lese-
+         und Merkstatus der Artikel) stecken in <code>reporter.db</code> und sind
+         ins iCloud-Backup eingeschlossen, damit sie eine Geräte-Wiederherstellung
+         überstehen. Die re-downloadbaren Artikelinhalte liegen dagegen in einer
+         zweiten Datei (<code>reporter-content.db</code>), die unter iOS vom
+         iCloud-Backup ausgeschlossen ist — sie werden bei Bedarf über die
+         Synchronisation erneut abgerufen.</p>
+      <p>Die App erhebt <strong>keine</strong> Telemetrie, enthält
+         <strong>kein</strong> Tracking, <strong>keine</strong> Analyse-SDKs und
+         <strong>keine</strong> Werbung. Es findet kein Profiling statt.</p>
+    </section>
+
+    <section aria-labelledby="netzwerkzugriffe">
+      <h2 id="netzwerkzugriffe">3. Netzwerkzugriffe beim normalen Betrieb</h2>
+      <p>Damit die App ihre Aufgabe erfüllen kann, greift sie auf Server zu, die
+         <strong>du</strong> durch deine Feed-Auswahl bestimmst:</p>
+      <div class="table-scroll">
+      <table>
+      <thead>
+        <tr><th>Zweck</th><th>Empfänger</th><th>Übertragene Daten</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Feed-Abruf (Synchronisation)</td>
+          <td>Die von dir abonnierten Feed-Server (beliebige Hosts, HTTP oder HTTPS)</td>
+          <td>Deine IP-Adresse; keine Inhalte von dir</td>
+        </tr>
+        <tr>
+          <td>Feed-Suche</td>
+          <td><code>feedsearch.dev</code> (Verzeichnis-API) sowie die von dir eingegebene Website und deren Standard-Feedpfade (Autodiscovery)</td>
+          <td>Dein Suchbegriff / die eingegebene URL sowie deine IP-Adresse</td>
+        </tr>
+        <tr>
+          <td>Feed-Symbole (Favicons)</td>
+          <td>Die Websites der abonnierten Feeds</td>
+          <td>Deine IP-Adresse; keine Inhalte von dir</td>
+        </tr>
+        <tr>
+          <td>Artikelbilder und externe Links</td>
+          <td>Die in den Artikeln referenzierten Server der jeweiligen Anbieter</td>
+          <td>Deine IP-Adresse; keine Inhalte von dir</td>
+        </tr>
+      </tbody>
+      </table>
+      </div>
+      <p>Bei jedem dieser Abrufe erhält der jeweilige Fremdserver zwangsläufig
+         deine IP-Adresse — wie bei jedem Besuch dieser Server in einem Browser.
+         Reporter übermittelt darüber hinaus keine personenbezogenen Daten an
+         diese Server.</p>
+      <p><strong>Hinweis zum ersten Start:</strong> Bei der erstmaligen Ausführung
+         richtet die App ein Demo-Abonnement ein — den Feed „Apple Newsroom“
+         (<code>https://www.apple.com/newsroom/rss-feed.rss</code>, Kategorie
+         „News“) — und ruft dessen Inhalte beim regulären Start-Abruf automatisch
+         von <code>apple.com</code> ab. Dabei geht wie bei jedem Feed-Abruf deine
+         IP-Adresse an Apple. Du kannst den Feed und die Kategorie wie jeden
+         anderen Eintrag bearbeiten oder löschen; danach kontaktiert die App nur
+         noch Server, die du selbst ausgewählt hast.</p>
+    </section>
+
+    <section aria-labelledby="debugbericht">
+      <h2 id="debugbericht">4. Debugbericht (nur auf deine ausdrückliche Anfrage)</h2>
+      <p>Auf der Seite <strong>Einstellungen → Diagnose &amp; Support</strong>
+         kannst du einen Debugbericht erzeugen. Dieser wird als vorbefüllter
+         <strong>E-Mail-Entwurf</strong> im Mail-Client deines Geräts geöffnet und
+         <strong>nur versendet, wenn du ihn selbst absendest</strong> — an die
+         Support-Adresse
+         <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a>.</p>
+      <p>Der Bericht enthält: App- und Geräteinformationen (App-Version,
+         Gerätemodell, Hersteller, Plattform, OS-Version), den Online-Status,
+         einen Abzug deiner Einstellungen, die Liste deiner Feeds
+         <strong>inklusive deren URLs</strong> sowie die jüngsten Sync- und
+         Session-Logeinträge. Vor dem Absenden siehst du den vollständigen Inhalt
+         im Mail-Entwurf und kannst ihn prüfen oder verwerfen.</p>
+      <p>Die optionale <strong>Debug-Sammlung</strong> (Schalter in den
+         Einstellungen, voreingestellt aus) schreibt Diagnoseeinträge in die
+         lokale Datenbank; sie werden nur mit einem von dir versendeten
+         Debugbericht weitergegeben.</p>
+    </section>
+
+    <section aria-labelledby="drittlaender">
+      <h2 id="drittlaender">5. Datenübermittlung in Drittländer</h2>
+      <p>Die in Abschnitt 3 genannten Server können weltweit verteilt stehen;
+         durch die Nutzung der jeweiligen Feed-Inhalte findet eine Übermittlung
+         deiner IP-Adresse an diese Server statt. Eine darüber hinausgehende
+         Übermittlung personenbezogener Daten findet nicht statt.</p>
+    </section>
+
+    <section aria-labelledby="rechte">
+      <h2 id="rechte">6. Deine Rechte</h2>
+      <p>Da Reporter keine Daten auf eigenen Servern speichert, beschränken sich
+         Auskunft, Berichtigung und Löschung auf die lokale Datenbank deines
+         Geräts: Das Löschen der App entfernt alle lokal gespeicherten Daten.
+         Gesendete Debugbericht-E-Mails kannst du über die Kontaktadresse löschen
+         lassen.</p>
+    </section>
+
+    <p><em>Hinweis: Diese Seite spiegelt den deutschen Haupttext der
+       Datenschutzerklärung. Maßgeblich ist die kanonische Datei
+       <a href="https://github.com/martin-stromberg/Reporter/blob/main/docs/privacy-policy.md"><code>docs/privacy-policy.md</code></a>
+       im Repository — dort findest du auch die englische Zusammenfassung.</em></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <nav aria-label="Fußnavigation">
+        <a href="privacypolicy.html">Datenschutz</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="press.html">Presse</a>
+        <a href="https://github.com/martin-stromberg/Reporter">GitHub</a>
+        <a href="https://github.com/martin-stromberg/Reporter/blob/main/LICENSE">Lizenz</a>
+      </nav>
+      <p>Kontakt: <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a></p>
+      <p>© Martin Stromberg — Reporter steht unter der PolyForm Noncommercial License 1.0.0.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -4,12 +4,16 @@
 
 ## Important Notes Before Update
 
+- Website deployment: the new `deploy-pages.yml` workflow publishes the `website/` folder to GitHub Pages on pushes to `main` — the site only goes live at https://martin-stromberg.github.io/Reporter/ once the one-time repository setting "Pages → Source: GitHub Actions" has been enabled.
 - iOS: the app is now iPhone-only — iPad support has been removed for this App Store submission (`UIDeviceFamily` reduced to iPhone), so the app can no longer be installed on iPad devices.
 - License change: the project is now licensed under the PolyForm Noncommercial License 1.0.0 — free for noncommercial use only; commercial use requires a separate commercial license (see `LICENSE` and `COMMERCIAL-LICENSE.md`).
 - GitHub release notes are no longer generated automatically from commits — `docs/RELEASE_NOTES.md` is used as the release body for stable releases and RC pre-releases and must be maintained before each release.
 
 ## What's New
 
+- New public project website at https://martin-stromberg.github.io/Reporter/ — a bilingual (German/English) static HTML/CSS site with no build step (sources in `website/`): landing page with hero, feature list, iOS screenshots and demo GIF, a "Coming soon on the App Store" badge plus GitHub Releases link, support/contact and developer info.
+- The site also includes a privacy policy page mirroring `docs/privacy-policy.md`, a changelog page linking to GitHub Releases, `changes.log` and `docs/RELEASE_NOTES.md`, and a press kit with the app icon (SVG and PNG in 1024/512/256 px), all iOS screenshots and short/long description texts.
+- Internal — no user-facing app change: website documentation added under `docs/help/website/` and referenced from `README.md` and `docs/help/index.md`; no C# code, app tests or app workflows were touched.
 - iOS: article content is now stored in a separate database file (`reporter-content.db` including its WAL/SHM files) that is excluded from iCloud backup, per App Store data-storage requirements — existing article content is migrated automatically on the first launch after the update. The user database (`reporter.db` with subscriptions, categories, keyword filters, settings and reading/saved state) is included in the backup, so this data survives a device restore; missing article content is re-downloaded automatically during the next feed refresh.
 - Article view: external links now open in the system browser when online instead of navigating inside the article view; when offline the existing hint dialog is still shown.
 - Startup hardening: a database migration error on app start no longer prevents the app from launching — the failure is logged to the session debug log.
@@ -54,12 +58,16 @@
 
 ## Wichtige Hinweise vor dem Update
 
+- Website-Bereitstellung: Der neue Workflow `deploy-pages.yml` veröffentlicht den Ordner `website/` bei Pushs auf `main` auf GitHub Pages — die Site geht unter https://martin-stromberg.github.io/Reporter/ erst live, wenn die einmalige Repository-Einstellung „Pages → Source: GitHub Actions" aktiviert wurde.
 - iOS: Die App ist jetzt nur noch für das iPhone freigegeben — die iPad-Unterstützung wurde für diese App-Store-Einreichung entfernt (`UIDeviceFamily` auf iPhone reduziert); die App kann auf iPad-Geräten nicht mehr installiert werden.
 - Lizenzwechsel: Das Projekt steht jetzt unter der PolyForm Noncommercial License 1.0.0 — kostenlos nur für nicht-kommerzielle Nutzung; für kommerzielle Nutzung ist eine separate kommerzielle Lizenz erforderlich (siehe `LICENSE` und `COMMERCIAL-LICENSE.md`).
 - GitHub-Release-Notes werden nicht mehr automatisch aus Commits generiert — als Release-Text für stabile Releases und RC-Pre-Releases dient `docs/RELEASE_NOTES.md`, die vor jedem Release gepflegt werden muss.
 
 ## Neuerungen
 
+- Neue öffentliche Projekt-Website unter https://martin-stromberg.github.io/Reporter/ — zweisprachige (deutsch/englisch) statische HTML/CSS-Site ohne Build-Schritt (Quellen in `website/`): Landing-Page mit Hero, Feature-Liste, iOS-Screenshots und Demo-GIF, Badge „Bald im App Store" plus GitHub-Releases-Link, Support/Kontakt und Entwicklerinfos.
+- Die Site enthält außerdem eine Datenschutzseite als Spiegel von `docs/privacy-policy.md`, eine Changelog-Seite mit Verweisen auf GitHub-Releases, `changes.log` und `docs/RELEASE_NOTES.md` sowie ein Press Kit mit App-Icon (SVG und PNG in 1024/512/256 px), allen iOS-Screenshots und Kurz-/Langtexten.
+- Intern — keine anwendersichtbare App-Änderung: Website-Dokumentation unter `docs/help/website/` ergänzt und aus `README.md` sowie `docs/help/index.md` verlinkt; kein C#-Code, keine App-Tests und keine App-Workflows betroffen.
 - iOS: Artikelinhalte liegen jetzt in einer separaten Datenbankdatei (`reporter-content.db` inklusive ihrer WAL-/SHM-Dateien), die vom iCloud-Backup ausgenommen ist — gemäß den App-Store-Vorgaben zur Datenablage; bereits gespeicherte Artikelinhalte werden beim ersten Start nach dem Update automatisch übernommen. Die Nutzerdatenbank (`reporter.db` mit Abonnements, Kategorien, Schlagwortfiltern, Einstellungen und Lese-/Merkstatus) ist dagegen im Backup enthalten und übersteht damit eine Geräte-Wiederherstellung; fehlende Artikelinhalte lädt die App beim nächsten Feed-Abruf automatisch nach.
 - Artikelansicht: Externe Links öffnen bei bestehender Verbindung jetzt den System-Browser statt innerhalb der Artikelansicht zu navigieren; offline erscheint weiterhin der bekannte Hinweisdialog.
 - Start-Absicherung: Ein Fehler bei der Datenbankmigration verhindert den App-Start nicht mehr — der Fehler wird im Sitzungs-Debugprotokoll festgehalten.

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — Reporter</title>
+  <meta name="description" content="Privacy policy of the Reporter app: local data storage, no telemetry, no tracking, no advertising.">
+  <link rel="icon" href="../assets/img/appicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="index.html">
+        <img src="../assets/img/appicon.svg" alt="Reporter app icon">
+        Reporter
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="privacypolicy.html" aria-current="page">Privacy</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="press.html">Press</a>
+        <a href="https://github.com/martin-stromberg/Reporter">GitHub</a>
+      </nav>
+      <span class="lang-switch" lang="de"><a href="../privacypolicy.html">Deutsch</a></span>
+    </div>
+  </header>
+
+  <main>
+    <h1>Privacy Policy — Reporter</h1>
+    <p><strong>Effective:</strong> September 2026</p>
+
+    <p>This privacy policy describes which data the “Reporter” app
+       (RSS/Atom feed reader) processes, where it flows, and which rights you
+       have. It is publicly reachable via the
+       <a href="https://github.com/martin-stromberg/Reporter/blob/main/docs/privacy-policy.md">GitHub
+       URL of the canonical document</a> on the repository's default branch
+       and registered in App Store Connect as the privacy URL. For the full
+       legal text, see the German section of that document; the English
+       version below is a faithful summary.</p>
+
+    <section aria-labelledby="controller">
+      <h2 id="controller">1. Controller and contact</h2>
+      <p>The operator of the repository is responsible for data processing in
+         the app and can be reached at the contact address configured for debug
+         reports:</p>
+      <p><strong>Email:</strong>
+         <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a></p>
+    </section>
+
+    <section aria-labelledby="local-storage">
+      <h2 id="local-storage">2. Principle: local storage only</h2>
+      <p>Reporter is a local feed reader <strong>without its own backend and
+         without a user account</strong>. All subscribed feeds, categories,
+         articles, keyword filters and settings are stored exclusively in local
+         SQLite databases on your device: the user data (subscriptions,
+         categories, keyword filters, settings and the read/saved state of
+         articles) lives in <code>reporter.db</code> and is included in iCloud
+         backup so it survives a device restore. The re-downloadable article
+         contents live in a second file (<code>reporter-content.db</code>), which
+         is excluded from iCloud backup on iOS — they are fetched again through
+         synchronization when needed.</p>
+      <p>The app collects <strong>no</strong> telemetry, contains
+         <strong>no</strong> tracking, <strong>no</strong> analytics SDKs and
+         <strong>no</strong> advertising. No profiling takes place.</p>
+    </section>
+
+    <section aria-labelledby="network-access">
+      <h2 id="network-access">3. Network access during normal operation</h2>
+      <p>To do its job the app contacts servers that <strong>you</strong>
+         determine through your feed selection:</p>
+      <div class="table-scroll">
+      <table>
+      <thead>
+        <tr><th>Purpose</th><th>Recipient</th><th>Data transmitted</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Feed sync</td>
+          <td>The feed servers you subscribed to (arbitrary hosts, HTTP or HTTPS)</td>
+          <td>Your IP address; none of your content</td>
+        </tr>
+        <tr>
+          <td>Feed search</td>
+          <td><code>feedsearch.dev</code> (directory API) plus the website you typed and its standard feed paths (autodiscovery)</td>
+          <td>Your search term / the URL you entered, plus your IP address</td>
+        </tr>
+        <tr>
+          <td>Feed icons (favicons)</td>
+          <td>The websites of subscribed feeds</td>
+          <td>Your IP address; none of your content</td>
+        </tr>
+        <tr>
+          <td>Article images and external links</td>
+          <td>The servers referenced inside articles</td>
+          <td>Your IP address; none of your content</td>
+        </tr>
+      </tbody>
+      </table>
+      </div>
+      <p>Each of these requests inevitably exposes your IP address to the
+         respective third-party server — exactly as visiting those servers in a
+         browser would. Reporter transmits no personal data beyond that.</p>
+      <p><strong>Note on first launch:</strong> On its very first run the app
+         sets up a demo subscription — the “Apple Newsroom” feed
+         (<code>https://www.apple.com/newsroom/rss-feed.rss</code>, category
+         “News”) — and automatically fetches its content from
+         <code>apple.com</code> during the regular startup sync. As with any
+         feed fetch, your IP address is exposed to Apple. You can edit or delete
+         the feed and the category like any other entry; afterwards the app only
+         contacts servers you selected yourself.</p>
+    </section>
+
+    <section aria-labelledby="debug-report">
+      <h2 id="debug-report">4. Debug report (only on your explicit request)</h2>
+      <p>Under <strong>Settings → Diagnostics &amp; Support</strong> you can
+         generate a debug report. It opens as a pre-filled <strong>email
+         draft</strong> in your device's mail client and is sent <strong>only if
+         you press send yourself</strong> — to the support address
+         <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a>.</p>
+      <p>The report contains: app and device information (app version, device
+         model, manufacturer, platform, OS version), online status, a snapshot
+         of your settings, the list of your feeds <strong>including their
+         URLs</strong>, and the latest sync and session log entries. You can
+         review the full content in the draft before sending or discard it.</p>
+      <p>The optional <strong>debug collection</strong> switch (off by default)
+         writes diagnostic entries to the local database; they leave the device
+         only inside a debug report you send.</p>
+    </section>
+
+    <section aria-labelledby="third-countries">
+      <h2 id="third-countries">5. Transfers to third countries</h2>
+      <p>The servers listed in section 3 may be located worldwide; using the
+         respective feed content transmits your IP address to those servers. No
+         further transfer of personal data takes place.</p>
+    </section>
+
+    <section aria-labelledby="your-rights">
+      <h2 id="your-rights">6. Your rights</h2>
+      <p>Since Reporter stores no data on its own servers, access, rectification
+         and erasure are limited to the local database on your device: deleting
+         the app removes all locally stored data. Debug report emails you sent
+         can be deleted on request via the contact address.</p>
+    </section>
+
+    <p><em>Note: This page mirrors the English summary of the privacy policy.
+       The authoritative source is
+       <a href="https://github.com/martin-stromberg/Reporter/blob/main/docs/privacy-policy.md"><code>docs/privacy-policy.md</code></a>
+       in the repository, which also contains the full German legal text.</em></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <nav aria-label="Footer navigation">
+        <a href="privacypolicy.html">Privacy</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="press.html">Press</a>
+        <a href="https://github.com/martin-stromberg/Reporter">GitHub</a>
+        <a href="https://github.com/martin-stromberg/Reporter/blob/main/LICENSE">License</a>
+      </nav>
+      <p>Contact: <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a></p>
+      <p>© Martin Stromberg — Reporter is licensed under the PolyForm Noncommercial License 1.0.0.</p>
+    </div>
+  </footer>
+</body>
+</html>
