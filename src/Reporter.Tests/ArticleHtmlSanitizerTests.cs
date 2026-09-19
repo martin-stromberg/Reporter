@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Text.RegularExpressions;
 using Reporter.Core.Services;
 
 namespace Reporter.Tests;
@@ -136,5 +137,92 @@ public class ArticleHtmlSanitizerTests
     {
         Assert.Equal(input, ArticleHtmlSanitizer.Sanitize(input, forOffline: false));
         Assert.Equal(input, ArticleHtmlSanitizer.Sanitize(input, forOffline: true));
+    }
+
+    /// <summary>
+    /// Verifies that offline mode with a local image replaces the first
+    /// <c>&lt;img&gt;</c> tag by a <c>data:</c> URI image and removes the
+    /// remaining image tags.
+    /// </summary>
+    [Fact]
+    public void Sanitize_Offline_WithLocalImage_ReplacesFirstImgWithDataUri()
+    {
+        var image = new Reporter.Core.Models.ItemImage([1, 2, 3], "image/png", null);
+        var html = "<p>A</p><img src=\"https://example.com/a.png\" />" +
+            "<img src=\"https://example.com/b.png\" /><p>B</p>";
+
+        var result = ArticleHtmlSanitizer.Sanitize(html, forOffline: true, localImage: image);
+
+        var expectedTag = $"<img src=\"data:image/png;base64,{Convert.ToBase64String(image.Data)}\" />";
+        Assert.Contains(expectedTag, result);
+        Assert.DoesNotContain("example.com", result);
+        Assert.NotNull(result);
+        Assert.Single(Regex.Matches(result, "<img"));
+        Assert.Contains("<p>A</p>", result);
+        Assert.Contains("<p>B</p>", result);
+    }
+
+    /// <summary>
+    /// Verifies that offline mode with a local image prepends a header image
+    /// when the content holds no <c>&lt;img&gt;</c> tag.
+    /// </summary>
+    [Fact]
+    public void Sanitize_Offline_WithLocalImageAndNoImg_PrependsHeaderImage()
+    {
+        var image = new Reporter.Core.Models.ItemImage([9], "image/jpeg", null);
+        var html = "<p>Text only</p>";
+
+        var result = ArticleHtmlSanitizer.Sanitize(html, forOffline: true, localImage: image);
+
+        Assert.StartsWith($"<img src=\"data:image/jpeg;base64,{Convert.ToBase64String(image.Data)}\" />", result);
+        Assert.Contains("<p>Text only</p>", result);
+    }
+
+    /// <summary>
+    /// Verifies that offline mode with a local image and an empty or
+    /// <c>null</c> content returns a fragment containing only the header image.
+    /// </summary>
+    /// <param name="input">The input to sanitize.</param>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Sanitize_Offline_EmptyContentWithLocalImage_ReturnsHeaderImage(string? input)
+    {
+        var image = new Reporter.Core.Models.ItemImage([5], "image/png", null);
+
+        var result = ArticleHtmlSanitizer.Sanitize(input, forOffline: true, localImage: image);
+
+        Assert.Equal($"<img src=\"data:image/png;base64,{Convert.ToBase64String(image.Data)}\" />", result);
+    }
+
+    /// <summary>
+    /// Verifies that a supplied local image is ignored in online mode so remote
+    /// images stay untouched.
+    /// </summary>
+    [Fact]
+    public void Sanitize_Online_WithLocalImage_KeepsRemoteImages()
+    {
+        var image = new Reporter.Core.Models.ItemImage([1], "image/png", null);
+        var html = "<p><img src=\"https://example.com/a.png\" /></p>";
+
+        var result = ArticleHtmlSanitizer.Sanitize(html, forOffline: false, localImage: image);
+
+        Assert.Contains("src=\"https://example.com/a.png\"", result);
+        Assert.DoesNotContain("data:image", result);
+    }
+
+    /// <summary>
+    /// Verifies that offline mode without a local image still removes all
+    /// image tags.
+    /// </summary>
+    [Fact]
+    public void Sanitize_Offline_WithoutLocalImage_RemovesAllImages()
+    {
+        var html = "<p><img src=\"https://example.com/a.png\" /><img src=\"https://example.com/b.png\" /></p>";
+
+        var result = ArticleHtmlSanitizer.Sanitize(html, forOffline: true, localImage: null);
+
+        Assert.DoesNotContain("<img", result, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -65,6 +65,7 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
             new FakeNetworkStatusService(),
             _keywordFilter,
             _feedIconService,
+            new FakeItemImageService(),
             _contentStore,
             _debugLogService);
 
@@ -96,6 +97,7 @@ public class FeedSyncServiceTests_DebugLog : IDisposable
             new FakeNetworkStatusService(),
             _keywordFilter,
             _feedIconService,
+            new FakeItemImageService(),
             _contentStore);
 
         var result = await service.SyncFeedAsync(feedId);

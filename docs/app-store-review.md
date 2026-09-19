@@ -44,15 +44,17 @@ Die App hält ihre lokale SQLite-Ablage in zwei Dateien getrennt:
   Einstellungen, Lese- und Merkstatus). **Nicht** vom iCloud-Backup
   ausgeschlossen: Diese Daten sind nicht wiederherstellbar und müssen eine
   Geräte-Wiederherstellung überstehen.
-- `reporter-content.db` — re-downloadbare Artikelinhalte
-  (`item_contents`-Tabelle). Vom iCloud-Backup ausgeschlossen
+- `reporter-content.db` — re-downloadbare Artikelinhalte und lokal
+  gespeicherte Artikelbilder (`item_contents`-Tabelle, Spalten
+  `content`/`image_data`/`image_content_type`/`image_url`; Bilder bis 5 MB).
+  Vom iCloud-Backup ausgeschlossen
   (`NSUrl.IsExcludedFromBackupKey` inkl. `-wal`-/`-shm`-Sidecars, gesetzt
-  durch `BackupExclusionService` in `App.OnStart`): Die Inhalte sind online
-  erneut abrufbar und würden sonst nur die iCloud-Quota belasten — das
+  durch `BackupExclusionService` in `App.OnStart`): Inhalte und Bilder sind
+  online erneut abrufbar und würden sonst nur die iCloud-Quota belasten — das
   entspricht den iOS Data Storage Guidelines (nur nicht reproduzierbare
   Nutzerdaten gehören ins Backup). Nach einem Restore ohne Content-Datei
-  lädt der Sync fehlende Inhalte automatisch nach (Content-Backfill im
-  `FeedSyncService`).
+  lädt der Sync fehlende Inhalte und Bilder automatisch nach
+  (Content-/Bild-Backfill im `FeedSyncService`).
 
 ## ATS-Begründung (`NSAllowsArbitraryLoads`)
 

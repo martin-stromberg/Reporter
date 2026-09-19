@@ -57,7 +57,7 @@ dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -f net10.0-windows10.
 
 ## Überprüfung
 
-- `.\scripts\Run-E2ETests.ps1` endet mit Exit-Code `0` und neun grünen Tests (das Projekt führt zusätzlich die `E2EProcessGuardTests` ohne E2E-Trait mit aus).
+- `.\scripts\Run-E2ETests.ps1` endet mit Exit-Code `0` und elf grünen Tests (das Projekt führt zusätzlich die `E2EProcessGuardTests` ohne E2E-Trait mit aus).
 - Beim Lauf öffnet sich das App-Fenster sichtbar; die Suite steuert es automatisch und schließt es am Ende.
 - Nach dem Lauf — auch nach Fehlschlag oder Abbruch — ist kein `Reporter`-Prozess aus dem Build-Output mehr aktiv (`Get-Process Reporter` leer): Die App-Instanzen hängen an einem Windows-Job-Objekt, der Teardown bestätigt den Prozess-Exit, und das Skript-`finally` räumt Reste auf. Einzig bei einem harten Test-Host-Abbruch kann ein `%TEMP%/reporter-e2e-*`-Leichnam zurückbleiben (dann war kein Teardown mehr möglich).
 - Die App-Datenbank unter `FileSystem.AppDataDirectory` bleibt unverändert — die Suite arbeitet ausschließlich in `%TEMP%/reporter-e2e-*`, das im Teardown gelöscht wird.

@@ -44,6 +44,42 @@ public static class TestFeedXml
     }
 
     /// <summary>
+    /// Builds an RSS 2.0 document whose items carry an <c>&lt;enclosure&gt;</c>
+    /// element (e.g. an article image with an <c>image/*</c> type).
+    /// </summary>
+    /// <param name="items">The items to include in the channel.</param>
+    /// <param name="channelTitle">The channel title.</param>
+    /// <returns>The RSS 2.0 document.</returns>
+    public static string RssWithEnclosure(IEnumerable<(string Title, string Link, string Guid, DateTime? PubDate, string? Description, string EnclosureUrl, string EnclosureType)> items, string channelTitle = "Test Feed")
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+        builder.AppendLine("<rss version=\"2.0\">");
+        builder.AppendLine("  <channel>");
+        builder.AppendLine($"    <title>{channelTitle}</title>");
+        foreach (var item in items)
+        {
+            builder.AppendLine("    <item>");
+            builder.AppendLine($"      <title>{item.Title}</title>");
+            builder.AppendLine($"      <link>{item.Link}</link>");
+            builder.AppendLine($"      <guid>{item.Guid}</guid>");
+            if (item.PubDate.HasValue)
+            {
+                builder.AppendLine($"      <pubDate>{item.PubDate.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)}</pubDate>");
+            }
+            if (item.Description is not null)
+            {
+                builder.AppendLine($"      <description>{item.Description}</description>");
+            }
+            builder.AppendLine($"      <enclosure url=\"{item.EnclosureUrl}\" length=\"0\" type=\"{item.EnclosureType}\" />");
+            builder.AppendLine("    </item>");
+        }
+        builder.AppendLine("  </channel>");
+        builder.AppendLine("</rss>");
+        return builder.ToString();
+    }
+
+    /// <summary>
     /// Builds an Atom 1.0 document with the specified feed title and entries.
     /// </summary>
     /// <param name="entries">The entries to include in the feed.</param>

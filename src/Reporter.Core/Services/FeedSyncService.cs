@@ -24,6 +24,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly INetworkStatusService _networkStatusService;
     private readonly IKeywordFilter _keywordFilter;
     private readonly IFeedIconService _feedIconService;
+    private readonly IItemImageService _imageService;
     private readonly IItemContentStore _contentStore;
     private readonly IDebugLogService? _debugLogService;
     private readonly SemaphoreSlim _syncAllLock = new(1, 1);
@@ -39,6 +40,7 @@ public class FeedSyncService : IFeedSyncService
     /// <param name="networkStatusService">The network connectivity status service.</param>
     /// <param name="keywordFilter">The keyword filter used to discard matching items before storing.</param>
     /// <param name="feedIconService">The service used to backfill the favicon of feeds that have none.</param>
+    /// <param name="imageService">The service used to resolve and download article images.</param>
     /// <param name="contentStore">The store used to backfill missing item contents.</param>
     /// <param name="debugLogService">The optional session debug log service used to record sync failures.</param>
     public FeedSyncService(
@@ -50,6 +52,7 @@ public class FeedSyncService : IFeedSyncService
         INetworkStatusService networkStatusService,
         IKeywordFilter keywordFilter,
         IFeedIconService feedIconService,
+        IItemImageService imageService,
         IItemContentStore contentStore,
         IDebugLogService? debugLogService = null)
     {
@@ -61,6 +64,7 @@ public class FeedSyncService : IFeedSyncService
         _networkStatusService = networkStatusService;
         _keywordFilter = keywordFilter;
         _feedIconService = feedIconService;
+        _imageService = imageService;
         _contentStore = contentStore;
         _debugLogService = debugLogService;
     }
@@ -178,21 +182,39 @@ public class FeedSyncService : IFeedSyncService
         var feedItems = syndicationFeed.Items.ToList();
 
         var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
-        var (newItemEntities, filteredCount, contentBackfill) = CollectNewItems(feed, feedItems, existingItems, keywordTexts, cancellationToken);
+        var imageItemIds = await _contentStore
+            .GetImageIdsAsync(existingItems.Select(i => i.Id).ToList(), cancellationToken)
+            .ConfigureAwait(false);
+        var collected = CollectNewItems(
+            new CollectContext(feed, feedItems, existingItems, keywordTexts, imageItemIds),
+            cancellationToken);
 
-        var newItems = newItemEntities.Count;
-        if (newItems > 0)
+        var failedImageDownloads = await DownloadImagesAsync(
+            collected.ImageCandidates,
+            collected.NewItems.ToDictionary(i => i.Id),
+            collected.ContentBackfill,
+            cancellationToken).ConfigureAwait(false);
+        if (failedImageDownloads > 0)
         {
-            await _itemRepository.AddRangeAsync(newItemEntities).ConfigureAwait(false);
+            _ = _debugLogService?.LogAsync(
+                DebugLogCategory.Sync,
+                $"Image download failed for {failedImageDownloads} item(s) of feed '{feed.Title}'",
+                level: DebugLogLevel.Warning);
         }
 
-        if (contentBackfill.Count > 0)
+        var newItems = collected.NewItems.Count;
+        if (newItems > 0)
         {
-            await _contentStore.SetRangeAsync(contentBackfill).ConfigureAwait(false);
+            await _itemRepository.AddRangeAsync(collected.NewItems).ConfigureAwait(false);
+        }
+
+        if (collected.ContentBackfill.Count > 0)
+        {
+            await _contentStore.SetRangeAsync(collected.ContentBackfill).ConfigureAwait(false);
         }
 
         var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
-        var filteredSuffix = filteredCount > 0 ? $", {filteredCount} filtered" : string.Empty;
+        var filteredSuffix = collected.FilteredCount > 0 ? $", {collected.FilteredCount} filtered" : string.Empty;
         var message = status == FeedHealth.Warning
             ? $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}. Health warning triggered."
             : $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}.";
@@ -207,11 +229,11 @@ public class FeedSyncService : IFeedSyncService
         await UpdateFeedHealthAsync(feed, status, new FeedHealthUpdate(resolvedTitle, faviconUrl)).ConfigureAwait(false);
         await UpdateLogAsync(log, status, message).ConfigureAwait(false);
 
-        if (newItemEntities.Count > 0)
+        if (collected.NewItems.Count > 0)
         {
             try
             {
-                await _notificationService.NotifyNewItemsAsync(feed, newItemEntities, cancellationToken).ConfigureAwait(false);
+                await _notificationService.NotifyNewItemsAsync(feed, collected.NewItems, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -228,30 +250,34 @@ public class FeedSyncService : IFeedSyncService
         return new SyncResult(status, newItems, message);
     }
 
-    private (List<Item> NewItems, int FilteredCount, List<ItemContentEntry> ContentBackfill) CollectNewItems(
-        Feed feed,
-        IReadOnlyList<SyndicationItem> feedItems,
-        IReadOnlyList<Item> existingItems,
-        IReadOnlyList<string> keywordTexts,
-        CancellationToken cancellationToken)
+    private CollectResult CollectNewItems(CollectContext context, CancellationToken cancellationToken)
     {
         var newItemEntities = new List<Item>();
         var contentBackfill = new List<ItemContentEntry>();
+        var imageCandidates = new List<(Guid ItemId, string ImageUrl)>();
         var filteredCount = 0;
         var knownKeys = new HashSet<string>(
-            existingItems.Select(i => i.GuidOrHash),
+            context.ExistingItems.Select(i => i.GuidOrHash),
             StringComparer.Ordinal);
 
         // Items ohne gespeicherten Inhalt (z. B. nach einem Restore ohne
         // Content-Datenbank) erhalten den frisch gelesenen Inhalt nachgeladen;
         // die Keyword-Filterung entfaellt, weil das Item den Filter beim
         // urspruenglichen Speichern bereits passiert hat.
-        var backfillCandidates = existingItems
+        var backfillCandidates = context.ExistingItems
             .Where(i => i.ContentHtml is null)
             .GroupBy(i => i.GuidOrHash, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.Ordinal);
 
-        foreach (var feedItem in feedItems)
+        // Bestandsitems ohne gespeichertes Bild werden Bildkandidaten — das ist
+        // zugleich der implizite Retry fehlgeschlagener Downloads: ohne
+        // gespeichertes Bild bleibt das Item Kandidat beim naechsten Sync.
+        var imageBackfillCandidates = context.ExistingItems
+            .Where(i => !context.ImageItemIds.Contains(i.Id))
+            .GroupBy(i => i.GuidOrHash, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.Ordinal);
+
+        foreach (var feedItem in context.FeedItems)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -269,22 +295,28 @@ public class FeedSyncService : IFeedSyncService
                     contentBackfill.Add(new ItemContentEntry(existingItemId, backfillContent));
                 }
 
+                if (imageBackfillCandidates.Remove(guidOrHash, out var imageItemId) &&
+                    _imageService.ResolveImageUrl(feedItem, GetContentHtml(feedItem), link, context.Feed.Url) is { } backfillImageUrl)
+                {
+                    imageCandidates.Add((imageItemId, backfillImageUrl));
+                }
+
                 continue;
             }
 
             var title = feedItem.Title?.Text;
             var contentHtml = GetContentHtml(feedItem);
 
-            if (_keywordFilter.MatchesAny(title, contentHtml, keywordTexts))
+            if (_keywordFilter.MatchesAny(title, contentHtml, context.KeywordTexts))
             {
                 filteredCount++;
                 continue;
             }
 
-            newItemEntities.Add(new Item
+            var newItem = new Item
             {
                 Id = Guid.NewGuid(),
-                FeedId = feed.Id,
+                FeedId = context.Feed.Id,
                 Title = title ?? string.Empty,
                 Link = link,
                 PublishedAt = publishedAt,
@@ -292,10 +324,65 @@ public class FeedSyncService : IFeedSyncService
                 IsRead = false,
                 IsSavedForLater = false,
                 ContentHtml = contentHtml,
-            });
+            };
+            newItemEntities.Add(newItem);
+
+            if (_imageService.ResolveImageUrl(feedItem, contentHtml, link, context.Feed.Url) is { } imageUrl)
+            {
+                imageCandidates.Add((newItem.Id, imageUrl));
+            }
         }
 
-        return (newItemEntities, filteredCount, contentBackfill);
+        return new CollectResult(newItemEntities, filteredCount, contentBackfill, imageCandidates);
+    }
+
+    // Sequentielle Bild-Downloads: jeder Kandidat erhaelt ein ItemImage oder
+    // null — Download-Fehler sind im Image-Service isoliert, ein
+    // OperationCanceledException bricht den Sync ab. Neue Items bekommen das
+    // Bild per set-Accessor zugewiesen; Backfill-Treffer werden pro ItemId zu
+    // genau einem Eintrag in contentBackfill zusammengefuehrt, damit ein Item
+    // ohne Inhalt UND ohne Bild (Restore-Szenario) nicht zwei Eintraege
+    // erzeugt, von denen die "letzter gewinnt"-Dedup in SetRangeAsync einen
+    // verwerfen wuerde.
+    private async Task<int> DownloadImagesAsync(
+        IReadOnlyList<(Guid ItemId, string ImageUrl)> imageCandidates,
+        IReadOnlyDictionary<Guid, Item> newItemsById,
+        List<ItemContentEntry> contentBackfill,
+        CancellationToken cancellationToken)
+    {
+        var backfillIndex = contentBackfill
+            .Select((entry, index) => (entry.ItemId, index))
+            .ToDictionary(x => x.ItemId, x => x.index);
+
+        var failed = 0;
+        foreach (var (itemId, imageUrl) in imageCandidates)
+        {
+            var image = await _imageService.TryDownloadImageAsync(imageUrl, cancellationToken).ConfigureAwait(false);
+            if (image is null)
+            {
+                failed++;
+                continue;
+            }
+
+            if (newItemsById.TryGetValue(itemId, out var newItem))
+            {
+                newItem.Image = image;
+                continue;
+            }
+
+            if (backfillIndex.TryGetValue(itemId, out var index))
+            {
+                var existing = contentBackfill[index];
+                contentBackfill[index] = new ItemContentEntry(itemId, existing.ContentHtml, image);
+            }
+            else
+            {
+                backfillIndex[itemId] = contentBackfill.Count;
+                contentBackfill.Add(new ItemContentEntry(itemId, null, image));
+            }
+        }
+
+        return failed;
     }
 
     private static string? ResolveFeedTitle(Feed feed, SyndicationFeed syndicationFeed)
@@ -424,4 +511,36 @@ public class FeedSyncService : IFeedSyncService
             ? new Atom03NormalizingXmlReader(reader)
             : reader;
     }
+
+    /// <summary>
+    /// Bundles the inputs of <see cref="CollectNewItems"/> so the signature
+    /// stays stable when further backfill channels are added.
+    /// </summary>
+    /// <param name="Feed">The feed entity being synchronized.</param>
+    /// <param name="FeedItems">The parsed syndication items of the downloaded feed.</param>
+    /// <param name="ExistingItems">The items already stored for this feed.</param>
+    /// <param name="KeywordTexts">The active keyword filter texts.</param>
+    /// <param name="ImageItemIds">Ids of existing items that already have a stored image.</param>
+    /// <returns>A context record carrying all inputs of <see cref="CollectNewItems"/>.</returns>
+    private sealed record CollectContext(
+        Feed Feed,
+        IReadOnlyList<SyndicationItem> FeedItems,
+        IReadOnlyList<Item> ExistingItems,
+        IReadOnlyList<string> KeywordTexts,
+        IReadOnlySet<Guid> ImageItemIds);
+
+    /// <summary>
+    /// The outcome of <see cref="CollectNewItems"/>: the new item entities, the
+    /// keyword-filtered count and the backfill work items for content and image.
+    /// </summary>
+    /// <param name="NewItems">The newly created item entities.</param>
+    /// <param name="FilteredCount">The number of feed items removed by the keyword filter.</param>
+    /// <param name="ContentBackfill">Existing items whose stored content must be refetched.</param>
+    /// <param name="ImageCandidates">Items whose article image should be downloaded.</param>
+    /// <returns>A result record carrying the outcome of <see cref="CollectNewItems"/>.</returns>
+    private sealed record CollectResult(
+        List<Item> NewItems,
+        int FilteredCount,
+        List<ItemContentEntry> ContentBackfill,
+        List<(Guid ItemId, string ImageUrl)> ImageCandidates);
 }

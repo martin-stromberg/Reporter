@@ -27,7 +27,7 @@ Der gespeicherte Artikeltext bleibt ohne Internetverbindung vollständig lesbar:
 
 - Oberhalb des Artikelinhalts erscheint das Hinweis-Banner **„Links sind im Offline-Modus deaktiviert."**.
 - Links im Artikeltext werden als normaler Text dargestellt und sind nicht anklickbar. Wird dennoch eine externe Verknüpfung angesteuert, zeigt die App einen Hinweisdialog (bestätigen mit **OK**).
-- Externe Bilder im Artikelinhalt werden offline nicht geladen — sie werden ausgeblendet, damit keine leeren Platzhalter entstehen.
+- Externe Bilder im Artikelinhalt werden offline nicht geladen — sie werden ausgeblendet, damit keine leeren Platzhalter entstehen. Eine Ausnahme ist das beim Abruf lokal gespeicherte Artikelbild: Es bleibt eingebettet sichtbar — erscheint der Artikel ohne eigenes Inline-Bild, wird es als Bild oberhalb des Textes eingeblendet.
 - Kehrt die Verbindung zurück, werden Links und Bilder automatisch wiederhergestellt, ohne dass der Artikel erneut geöffnet werden muss.
 
 Details siehe [Offline lesen](offline.md).

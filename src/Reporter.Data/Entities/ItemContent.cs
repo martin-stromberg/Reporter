@@ -21,4 +21,19 @@ public class ItemContent
     /// Gets or sets the HTML content for offline reading.
     /// </summary>
     public string? ContentHtml { get; set; }
+
+    /// <summary>
+    /// Gets or sets the binary data of the locally stored article image.
+    /// </summary>
+    public byte[]? ImageData { get; set; }
+
+    /// <summary>
+    /// Gets or sets the MIME type of the stored article image.
+    /// </summary>
+    public string? ImageContentType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the origin URL the article image was downloaded from.
+    /// </summary>
+    public string? ImageUrl { get; set; }
 }

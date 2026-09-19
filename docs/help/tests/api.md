@@ -47,7 +47,7 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 
 ### `GET /feeds/{name}.xml`
 
-**Beschreibung:** Liefert einen RSS-2.0-Feed mit `application/rss+xml`. Existiert eine dedizierte Fixture-Datei `Fixtures/{name}.xml` (z. B. `link-feed.xml`), wird sie ausgeliefert — so können Tests den Feed-Inhalt formen (der `link-feed`-Artikel enthält z. B. einen externen `<a href="{baseUrl}/external-link">`-Link); sonst greift das generische Template `Fixtures/stub-feed.xml`. In beiden Fällen werden die Platzhalter `{name}` (Channel-`<title>` „Stub Feed {name}") und `{baseUrl}` (`BaseUrl` des Stubs) substituiert → eindeutiger Feed-Titel je Stub-URL für die Testisolation. Die Route `/feeds/site-feed.xml` ist vor dem Template registriert und liefert das statische `Fixtures/site-feed.xml` („Stub Site Feed").
+**Beschreibung:** Liefert einen RSS-2.0-Feed mit `application/rss+xml`. Existiert eine dedizierte Fixture-Datei `Fixtures/{name}.xml` (z. B. `link-feed.xml`, `image-feed.xml`, `broken-image-feed.xml`), wird sie ausgeliefert — so können Tests den Feed-Inhalt formen (der `link-feed`-Artikel enthält z. B. einen externen `<a href="{baseUrl}/external-link">`-Link; der `image-feed`-Artikel trägt ein `<enclosure type="image/png" url="{baseUrl}/images/article.png">` plus Inline-`<img>`, `broken-image-feed` zeigt sein Enclosure auf `/not-an-image`); sonst greift das generische Template `Fixtures/stub-feed.xml`. In beiden Fällen werden die Platzhalter `{name}` (Channel-`<title>` „Stub Feed {name}") und `{baseUrl}` (`BaseUrl` des Stubs) substituiert → eindeutiger Feed-Titel je Stub-URL für die Testisolation. Die Route `/feeds/site-feed.xml` ist vor dem Template registriert und liefert das statische `Fixtures/site-feed.xml` („Stub Site Feed").
 
 **Parameter:**
 
@@ -66,6 +66,20 @@ GET http://127.0.0.1:{port}/directory?url=http%3A%2F%2F127.0.0.1%3A{port}%2Fsite
 ### `GET /external-link`
 
 **Beschreibung:** Liefert eine kleine statische HTML-Seite (`text/html`) und inkrementiert dabei `StubFeedServer.ExternalLinkHitCount` (`Interlocked`-gezählt). Die Route ist das Ziel des externen Links im `link-feed`-Artikel: Da der System-Browser die URL nach `Browser.OpenAsync` abruft, belegt der Zähler im Test `ArticleLinkTests.ExternalLinkInArticle_OpensSystemBrowser`, dass die Navigation die App verlassen hat statt im WebView zu laufen.
+
+### `GET /images/{name}.png`
+
+**Beschreibung:** Liefert unabhängig vom Namen ein festes 64×48-PNG (`image/png`) aus der eingebetteten Base64-Konstante `StubFeedServer.StubImageBase64` — groß genug, damit die UIA-Prüfung des gerenderten Bildes (≥ 40 px) in `ArticleImageTests.ArticleImage_StoredLocally_AndShownOnCardAndDetail` stabil ist. Die Route ist das Enclosure-/Inline-Bildziel des `image-feed`-Stubs.
+
+**Parameter:**
+
+| Name | Typ | Pflicht | Beschreibung |
+|------|-----|---------|--------------|
+| `name` | Route-String | Ja | Beliebiger Bildname; dient nur der eindeutigen URL, die Antwort ist immer dasselbe PNG |
+
+### `GET /not-an-image`
+
+**Beschreibung:** Liefert `text/plain` („this is not an image") — bewusst kein Bild. Die Route ist das Enclosure-Ziel des `broken-image-feed`-Stubs und treibt damit den MIME-Reject-Pfad des Bild-Downloads in `ArticleImageTests.BrokenImage_DoesNotFailSync_StoresNoImage`: Der Abruf läuft erfolgreich, es wird kein Bild gespeichert und die Karte bleibt auf der Ersatz-Kaskade.
 
 ### Übrige Pfade
 

@@ -24,6 +24,7 @@ public class FeedSyncServiceTests : IDisposable
     private readonly KeywordRepository _keywordRepository;
     private readonly KeywordFilter _keywordFilter;
     private readonly FakeFeedIconService _feedIconService;
+    private readonly FakeItemImageService _imageService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncServiceTests"/> class.
@@ -39,6 +40,7 @@ public class FeedSyncServiceTests : IDisposable
         _keywordRepository = new KeywordRepository(_factory);
         _keywordFilter = new KeywordFilter(_keywordRepository, new KeywordMatcher());
         _feedIconService = new FakeFeedIconService();
+        _imageService = new FakeItemImageService();
     }
 
     /// <summary>
@@ -64,14 +66,32 @@ public class FeedSyncServiceTests : IDisposable
             };
         });
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService, _contentStore);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, notificationService ?? new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService, _imageService, _contentStore);
     }
 
     private FeedSyncService CreateFailingService(Exception exception, INetworkStatusService? networkStatusService = null)
     {
         var handler = new FakeHttpMessageHandler(_ => Task.FromException<HttpResponseMessage>(exception));
         var httpClient = new HttpClient(handler);
-        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService, _contentStore);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), networkStatusService ?? new FakeNetworkStatusService(), _keywordFilter, _feedIconService, _imageService, _contentStore);
+    }
+
+    private FeedSyncService CreateServiceWithImageDownload(string feedXml, Func<HttpRequestMessage, HttpResponseMessage> imageResponder)
+    {
+        var handler = new FakeHttpMessageHandler(request =>
+        {
+            if (request.RequestUri?.AbsolutePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return imageResponder(request);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(feedXml, Encoding.UTF8, "application/rss+xml"),
+            };
+        });
+        var httpClient = new HttpClient(handler);
+        return new FeedSyncService(_feedRepository, _itemRepository, _syncLogRepository, httpClient, new FakeNotificationService(), new FakeNetworkStatusService(), _keywordFilter, _feedIconService, new ItemImageService(httpClient), _contentStore);
     }
 
     private NotificationService CreateNotificationService(FakeLocalNotificationService localNotificationService)
@@ -1246,5 +1266,244 @@ public class FeedSyncServiceTests : IDisposable
         Assert.Equal(FeedHealth.Ok, result.Status);
         Assert.Equal(0, result.NewItems);
         Assert.Equal("<p>stored</p>", await _contentStore.GetAsync(existing.Id));
+    }
+
+    /// <summary>
+    /// Verifies that an enclosure image of a new item is downloaded during the
+    /// sync and stored in the content store.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_EnclosureImage_StoresImageLocally()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var imageBytes = new byte[] { 1, 2, 3 };
+        var xml = TestFeedXml.RssWithEnclosure(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Desc", "https://example.com/img.png", "image/png"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => TestHttpResponses.Png(imageBytes));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        var item = Assert.Single(items);
+        var image = await _contentStore.GetImageAsync(item.Id);
+        Assert.NotNull(image);
+        Assert.Equal(imageBytes, image.Data);
+        Assert.Equal("image/png", image.ContentType);
+        Assert.Equal("https://example.com/img.png", image.Url);
+    }
+
+    /// <summary>
+    /// Verifies that the first <c>&lt;img src&gt;</c> of the item content is
+    /// downloaded and stored when no dedicated image field exists.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FirstImgSrc_StoresImageLocally()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var imageBytes = new byte[] { 4, 5, 6 };
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "&lt;p&gt;A &lt;img src=&quot;https://example.com/img.png&quot; /&gt;&lt;/p&gt;"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => TestHttpResponses.Png(imageBytes));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var item = Assert.Single(await _itemRepository.GetByFeedAsync(feedId));
+        var image = await _contentStore.GetImageAsync(item.Id);
+        Assert.NotNull(image);
+        Assert.Equal(imageBytes, image.Data);
+        Assert.Equal("https://example.com/img.png", image.Url);
+    }
+
+    /// <summary>
+    /// Verifies that a relative <c>&lt;img src&gt;</c> is resolved against the
+    /// item link before the download.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_RelativeImgSrc_DownloadsResolved()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var imageBytes = new byte[] { 7 };
+        var xml = TestFeedXml.Rss(
+        [
+            ("Item One", "https://example.com/articles/1", "guid-1", DateTime.UtcNow, "&lt;p&gt;&lt;img src=&quot;/images/hero.png&quot; /&gt;&lt;/p&gt;"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => TestHttpResponses.Png(imageBytes));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var item = Assert.Single(await _itemRepository.GetByFeedAsync(feedId));
+        var image = await _contentStore.GetImageAsync(item.Id);
+        Assert.NotNull(image);
+        Assert.Equal("https://example.com/images/hero.png", image.Url);
+    }
+
+    /// <summary>
+    /// Verifies that a failed image download leaves the item stored without an
+    /// image while the sync stays healthy (remote image URL fallback).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ImageDownloadFails_SyncStillSucceeds()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.RssWithEnclosure(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Desc", "https://example.com/missing.png", "image/png"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+        var item = Assert.Single(await _itemRepository.GetByFeedAsync(feedId));
+        Assert.Null(await _contentStore.GetImageAsync(item.Id));
+
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedHealth.Ok, feed?.HealthStatus);
+    }
+
+    /// <summary>
+    /// Verifies that an image response exceeding the 5 MB cap is discarded —
+    /// exercised through the real <see cref="ItemImageService"/> limit.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_OversizedImage_StoresNoImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var xml = TestFeedXml.RssWithEnclosure(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Desc", "https://example.com/big.png", "image/png"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => TestHttpResponses.Png(new byte[(5 * 1024 * 1024) + 1]));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var item = Assert.Single(await _itemRepository.GetByFeedAsync(feedId));
+        Assert.Null(await _contentStore.GetImageAsync(item.Id));
+    }
+
+    /// <summary>
+    /// Verifies that an existing item without a stored image gets the freshly
+    /// resolved image backfilled while its stored content stays untouched.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ExistingItemsWithoutImage_BackfillsImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var existing = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item One",
+            Link = "https://example.com/1",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>stored</p>",
+        };
+        await _itemRepository.AddAsync(existing);
+
+        var imageBytes = new byte[] { 1, 2 };
+        var xml = TestFeedXml.RssWithEnclosure(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Desc", "https://example.com/img.png", "image/png"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => TestHttpResponses.Png(imageBytes));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal("<p>stored</p>", await _contentStore.GetAsync(existing.Id));
+        var image = await _contentStore.GetImageAsync(existing.Id);
+        Assert.NotNull(image);
+        Assert.Equal(imageBytes, image.Data);
+    }
+
+    /// <summary>
+    /// Verifies that an existing item without stored content and without a
+    /// stored image gets both backfilled through a single merged entry.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ExistingItemWithoutContentAndImage_BackfillsBoth()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var existing = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item One",
+            Link = "https://example.com/1",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _itemRepository.AddAsync(existing);
+
+        var imageBytes = new byte[] { 3 };
+        var xml = TestFeedXml.RssWithEnclosure(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Restored description", "https://example.com/img.png", "image/png"),
+        ]);
+        var service = CreateServiceWithImageDownload(xml, _ => TestHttpResponses.Png(imageBytes));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(0, result.NewItems);
+        Assert.Equal("Restored description", await _contentStore.GetAsync(existing.Id));
+        var image = await _contentStore.GetImageAsync(existing.Id);
+        Assert.NotNull(image);
+        Assert.Equal(imageBytes, image.Data);
+    }
+
+    /// <summary>
+    /// Verifies that an existing item with a stored image is not downloaded
+    /// again on the next sync.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ExistingImage_NotRedownloaded()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var existing = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item One",
+            Link = "https://example.com/1",
+            GuidOrHash = "guid-1",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>stored</p>",
+            Image = new ItemImage([9], "image/png", "https://example.com/img.png"),
+        };
+        await _itemRepository.AddAsync(existing);
+
+        var xml = TestFeedXml.RssWithEnclosure(
+        [
+            ("Item One", "https://example.com/1", "guid-1", DateTime.UtcNow, "Desc", "https://example.com/img.png", "image/png"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Empty(_imageService.RequestedUrls);
     }
 }

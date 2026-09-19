@@ -1,6 +1,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
 using System.Text.RegularExpressions;
+using Reporter.Core.Models;
 
 namespace Reporter.Core.Services;
 
@@ -33,12 +34,26 @@ public static class ArticleHtmlSanitizer
     /// elements are removed so that no external resources are required to read
     /// the article without a network connection.
     /// </param>
+    /// <param name="localImage">
+    /// The locally stored article image. When <paramref name="forOffline"/> is
+    /// <c>true</c> and an image is supplied, the first <c>&lt;img&gt;</c> tag is
+    /// replaced by an <c>&lt;img&gt;</c> with a <c>data:</c> URI — or, when the
+    /// content holds no image tag (including empty or <c>null</c> content), a
+    /// header image is prepended — while all other image tags are removed.
+    /// </param>
     /// <returns>The sanitized HTML or <c>null</c> if the input is <c>null</c>.</returns>
-    public static string? Sanitize(string? html, bool forOffline)
+    public static string? Sanitize(string? html, bool forOffline, ItemImage? localImage = null)
     {
+        // Das lokale Bild wird vor der Whitespace-Fruehrueckkehr ausgewertet,
+        // damit bild-only-Artikel ohne ContentHtml ein Header-Bild-Fragment
+        // erhalten statt auf den leeren Inhalt zurueckzufallen.
+        var localImageTag = forOffline && localImage is not null
+            ? CreateLocalImageTag(localImage)
+            : null;
+
         if (string.IsNullOrWhiteSpace(html))
         {
-            return html;
+            return localImageTag ?? html;
         }
 
         html = ScriptTagRegex.Replace(html, string.Empty);
@@ -56,9 +71,38 @@ public static class ArticleHtmlSanitizer
         {
             html = AnchorWithContentRegex.Replace(html, "$1");
             html = AnchorTagRegex.Replace(html, string.Empty);
-            html = ImageTagRegex.Replace(html, string.Empty);
+
+            if (localImageTag is not null)
+            {
+                var replaced = false;
+                html = ImageTagRegex.Replace(html, match =>
+                {
+                    if (replaced)
+                    {
+                        return string.Empty;
+                    }
+
+                    replaced = true;
+                    return localImageTag;
+                });
+                if (!replaced)
+                {
+                    html = localImageTag + html;
+                }
+            }
+            else
+            {
+                html = ImageTagRegex.Replace(html, string.Empty);
+            }
         }
 
         return html;
+    }
+
+    private static string CreateLocalImageTag(ItemImage image)
+    {
+        var mediaType = string.IsNullOrWhiteSpace(image.ContentType) ? "image/png" : image.ContentType;
+        var base64 = Convert.ToBase64String(image.Data);
+        return $"<img src=\"data:{mediaType};base64,{base64}\" />";
     }
 }

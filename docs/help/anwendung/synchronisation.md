@@ -39,6 +39,10 @@ Der Schalter **Beim Programmstart abrufen** in den **Einstellungen** (Voreinstel
 
 Beim Anlegen eines Feeds versucht die App, das Favicon der zugehörigen Website zu ermitteln und zu speichern. Fehlt das Symbol noch — etwa weil der Feed offline angelegt wurde —, holt die App es beim nächsten erfolgreichen Abruf nach. Gelingt die Ermittlung nicht, bleibt der Feed funktionsfähig und zeigt stattdessen seinen Anfangsbuchstaben (siehe [Feeds suchen und hinzufügen](feed-suche.md)).
 
+### Artikelbilder beim Abruf
+
+Bei jedem Abruf lädt die App zusätzlich zum Artikeltext das Artikelbild herunter und legt es lokal auf dem Gerät ab — so bleibt das Vorschaubild auf den Artikelkarten und das Bild in der Detailansicht auch ohne Internetverbindung sichtbar (siehe [Offline lesen](offline.md)). Als Bildquelle dient vorrangig das im Feed-Eintrag deklarierte Bild, ersatzweise das erste Bild im Artikeltext. Sehr große Bilder (über 5 MB) und Bilder, die nicht geladen werden können, werden übersprungen — der Artikel wird trotzdem gespeichert und zeigt das Bild dann wie bisher direkt von der Quelle, solange eine Verbindung besteht. Artikel, die ihr Bild noch nicht gespeichert haben — etwa weil der Download einmal scheiterte oder der Artikel vor diesem Feature abgerufen wurde —, holen es beim nächsten Abruf automatisch nach.
+
 ## Anzeigetitel beim ersten Abruf
 
 Wurde ein Feed ohne bekannten Anzeigetitel angelegt — etwa über die **Suche** mit einem Treffer ohne Titel oder über **URL direkt hinzufügen** bzw. den Direkt-Hinzufügen-Dialog (siehe [Feeds suchen und hinzufügen](feed-suche.md)) —, zeigt die Liste zunächst einen Platzhalter aus der Feed-Adresse: den Dateinamen (z. B. `heise-atom.xml`), bei Adressen ohne Dateipfad den Website-Namen oder notfalls die Adresse selbst. Beim ersten erfolgreichen Abruf ersetzt die App den Platzhalter automatisch durch den echten Titel aus dem Feed. Selbst vergebene Titel (über **Umbenennen**) bleiben unverändert und werden nie überschrieben.
