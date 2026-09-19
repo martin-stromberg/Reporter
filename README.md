@@ -5,10 +5,13 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![Pre-Release](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/staging-ci.yml?branch=staging&label=Pre-Release)](https://github.com/martin-stromberg/Reporter/actions/workflows/staging-ci.yml)
 [![Release-Workflow](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/release.yml?label=Release-Workflow)](https://github.com/martin-stromberg/Reporter/actions/workflows/release.yml)
+[![Deploy Pages](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/deploy-pages.yml?label=Deploy%20Pages)](https://github.com/martin-stromberg/Reporter/actions/workflows/deploy-pages.yml)
 [![Release](https://img.shields.io/github/v/release/martin-stromberg/Reporter?include_prereleases)](https://github.com/martin-stromberg/Reporter/releases)
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm--Noncommercial--1.0.0-blue)](LICENSE)
 
 Lokaler RSS-/Feed-Reader als .NET MAUI-App für iOS (derzeit nur iPhone). Der Windows-Build dient als Umgebung für Entwicklung und automatisierte Tests.
+
+Die öffentliche Projekt-Website (deutsch/englisch) ist unter https://martin-stromberg.github.io/Reporter/ erreichbar — Quellen im Ordner [`website/`](website/).
 
 ![App-Demo (iOS-Simulator): Ungelesen-Übersicht, Feed-Suche nach „zdf.de“ und Abonnieren von ZDFheute](docs/help/anwendung/screenshots/readme-demo-ios/app-demo-ios.gif)
 
@@ -18,11 +21,11 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 
 - Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
 - RSS-/Atom-Feed-Abruf (RSS 2.0, Atom 1.0 und Atom 0.3) mit Feed-Health-Status und Sync-Protokoll
-- Feeds per Suche (feedsearch.dev plus Autodiscovery) oder direkter URL-Eingabe hinzufügen; Verwaltung per Kontextmenü auf der **Feeds**-Seite
-- Artikeldetailansicht mit WebView-Volltext, automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser — externe Links im Artikeltext werden an den System-Browser übergeben
+- Feeds über eine Website-Adresse finden (feedsearch.dev plus Autodiscovery) oder direkt per Feed-URL hinzufügen; Verwaltung per Kontextmenü auf der **Feeds**-Seite
+- Artikeldetailansicht mit dem vom Feed gelieferten Artikeltext (bei vielen Feeds nur ein Teaser; der Originalbeitrag lässt sich über „Im Browser öffnen" aufrufen), automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser — externe Links im Artikeltext werden an den System-Browser übergeben
 - Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und konfigurierbare Sortierung der ungelesenen Artikel
 - Automatische Hintergrund-Aktualisierung (In-App-Timer; unter iOS zusätzlich OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit Ruhezeiten
-- Vollständig offline lesbar dank lokaler SQLite-Datenhaltung; unter iOS sind die Nutzerdaten (Abonnements, Einstellungen, Lesestatus) im iCloud-Backup enthalten, während die re-downloadbaren Artikelinhalte in einer separaten, ausgeschlossenen Datei liegen und nach einer Wiederherstellung automatisch nachgeladen werden
+- Synchronisierte Artikeltexte offline lesbar dank lokaler SQLite-Datenhaltung (Originalbeiträge, Links und Bilder benötigen eine Verbindung); unter iOS sind die Nutzerdaten (Abonnements, Einstellungen, Lesestatus) im iCloud-Backup enthalten, während die re-downloadbaren Artikelinhalte in einer separaten, ausgeschlossenen Datei liegen und nach einer Wiederherstellung automatisch nachgeladen werden
 - Light/Dark-Theme, lokalisierte UI (Deutsch/Englisch), durchgängige Barrierefreiheit und ein Design-System mit eigenem App-Icon
 - Beim ersten Start legt die App einmalig die Kategorie „News" mit einem Demo-Feed an
 
@@ -35,6 +38,7 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 | `Reporter.Data` | Datenbankzugriff und Repositories |
 | `Reporter.Tests` | Unit- und Integrationstests |
 | `Reporter.E2ETests` | FlaUI-UIA3-End-to-End-Smoke-Tests der Windows-App |
+| `website/` | Statische zweisprachige Projekt-Website (HTML/CSS) — Quellen der GitHub-Pages-Site |
 
 ## Voraussetzungen
 
@@ -74,7 +78,7 @@ Die E2E-Suite hinterlässt keine verwaisten App-Prozesse: Die gestartete `Report
 
 ## CI/CD
 
-GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md).
+GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md). Zusätzlich veröffentlicht der Workflow `deploy-pages.yml` den Ordner `website/` bei Änderungen auf `main` als GitHub-Pages-Site unter `https://martin-stromberg.github.io/Reporter/` — Details siehe [Website](docs/help/website/index.md).
 
 ## Changelog
 
@@ -103,6 +107,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - [Datenschutzerklärung](docs/privacy-policy.md) — öffentlich referenzierbare Privacy-Policy (deutsch/englisch) für App Store Connect
 - [App-Store-Review](docs/app-store-review.md) — Review-Notizen zur Einreichung: App-Privacy-Antworten, ATS-Begründung, Altersfreigabe, iPad-Entscheidung
 - [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien und Asset-Reparatur
+- [Website](docs/help/website/index.md) — zweisprachige statische Projekt-Website unter `website/` (Landing-Page, Datenschutz, Changelog, Press Kit) und ihr Deployment auf GitHub Pages
 - [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
 - [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen
 - [Contributing](CONTRIBUTING.md) — Richtlinien für Beiträge

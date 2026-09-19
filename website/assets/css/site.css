@@ -1,0 +1,476 @@
+/* Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. */
+
+/* Reporter — shared site stylesheet.
+   Design system: #1e293b (dark slate) / #f59e0b (amber accent),
+   Newsreader for headlines, Inter for UI text — with system fallbacks. */
+
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
+  --color-text: #1e293b;
+  --color-text-muted: #475569;
+  --color-primary: #1e293b;
+  --color-accent: #f59e0b;
+  --color-accent-dark: #b45309;
+  --color-border: #e2e8f0;
+  /* Dark chrome surfaces (header, hero, store badge, footer) stay dark in
+     both color schemes — text on them uses the on-chrome palette. */
+  --color-chrome: #1e293b;
+  --color-on-chrome: #f1f5f9;
+  --color-on-chrome-muted: #cbd5e1;
+  --color-on-chrome-subtle: #94a3b8;
+  --color-on-chrome-link: #e2e8f0;
+  --color-on-accent: #1e293b;
+  --color-on-accent-dark: #ffffff;
+  --color-link-hover: #92400e;
+  --font-headline: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --max-width: 72rem;
+  --radius: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f172a;
+    --color-surface: #1e293b;
+    --color-text: #e2e8f0;
+    --color-text-muted: #94a3b8;
+    --color-primary: #f1f5f9;
+    --color-accent: #f59e0b;
+    --color-accent-dark: #fbbf24;
+    --color-on-accent-dark: #1e293b;
+    --color-link-hover: #f59e0b;
+    --color-border: #334155;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-headline);
+  color: var(--color-primary);
+  line-height: 1.25;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; margin-top: 2.5rem; }
+h3 { font-size: 1.15rem; }
+
+a {
+  color: var(--color-accent-dark);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+/* Visible focus styles for accessibility */
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Header / navigation ---------- */
+
+.site-header {
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+}
+
+.site-header-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-headline);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-on-chrome);
+  text-decoration: none;
+}
+
+/* The brand sits on the dark chrome header in both schemes, so it keeps
+   the light accent hover instead of the scheme-dependent link hover. */
+.brand:hover {
+  color: var(--color-accent);
+}
+
+.brand img {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+.site-nav a,
+.lang-switch a {
+  color: var(--color-on-chrome-link);
+  text-decoration: none;
+  padding: 0.5rem 0.6rem; /* keeps touch targets >= 44px tall */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.4rem;
+}
+
+.site-nav a:hover,
+.lang-switch a:hover {
+  color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.lang-switch {
+  font-size: 0.85rem;
+  color: var(--color-on-chrome-subtle);
+}
+
+/* ---------- Layout ---------- */
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+section {
+  margin-bottom: 2.5rem;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+  border-radius: var(--radius);
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2rem;
+}
+
+.hero-text {
+  flex: 1 1 20rem;
+}
+
+.hero-text h1 {
+  color: var(--color-on-chrome);
+  font-size: 2.6rem;
+  margin: 0 0 0.5rem;
+}
+
+.hero-text .slogan {
+  font-family: var(--font-headline);
+  font-size: 1.35rem;
+  color: var(--color-accent);
+  margin: 0 0 1rem;
+}
+
+.hero-text p {
+  color: var(--color-on-chrome-muted);
+  max-width: 38rem;
+}
+
+.hero-visual {
+  flex: 0 1 16rem;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-visual img {
+  border-radius: 1.2rem;
+  box-shadow: 0 1.2rem 2.5rem rgba(0, 0, 0, 0.4);
+  max-width: 14rem;
+}
+
+/* ---------- Feature list / cards ---------- */
+
+.feature-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-list li {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+}
+
+.feature-list li strong {
+  display: block;
+  color: var(--color-primary);
+  margin-bottom: 0.25rem;
+}
+
+/* ---------- Screenshots ---------- */
+
+.screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
+}
+
+.screenshot-grid figure {
+  margin: 0;
+  text-align: center;
+}
+
+/* Download link wrapped around a screenshot: the block display makes the
+   whole image area the touch target. */
+.screenshot-grid figure > a {
+  display: block;
+}
+
+.screenshot-grid img {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.screenshot-grid figcaption {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 0.4rem;
+}
+
+.demo-gif {
+  max-width: 22rem;
+  margin: 1.5rem auto 0;
+  display: block;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+/* ---------- Store badge / buttons ---------- */
+
+.store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+  border-radius: 0.6rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.95rem;
+}
+
+.store-badge small {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-on-chrome-subtle);
+  line-height: 1.1;
+}
+
+.store-badge strong {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-dark);
+  color: var(--color-on-accent-dark);
+}
+
+.btn-outline {
+  border: 1px solid var(--color-accent-dark);
+  color: var(--color-accent-dark);
+}
+
+.btn-outline:hover {
+  background: var(--color-accent-dark);
+  color: var(--color-on-accent-dark);
+}
+
+/* ---------- Tables ---------- */
+
+/* Horizontal scroll container so wide tables stay usable on narrow
+   viewports instead of overflowing the page. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+th, td {
+  border: 1px solid var(--color-border);
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--color-surface);
+  font-family: var(--font-headline);
+}
+
+/* ---------- Press kit ---------- */
+
+.press-downloads {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+.press-downloads li {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.press-downloads img {
+  max-height: 6rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Download actions are rendered as .btn chips (min-height 44px) so every
+   press-kit download is a compliant touch target. */
+.press-downloads li > .btn,
+.press-downloads .button-row,
+.screenshot-grid figcaption .btn {
+  margin-top: 0.6rem;
+}
+
+blockquote.copy-text {
+  background: var(--color-surface);
+  border-left: 4px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+  background: var(--color-chrome);
+  color: var(--color-on-chrome-muted);
+  margin-top: 2rem;
+}
+
+.site-footer-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.site-footer a {
+  color: var(--color-on-chrome-link);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+}
+
+.site-footer a:hover {
+  color: var(--color-accent);
+}
+
+.site-footer p {
+  margin: 0.25rem 0;
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 40rem) {
+  .site-header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-nav {
+    margin-left: 0;
+  }
+
+  .hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .hero-text h1 {
+    font-size: 2rem;
+  }
+}
