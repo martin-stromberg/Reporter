@@ -27,9 +27,9 @@ auf deinem Gerät: Die Nutzerdaten (Abonnements, Kategorien, Stichwort-Filter,
 Einstellungen sowie Lese- und Merkstatus der Artikel) stecken in `reporter.db`
 und sind ins iCloud-Backup eingeschlossen, damit sie eine
 Geräte-Wiederherstellung überstehen. Die re-downloadbaren Artikelinhalte
-liegen dagegen in einer zweiten Datei (`reporter-content.db`), die unter iOS
-vom iCloud-Backup ausgeschlossen ist — sie werden bei Bedarf über die
-Synchronisation erneut abgerufen.
+und -bilder liegen dagegen in einer zweiten Datei (`reporter-content.db`),
+die unter iOS vom iCloud-Backup ausgeschlossen ist — sie werden bei Bedarf
+über die Synchronisation erneut abgerufen.
 
 Die App erhebt **keine** Telemetrie, enthält **kein** Tracking, **keine**
 Analyse-SDKs und **keine** Werbung. Es findet kein Profiling statt.
@@ -44,7 +44,7 @@ durch deine Feed-Auswahl bestimmst:
 | Feed-Abruf (Synchronisation) | Die von dir abonnierten Feed-Server (beliebige Hosts, HTTP oder HTTPS) | Deine IP-Adresse; keine Inhalte von dir |
 | Feed-Suche | `feedsearch.dev` (Verzeichnis-API) sowie die von dir eingegebene Website und deren Standard-Feedpfade (Autodiscovery) | Dein Suchbegriff / die eingegebene URL sowie deine IP-Adresse |
 | Feed-Symbole (Favicons) | Die Websites der abonnierten Feeds | Deine IP-Adresse; keine Inhalte von dir |
-| Artikelbilder und externe Links | Die in den Artikeln referenzierten Server der jeweiligen Anbieter | Deine IP-Adresse; keine Inhalte von dir |
+| Artikelbilder (werden beim Feed-Abruf lokal gespeichert) und externe Links | Die in den Feeds und Artikeln referenzierten Server der jeweiligen Anbieter | Deine IP-Adresse; keine Inhalte von dir |
 
 Bei jedem dieser Abrufe erhält der jeweilige Fremdserver zwangsläufig deine
 IP-Adresse — wie bei jedem Besuch dieser Server in einem Browser. Reporter
@@ -117,9 +117,9 @@ settings are stored exclusively in local SQLite databases on your device:
 the user data (subscriptions, categories, keyword filters, settings and the
 read/saved state of articles) lives in `reporter.db` and is included in
 iCloud backup so it survives a device restore. The re-downloadable article
-contents live in a second file (`reporter-content.db`), which is excluded
-from iCloud backup on iOS — they are fetched again through synchronization
-when needed.
+contents and images live in a second file (`reporter-content.db`), which is
+excluded from iCloud backup on iOS — they are fetched again through
+synchronization when needed.
 
 The app collects **no** telemetry, contains **no** tracking, **no** analytics
 SDKs and **no** advertising. No profiling takes place.
@@ -134,7 +134,7 @@ feed selection:
 | Feed sync | The feed servers you subscribed to (arbitrary hosts, HTTP or HTTPS) | Your IP address; none of your content |
 | Feed search | `feedsearch.dev` (directory API) plus the website you typed and its standard feed paths (autodiscovery) | Your search term / the URL you entered, plus your IP address |
 | Feed icons (favicons) | The websites of subscribed feeds | Your IP address; none of your content |
-| Article images and external links | The servers referenced inside articles | Your IP address; none of your content |
+| Article images (downloaded and stored locally during feed sync) and external links | The servers referenced inside feeds and articles | Your IP address; none of your content |
 
 Each of these requests inevitably exposes your IP address to the respective
 third-party server — exactly as visiting those servers in a browser would.

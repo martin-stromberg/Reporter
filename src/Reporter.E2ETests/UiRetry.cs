@@ -307,6 +307,7 @@ public static class UiRetry
             // Non-focusable elements (e.g. plain groups) are clicked anyway.
         }
 
+        BringToFront(element);
         element.Click(moveMouse: true);
     }
 
@@ -326,6 +327,28 @@ public static class UiRetry
 
         element.Focus();
         Keyboard.Type(text);
+    }
+
+    // Raises the window hosting the element before a real mouse click: another
+    // window (e.g. a browser opened by a previous test) can cover the app and
+    // swallow the click aimed at the element's screen coordinates.
+    private static void BringToFront(AutomationElement element)
+    {
+        try
+        {
+            var current = element;
+            while (current.ControlType != ControlType.Window && current.Parent is { } parent)
+            {
+                current = parent;
+            }
+
+            current.AsWindow()?.SetForeground();
+            Thread.Sleep(150);
+        }
+        catch (Exception)
+        {
+            // Best effort — the click is attempted either way.
+        }
     }
 
     private static AutomationElement? FindInScope(

@@ -54,7 +54,7 @@
 
 ## `dotnet test Reporter.sln` schlägt ohne gebaute App fehl
 
-**Symptom:** Ein Solution-weiter Testlauf meldet neun fehlgeschlagene `Reporter.E2ETests`-Tests.
+**Symptom:** Ein Solution-weiter Testlauf meldet elf fehlgeschlagene `Reporter.E2ETests`-Tests.
 
 **Ursache:** Das E2E-Projekt ist Teil der Solution; ohne gebaute `Reporter.exe` und interaktive Session kann es nicht laufen.
 

@@ -11,6 +11,7 @@
     <!-- Value Converters -->
 
     <converters:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBoolConverter" />
+    <converters:LocalImageLoaderToImageSourceConverter x:Key="LocalImageLoaderToImageSourceConverter" />
 
     <!-- Typografie-Styles -->
 

@@ -84,16 +84,36 @@
                     Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
                     VerticalOptions="Start">
                 <Border.Triggers>
-                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline, Source={x:Reference Card}}" Value="False">
+                    <MultiTrigger TargetType="Border">
+                        <MultiTrigger.Conditions>
+                            <BindingCondition Binding="{Binding IsOnline, Source={x:Reference Card}}" Value="False"/>
+                            <BindingCondition Binding="{Binding HasLocalImage}" Value="False"/>
+                        </MultiTrigger.Conditions>
                         <Setter Property="IsVisible" Value="False"/>
-                    </DataTrigger>
+                    </MultiTrigger>
                 </Border.Triggers>
                 <Grid>
+                    <Image Source="{Binding LocalImageLoader, Converter={StaticResource LocalImageLoaderToImageSourceConverter}}"
+                           AutomationId="ArticleCardThumbnail"
+                           Aspect="AspectFill"
+                           WidthRequest="80"
+                           HeightRequest="80"
+                           IsVisible="{Binding HasLocalImage}"/>
                     <Image Source="{Binding ImageUrl}"
                            Aspect="AspectFill"
                            WidthRequest="80"
                            HeightRequest="80"
-                           IsVisible="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+                           IsVisible="False">
+                        <Image.Triggers>
+                            <MultiTrigger TargetType="Image">
+                                <MultiTrigger.Conditions>
+                                    <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                    <BindingCondition Binding="{Binding HasLocalImage}" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="IsVisible" Value="True"/>
+                            </MultiTrigger>
+                        </Image.Triggers>
+                    </Image>
                     <Image Source="{Binding FeedFaviconUrl}"
                            Aspect="AspectFit"
                            WidthRequest="48"
@@ -104,6 +124,7 @@
                                 <MultiTrigger.Conditions>
                                     <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
                                     <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                    <BindingCondition Binding="{Binding HasLocalImage}" Value="False"/>
                                 </MultiTrigger.Conditions>
                                 <Setter Property="IsVisible" Value="True"/>
                             </MultiTrigger>
@@ -119,6 +140,7 @@
                                 <MultiTrigger.Conditions>
                                     <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
                                     <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False"/>
+                                    <BindingCondition Binding="{Binding HasLocalImage}" Value="False"/>
                                 </MultiTrigger.Conditions>
                                 <Setter Property="IsVisible" Value="True"/>
                             </MultiTrigger>

@@ -1499,4 +1499,338 @@ public class ItemRepositoryTests : IDisposable
         Assert.Contains(first.Id, ids);
         Assert.Contains(second.Id, ids);
     }
+
+    /// <summary>
+    /// Verifies that GetByIdAsync hydrates <see cref="Item.Image"/> from the
+    /// content store.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByIdAsync_HydratesImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([1, 2, 3], "image/png", "https://example.com/img.png");
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "With Image",
+            GuidOrHash = "with-image",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>body</p>",
+            Image = image,
+        };
+        await _repository.AddAsync(item);
+
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result?.Image);
+        Assert.Equal(image.Data, result.Image.Data);
+        Assert.Equal("image/png", result.Image.ContentType);
+        Assert.Equal("https://example.com/img.png", result.Image.Url);
+    }
+
+    /// <summary>
+    /// Verifies that the paged unread list projects a lazy
+    /// <see cref="ItemListItem.LocalImageLoader"/> that yields the stored image
+    /// bytes on demand.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetUnreadByDateAsync_Paged_ProjectsLocalImageLoader()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([1, 2, 3], "image/png", null);
+        var withImage = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "With Image",
+            GuidOrHash = "with-image",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = image,
+        };
+        var withoutImage = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Without Image",
+            GuidOrHash = "without-image",
+            IsRead = false,
+            IsSavedForLater = false,
+        };
+        await _repository.AddRangeAsync(new List<Item> { withImage, withoutImage });
+
+        var result = await _repository.GetUnreadByDateAsync(0, 50);
+
+        Assert.Equal(2, result.Count);
+        var listed = Assert.Single(result, i => i.Id == withImage.Id);
+        Assert.True(listed.HasLocalImage);
+        Assert.Equal(image.Data, await ReadAllBytesAsync(listed.LocalImageLoader!));
+        var plain = Assert.Single(result, i => i.Id == withoutImage.Id);
+        Assert.Null(plain.LocalImageLoader);
+        Assert.False(plain.HasLocalImage);
+    }
+
+    /// <summary>
+    /// Verifies that the saved-for-later list projects a lazy
+    /// <see cref="ItemListItem.LocalImageLoader"/> that yields the stored image
+    /// bytes on demand.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetSavedForLaterAsync_ProjectsLocalImageLoader()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([4, 5], "image/jpeg", null);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Saved",
+            GuidOrHash = "saved",
+            IsRead = false,
+            IsSavedForLater = true,
+            Image = image,
+        };
+        await _repository.AddAsync(item);
+
+        var result = await _repository.GetSavedForLaterAsync(0, 50);
+
+        var listed = Assert.Single(result);
+        Assert.True(listed.HasLocalImage);
+        Assert.Equal(image.Data, await ReadAllBytesAsync(listed.LocalImageLoader!));
+    }
+
+    private static async Task<byte[]> ReadAllBytesAsync(Func<CancellationToken, Task<Stream>> loader)
+    {
+        await using var stream = await loader(CancellationToken.None);
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer);
+        return buffer.ToArray();
+    }
+
+    /// <summary>
+    /// Verifies that AddAsync stores the supplied image in the content store.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_WithImage_StoresImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([1], "image/png", "https://example.com/img.png");
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>body</p>",
+            Image = image,
+        };
+        await _repository.AddAsync(item);
+
+        Assert.Equal(image.Data, (await _contentStore.GetImageAsync(item.Id))?.Data);
+    }
+
+    /// <summary>
+    /// Verifies that AddAsync stores an image-only item — one without content —
+    /// as an image-only content store row.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_ImageOnlyItem_StoresEntry()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([1], "image/png", null);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = image,
+        };
+        await _repository.AddAsync(item);
+
+        Assert.Null(await _contentStore.GetAsync(item.Id));
+        Assert.Equal(image.Data, (await _contentStore.GetImageAsync(item.Id))?.Data);
+        Assert.Contains(item.Id, await _contentStore.GetItemIdsAsync());
+    }
+
+    /// <summary>
+    /// Verifies that AddRangeAsync stores an image-only item as an image-only
+    /// content store row.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddRangeAsync_ImageOnlyItem_StoresEntry()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([1], "image/png", null);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = image,
+        };
+        await _repository.AddRangeAsync(new List<Item> { item });
+
+        Assert.Null(await _contentStore.GetAsync(item.Id));
+        Assert.Equal(image.Data, (await _contentStore.GetImageAsync(item.Id))?.Data);
+        Assert.Contains(item.Id, await _contentStore.GetItemIdsAsync());
+    }
+
+    /// <summary>
+    /// Verifies that UpdateAsync leaves a stored image untouched because it
+    /// never passes an image to the content store.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_KeepsStoredImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var image = new ItemImage([1], "image/png", null);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>old</p>",
+            Image = image,
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.UpdateAsync(new Item
+        {
+            Id = item.Id,
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>new</p>",
+        });
+
+        Assert.Equal("<p>new</p>", await _contentStore.GetAsync(item.Id));
+        Assert.Equal(image.Data, (await _contentStore.GetImageAsync(item.Id))?.Data);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.DeleteAsync"/> also removes the
+    /// stored image of the item.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesStoredImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = new ItemImage([1], "image/png", null),
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.DeleteAsync(item.Id);
+
+        Assert.Null(await _contentStore.GetImageAsync(item.Id));
+        Assert.Empty(await _contentStore.GetItemIdsAsync());
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.DeleteExpiredAsync"/> removes
+    /// the stored images of the deleted items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteExpiredAsync_RemovesStoredImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var expired = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Expired",
+            GuidOrHash = "expired",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Image = new ItemImage([1], "image/png", null),
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Image = new ItemImage([2], "image/png", null),
+        };
+        await _repository.AddRangeAsync(new List<Item> { expired, kept });
+
+        var deleted = await _repository.DeleteExpiredAsync(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal(1, deleted);
+        Assert.Null(await _contentStore.GetImageAsync(expired.Id));
+        Assert.NotNull(await _contentStore.GetImageAsync(kept.Id));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.DeleteRangeAsync"/> removes the
+    /// stored images of the deleted items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteRangeAsync_RemovesStoredImage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var first = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "First",
+            GuidOrHash = "first",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = new ItemImage([1], "image/png", null),
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = new ItemImage([2], "image/png", null),
+        };
+        await _repository.AddRangeAsync(new List<Item> { first, kept });
+
+        var deleted = await _repository.DeleteRangeAsync(new List<Guid> { first.Id });
+
+        Assert.Equal(1, deleted);
+        Assert.Null(await _contentStore.GetImageAsync(first.Id));
+        Assert.NotNull(await _contentStore.GetImageAsync(kept.Id));
+    }
 }

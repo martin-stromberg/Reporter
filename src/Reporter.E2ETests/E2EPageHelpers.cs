@@ -33,16 +33,14 @@ public sealed class E2EPageHelpers
     /// the target page so the active page is really rendered. On the narrow
     /// window only the first tabs render in the Shell tab strip; the rest live
     /// behind the NavigationView overflow button ("Mehr"/"More") and only enter
-    /// the UIA tree once that flyout is opened.
+    /// the UIA tree once that flyout is opened. A pushed page left over from a
+    /// previous test (e.g. an article detail) keeps covering the tab root, so
+    /// the whole select-then-anchor sequence is retried and the pushed page is
+    /// popped via its back button when the anchor stays away.
     /// </summary>
     /// <param name="tabTitle">The localized tab title.</param>
     public void SelectTab(string tabTitle)
     {
-        var selected = UiRetry.SelectTab(Window, tabTitle);
-        Assert.True(
-            selected,
-            $"Tab '{tabTitle}' was not found. App running: {!_fixture.App.HasExited}");
-
         var anchor = tabTitle switch
         {
             var t when t == AppResources.TabFeeds => AppResources.ActionAddFeed,
@@ -50,9 +48,28 @@ public sealed class E2EPageHelpers
             var t when t == AppResources.TabUnread => AppResources.ButtonMarkAllRead,
             _ => null,
         };
-        if (anchor is not null)
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+        while (true)
         {
-            UiRetry.WaitForElementByName(Window, anchor);
+            var selected = UiRetry.SelectTab(Window, tabTitle);
+            Assert.True(
+                selected,
+                $"Tab '{tabTitle}' was not found. App running: {!_fixture.App.HasExited}");
+
+            if (anchor is null ||
+                UiRetry.TryFindElementByName(Window, anchor, timeout: TimeSpan.FromSeconds(8)) is not null)
+            {
+                return;
+            }
+
+            if (!TryPopPushedPage() && DateTime.UtcNow >= deadline)
+            {
+                // Same failure signature as before: the regular anchor wait
+                // reports the missing element after the last retry.
+                UiRetry.WaitForElementByName(Window, anchor);
+                return;
+            }
         }
     }
 
@@ -78,4 +95,24 @@ public sealed class E2EPageHelpers
             Window,
             cf => cf.ByName(AppResources.PlaceholderFeedSearch).Or(cf.ByControlType(ControlType.Edit)),
             description: "URL entry");
+
+    // Returns whether a back navigation was triggered. Covers both the Shell
+    // chrome back button (WinUI NavigationView) and the article detail's own
+    // back button in the reader control bar — the two affordances that pop a
+    // page pushed onto a tab's navigation stack.
+    private bool TryPopPushedPage()
+    {
+        var back = UiRetry.TryFindElement(
+            Window,
+            cf => cf.ByAutomationId("NavigationViewBackButton")
+                .Or(cf.ByName(AppResources.AccessibilityBack).And(cf.ByControlType(ControlType.Button))),
+            TimeSpan.FromSeconds(1));
+        if (back is null)
+        {
+            return false;
+        }
+
+        UiRetry.InvokeOrClick(back);
+        return true;
+    }
 }

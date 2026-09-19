@@ -23,6 +23,12 @@ public sealed class StubFeedServer : IAsyncLifetime
     private WebApplication? _app;
     private int _externalLinkHitCount;
 
+    // A valid 64x48 PNG — large enough to render as a visibly sized image in
+    // the article detail WebView (the E2E image assertion requires >= 40 px
+    // height) while staying compact in source and well below the 5 MB cap.
+    private const string StubImageBase64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAYAAAChS3wfAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAC5SURBVGhD7dChbQQBFEPBrS6FpZfrIP1t+JDD1n9giIEl+/n5/Xsvewyu6QCDazrA4JoOMLjm6wHv55nmHnWAgSxc4x51gIEsXOMedYCBLFzjHnWAgSxc4x51gIEsXOMedYCBLFzjHnWAgSxc4x51gIEsXOMedYCBLFzjHnWAwTUdYHBNBxhc0wEG15w/4B9CubXDbrBBzQAAAABJRU5ErkJggg==";
+
     /// <summary>
     /// Gets the base URL of the stub server (<c>http://127.0.0.1:{port}</c>), valid
     /// after <see cref="InitializeAsync"/> has completed.
@@ -92,6 +98,16 @@ public sealed class StubFeedServer : IAsyncLifetime
                     .Replace("{baseUrl}", BaseUrl, StringComparison.Ordinal),
                 "application/rss+xml");
         });
+
+        // The article image the image-feed.xml fixture references: the 64x48
+        // PNG from StubImageBase64 — sized >= 40 px so the E2E image assertion
+        // in ArticleImageTests can verify a visibly rendered image.
+        app.MapGet("/images/{name}.png", (string name) =>
+            Results.Bytes(Convert.FromBase64String(StubImageBase64), "image/png"));
+
+        // A URL that answers with a non-image body so the app's Content-Type
+        // check must reject it (broken-image-feed.xml fixture).
+        app.MapGet("/not-an-image", () => Results.Content("not an image", "text/plain"));
 
         // Target of the external article link: hits are counted so the test can
         // prove the system browser fetched this URL instead of the WebView.

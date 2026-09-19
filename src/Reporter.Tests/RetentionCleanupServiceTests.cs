@@ -402,4 +402,50 @@ public class RetentionCleanupServiceTests : IDisposable
         Assert.Null(await _contentStore.GetAsync(orphan.Id));
         Assert.Equal("<p>kept</p>", await _contentStore.GetAsync(kept.Id));
     }
+
+    /// <summary>
+    /// Verifies that CleanupAsync removes image-only content store entries
+    /// whose item no longer exists, because <c>GetItemIdsAsync</c> covers
+    /// image-only rows as well.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CleanupAsync_RemovesOrphanedImages()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var orphan = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Orphaned",
+            GuidOrHash = "orphan",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = new ItemImage([1], "image/png", null),
+        };
+        var kept = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Kept",
+            GuidOrHash = "kept",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = new ItemImage([2], "image/png", null),
+        };
+        await _itemRepository.AddRangeAsync(new List<Item> { orphan, kept });
+
+        // Das Item direkt in der Nutzerdatenbank loeschen, ohne den
+        // Content-Speicher zu bereinigen — so entsteht eine Waise.
+        await using (var context = _factory.CreateDbContext())
+        {
+            await context.Items.Where(i => i.Id == orphan.Id).ExecuteDeleteAsync();
+        }
+
+        var deleted = await _service.CleanupAsync();
+
+        Assert.Equal(0, deleted);
+        Assert.Null(await _contentStore.GetImageAsync(orphan.Id));
+        Assert.NotNull(await _contentStore.GetImageAsync(kept.Id));
+    }
 }

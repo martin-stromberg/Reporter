@@ -75,6 +75,7 @@ public class ServiceCollectionTests
             .AddSingleton<HttpClient>(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
             .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<IFeedIconService, FeedIconService>()
+            .AddSingleton<IItemImageService, ItemImageService>()
             .AddSingleton<IKeywordMatcher, KeywordMatcher>()
             .AddSingleton<IKeywordFilter, KeywordFilter>()
             .AddSingleton<INotificationService, NotificationService>()
@@ -86,6 +87,7 @@ public class ServiceCollectionTests
 
         Assert.NotNull(provider.GetRequiredService<IFeedSyncService>());
         Assert.NotNull(provider.GetRequiredService<IFeedIconService>());
+        Assert.NotNull(provider.GetRequiredService<IItemImageService>());
 
         connection.Dispose();
     }

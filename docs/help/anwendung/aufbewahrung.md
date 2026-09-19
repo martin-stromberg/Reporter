@@ -45,13 +45,13 @@ Die Kandidaten kommen hydratisiert aus dem `ItemRepository` — `item.ContentHtm
 
 ### 5. Content-Waisen aufräumen
 
-Der Artikelinhalt liegt getrennt von den Nutzerdaten in der Content-Datenbank `reporter-content.db` (siehe [Datenmodell](datenmodell.md)). Damit dort keine verwaisten Zeilen liegen bleiben, führt `RetentionCleanupService` am Ende von `CleanupAsync` zusätzlich einen Sweep durch (er läuft nur bei aktiver Aufbewahrungsfrist — bei `RetentionDays <= 0` endet `CleanupAsync` bereits vorher):
+Artikelinhalt und lokal gespeichertes Artikelbild liegen getrennt von den Nutzerdaten in der Content-Datenbank `reporter-content.db` (siehe [Datenmodell](datenmodell.md)) — eine `item_contents`-Zeile kann Inhalt, Bild oder beides tragen. Damit dort keine verwaisten Zeilen liegen bleiben, führt `RetentionCleanupService` am Ende von `CleanupAsync` zusätzlich einen Sweep durch (er läuft nur bei aktiver Aufbewahrungsfrist — bei `RetentionDays <= 0` endet `CleanupAsync` bereits vorher):
 
 1. `IItemContentStore.GetItemIdsAsync()` liest alle im Content-Speicher vorhandenen `item_id`-Werte.
 2. `IItemRepository.GetAllIdsAsync()` liefert die noch existierenden Artikel-IDs der Hauptdatenbank.
 3. `IItemContentStore.DeleteRangeAsync` löscht alle Content-IDs ohne zugehörigen Artikel.
 
-Der Sweep ist Sicherheitsnetz: Die expliziten Löschpfade räumen `item_contents` bereits unmittelbar mit — `DeleteAsync`, `DeleteExpiredAsync` und `DeleteRangeAsync` im `ItemRepository` sowie `FeedRepository.DeleteAsync`, das nach der Haupt-Datenbankkaskade die Inhalte aller Artikel des Feeds entfernt. Der Sweep entfernt Restbestände, die trotzdem zurückgeblieben sind (etwa aus einem früheren Zwischenstand). Der Rückgabewert von `CleanupAsync` zählt weiterhin nur gelöschte Artikel — Waisen-Zeilen fließen nicht in die Zahl ein.
+Der Sweep ist Sicherheitsnetz: Die expliziten Löschpfade räumen `item_contents` bereits unmittelbar mit — `DeleteAsync`, `DeleteExpiredAsync` und `DeleteRangeAsync` im `ItemRepository` sowie `FeedRepository.DeleteAsync`, das nach der Haupt-Datenbankkaskade die Inhalte und Bilder aller Artikel des Feeds entfernt. Da die Bilddaten in denselben Zeilen liegen, gehen sie bei jeder Löschung automatisch mit verloren. Der Sweep entfernt Restbestände, die trotzdem zurückgeblieben sind (etwa aus einem früheren Zwischenstand). Der Rückgabewert von `CleanupAsync` zählt weiterhin nur gelöschte Artikel — Waisen-Zeilen fließen nicht in die Zahl ein.
 
 ```mermaid
 flowchart TD
