@@ -54,7 +54,8 @@ public class ItemRepository : IItemRepository
         }
 
         var contentHtml = await _contentStore.GetAsync(id);
-        return MapToModel(entity, contentHtml);
+        var image = await _contentStore.GetImageAsync(id);
+        return MapToModel(entity, contentHtml, image);
     }
 
     /// <inheritdoc />
@@ -64,9 +65,9 @@ public class ItemRepository : IItemRepository
         context.Items.Add(MapToEntity(item));
         await context.SaveChangesAsync();
 
-        if (!string.IsNullOrEmpty(item.ContentHtml))
+        if (!string.IsNullOrEmpty(item.ContentHtml) || item.Image is not null)
         {
-            await _contentStore.SetAsync(item.Id, item.ContentHtml);
+            await _contentStore.SetAsync(item.Id, item.ContentHtml, item.Image);
         }
     }
 
@@ -148,7 +149,8 @@ public class ItemRepository : IItemRepository
             .ToListAsync();
 
         var contents = await GetContentsAsync(rows, r => r.Id);
-        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id))).ToList();
+        var imageItemIds = await _contentStore.GetImageIdsAsync(rows.Select(r => r.Id).ToList());
+        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id), imageItemIds.Contains(r.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -262,7 +264,8 @@ public class ItemRepository : IItemRepository
             .ToListAsync();
 
         var contents = await GetContentsAsync(rows, r => r.Id);
-        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id))).ToList();
+        var imageItemIds = await _contentStore.GetImageIdsAsync(rows.Select(r => r.Id).ToList());
+        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id), imageItemIds.Contains(r.Id))).ToList();
     }
 
     /// <inheritdoc />
@@ -278,8 +281,8 @@ public class ItemRepository : IItemRepository
         await context.SaveChangesAsync();
 
         var contentEntries = items
-            .Where(i => !string.IsNullOrEmpty(i.ContentHtml))
-            .Select(i => new ItemContentEntry(i.Id, i.ContentHtml))
+            .Where(i => !string.IsNullOrEmpty(i.ContentHtml) || i.Image is not null)
+            .Select(i => new ItemContentEntry(i.Id, i.ContentHtml, i.Image))
             .ToList();
         await _contentStore.SetRangeAsync(contentEntries);
     }
@@ -366,7 +369,7 @@ public class ItemRepository : IItemRepository
         });
     }
 
-    private static ItemListItem MapToListItem(ItemListRow row, string? contentHtml)
+    private ItemListItem MapToListItem(ItemListRow row, string? contentHtml, bool hasLocalImage)
     {
         return new ItemListItem
         {
@@ -382,20 +385,23 @@ public class ItemRepository : IItemRepository
             CategoryId = row.CategoryId,
             CategoryName = row.CategoryName,
             ImageUrl = ExtractImageUrl(contentHtml),
+            LocalImageLoader = hasLocalImage ? ct => LoadImageStreamAsync(row.Id, ct) : null,
             Summary = ExtractSummary(contentHtml),
             ReadingTimeText = ReadingTimeEstimator.EstimateText(contentHtml),
         };
     }
 
+    // The image blob is only read when the card actually renders the
+    // thumbnail, so paged list projections never pull the full image data.
+    private async Task<Stream> LoadImageStreamAsync(Guid itemId, CancellationToken cancellationToken)
+    {
+        var image = await _contentStore.GetImageAsync(itemId, cancellationToken).ConfigureAwait(false);
+        return image is null ? Stream.Null : new MemoryStream(image.Data, writable: false);
+    }
+
     private static string? ExtractImageUrl(string? contentHtml)
     {
-        if (string.IsNullOrWhiteSpace(contentHtml))
-        {
-            return null;
-        }
-
-        var match = Regex.Match(contentHtml, "<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOptions.IgnoreCase);
-        return match.Success ? match.Groups[1].Value.Trim() : null;
+        return ItemImageService.ExtractFirstImageUrl(contentHtml);
     }
 
     private static string? ExtractSummary(string? contentHtml)
@@ -423,7 +429,7 @@ public class ItemRepository : IItemRepository
         return await _contentStore.GetRangeAsync(items.Select(idSelector).ToList(), cancellationToken);
     }
 
-    private static Item MapToModel(ItemEntity entity, string? contentHtml)
+    private static Item MapToModel(ItemEntity entity, string? contentHtml, ItemImage? image = null)
     {
         return new Item
         {
@@ -437,6 +443,7 @@ public class ItemRepository : IItemRepository
             IsSavedForLater = entity.IsSavedForLater,
             ReadAt = entity.ReadAt,
             ContentHtml = contentHtml,
+            Image = image,
         };
     }
 

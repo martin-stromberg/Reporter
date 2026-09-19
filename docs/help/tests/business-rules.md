@@ -23,7 +23,7 @@
 **Beschreibung:** Die Route `/feeds/{name}.xml` des `StubFeedServer` liefert bevorzugt eine gleichnamige Fixture-Datei `Fixtures/{name}.xml` aus; erst wenn keine existiert, greift das generische `stub-feed.xml`-Template. So können Tests Feed-Inhalte gezielt formen, ohne das Template für alle anderen Tests zu verändern.
 
 **Bedingungen:**
-- `File.Exists(Fixtures/{name}.xml)` → dedizierte Datei (z. B. `link-feed.xml` mit einem externen `<a href="{baseUrl}/external-link">`-Link im Artikel-HTML).
+- `File.Exists(Fixtures/{name}.xml)` → dedizierte Datei (z. B. `link-feed.xml` mit einem externen `<a href="{baseUrl}/external-link">`-Link im Artikel-HTML, `image-feed.xml`/`broken-image-feed.xml` mit Bild-Enclosures für `ArticleImageTests`).
 - Sonst → `Fixtures/stub-feed.xml` als Fallback.
 - In beiden Fällen werden die Platzhalter `{name}` und `{baseUrl}` substituiert.
 

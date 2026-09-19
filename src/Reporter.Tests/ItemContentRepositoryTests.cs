@@ -232,4 +232,210 @@ public class ItemContentRepositoryTests : IDisposable
         Assert.Contains(first, ids);
         Assert.Contains(second, ids);
     }
+
+    /// <summary>
+    /// Verifies that SetAsync stores an image that GetImageAsync returns with
+    /// data, content type and origin URL.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetAsync_WithImage_PersistsImage()
+    {
+        var itemId = Guid.NewGuid();
+        var image = new ItemImage([1, 2, 3], "image/png", "https://example.com/img.png");
+
+        await _store.SetAsync(itemId, "<p>body</p>", image);
+
+        var stored = await _store.GetImageAsync(itemId);
+        Assert.NotNull(stored);
+        Assert.Equal(image.Data, stored.Data);
+        Assert.Equal("image/png", stored.ContentType);
+        Assert.Equal("https://example.com/img.png", stored.Url);
+        Assert.Equal("<p>body</p>", await _store.GetAsync(itemId));
+    }
+
+    /// <summary>
+    /// Verifies that GetImageAsync returns null for an item without a stored image.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetImageAsync_UnknownItem_ReturnsNull()
+    {
+        Assert.Null(await _store.GetImageAsync(Guid.NewGuid()));
+    }
+
+    /// <summary>
+    /// Verifies that GetImageIdsAsync returns exactly the identifiers with a
+    /// stored image, including image-only rows, and filters out identifiers
+    /// that were not part of the lookup.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetImageIdsAsync_ReturnsStoredImageIds()
+    {
+        var withImage = Guid.NewGuid();
+        var imageOnly = Guid.NewGuid();
+        var withoutImage = Guid.NewGuid();
+        var notQueried = Guid.NewGuid();
+        await _store.SetAsync(withImage, "<p>body</p>", new ItemImage([1], "image/png", null));
+        await _store.SetAsync(imageOnly, null, new ItemImage([2], "image/png", null));
+        await _store.SetAsync(withoutImage, "<p>body</p>");
+        await _store.SetAsync(notQueried, null, new ItemImage([3], "image/png", null));
+
+        var ids = await _store.GetImageIdsAsync(new List<Guid> { withImage, imageOnly, withoutImage });
+
+        Assert.Equal(2, ids.Count);
+        Assert.Contains(withImage, ids);
+        Assert.Contains(imageOnly, ids);
+    }
+
+    /// <summary>
+    /// Verifies that SetAsync with a null content and an image creates an
+    /// image-only row that keeps GetItemIdsAsync coverage.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetAsync_NullContentWithImage_KeepsRow()
+    {
+        var itemId = Guid.NewGuid();
+
+        await _store.SetAsync(itemId, null, new ItemImage([1], "image/png", null));
+
+        Assert.Null(await _store.GetAsync(itemId));
+        Assert.NotNull(await _store.GetImageAsync(itemId));
+        Assert.Contains(itemId, await _store.GetItemIdsAsync());
+    }
+
+    /// <summary>
+    /// Verifies that an image-only SetRangeAsync entry writes the image columns.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetRangeAsync_ImageOnlyEntry_UpsertsImageColumns()
+    {
+        var itemId = Guid.NewGuid();
+        var image = new ItemImage([7, 8], "image/webp", "https://example.com/i.webp");
+
+        await _store.SetRangeAsync(new List<ItemContentEntry>
+        {
+            new(itemId, null, image),
+        });
+
+        var stored = await _store.GetImageAsync(itemId);
+        Assert.NotNull(stored);
+        Assert.Equal(image.Data, stored.Data);
+        Assert.Equal("image/webp", stored.ContentType);
+        Assert.Equal("https://example.com/i.webp", stored.Url);
+    }
+
+    /// <summary>
+    /// Verifies that a content-only SetRangeAsync entry leaves a stored image
+    /// untouched.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetRangeAsync_ContentOnlyEntry_KeepsImage()
+    {
+        var itemId = Guid.NewGuid();
+        var image = new ItemImage([9], "image/png", null);
+        await _store.SetAsync(itemId, "<p>old</p>", image);
+
+        await _store.SetRangeAsync(new List<ItemContentEntry>
+        {
+            new(itemId, "<p>new</p>"),
+        });
+
+        Assert.Equal("<p>new</p>", await _store.GetAsync(itemId));
+        Assert.Equal(image.Data, (await _store.GetImageAsync(itemId))?.Data);
+    }
+
+    /// <summary>
+    /// Verifies that SetAsync with a null content and an image keeps the stored
+    /// content — the semantics that make the image backfill non-destructive.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetAsync_NullContentWithImage_KeepsStoredContent()
+    {
+        var itemId = Guid.NewGuid();
+        await _store.SetAsync(itemId, "<p>body</p>");
+
+        await _store.SetAsync(itemId, null, new ItemImage([1], "image/png", null));
+
+        Assert.Equal("<p>body</p>", await _store.GetAsync(itemId));
+        Assert.NotNull(await _store.GetImageAsync(itemId));
+    }
+
+    /// <summary>
+    /// Verifies that an image-only SetRangeAsync entry keeps the stored content.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetRangeAsync_ImageOnlyEntry_KeepsStoredContent()
+    {
+        var itemId = Guid.NewGuid();
+        await _store.SetAsync(itemId, "<p>body</p>");
+
+        await _store.SetRangeAsync(new List<ItemContentEntry>
+        {
+            new(itemId, null, new ItemImage([2], "image/png", null)),
+        });
+
+        Assert.Equal("<p>body</p>", await _store.GetAsync(itemId));
+        Assert.NotNull(await _store.GetImageAsync(itemId));
+    }
+
+    /// <summary>
+    /// Verifies that SetAsync with a null content removes the stored content
+    /// but keeps a stored image, leaving an image-only row behind.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SetAsync_NullContent_KeepsStoredImage()
+    {
+        var itemId = Guid.NewGuid();
+        var image = new ItemImage([3], "image/png", null);
+        await _store.SetAsync(itemId, "<p>body</p>", image);
+
+        await _store.SetAsync(itemId, null);
+
+        Assert.Null(await _store.GetAsync(itemId));
+        Assert.Equal(image.Data, (await _store.GetImageAsync(itemId))?.Data);
+        Assert.Contains(itemId, await _store.GetItemIdsAsync());
+    }
+
+    /// <summary>
+    /// Verifies that DeleteAsync removes the stored image together with the row.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesImage()
+    {
+        var itemId = Guid.NewGuid();
+        await _store.SetAsync(itemId, "<p>body</p>", new ItemImage([1], "image/png", null));
+
+        await _store.DeleteAsync(itemId);
+
+        Assert.Null(await _store.GetImageAsync(itemId));
+        Assert.Empty(await _store.GetImageIdsAsync(new List<Guid> { itemId }));
+    }
+
+    /// <summary>
+    /// Verifies that DeleteRangeAsync removes the stored images of the
+    /// supplied identifiers.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteRangeAsync_RemovesImage()
+    {
+        var first = Guid.NewGuid();
+        var kept = Guid.NewGuid();
+        await _store.SetAsync(first, null, new ItemImage([1], "image/png", null));
+        await _store.SetAsync(kept, null, new ItemImage([2], "image/png", null));
+
+        await _store.DeleteRangeAsync(new List<Guid> { first });
+
+        Assert.Null(await _store.GetImageAsync(first));
+        Assert.NotNull(await _store.GetImageAsync(kept));
+    }
 }

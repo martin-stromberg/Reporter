@@ -302,4 +302,34 @@ public class FeedRepositoryTests : IDisposable
         Assert.Null(await _contentStore.GetAsync(item.Id));
         Assert.Empty(await _contentStore.GetItemIdsAsync());
     }
+
+    /// <summary>
+    /// Verifies that deleting a feed also removes the stored images of its
+    /// items: the content rows — including the image columns — live in the
+    /// separate content database and must be deleted explicitly.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesItemImages()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed", NotificationsEnabled = true };
+        await _repository.AddAsync(feed);
+        var itemRepository = new ItemRepository(_factory, _contentStore);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feed.Id,
+            Title = "Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            Image = new ItemImage([1], "image/png", null),
+        };
+        await itemRepository.AddAsync(item);
+
+        await _repository.DeleteAsync(feed.Id);
+
+        Assert.Null(await _contentStore.GetImageAsync(item.Id));
+        Assert.Empty(await _contentStore.GetImageIdsAsync(new List<Guid> { item.Id }));
+    }
 }

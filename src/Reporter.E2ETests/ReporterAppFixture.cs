@@ -45,6 +45,13 @@ public sealed class ReporterAppFixture : IAsyncLifetime
     /// </summary>
     public string DatabasePath { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// Gets the path of the isolated content database (<c>reporter-content.db</c>)
+    /// the app creates next to <see cref="DatabasePath"/> for the re-downloadable
+    /// article contents and images.
+    /// </summary>
+    public string ContentDatabasePath { get; private set; } = string.Empty;
+
     /// <inheritdoc />
     public async Task InitializeAsync()
     {
@@ -156,6 +163,9 @@ public sealed class ReporterAppFixture : IAsyncLifetime
         _tempDirectory = Path.Combine(Path.GetTempPath(), $"reporter-e2e-{Guid.NewGuid():N}");
         Directory.CreateDirectory(_tempDirectory);
         DatabasePath = Path.Combine(_tempDirectory, "reporter.db");
+        // The app derives the content database path from REPORTER_DB_PATH and
+        // places reporter-content.db in the same directory.
+        ContentDatabasePath = Path.Combine(_tempDirectory, "reporter-content.db");
 
         var appPath = ResolveAppPath();
         var startInfo = new ProcessStartInfo(appPath) { UseShellExecute = false };

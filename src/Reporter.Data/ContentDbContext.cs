@@ -44,5 +44,8 @@ public class ContentDbContext : DbContext
         entity.HasKey(e => e.ItemId);
         entity.Property(e => e.ItemId).HasColumnName("item_id");
         entity.Property(e => e.ContentHtml).HasColumnName("content_html");
+        entity.Property(e => e.ImageData).HasColumnName("image_data");
+        entity.Property(e => e.ImageContentType).HasColumnName("image_content_type");
+        entity.Property(e => e.ImageUrl).HasColumnName("image_url");
     }
 }

@@ -33,6 +33,9 @@ public class ContentDbContextTests
         Assert.Equal("item_contents", entityType.GetTableName());
         Assert.Equal("item_id", entityType.FindProperty(nameof(ItemContent.ItemId))?.GetColumnName());
         Assert.Equal("content_html", entityType.FindProperty(nameof(ItemContent.ContentHtml))?.GetColumnName());
+        Assert.Equal("image_data", entityType.FindProperty(nameof(ItemContent.ImageData))?.GetColumnName());
+        Assert.Equal("image_content_type", entityType.FindProperty(nameof(ItemContent.ImageContentType))?.GetColumnName());
+        Assert.Equal("image_url", entityType.FindProperty(nameof(ItemContent.ImageUrl))?.GetColumnName());
         var key = Assert.Single(entityType.GetKeys());
         Assert.Equal(nameof(ItemContent.ItemId), Assert.Single(key.Properties).Name);
     }
@@ -65,6 +68,41 @@ public class ContentDbContextTests
             var reloaded = await context.ItemContents.AsNoTracking().SingleAsync();
             Assert.Equal(itemId, reloaded.ItemId);
             Assert.Equal("<p>body</p>", reloaded.ContentHtml);
+        }
+    }
+
+    /// <summary>
+    /// Verifies that an <see cref="ItemContent"/> entity with image data
+    /// survives a persist roundtrip through the real migrations of the
+    /// <see cref="TestContentDbContextFactory"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task ItemContent_PersistImageRoundtrip()
+    {
+        using var factory = new TestContentDbContextFactory();
+        var itemId = Guid.NewGuid();
+        var imageData = new byte[] { 1, 2, 3 };
+
+        await using (var context = factory.CreateDbContext())
+        {
+            context.ItemContents.Add(new ItemContent
+            {
+                ItemId = itemId,
+                ContentHtml = "<p>body</p>",
+                ImageData = imageData,
+                ImageContentType = "image/png",
+                ImageUrl = "https://example.com/img.png",
+            });
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = factory.CreateDbContext())
+        {
+            var reloaded = await context.ItemContents.AsNoTracking().SingleAsync();
+            Assert.Equal(imageData, reloaded.ImageData);
+            Assert.Equal("image/png", reloaded.ImageContentType);
+            Assert.Equal("https://example.com/img.png", reloaded.ImageUrl);
         }
     }
 }

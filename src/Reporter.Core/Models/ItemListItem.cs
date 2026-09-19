@@ -63,6 +63,20 @@ public class ItemListItem
     public string? ImageUrl { get; init; }
 
     /// <summary>
+    /// Gets the lazy loader of the locally stored article image bytes for the
+    /// thumbnail, or <c>null</c> when no local image is stored. The blob is only
+    /// fetched when a card actually renders the image so paged list projections
+    /// stay free of the image bulk; the returned stream is empty when the image
+    /// was removed in the meantime.
+    /// </summary>
+    public Func<CancellationToken, Task<Stream>>? LocalImageLoader { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether a locally stored image is available.
+    /// </summary>
+    public bool HasLocalImage => LocalImageLoader is not null;
+
+    /// <summary>
     /// Gets the favicon URL of the item's feed, or <c>null</c> when none was discovered.
     /// </summary>
     public string? FeedFaviconUrl { get; init; }
@@ -110,6 +124,7 @@ public class ItemListItem
             CategoryId = CategoryId,
             CategoryName = CategoryName,
             ImageUrl = ImageUrl,
+            LocalImageLoader = LocalImageLoader,
             FeedFaviconUrl = FeedFaviconUrl,
             Summary = Summary,
             ReadingTimeText = ReadingTimeText,

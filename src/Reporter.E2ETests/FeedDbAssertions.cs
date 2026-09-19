@@ -68,6 +68,80 @@ public static class FeedDbAssertions
                 "$title",
                 title));
 
+    /// <summary>
+    /// Polls until the item with the given title (looked up in
+    /// <paramref name="databasePath"/>) has a non-empty <c>image_data</c> row in
+    /// the separate <c>item_contents</c> table of
+    /// <paramref name="contentDatabasePath"/>. The join across the two database
+    /// files is resolved in code because they cannot be queried together.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="contentDatabasePath">The path of the temp <c>reporter-content.db</c>.</param>
+    /// <param name="title">The item title to look for.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether a stored image row exists for the item.</returns>
+    public static async Task<bool> ItemImageExistsAsync(
+        string databasePath,
+        string contentDatabasePath,
+        string title,
+        TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(15));
+        while (true)
+        {
+            var itemId = await ReadItemIdAsync(databasePath, title).ConfigureAwait(false);
+            if (itemId is not null &&
+                await ImageRowExistsAsync(contentDatabasePath, itemId).ConfigureAwait(false))
+            {
+                return true;
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                return false;
+            }
+
+            await Task.Delay(500).ConfigureAwait(false);
+        }
+    }
+
+    // Reads the raw id value of the item row with the given title. The value is
+    // handed back to SQLite unchanged so the check works regardless of whether
+    // the GUID column is stored as TEXT or BLOB.
+    private static async Task<object?> ReadItemIdAsync(string databasePath, string title)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return null;
+        }
+
+        await using var connection = CreateReadOnlyConnection(databasePath);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT id FROM items WHERE title = $title";
+        command.Parameters.AddWithValue("$title", title);
+        return await command.ExecuteScalarAsync().ConfigureAwait(false);
+    }
+
+    // Checks the content database for a non-empty image_data row of the item.
+    private static async Task<bool> ImageRowExistsAsync(string contentDatabasePath, object itemId)
+    {
+        if (!File.Exists(contentDatabasePath))
+        {
+            return false;
+        }
+
+        await using var connection = CreateReadOnlyConnection(contentDatabasePath);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT COUNT(*) FROM item_contents " +
+            "WHERE item_id = $itemId AND image_data IS NOT NULL AND LENGTH(image_data) > 0";
+        command.Parameters.AddWithValue("$itemId", itemId);
+        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        return result is long count && count > 0;
+    }
+
     // Polls the check until it reports the row or the timeout elapses; the
     // polling absorbs the delay between the UI action and the asynchronous
     // persistence inside the app.
@@ -106,11 +180,7 @@ public static class FeedDbAssertions
             return false;
         }
 
-        // Pooling is disabled on purpose: a pooled connection keeps the
-        // database file open inside the test host after Dispose, which blocks
-        // the temp-directory cleanup in the teardown paths.
-        await using var connection = new SqliteConnection(
-            $"Data Source={databasePath};Mode=ReadOnly;Default Timeout=5;Pooling=False");
+        await using var connection = CreateReadOnlyConnection(databasePath);
         await connection.OpenAsync().ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = commandText;
@@ -118,4 +188,10 @@ public static class FeedDbAssertions
         var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
         return result is long count && count > 0;
     }
+
+    // Pooling is disabled on purpose: a pooled connection keeps the
+    // database file open inside the test host after Dispose, which blocks
+    // the temp-directory cleanup in the teardown paths.
+    private static SqliteConnection CreateReadOnlyConnection(string databasePath)
+        => new($"Data Source={databasePath};Mode=ReadOnly;Default Timeout=5;Pooling=False");
 }

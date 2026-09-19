@@ -46,33 +46,61 @@ public class ItemContentRepository : IItemContentStore
         await using var context = await _factory.CreateDbContextAsync(cancellationToken);
         return await context.ItemContents
             .AsNoTracking()
-            .Where(c => itemIds.Contains(c.ItemId))
+            .Where(c => itemIds.Contains(c.ItemId) && c.ContentHtml != null)
             .ToDictionaryAsync(c => c.ItemId, c => c.ContentHtml!, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task SetAsync(Guid itemId, string? contentHtml, CancellationToken cancellationToken = default)
+    public async Task<ItemImage?> GetImageAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        var row = await context.ItemContents
+            .AsNoTracking()
+            .Where(c => c.ItemId == itemId && c.ImageData != null)
+            .Select(c => new { c.ImageData, c.ImageContentType, c.ImageUrl })
+            .FirstOrDefaultAsync(cancellationToken);
+        return row?.ImageData is null
+            ? null
+            : new ItemImage(row.ImageData, row.ImageContentType, row.ImageUrl);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlySet<Guid>> GetImageIdsAsync(IReadOnlyList<Guid> itemIds, CancellationToken cancellationToken = default)
+    {
+        if (itemIds.Count == 0)
+        {
+            return new HashSet<Guid>();
+        }
+
+        await using var context = await _factory.CreateDbContextAsync(cancellationToken);
+        var ids = await context.ItemContents
+            .AsNoTracking()
+            .Where(c => itemIds.Contains(c.ItemId) && c.ImageData != null)
+            .Select(c => c.ItemId)
+            .ToListAsync(cancellationToken);
+        return new HashSet<Guid>(ids);
+    }
+
+    /// <inheritdoc />
+    public async Task SetAsync(Guid itemId, string? contentHtml, ItemImage? image = null, CancellationToken cancellationToken = default)
     {
         await using var context = await _factory.CreateDbContextAsync(cancellationToken);
         var entity = await context.ItemContents.FindAsync([itemId], cancellationToken);
-        if (string.IsNullOrEmpty(contentHtml))
-        {
-            if (entity is not null)
-            {
-                context.ItemContents.Remove(entity);
-                await context.SaveChangesAsync(cancellationToken);
-            }
-
-            return;
-        }
-
         if (entity is null)
         {
-            context.ItemContents.Add(new ItemContent { ItemId = itemId, ContentHtml = contentHtml });
+            if (string.IsNullOrEmpty(contentHtml) && image is null)
+            {
+                return;
+            }
+
+            entity = new ItemContent { ItemId = itemId };
+            context.ItemContents.Add(entity);
         }
-        else
+
+        ApplyEntry(entity, contentHtml, image);
+        if (string.IsNullOrEmpty(entity.ContentHtml) && entity.ImageData is null)
         {
-            entity.ContentHtml = contentHtml;
+            context.ItemContents.Remove(entity);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -102,24 +130,25 @@ public class ItemContentRepository : IItemContentStore
 
         foreach (var entry in deduplicated)
         {
-            if (string.IsNullOrEmpty(entry.ContentHtml))
+            if (existingById.TryGetValue(entry.ItemId, out var entity))
             {
-                if (existingById.TryGetValue(entry.ItemId, out var toRemove))
+                ApplyEntry(entity, entry.ContentHtml, entry.Image);
+                if (string.IsNullOrEmpty(entity.ContentHtml) && entity.ImageData is null)
                 {
-                    context.ItemContents.Remove(toRemove);
+                    context.ItemContents.Remove(entity);
                 }
 
                 continue;
             }
 
-            if (existingById.TryGetValue(entry.ItemId, out var entity))
+            if (string.IsNullOrEmpty(entry.ContentHtml) && entry.Image is null)
             {
-                entity.ContentHtml = entry.ContentHtml;
+                continue;
             }
-            else
-            {
-                context.ItemContents.Add(new ItemContent { ItemId = entry.ItemId, ContentHtml = entry.ContentHtml });
-            }
+
+            var created = new ItemContent { ItemId = entry.ItemId };
+            ApplyEntry(created, entry.ContentHtml, entry.Image);
+            context.ItemContents.Add(created);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -161,5 +190,26 @@ public class ItemContentRepository : IItemContentStore
             .AsNoTracking()
             .Select(c => c.ItemId)
             .ToListAsync(cancellationToken);
+    }
+
+    // Feldweiser Upsert: ein uebergebenes Bild schreibt die Bild-Spalten, ein
+    // fehlendes Bild laesst sie unberuehrt; ein leerer Content entfernt den
+    // gespeicherten Inhalt nur ohne Bild im selben Eintrag.
+    private static void ApplyEntry(ItemContent entity, string? contentHtml, ItemImage? image)
+    {
+        if (image is not null)
+        {
+            entity.ImageData = image.Data;
+            entity.ImageContentType = image.ContentType;
+            entity.ImageUrl = image.Url;
+            if (!string.IsNullOrEmpty(contentHtml))
+            {
+                entity.ContentHtml = contentHtml;
+            }
+
+            return;
+        }
+
+        entity.ContentHtml = string.IsNullOrEmpty(contentHtml) ? null : contentHtml;
     }
 }

@@ -91,6 +91,7 @@ public static class MauiProgram
             .AddSingleton<IFeedSearchService>(provider =>
                 new FeedSearchService(provider.GetRequiredService<HttpClient>(), feedSearchEndpoint))
             .AddSingleton<IFeedIconService, FeedIconService>()
+            .AddSingleton<IItemImageService, ItemImageService>()
             .AddSingleton<IFeedSyncService, FeedSyncService>()
             .AddSingleton<IRetentionCleanupService, RetentionCleanupService>()
             .AddSingleton(new FirstRunState { IsFirstRun = isFirstRun, DemoSeedSuppressed = demoSeedSuppressed })

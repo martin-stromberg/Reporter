@@ -352,7 +352,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
 
     private void RebuildHtml()
     {
-        var content = ArticleHtmlSanitizer.Sanitize(Item?.ContentHtml, forOffline: !IsOnline);
+        var content = ArticleHtmlSanitizer.Sanitize(Item?.ContentHtml, forOffline: !IsOnline, localImage: Item?.Image);
         if (string.IsNullOrWhiteSpace(content))
         {
             HtmlSource = string.Empty;
@@ -581,6 +581,7 @@ blockquote {{
             Link = Item.Link,
             PublishedAt = Item.PublishedAt,
             ContentHtml = Item.ContentHtml,
+            Image = Item.Image,
             ReadAt = readAt,
         };
     }

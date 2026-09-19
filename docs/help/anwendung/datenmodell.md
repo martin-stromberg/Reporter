@@ -43,15 +43,29 @@
 | `IsSavedForLater` | `bool` | Gibt an, ob der Artikel für später bewahrt wurde. |
 | `ReadAt` | `DateTime?` | Zeitpunkt, an dem der Artikel gelesen wurde. |
 | `ContentHtml` | `string?` | HTML-Inhalt für den Offline-Lesemodus; liegt nicht in der `items`-Tabelle, sondern in `item_contents` der separaten Content-Datenbank `reporter-content.db` (siehe `ItemContent`). |
+| `Image` | `ItemImage?` | Lokal gespeichertes Artikelbild für die Offline-Verfügbarkeit; liegt ebenfalls in `item_contents` der Content-Datenbank (Spalten `image_data`, `image_content_type`, `image_url`). |
 
 ### `ItemContent` (Content-Datenbank `reporter-content.db`)
 
-Re-downloadbarer Artikelinhalt, getrennt von den Nutzerdaten in `reporter.db` gehalten, damit die Nutzerdatenbank ins iCloud-Backup eingeschlossen werden kann, während die Massendaten ausgeschlossen bleiben. Eigener `ContentDbContext` mit eigener Migrationshistorie; es gibt keinen datenbankübergreifenden Foreign Key — die Zuordnung läuft allein über `ItemId` = `items.id`.
+Re-downloadbarer Artikelinhalt samt Artikelbild, getrennt von den Nutzerdaten in `reporter.db` gehalten, damit die Nutzerdatenbank ins iCloud-Backup eingeschlossen werden kann, während die Massendaten ausgeschlossen bleiben. Eigener `ContentDbContext` mit eigener Migrationshistorie; es gibt keinen datenbankübergreifenden Foreign Key — die Zuordnung läuft allein über `ItemId` = `items.id`. Eine Zeile kann Inhalt, Bild oder beides tragen; schreibende Upserts aktualisieren die Felder getrennt (ein mitgegebenes Bild schreibt die Bildspalten, ein fehlendes Bild lässt sie unverändert, leerer Inhalt ohne Bild entfernt den gespeicherten Inhalt).
 
 | Eigenschaft | Typ | Beschreibung |
 |-------------|-----|--------------|
 | `ItemId` | `Guid` | Kennung des zugehörigen Artikels (`items.id` in `reporter.db`); Primärschlüssel (`item_id`). |
-| `ContentHtml` | `string?` | HTML-Inhalt des Artikels (`content_html`); nur nicht-leere Inhalte erhalten eine Zeile. |
+| `ContentHtml` | `string?` | HTML-Inhalt des Artikels (`content_html`). |
+| `ImageData` | `byte[]?` | Binärdaten des lokal gespeicherten Artikelbilds (`image_data`). |
+| `ImageContentType` | `string?` | MIME-Typ des Bilds (`image_content_type`, z. B. `image/png`). |
+| `ImageUrl` | `string?` | Quell-URL des Bilds (`image_url`); bleibt als Remote-Fallback erhalten. |
+
+### `ItemImage` (Wertobjekt)
+
+Domänenmodell des Artikelbilds; wird beim Lesen aus den drei `image_*`-Spalten der `item_contents`-Zeile hydratisiert.
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `Data` | `byte[]` | Bilddaten. |
+| `ContentType` | `string?` | MIME-Typ des Bilds. |
+| `Url` | `string?` | Quell-URL des Bilds (Remote-Fallback). |
 
 ### `Keyword`
 
@@ -116,7 +130,7 @@ Die App verwendet eine saubere Schichtung:
 - `Reporter.Core.Models` enthält die Domänenmodelle.
 - `Reporter.Core.Interfaces` definiert Repository-Schnittstellen für alle Entitäten.
 - `Reporter.Data.Repositories` implementiert die Schnittstellen mit Entity Framework Core und SQLite.
-- Die Ablage ist auf zwei SQLite-Dateien aufgeteilt: `reporter.db` (Nutzerdaten: `feeds`, `categories`, `keywords`, `settings`, `sync_logs`, `debug_log_entries` sowie `items` ohne `content_html`) und `reporter-content.db` (re-downloadbare Artikelinhalte, Tabelle `item_contents`). `ItemRepository`/`FeedRepository` arbeiten zweistufig auf beiden Speichern: Der Artikelinhalt läuft über `IItemContentStore`/`ItemContentRepository` (`IDbContextFactory<ContentDbContext>`) — Lesepfade hydratisieren `ContentHtml` per Batch-Lookup, Schreib-/Löschpfade (inkl. der Feed-Kaskade, die die `items`-Zeilen entfernt) spiegeln die Änderungen in den Content-Speicher; verwaiste `item_contents`-Zeilen räumt der Retention-Cleanup beim Start weg (siehe [Aufbewahrung](aufbewahrung.md)). Die Migration `DropItemContentHtml` hat die Legacy-Spalte `items.content_html` entfernt; ihre Werte wurden vorab per `IContentMigrationService` in den Content-Speicher kopiert. Fehlende Inhalte (z. B. nach einem Restore ohne Content-Datei) lädt der Sync beim nächsten Abruf nach (Content-Backfill im `FeedSyncService`).
+- Die Ablage ist auf zwei SQLite-Dateien aufgeteilt: `reporter.db` (Nutzerdaten: `feeds`, `categories`, `keywords`, `settings`, `sync_logs`, `debug_log_entries` sowie `items` ohne `content_html`) und `reporter-content.db` (re-downloadbare Artikelinhalte und Artikelbilder, Tabelle `item_contents` mit den Spalten `content_html`, `image_data`, `image_content_type`, `image_url` — per Migration `AddItemContentImageColumns` ergänzt). `ItemRepository`/`FeedRepository` arbeiten zweistufig auf beiden Speichern: Artikelinhalt und Bild laufen über `IItemContentStore`/`ItemContentRepository` (`IDbContextFactory<ContentDbContext>`) — Lesepfade hydratisieren `ContentHtml` und `Image` per Batch-Lookup, Schreib-/Löschpfade (inkl. der Feed-Kaskade, die die `items`-Zeilen entfernt) spiegeln die Änderungen in den Content-Speicher; verwaiste `item_contents`-Zeilen räumt der Retention-Cleanup beim Start weg (siehe [Aufbewahrung](aufbewahrung.md)). Die Migration `DropItemContentHtml` hat die Legacy-Spalte `items.content_html` entfernt; ihre Werte wurden vorab per `IContentMigrationService` in den Content-Speicher kopiert. Fehlende Inhalte und Bilder (z. B. nach einem Restore ohne Content-Datei oder nach einem fehlgeschlagenen Bild-Download) lädt der Sync beim nächsten Abruf nach — der `FeedSyncService` löst die Bild-URL über `IItemImageService` (Enclosure → MediaRSS → iTunes → erstes `<img src>`) auf, lädt das Bild mit 5-MB-Limit herunter und backfillt fehlende Inhalte/Bilder pro Item in einem gemeinsamen Content-Eintrag.
 - `Reporter.Data.Repositories` injiziert `IDbContextFactory<ReporterDbContext>` (bzw. `IDbContextFactory<ContentDbContext>` im `ItemContentRepository`), um pro Operation einen neuen `DbContext` zu erzeugen.
 - `Settings` wird als Singleton verwaltet; es existiert immer genau ein Datensatz.
 - `IItemRepository` bietet zusätzliche Queries für ungelesene Artikel, Artikel pro Feed/Kategorie und gespeicherte Artikel (paged); die Dublettenerkennung pro Feed läuft im Sync über ein In-Memory-`HashSet` auf `GuidOrHash` mit Batch-Insert via `AddRangeAsync`.

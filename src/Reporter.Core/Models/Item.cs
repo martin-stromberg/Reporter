@@ -56,4 +56,12 @@ public class Item
     /// Gets the HTML content for offline reading.
     /// </summary>
     public string? ContentHtml { get; init; }
+
+    /// <summary>
+    /// Gets or sets the locally stored article image. The <c>set</c> accessor is a
+    /// deliberate exception from the <c>init</c>-only accessors of this model:
+    /// <c>FeedSyncService</c> assigns the downloaded image to the already
+    /// constructed entities after the sequential download loop.
+    /// </summary>
+    public ItemImage? Image { get; set; }
 }
