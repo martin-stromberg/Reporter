@@ -5,9 +5,11 @@ using Microsoft.Data.Sqlite;
 namespace Reporter.E2ETests;
 
 /// <summary>
-/// Read-only SQLite checks against the isolated <c>reporter.db</c> the app under
-/// test was pointed at via <c>REPORTER_DB_PATH</c>. Writes are never performed —
-/// the app owns the database exclusively.
+/// SQLite checks against the isolated <c>reporter.db</c> the app under test was
+/// pointed at via <c>REPORTER_DB_PATH</c>. All assertion helpers are read-only;
+/// the single write helper <see cref="MarkAllItemsReadAsync"/> exists for test
+/// cleanup so a test that seeds many articles cannot push the articles needed
+/// by later tests out of the virtualized unread list.
 /// </summary>
 public static class FeedDbAssertions
 {
@@ -187,6 +189,99 @@ public static class FeedDbAssertions
         command.Parameters.AddWithValue(parameterName, value);
         var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
         return result is long count && count > 0;
+    }
+
+    /// <summary>
+    /// Marks every item row as read. Tests that seed dozens of articles (the
+    /// feed-detail paging fixtures) call this during cleanup: read items leave
+    /// the unread list, so the accumulated articles cannot push the few
+    /// articles asserted by the other E2E tests out of the virtualized list.
+    /// Retried briefly because the app may hold a write lock while a sync is
+    /// still finishing.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public static async Task MarkAllItemsReadAsync(string databasePath)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return;
+        }
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                // Pooling is disabled for the same reason as the read-only
+                // connection: the file must not stay open in the test host.
+                await using var connection = new SqliteConnection(
+                    $"Data Source={databasePath};Default Timeout=5;Pooling=False");
+                await connection.OpenAsync().ConfigureAwait(false);
+                await using var command = connection.CreateCommand();
+                command.CommandText = "UPDATE items SET is_read = 1 WHERE is_read = 0";
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                return;
+            }
+            catch (SqliteException)
+            {
+                if (attempt == 4)
+                {
+                    // A permanently locked database file must not stay silent —
+                    // the cleanup caller tolerates the failure.
+                    throw;
+                }
+
+                await Task.Delay(500).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Deletes every feed row together with its items. Tests that add feeds
+    /// call this during cleanup so the shared feed list stays short: an
+    /// accumulating list pushes newly added cards out of the virtualized
+    /// viewport where the scroll scan of the next tests cannot reach them.
+    /// Retried briefly because the app may hold a write lock while a sync is
+    /// still finishing.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public static async Task DeleteAllFeedsAsync(string databasePath)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return;
+        }
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                // Pooling is disabled for the same reason as the read-only
+                // connection: the file must not stay open in the test host.
+                // The items are removed explicitly instead of relying on the
+                // foreign-key cascade so the cleanup does not depend on the
+                // connection's FK enforcement.
+                await using var connection = new SqliteConnection(
+                    $"Data Source={databasePath};Default Timeout=5;Pooling=False");
+                await connection.OpenAsync().ConfigureAwait(false);
+                await using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM items; DELETE FROM feeds";
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                return;
+            }
+            catch (SqliteException)
+            {
+                if (attempt == 4)
+                {
+                    // A permanently locked database file must not stay silent —
+                    // the cleanup caller tolerates the failure.
+                    throw;
+                }
+
+                await Task.Delay(500).ConfigureAwait(false);
+            }
+        }
     }
 
     // Pooling is disabled on purpose: a pooled connection keeps the

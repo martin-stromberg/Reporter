@@ -1798,5 +1798,77 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("FeedErrorKindUnknown", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed detail ähnelt.
+        /// </summary>
+        public static string PageTitleFeedDetail {
+            get {
+                return ResourceManager.GetString("PageTitleFeedDetail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Search articles in this feed… ähnelt.
+        /// </summary>
+        public static string PlaceholderFeedDetailSearch {
+            get {
+                return ResourceManager.GetString("PlaceholderFeedDetailSearch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Articles of this feed will appear here. ähnelt.
+        /// </summary>
+        public static string PlaceholderFeedDetail {
+            get {
+                return ResourceManager.GetString("PlaceholderFeedDetail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die No articles found for this search term. ähnelt.
+        /// </summary>
+        public static string FeedDetailSearchNoResults {
+            get {
+                return ResourceManager.GetString("FeedDetailSearchNoResults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Actions ähnelt.
+        /// </summary>
+        public static string ButtonFeedActions {
+            get {
+                return ResourceManager.GetString("ButtonFeedActions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Double-tap to open the feed details ähnelt.
+        /// </summary>
+        public static string AccessibilityOpenFeedDetails {
+            get {
+                return ResourceManager.GetString("AccessibilityOpenFeedDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Feed URL ähnelt.
+        /// </summary>
+        public static string PlaceholderFeedEditUrl {
+            get {
+                return ResourceManager.GetString("PlaceholderFeedEditUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The action could not be completed. ähnelt.
+        /// </summary>
+        public static string ErrorActionFailed {
+            get {
+                return ResourceManager.GetString("ErrorActionFailed", resourceCulture);
+            }
+        }
     }
 }

@@ -40,7 +40,7 @@
 
 **Ursache:** Bei schmalen Fenstern rendert die Shell-`TabBar` nur die ersten Einträge; die übrigen liegen hinter dem NavigationView-Overflow-Button (`TopNavOverflowButton`) und betreten den UIA-Baum erst nach Öffnen des Flyouts.
 
-**Lösung:** Bereits in `SmokeTests.SelectTab` behandelt — der Helfer öffnet das Overflow-Flyout automatisch und versucht die Auswahl erneut. Tritt der Fehler trotzdem auf, Fenster vergrößern bzw. prüfen, ob die lokalisierten Tab-Titel (`AppResources.Tab*`) geändert wurden.
+**Lösung:** Bereits in `UiRetry.SelectTab`/`E2EPageHelpers.SelectTab` behandelt — der Helfer öffnet das Overflow-Flyout automatisch und versucht die Auswahl erneut; eine geschobene Detailseite poppt er über `TryPopPushedPage`. Tritt der Fehler trotzdem auf, Fenster vergrößern bzw. prüfen, ob die lokalisierten Tab-Titel (`AppResources.Tab*`) geändert wurden.
 
 ## Erwartete Beschriftungen passen nicht
 
@@ -50,11 +50,11 @@
 
 **Lösung:**
 1. Suite auf einer Maschine mit unterstützter OS-Kultur (Deutsch/Englisch) ausführen.
-2. Nach RESX-Umbenennungen die verwendeten Schlüssel in `SmokeTests`/`UiRetry`-Aufrufen prüfen (`ButtonRename`, `CategoryNone`, `PlaceholderFeeds` u. a.).
+2. Nach RESX-Umbenennungen die verwendeten Schlüssel in `SmokeTests`/`FeedDetailTests`/`E2EPageHelpers`-Aufrufen prüfen (`ButtonRename`, `CategoryNone`, `PlaceholderFeeds`, `ButtonFeedActions`, `PlaceholderFeedEditUrl` u. a.).
 
 ## `dotnet test Reporter.sln` schlägt ohne gebaute App fehl
 
-**Symptom:** Ein Solution-weiter Testlauf meldet elf fehlgeschlagene `Reporter.E2ETests`-Tests.
+**Symptom:** Ein Solution-weiter Testlauf meldet siebzehn fehlgeschlagene `Reporter.E2ETests`-Tests.
 
 **Ursache:** Das E2E-Projekt ist Teil der Solution; ohne gebaute `Reporter.exe` und interaktive Session kann es nicht laufen.
 

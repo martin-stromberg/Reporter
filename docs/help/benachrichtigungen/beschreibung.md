@@ -10,10 +10,10 @@ Reporter benachrichtigt dich auf dem iPhone/iPad über neue Artikel in deinen Fe
 
 ## Funktionsweise
 
-Nach jedem Feed-Abgleich — ob manuell über **Aktualisieren** im Feed-Kontextmenü, das Herunterziehen der Feed-Liste oder automatisch — prüft die App, ob neue Artikel gespeichert wurden, und wendet die Benachrichtigungsregeln an. Eine sichtbare Mitteilung entsteht dabei nur aus dem automatischen Hintergrund-Abgleich, den iOS ausführt, während die App nicht geöffnet ist. Läuft der Abgleich dagegen bei geöffneter App (manuell, per Timer oder beim Programmstart), erscheinen neue Artikel still in den Listen — ohne Banner, ohne Ton und ohne Eintrag im Mitteilungszentrum. Für jeden neuen Artikel entscheiden vier Bedingungen, ob eine Benachrichtigung entsteht:
+Nach jedem Feed-Abgleich — ob manuell über **Aktualisieren** im Menü **Feed-Aktionen** der Feeddetailansicht, das Herunterziehen der Feed-Liste oder automatisch — prüft die App, ob neue Artikel gespeichert wurden, und wendet die Benachrichtigungsregeln an. Eine sichtbare Mitteilung entsteht dabei nur aus dem automatischen Hintergrund-Abgleich, den iOS ausführt, während die App nicht geöffnet ist. Läuft der Abgleich dagegen bei geöffneter App (manuell, per Timer oder beim Programmstart), erscheinen neue Artikel still in den Listen — ohne Banner, ohne Ton und ohne Eintrag im Mitteilungszentrum. Für jeden neuen Artikel entscheiden vier Bedingungen, ob eine Benachrichtigung entsteht:
 
 1. **Benachrichtigungen** in den **Einstellungen** (Karte **Benachrichtigungen & Ruhezeiten**) müssen eingeschaltet sein.
-2. Der Schalter **Benachrichtigungen** des betreffenden Feeds (Seite **Feeds** → Feed antippen → **Bearbeiten**) muss eingeschaltet sein — so lassen sich einzelne Feeds stummschalten.
+2. Der Schalter **Benachrichtigungen** des betreffenden Feeds (Seite **Feeds** → Feed antippen → **Aktionen** → **Bearbeiten**) muss eingeschaltet sein — so lassen sich einzelne Feeds stummschalten.
 3. Es darf gerade keine **Ruhezeit (Nicht stören)** laufen. Benachrichtigungen in der Ruhezeit werden verworfen, nicht nachgeholt.
 4. Der Artikel darf kein Filter-Schlagwort in Titel oder Inhalt enthalten — solche Treffer werden bereits beim Abruf verworfen und erscheinen nicht in den Listen.
 

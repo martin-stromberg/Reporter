@@ -150,7 +150,7 @@
                                 StrokeShape="RoundRectangle 12"
                                 Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
                                 SemanticProperties.Description="{Binding Title}"
-                                SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityTapForActions}"
+                                SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityOpenFeedDetails}"
                                 Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnFeedTapped"
@@ -325,13 +325,7 @@
                           ColumnSpacing="8">
                         <Label Text="{x:Static strings:AppResources.FeedAddSheetTitle}"
                                Style="{StaticResource HeadlineSmallStyle}"
-                               VerticalOptions="Center">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding IsEditMode}" Value="True">
-                                    <Setter Property="Text" Value="{x:Static strings:AppResources.FeedEditSheetTitle}"/>
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
+                               VerticalOptions="Center"/>
                         <Button Grid.Column="1"
                                 Text="{x:Static strings:AppResources.ButtonCancel}"
                                 Command="{Binding CloseAddFormCommand}"
@@ -353,9 +347,6 @@
                             <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="False">
                                 <Setter Property="IsVisible" Value="True"/>
                             </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsEditMode}" Value="True">
-                                <Setter Property="IsVisible" Value="False"/>
-                            </DataTrigger>
                         </Label.Triggers>
                     </Label>
                     <Entry x:Name="NewUrlEntry"
@@ -369,68 +360,10 @@
                                        HorizontalOptions="Center"/>
                     <Button Text="{x:Static strings:AppResources.ButtonSearch}"
                             Command="{Binding SearchCommand}"
-                            MinimumHeightRequest="44">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding IsEditMode}" Value="True">
-                                <Setter Property="IsVisible" Value="False"/>
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
+                            MinimumHeightRequest="44"/>
                     <Button Text="{x:Static strings:AppResources.ButtonDirectAdd}"
                             Command="{Binding DirectAddCommand}"
-                            MinimumHeightRequest="44">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding IsEditMode}" Value="True">
-                                <Setter Property="IsVisible" Value="False"/>
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-                    <VerticalStackLayout Spacing="12"
-                                         IsVisible="False">
-                        <VerticalStackLayout.Triggers>
-                            <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding IsEditMode}" Value="True">
-                                <Setter Property="IsVisible" Value="True"/>
-                            </DataTrigger>
-                        </VerticalStackLayout.Triggers>
-                        <Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="8"
-                              IsEnabled="{Binding NotificationsSupported}">
-                            <Grid.Triggers>
-                                <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
-                                    <Setter Property="Opacity" Value="0.4"/>
-                                </DataTrigger>
-                            </Grid.Triggers>
-                            <VerticalStackLayout VerticalOptions="Center"
-                                                 Spacing="2">
-                                <Label Text="{x:Static strings:AppResources.FeedNotificationsLabel}"/>
-                                <Label Text="{x:Static strings:AppResources.FeedNotificationsHint}"
-                                       Style="{StaticResource MetaStyle}"/>
-                            </VerticalStackLayout>
-                            <Switch Grid.Column="1"
-                                    IsToggled="{Binding FeedNotificationsEnabled}"
-                                    SemanticProperties.Description="{x:Static strings:AppResources.FeedNotificationsLabel}"
-                                    MinimumWidthRequest="44"
-                                    MinimumHeightRequest="44"
-                                    VerticalOptions="Center"/>
-                        </Grid>
-                        <Border Padding="10"
-                                StrokeShape="RoundRectangle 8"
-                                Stroke="Transparent"
-                                IsVisible="False"
-                                Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
-                                    <Setter Property="IsVisible" Value="True"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
-                                   Style="{StaticResource BodySmallStyle}"
-                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
-                        </Border>
-                        <Button Text="{x:Static strings:AppResources.ButtonSave}"
-                                Command="{Binding SaveCommand}"
-                                MinimumHeightRequest="44"/>
-                    </VerticalStackLayout>
+                            MinimumHeightRequest="44"/>
                 </VerticalStackLayout>
             </Border>
         </Grid>

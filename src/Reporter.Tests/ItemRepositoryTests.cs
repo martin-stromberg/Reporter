@@ -1289,6 +1289,199 @@ public class ItemRepositoryTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that the paged GetByFeedAsync overload returns only items of the
+    /// requested feed, including read and unread items.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_Paged_ReturnsOnlyMatchingFeed()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var otherFeedId = Guid.NewGuid();
+        await using (var context = _factory.CreateDbContext())
+        {
+            context.Feeds.Add(new Entities.Feed
+            {
+                Id = otherFeedId,
+                Url = "https://example.com/other",
+                Title = "Other Feed",
+            });
+            await context.SaveChangesAsync();
+        }
+
+        await _repository.AddRangeAsync(new List<Item>
+        {
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Unread",
+                GuidOrHash = "unread",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 2),
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Read",
+                GuidOrHash = "read",
+                IsRead = true,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 1),
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = otherFeedId,
+                Title = "Other Feed",
+                GuidOrHash = "other",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 3),
+            },
+        });
+
+        var result = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 10);
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, item => Assert.NotEqual("Other Feed", item.Title));
+    }
+
+    /// <summary>
+    /// Verifies that the paged GetByFeedAsync overload pages through the feed's
+    /// items with Skip/Take.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_Paged_ReturnsPage()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        for (var i = 0; i < 5; i++)
+        {
+            await _repository.AddAsync(new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = $"Item {i}",
+                GuidOrHash = $"item-{i}",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 1).AddDays(i),
+            });
+        }
+
+        var firstPage = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 2);
+        var secondPage = await _repository.GetByFeedAsync(feedId, page: 1, pageSize: 2);
+        var thirdPage = await _repository.GetByFeedAsync(feedId, page: 2, pageSize: 2);
+
+        Assert.Equal(2, firstPage.Count);
+        Assert.Equal(2, secondPage.Count);
+        Assert.Single(thirdPage);
+        Assert.Equal("Item 4", firstPage[0].Title);
+        Assert.Equal("Item 3", firstPage[1].Title);
+        Assert.Equal("Item 2", secondPage[0].Title);
+        Assert.Equal("Item 1", secondPage[1].Title);
+        Assert.Equal("Item 0", thirdPage[0].Title);
+    }
+
+    /// <summary>
+    /// Verifies that the paged GetByFeedAsync overload orders by PublishedAt
+    /// descending and breaks ties by the item id.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_Paged_OrdersByPublishedAtDescending()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var publishedAt = new DateTime(2026, 1, 1);
+        var firstId = new Guid("00000000-0000-0000-0000-000000000001");
+        var secondId = new Guid("00000000-0000-0000-0000-000000000002");
+        await _repository.AddRangeAsync(new List<Item>
+        {
+            new Item
+            {
+                Id = secondId,
+                FeedId = feedId,
+                Title = "Same Date B",
+                GuidOrHash = "same-b",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = publishedAt,
+            },
+            new Item
+            {
+                Id = firstId,
+                FeedId = feedId,
+                Title = "Same Date A",
+                GuidOrHash = "same-a",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = publishedAt,
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Newest",
+                GuidOrHash = "newest",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = publishedAt.AddDays(1),
+            },
+        });
+
+        var result = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 10);
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal("Newest", result[0].Title);
+        Assert.Equal("Same Date A", result[1].Title);
+        Assert.Equal("Same Date B", result[2].Title);
+    }
+
+    /// <summary>
+    /// Verifies that the paged GetByFeedAsync overload filters titles by the
+    /// search term and treats a blank term as no filter.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_Paged_FiltersBySearchTerm()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddRangeAsync(new List<Item>
+        {
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Apple Pie",
+                GuidOrHash = "apple",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 1),
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Banana Bread",
+                GuidOrHash = "banana",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 2),
+            },
+        });
+
+        var filtered = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 10, searchTerm: "Apple");
+        var unfiltered = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 10, searchTerm: "   ");
+
+        Assert.Single(filtered);
+        Assert.Equal("Apple Pie", filtered[0].Title);
+        Assert.Equal(2, unfiltered.Count);
+    }
+
+    /// <summary>
     /// Verifies that <see cref="ItemRepository.UpdateAsync"/> writes the new
     /// content into the content store.
     /// </summary>

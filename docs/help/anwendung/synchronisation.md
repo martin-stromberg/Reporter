@@ -13,8 +13,8 @@
 
 ### Einen einzelnen Feed aktualisieren
 
-1. Öffne die Seite **Feeds**.
-2. Tippe die Karte des gewünschten Feeds an und wähle im Menü **Feed-Aktionen** den Eintrag **Aktualisieren**.
+1. Öffne die Seite **Feeds** und tippe die Karte des gewünschten Feeds an — die Detailansicht des Feeds öffnet sich.
+2. Wähle über den Button **Aktionen** im Menü **Feed-Aktionen** den Eintrag **Aktualisieren** — alternativ ziehst du die Artikelliste der Detailansicht nach unten (Ziehen zum Aktualisieren).
 3. Die App ruft den Feed ab, parst die Feed-Daten (unterstützte Formate: RSS 2.0, Atom 1.0 und Atom 0.3) und speichert neue Artikel in der Datenbank. Artikel, die ein eingerichtetes Filter-Schlagwort in Titel oder Inhalt enthalten, werden dabei verworfen und erscheinen nicht in den Listen — intern vermerkt der Protokolleintrag des Abrufs, wie viele Artikel gefiltert wurden.
 4. Der Gesundheitsstatus des Feeds wird aktualisiert (**In Ordnung**, **Warnung** oder **Fehler**).
 5. Auf iOS wertet die App für berechtigte neue Artikel die Benachrichtigungsregeln aus — abhängig von den Schaltern in den **Einstellungen** und am Feed, der Ruhezeit und den Schlagwort-Filtern. Eine sichtbare Mitteilung erscheint dabei bei geöffneter App bewusst nicht; sie kommt nur aus dem automatischen Hintergrund-Abgleich bei geschlossener App. Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
@@ -51,8 +51,8 @@ Wurde ein Feed ohne bekannten Anzeigetitel angelegt — etwa über die **Suche**
 
 Hat das Gerät keine Internetverbindung, wird kein Abruf gestartet:
 
-- Auf der Seite **Feeds** erscheint oberhalb der Liste ein Hinweis-Banner **„Keine Internetverbindung."**; auf **Ungelesen** wird der Aktualisieren-Button abgedunkelt und ein Hinweis in der Statuszeile eingeblendet.
-- **Aktualisieren** (im Menü **Feed-Aktionen** einer Feed-Karte) und das Herunterziehen der Liste werden übersprungen — es entsteht weder ein Fehlereintrag noch ändert sich der Gesundheitsstatus eines Feeds.
+- Auf der Seite **Feeds** und in der Detailansicht eines Feeds erscheint ein Hinweis-Banner **„Keine Internetverbindung."**; auf **Ungelesen** wird der Aktualisieren-Button abgedunkelt und ein Hinweis in der Statuszeile eingeblendet.
+- **Aktualisieren** (im Menü **Feed-Aktionen** der Feeddetailansicht) und das Herunterziehen der Listen werden übersprungen — es entsteht weder ein Fehlereintrag noch ändert sich der Gesundheitsstatus eines Feeds.
 - Die automatische Hintergrund-Aktualisierung pausiert und setzt nach Netzrückkehr mit dem nächsten Intervall fort.
 
 Details zum Offline-Verhalten siehe [Offline lesen](offline.md).
@@ -79,7 +79,7 @@ Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt
 
 ### Fehlerdetails eines Feeds anzeigen
 
-Zeigt ein Feed den Status **Fehler**, enthält das Menü **Feed-Aktionen** seiner Karte den zusätzlichen Eintrag **Fehlerdetails anzeigen**. Er öffnet den Dialog **Synchronisierungsfehler** mit dem Grund des letzten fehlgeschlagenen Abrufs:
+Zeigt ein Feed den Status **Fehler**, enthält das Menü **Feed-Aktionen** in seiner Detailansicht den zusätzlichen Eintrag **Fehlerdetails anzeigen**. Er öffnet den Dialog **Synchronisierungsfehler** mit dem Grund des letzten fehlgeschlagenen Abrufs:
 
 - **Unverschlüsselte Verbindung blockiert** — die `http://`-Adresse wurde blockiert oder der Server verweigert Klartext; der Dialog empfiehlt die Umstellung auf HTTPS.
 - **HTTP-Fehler des Servers** — der Feed-Server hat geantwortet, aber einen Fehler gemeldet.

@@ -1,10 +1,10 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
-using Reporter.Core.Services;
 using Reporter.Core.ViewModels;
 
 namespace Reporter.Views;
@@ -49,154 +49,25 @@ public partial class FeedsPage : ContentPage
     }
 
     /// <summary>
-    /// Shows an action sheet for the tapped feed and routes the selected action
-    /// to the view model.
+    /// Navigates to the detail page of the tapped feed.
     /// </summary>
     /// <param name="sender">The view that received the tap.</param>
     /// <param name="e">Event args containing the tapped feed as <see cref="TappedEventArgs.Parameter"/>.</param>
     private async void OnFeedTapped(object? sender, TappedEventArgs e)
     {
-        if (e.Parameter is not FeedListItem feed || BindingContext is not FeedsViewModel viewModel)
+        if (e.Parameter is not FeedListItem feed)
         {
             return;
         }
 
-        var actions = new List<string>
+        try
         {
-            AppResources.ButtonRefresh,
-            AppResources.ButtonRename,
-            AppResources.ButtonChangeCategory,
-            AppResources.ButtonEdit,
-        };
-
-        if (feed.HealthStatus == FeedHealth.Error)
-        {
-            actions.Add(AppResources.ButtonShowErrorDetails);
+            await Shell.Current.GoToAsync($"feeddetail?feedId={feed.Id}");
         }
-
-        actions.Add(AppResources.ButtonDelete);
-
-        var action = await DisplayActionSheetAsync(
-            AppResources.ActionSheetTitleFeed,
-            AppResources.ButtonCancel,
-            null,
-            [.. actions]);
-
-        if (action == AppResources.ButtonRefresh)
+        catch (Exception ex)
         {
-            await viewModel.RefreshCommand.ExecuteAsync(feed);
+            Debug.WriteLine($"OnFeedTapped navigation failed: {ex}");
         }
-        else if (action == AppResources.ButtonRename)
-        {
-            await RenameFeedAsync(viewModel, feed);
-        }
-        else if (action == AppResources.ButtonChangeCategory)
-        {
-            await ChangeCategoryAsync(viewModel, feed);
-        }
-        else if (action == AppResources.ButtonEdit)
-        {
-            await viewModel.EditCommand.ExecuteAsync(feed);
-        }
-        else if (action == AppResources.ButtonShowErrorDetails)
-        {
-            await ShowFeedErrorDetailsAsync(viewModel, feed);
-        }
-        else if (action == AppResources.ButtonDelete)
-        {
-            await ConfirmDeleteFeedAsync(viewModel, feed);
-        }
-    }
-
-    /// <summary>
-    /// Asks for a new display title and renames the feed when confirmed.
-    /// </summary>
-    /// <param name="viewModel">The feeds view model.</param>
-    /// <param name="feed">The feed to rename.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task RenameFeedAsync(FeedsViewModel viewModel, FeedListItem feed)
-    {
-        var newTitle = await DisplayPromptAsync(
-            AppResources.PromptRenameFeedTitle,
-            AppResources.PromptRenameFeedMessage,
-            AppResources.ButtonOk,
-            AppResources.ButtonCancel,
-            initialValue: feed.Title);
-
-        if (newTitle is not null)
-        {
-            await viewModel.RenameFeedAsync(feed, newTitle);
-        }
-    }
-
-    /// <summary>
-    /// Shows the category picker and applies the chosen category to the feed.
-    /// </summary>
-    /// <param name="viewModel">The feeds view model.</param>
-    /// <param name="feed">The feed to update.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task ChangeCategoryAsync(FeedsViewModel viewModel, FeedListItem feed)
-    {
-        // A cancelled sheet returns the cancel text, so a category named exactly
-        // like the cancel button could not be told apart from a cancellation —
-        // it is excluded from the options.
-        var categories = viewModel.Categories
-            .Where(c => !string.Equals(c.Name, AppResources.ButtonCancel, StringComparison.Ordinal))
-            .ToList();
-
-        // The action sheet returns the tapped button's text, not its position.
-        // Categories cannot get duplicate names through the app, but a database
-        // edited elsewhere may contain them; the labels are made collision-free
-        // unique so the returned text maps to exactly one entry.
-        var options = FeedsViewModel.MakeUniqueOptionLabels(
-            categories.Select(c => c.Name).ToList());
-
-        var selectedName = await DisplayActionSheetAsync(
-            AppResources.LabelFeedCategory,
-            AppResources.ButtonCancel,
-            null,
-            options.ToArray());
-
-        var index = options.IndexOf(selectedName);
-        if (index >= 0)
-        {
-            await viewModel.ChangeFeedCategoryAsync(feed, categories[index]);
-        }
-    }
-
-    /// <summary>
-    /// Asks for confirmation and deletes the feed when confirmed.
-    /// </summary>
-    /// <param name="viewModel">The feeds view model.</param>
-    /// <param name="feed">The feed to delete.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task ConfirmDeleteFeedAsync(FeedsViewModel viewModel, FeedListItem feed)
-    {
-        var confirmed = await DisplayAlertAsync(
-            AppResources.ConfirmDeleteFeedTitle,
-            AppResources.ConfirmDeleteFeedMessage,
-            AppResources.ButtonYes,
-            AppResources.ButtonNo);
-
-        if (confirmed)
-        {
-            await viewModel.DeleteCommand.ExecuteAsync(feed);
-        }
-    }
-
-    /// <summary>
-    /// Shows the last sync error of the feed: a localized category text plus
-    /// the stored technical message when present.
-    /// </summary>
-    /// <param name="viewModel">The feeds view model.</param>
-    /// <param name="feed">The feed whose error details are shown.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task ShowFeedErrorDetailsAsync(FeedsViewModel viewModel, FeedListItem feed)
-    {
-        await DisplayAlertAsync(
-            AppResources.FeedErrorDetailsTitle,
-            viewModel.GetFeedErrorMessage(feed),
-            AppResources.ButtonOk);
     }
 
     /// <summary>

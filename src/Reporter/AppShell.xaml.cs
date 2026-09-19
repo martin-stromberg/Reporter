@@ -20,6 +20,7 @@ public partial class AppShell : Shell
         InitializeComponent();
 
         Routing.RegisterRoute("articledetail", typeof(ArticleDetailPage));
+        Routing.RegisterRoute("feeddetail", typeof(FeedDetailPage));
 
         var unreadTab = new Tab { Title = AppResources.TabUnread, Icon = "tab_unread.png" };
         unreadTab.Items.Add(new ShellContent { Route = "unread", Title = AppResources.TabUnread, Content = services.GetRequiredService<UnreadPage>() });

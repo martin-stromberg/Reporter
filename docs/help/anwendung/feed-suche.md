@@ -32,7 +32,7 @@ Freitext ohne Adressbezug (z. B. nur ein Stichwort) wird nicht gesucht — dafü
 5. Bestätige den Dialog **Feed abonnieren?** mit **Ja** — oder brich mit **Nein** ab.
 6. Der Feed erscheint in deiner Feed-Liste.
 
-> **Hinweis:** Anzeigetitel, Kategorie und Benachrichtigungen musst du beim Hinzufügen nicht angeben. Neue Feeds starten ohne Kategorie und mit eingeschalteten Benachrichtigungen; beides kannst du später über das Kontextmenü des Feeds ändern (siehe [Bestehende Feeds verwalten](#bestehende-feeds-verwalten)).
+> **Hinweis:** Anzeigetitel, Kategorie und Benachrichtigungen musst du beim Hinzufügen nicht angeben. Neue Feeds starten ohne Kategorie und mit eingeschalteten Benachrichtigungen; beides kannst du später über das Menü **Feed-Aktionen** in der Detailansicht des Feeds ändern (siehe [Bestehende Feeds verwalten](#bestehende-feeds-verwalten)).
 
 ## Feed direkt per URL hinzufügen
 
@@ -64,14 +64,14 @@ Ohne Internetverbindung ist die Suche deaktiviert: Im geöffneten Formular ersch
 
 ## Bestehende Feeds verwalten
 
-Ein Tipp auf eine Feed-Karte öffnet das Menü **Feed-Aktionen**:
+Ein Tipp auf eine Feed-Karte öffnet die [Feeddetailansicht](feeddetailansicht.md): Sie zeigt alle gespeicherten Artikel des Feeds als nachladende Liste mit Titelsuche — und hinter dem Button **Aktionen** das Menü **Feed-Aktionen**:
 
 - **Aktualisieren** — ruft nur diesen Feed neu ab.
 - **Umbenennen** — öffnet den Dialog **Feed umbenennen**, in dem das Feld **Neuer Anzeigetitel** bereits den bisherigen Titel enthält. **OK** übernimmt den neuen Namen; ein leerer Titel wird mit dem Hinweis **„Bitte gib einen Anzeigetitel ein."** abgelehnt.
 - **Kategorie ändern** — zeigt eine Auswahlliste aller Kategorien, an oberster Stelle **Keine Kategorie** zum Entfernen der Zuordnung. Kommt ein Kategoriename mehrfach vor, werden die Einträge nummeriert (z. B. „News", „News (2)"), damit jede Auswahl eindeutig ist.
-- **Bearbeiten** — öffnet dasselbe Formular wie beim Hinzufügen im Bearbeitungsmodus (Titel **Feed bearbeiten**): Hier änderst du die Feed-Adresse und den Schalter **Benachrichtigungen** und schließt mit **Speichern** ab. Die Suchschaltflächen und der Offline-Hinweis sind in diesem Modus ausgeblendet. Auf Plattformen ohne Benachrichtigungsfunktion ist der Schalter deaktiviert und mit dem Hinweis **„Benachrichtigungen sind derzeit nur auf iOS verfügbar."** versehen.
+- **Bearbeiten** — öffnet in der Detailansicht das Formular **Feed bearbeiten**, das sich von unten über die Seite schiebt: Hier änderst du die Feed-Adresse im Feld **Feed-URL** und den Schalter **Benachrichtigungen** und schließt mit **Speichern** ab. Auf Plattformen ohne Benachrichtigungsfunktion ist der Schalter deaktiviert und mit dem Hinweis **„Benachrichtigungen sind derzeit nur auf iOS verfügbar."** versehen.
 - **Fehlerdetails anzeigen** — nur vorhanden, wenn der Feed den Status **Fehler** trägt; öffnet den Dialog **Synchronisierungsfehler** mit dem verständlichen Grund und der technischen Meldung des letzten fehlgeschlagenen Abrufs (Details siehe [Feeds synchronisieren](synchronisation.md)).
-- **Löschen** — entfernt den Feed nach Rückfrage (**Feed löschen?**) inklusive aller zugehörigen Artikel.
+- **Löschen** — entfernt den Feed nach Rückfrage (**Feed löschen?**) inklusive aller zugehörigen Artikel und kehrt zur Feed-Übersicht zurück.
 
 ## Weitere Hinweise
 
