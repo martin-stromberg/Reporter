@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reporter — Lokaler RSS-/Feed-Reader für iOS</title>
+  <meta name="description" content="Reporter ist ein lokaler RSS-/Atom-Feed-Reader für iOS: Feeds abonnieren, Artikel lesen, Beiträge merken — ohne Backend, ohne Konto, ohne Tracking.">
+  <link rel="icon" href="assets/img/appicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/img/appicon.svg" alt="Reporter-App-Icon">
+        Reporter
+      </a>
+      <nav class="site-nav" aria-label="Hauptnavigation">
+        <a href="index.html" aria-current="page">Start</a>
+        <a href="privacypolicy.html">Datenschutz</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="press.html">Presse</a>
+        <a href="https://github.com/martin-stromberg/Reporter">GitHub</a>
+      </nav>
+      <span class="lang-switch" lang="en"><a href="en/index.html">English</a></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Reporter</h1>
+        <p class="slogan">Deine Feeds. Dein Gerät. Kein Tracking.</p>
+        <p>Lokaler RSS-/Feed-Reader als App für dein iPhone.
+           Reporter bietet einen zentralen Ort, um RSS- und Atom-Feeds zu
+           abonnieren, Artikel zu lesen und Beiträge für später zu merken.</p>
+        <div class="button-row">
+          <span class="store-badge" role="img" aria-label="Bald im App Store verfügbar">
+            <span><small>Bald erhältlich im</small><strong>App Store</strong></span>
+          </span>
+          <a class="btn btn-primary" href="https://github.com/martin-stromberg/Reporter/releases">Releases auf GitHub</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/img/screenshots/01-ungelesen.png" alt="iPhone-Screenshot der Reporter-App: Tab „Ungelesen“">
+      </div>
+    </section>
+
+    <section aria-labelledby="beschreibung">
+      <h2 id="beschreibung">Was ist Reporter?</h2>
+      <p>Reporter ist ein lokaler RSS-/Atom-Feed-Reader für iOS. Die App bündelt
+         deine abonnierten Feeds an einem Ort: neue Artikel erscheinen unter
+         <strong>Ungelesen</strong>, gemerkte Beiträge unter <strong>Später</strong>,
+         und die fünf Tabs <em>Ungelesen, Feeds, Später, Kategorien,
+         Einstellungen</em> halten alles griffbereit. Bereits synchronisierte
+         Artikeltexte bleiben auch ohne Internetverbindung lesbar.</p>
+      <p>Reporter kommt <strong>ohne eigenes Backend, ohne Benutzerkonto, ohne
+         Telemetrie, ohne Tracking und ohne Werbung</strong> aus — alle Daten
+         bleiben ausschließlich auf deinem Gerät.
+         Die App richtet sich an alle, die ihre Nachrichtenquellen selbst
+         bestimmen und ihre Daten bei sich behalten wollen.</p>
+    </section>
+
+    <section aria-labelledby="features">
+      <h2 id="features">Features</h2>
+      <ul class="feature-list">
+        <li><strong>Übersichtliche Bereiche</strong>
+            Fünf Tabs am unteren Bildschirmrand — Ungelesen, Feeds, Später,
+            Kategorien und Einstellungen — bringen dich direkt dorthin, wo du
+            hinwillst.</li>
+        <li><strong>RSS-/Atom-Feed-Abruf</strong>
+            Unterstützt alle gängigen Feed-Formate (RSS und Atom) — mit
+            Statusanzeige und Protokoll pro Feed.</li>
+        <li><strong>Feeds leicht finden</strong>
+            Website-Adresse eingeben und aus den gefundenen Feeds der Seite
+            wählen — die genaue Feed-Adresse musst du nicht kennen.
+            Alternativ Feed-URL direkt eintragen. Verwaltung per Kontextmenü
+            auf der Feeds-Seite.</li>
+        <li><strong>Artikeldetailansicht</strong>
+            Artikel direkt in der App lesen — was der Feed liefert, bei
+            vielen Feeds nur ein Teaser; den Originalbeitrag öffnest du
+            per Knopfdruck im System-Browser. Dazu automatisches
+            Gelesen-Markieren, „Für später bewahren“ und Teilen.</li>
+        <li><strong>Filter und Sortierung</strong>
+            Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und
+            konfigurierbare Sortierung der ungelesenen Artikel.</li>
+        <li><strong>Hintergrund-Aktualisierung &amp; Benachrichtigungen</strong>
+            Automatischer Abgleich (In-App-Timer; unter iOS zusätzlich
+            OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit
+            Ruhezeiten.</li>
+        <li><strong>Offline lesen</strong>
+            Synchronisierte Artikeltexte bleiben ohne Internetverbindung
+            lesbar; Originalbeiträge, Links und Bilder brauchen Netz. Alle
+            Daten bleiben auf deinem Gerät; deine Abos, Kategorien und
+            Einstellungen sind im iCloud-Backup enthalten, Artikelinhalte
+            werden nach einer Wiederherstellung automatisch nachgeladen.</li>
+        <li><strong>Durchdachtes Design</strong>
+            Light-/Dark-Theme, lokalisierte UI (Deutsch/Englisch), durchgängige
+            Barrierefreiheit und ein Design-System mit eigenem App-Icon — beim
+            ersten Start wartet ein Demo-Feed auf dich.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="screenshots">
+      <h2 id="screenshots">Screenshots &amp; Demo</h2>
+      <div class="screenshot-grid">
+        <figure>
+          <img src="assets/img/screenshots/01-ungelesen.png" alt="Tab „Ungelesen“ nach dem ersten Start">
+          <figcaption>Ungelesen</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/screenshots/02-feeds.png" alt="Tab „Feeds“ mit abonnierten Feeds">
+          <figcaption>Feeds</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/screenshots/04-feed-suche-ergebnisse.png" alt="Feed-Suche mit Ergebnissen für „zdf.de“">
+          <figcaption>Feed-Suche</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/screenshots/05-feed-abo-dialog.png" alt="Dialog zum Abonnieren des ZDFheute-Feeds">
+          <figcaption>Feed abonnieren</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/screenshots/07-ungelesen-nach-zdf.png" alt="Ungelesen-Liste nach dem ZDF-Abo">
+          <figcaption>Neue Artikel</figcaption>
+        </figure>
+      </div>
+      <img class="demo-gif" src="assets/img/app-demo-ios.gif"
+           alt="Animierte Demo im iOS-Simulator: erster Start mit Demo-Feed sowie Suchen und Abonnieren eines Feeds">
+    </section>
+
+    <section aria-labelledby="download">
+      <h2 id="download">Download</h2>
+      <p>Reporter wird derzeit für den App Store vorbereitet. Bis zur
+         Veröffentlichung findest du alle Downloads und Versionshinweise
+         auf der GitHub-Releases-Seite.</p>
+      <div class="button-row">
+        <span class="store-badge" role="img" aria-label="Bald im App Store verfügbar">
+          <span><small>Bald erhältlich im</small><strong>App Store</strong></span>
+        </span>
+        <a class="btn btn-primary" href="https://github.com/martin-stromberg/Reporter/releases">GitHub-Releases</a>
+        <a class="btn btn-outline" href="https://github.com/martin-stromberg/Reporter">Quellcode ansehen</a>
+      </div>
+    </section>
+
+    <section aria-labelledby="support">
+      <h2 id="support">Support &amp; Kontakt</h2>
+      <p>Fragen, Fehler oder Wünsche? Erreichbar per E-Mail an
+         <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a>
+         oder über die
+         <a href="https://github.com/martin-stromberg/Reporter/issues">GitHub Issues</a>
+         des Projekts.</p>
+      <p>Entwickelt wird Reporter von <strong>Martin Stromberg</strong> — mit
+         KI-Unterstützung (Devin, Cognition) bei Implementierung und
+         Dokumentation. Die App steht unter der
+         <a href="https://github.com/martin-stromberg/Reporter/blob/main/LICENSE">PolyForm
+         Noncommercial License 1.0.0</a> — nicht-kommerzielle Nutzung ist frei,
+         für kommerzielle Nutzung gibt es eine
+         <a href="https://github.com/martin-stromberg/Reporter/blob/main/COMMERCIAL-LICENSE.md">separate
+         kommerzielle Lizenz</a>.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <nav aria-label="Fußnavigation">
+        <a href="privacypolicy.html">Datenschutz</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="press.html">Presse</a>
+        <a href="https://github.com/martin-stromberg/Reporter">GitHub</a>
+        <a href="https://github.com/martin-stromberg/Reporter/blob/main/LICENSE">Lizenz</a>
+      </nav>
+      <p>Kontakt: <a href="mailto:mstromberg84+reporter@gmail.com">mstromberg84+reporter@gmail.com</a></p>
+      <p>© Martin Stromberg — Reporter steht unter der PolyForm Noncommercial License 1.0.0.</p>
+    </div>
+  </footer>
+</body>
+</html>

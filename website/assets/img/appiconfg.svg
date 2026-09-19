@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" fill="none">
+  <!-- Outer Rounded Badge Frame -->
+  <rect x="30" y="30" width="340" height="340" rx="72" fill="#ffffff" stroke="#1e293b" stroke-width="22" stroke-linejoin="round"></rect>
+
+  <!-- Inner Signal Elements -->
+  <!-- 1. Warm Amber Accent Publication Dot -->
+  <circle cx="140" cy="270" r="32" fill="#f59e0b"></circle>
+
+  <!-- 2. Inner RSS Signal Wave Arc -->
+  <path d="M 112 186 A 84 84 0 0 1 224 298" fill="none" stroke="#1e293b" stroke-width="26" stroke-linecap="round"></path>
+
+  <!-- 3. Outer RSS Signal Wave Arc -->
+  <path d="M 112 122 A 148 148 0 0 1 288 298" fill="none" stroke="#1e293b" stroke-width="26" stroke-linecap="round"></path>
+</svg>
