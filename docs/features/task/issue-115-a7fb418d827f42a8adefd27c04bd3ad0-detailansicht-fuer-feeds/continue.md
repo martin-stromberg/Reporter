@@ -20,7 +20,7 @@ Keine — `review.md` trägt den Status `Vollständig umgesetzt`.
 
 ## Usability-Befunde
 
-Keine.
+- [ ] `FeedDetailPage.xaml` — Der „Aktionen"-Button im Kopf der Detailansicht zeigt derzeit Text (`ButtonFeedActions`). Er soll stattdessen ein passendes Symbol (Icon) zeigen — z. B. ein Overflow-/Kebab- oder Zahnrad-Icon passend zum Icon-Stil der übrigen App (vgl. `ArticleCardView`-Buttons, `Styles.xaml`). Accessibility-Beschreibung (`SemanticProperties.Description`) muss dabei erhalten bleiben. (Nutzerwunsch, nachträglich ergänzt.)
 
 ## Fehlgeschlagene Tests
 
