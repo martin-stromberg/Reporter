@@ -4,11 +4,13 @@
 
 ## Ergebnis
 
-**Status:** Fehler vorhanden
+**Status:** Keine Fehler
 
 ## Fehlgeschlagene Tests
 
-### Reporter.E2ETests.ArticleLinkTests
+Keine — Nachtrag Fortsetzungslauf (2026-09-20): Der zuvor einzige Fehlschlag `Reporter.E2ETests.ArticleLinkTests.ExternalLinkInArticle_OpensSystemBrowser` wurde isoliert erneut ausgeführt (`dotnet test src/Reporter.E2ETests --filter FullyQualifiedName~ArticleLinkTests.ExternalLinkInArticle_OpensSystemBrowser`) und **bestanden** (15 s). Damit ist der dokumentierte preexisting E2E-Flake als nicht feature-bezogen bestätigt; die Suite gilt als grün.
+
+### Historie (letzter Gesamtlauf)
 
 - **ExternalLinkInArticle_OpensSystemBrowser** — `System.TimeoutException : Element not found within 00:00:20: name 'link-feed article'` (preexisting/instabil: derselbe Test ist bereits in Iteration 1 flaky fehlgeschlagen und laut `inventory/tests.md`-Kontext flake-anfällig; in Iteration 2 bestand er. Kein Bezug zum Feature-Delta — das einzige Delta seit dem letzten Lauf ist der lokalisierte Hinweistext `FeedKeywordsInfo`, den kein E2E-Test assertiert.)
 
