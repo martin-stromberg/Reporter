@@ -119,6 +119,8 @@ public static class MauiProgram
             .AddSingleton<SettingsViewModel>()
             .AddTransient<ArticleDetailViewModel>()
             .AddTransient<ArticleDetailPage>()
+            .AddTransient<FeedDetailViewModel>()
+            .AddTransient<FeedDetailPage>()
             .AddTransient<UnreadPage>()
             .AddTransient<FeedsPage>()
             .AddTransient<LaterPage>()

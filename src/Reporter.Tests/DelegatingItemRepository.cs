@@ -61,6 +61,14 @@ public class DelegatingItemRepository : IItemRepository
     public virtual Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId) => _inner.GetByFeedAsync(feedId);
 
     /// <inheritdoc />
+    public virtual Task<IReadOnlyList<ItemListItem>> GetByFeedAsync(
+        Guid feedId,
+        int page,
+        int pageSize,
+        string? searchTerm = null)
+        => _inner.GetByFeedAsync(feedId, page, pageSize, searchTerm);
+
+    /// <inheritdoc />
     public virtual Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId) => _inner.GetByCategoryAsync(categoryId);
 
     /// <inheritdoc />

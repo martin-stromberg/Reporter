@@ -114,10 +114,7 @@ public partial class FeedsViewModel
             return;
         }
 
-        // Searching replaces the add form with the results view; in edit mode
-        // that would silently discard an in-progress edit (e.g. via the entry's
-        // ReturnCommand), so the search only runs from add mode.
-        if (!IsOnline || IsEditMode)
+        if (!IsOnline)
         {
             return;
         }
@@ -203,7 +200,7 @@ public partial class FeedsViewModel
 
     private static bool TryResolveSearchUrl(string input, out string searchUrl, out bool isDirectUrl)
     {
-        if (IsValidFeedUrl(input))
+        if (FeedUrlValidator.IsValidFeedUrl(input))
         {
             searchUrl = input;
             isDirectUrl = true;
@@ -274,14 +271,6 @@ public partial class FeedsViewModel
 
     private async Task DirectAddAsync()
     {
-        // Same precondition as SearchAsync: adding while an edit is in progress
-        // would create a new feed from the edit form's URL and silently discard
-        // the edit, so the direct add only runs from add mode.
-        if (IsEditMode)
-        {
-            return;
-        }
-
         var input = NewUrl.Trim();
         if (input.Length == 0 || !TryResolveSearchUrl(input, out var url, out _))
         {

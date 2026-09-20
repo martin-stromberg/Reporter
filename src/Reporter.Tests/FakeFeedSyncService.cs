@@ -12,6 +12,12 @@ namespace Reporter.Tests;
 public sealed class FakeFeedSyncService : IFeedSyncService
 {
     /// <summary>
+    /// Gets or sets the result returned by <see cref="SyncAllAsync"/>.
+    /// </summary>
+    /// <returns>The configured <see cref="SyncResult"/> for <see cref="SyncAllAsync"/>.</returns>
+    public SyncResult SyncAllResult { get; set; } = new(FeedHealth.Ok, 0);
+
+    /// <summary>
     /// Gets or sets the exception thrown by <see cref="SyncAllAsync"/>, or <c>null</c> for none.
     /// </summary>
     public Exception? SyncAllException { get; set; }
@@ -28,10 +34,41 @@ public sealed class FakeFeedSyncService : IFeedSyncService
 
     private int _syncAllCallCount;
 
+    /// <summary>
+    /// Gets the number of <see cref="SyncFeedAsync"/> calls.
+    /// </summary>
+    public int SyncFeedCallCount => _syncFeedCallCount;
+
+    private int _syncFeedCallCount;
+
+    /// <summary>
+    /// Gets the feed identifier passed to the most recent <see cref="SyncFeedAsync"/> call.
+    /// </summary>
+    public Guid? LastSyncFeedId { get; private set; }
+
+    /// <summary>
+    /// Gets or sets the result returned by <see cref="SyncFeedAsync"/>.
+    /// </summary>
+    /// <returns>The configured <see cref="SyncResult"/> for <see cref="SyncFeedAsync"/>.</returns>
+    public SyncResult SyncFeedResult { get; set; } = new(FeedHealth.Ok, 0);
+
+    /// <summary>
+    /// Gets or sets the exception thrown by <see cref="SyncFeedAsync"/>, or <c>null</c> for none.
+    /// </summary>
+    public Exception? SyncFeedException { get; set; }
+
     /// <inheritdoc />
     public Task<SyncResult> SyncFeedAsync(Guid feedId, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new SyncResult("OK", 0));
+        Interlocked.Increment(ref _syncFeedCallCount);
+        LastSyncFeedId = feedId;
+
+        if (SyncFeedException is not null)
+        {
+            throw SyncFeedException;
+        }
+
+        return Task.FromResult(SyncFeedResult);
     }
 
     /// <inheritdoc />
@@ -49,6 +86,6 @@ public sealed class FakeFeedSyncService : IFeedSyncService
             await SyncAllBlocker.Task;
         }
 
-        return new SyncResult("OK", 0);
+        return SyncAllResult;
     }
 }

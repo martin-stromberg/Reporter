@@ -5,6 +5,7 @@ using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Conditions;
 using FlaUI.Core.Definitions;
 using FlaUI.Core.Input;
+using FlaUI.Core.WindowsAPI;
 
 namespace Reporter.E2ETests;
 
@@ -69,6 +70,45 @@ public static class UiRetry
             if (DateTime.UtcNow >= deadline)
             {
                 return null;
+            }
+
+            Thread.Sleep(PollInterval);
+        }
+    }
+
+    /// <summary>
+    /// Polls <paramref name="root"/> for all descendants matching
+    /// <paramref name="condition"/> and returns them once at least one exists,
+    /// or an empty array on timeout.
+    /// </summary>
+    /// <param name="root">The element to search below.</param>
+    /// <param name="condition">The condition factory expression.</param>
+    /// <param name="timeout">An optional timeout overriding the 20 s default.</param>
+    /// <returns>The found elements or an empty array.</returns>
+    public static AutomationElement[] TryFindElements(
+        AutomationElement root,
+        Func<ConditionFactory, ConditionBase> condition,
+        TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? DefaultTimeout);
+        while (true)
+        {
+            try
+            {
+                var elements = root.FindAllDescendants(condition);
+                if (elements.Length > 0)
+                {
+                    return elements;
+                }
+            }
+            catch (Exception)
+            {
+                // The UIA tree can be transiently unavailable while the app renders.
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                return [];
             }
 
             Thread.Sleep(PollInterval);
@@ -326,6 +366,10 @@ public static class UiRetry
         }
 
         element.Focus();
+        // Without the value pattern plain typing would append to a prefilled
+        // entry (e.g. the edit sheet's URL), so the field is cleared first.
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+        Keyboard.Type(VirtualKeyShort.DELETE);
         Keyboard.Type(text);
     }
 

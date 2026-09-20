@@ -45,7 +45,7 @@
 1. In den **Einstellungen** den Schalter **Automatische Hintergrund-Aktualisierung** einschalten.
 2. Das gewünschte **Abruf-Intervall** wählen; für einen Abruf beim App-Start **Beim Programmstart abrufen** einschalten.
 3. Auf iOS zusätzlich in den Systemeinstellungen unter **Allgemein** → **Hintergrundaktualisierung** prüfen, ob die Funktion für Reporter freigegeben ist — sonst läuft der Abgleich bei geschlossener App nie. Das **Abruf-Intervall** ist dabei nur eine Mindestpause; iOS kann den Abgleich deutlich später ausführen.
-4. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Menü **Feed-Aktionen** → **Aktualisieren** abrufen.
+4. Alternativ auf der Seite **Feeds** die Liste nach unten ziehen (Ziehen zum Aktualisieren) oder einen einzelnen Feed über dessen Detailansicht abrufen (**Feeds** → Feed antippen → **Aktionen** → **Aktualisieren**).
 
 ## Feed zeigt Status „Fehler“ — „Unlesbares Feed-Format"
 
@@ -77,7 +77,7 @@
 
 **Lösung:**
 1. In den **Einstellungen** unter **Benachrichtigungen & Ruhezeiten** den Schalter **Benachrichtigungen** prüfen; bei sichtbarer Hinweiszeile **Benachrichtigungen erlauben** tippen (öffnet den iOS-Dialog) bzw. **Einstellungen öffnen** tippen und die Berechtigung in iOS freischalten.
-2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed antippen → **Bearbeiten**) prüfen.
+2. **Ruhezeit (Nicht stören)** und den Feed-Schalter **Benachrichtigungen** (Seite **Feeds** → Feed antippen → **Aktionen** → **Bearbeiten**) prüfen.
 3. Unter **Synchronisation & Lesefluss** die **Automatische Hintergrund-Aktualisierung** prüfen und in den iOS-Einstellungen (**Allgemein** → **Hintergrundaktualisierung**) die Freigabe für Reporter sicherstellen.
 4. Ausführliche Hilfe siehe [Benachrichtigungen — Fehlerbehebung](../benachrichtigungen/fehlerbehebung-anwender.md).
 

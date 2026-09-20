@@ -39,15 +39,15 @@
 
 **Bedingungen:**
 - Alle Tests liegen in der einen `E2ETestCollection` → serielle Ausführung, kein `ITestCaseOrderer`.
-- Jeder Test, der einen vorhandenen Feed oder eine Kategorie braucht, erzeugt ihn selbst per UI-Seeding (`AddFeedViaUi`, `AddCategoryViaUi`) — kein DB-Seeding.
+- Jeder Test, der einen vorhandenen Feed oder eine Kategorie braucht, erzeugt ihn selbst per UI-Seeding (`E2EPageHelpers.AddFeedViaUi`, `FeedDetailTests.AddCategoryViaUi`) — kein DB-Seeding.
 - Jeder Test nutzt eine eigene Stub-URL (`/feeds/{eindeutiger-name}.xml`); die `{name}`-Substitution im Channel-`<title>` erzeugt einen eindeutigen Karten-Titel.
 
 **Verhalten:**
 - Asserts sind zustandsagnostisch (z. B. akzeptiert `AppStarts_FeedListRenders` Karten **oder** den `EmptyView`-Platzhalter).
-- `ResetUiState` schließt Sheets/Dialoge und aktiviert den Feeds-Tab; persistierte Testdaten bleiben bewusst bestehen und stören dank eindeutiger Titel nicht.
-- Jeder Feeds-Test beginnt mit `SelectTab(AppResources.TabFeeds)`, weil die App auf dem **Unread-Tab** startet (Tab-Aktivierung statt angenommener Vorbedingung).
+- `ResetUiState` schließt Sheets/Dialoge und aktiviert den Feeds-Tab; persistierte Testdaten bleiben bei den Smoke-Tests bewusst bestehen und stören dank eindeutiger Titel nicht. Die `FeedDetailTests` räumen dagegen aktiv: Konstruktor und `ResetUiState` löschen alle `feeds`-/`items`-Zeilen (`DeleteAllFeedsAsync`) und markieren angefallene Artikel als gelesen (`MarkAllItemsReadAsync`) — ihre 25-Artikel-Paging-Fixtures würden die virtualisierten Listen sonst für Folgetests unerreichbar lang machen.
+- Jeder Feeds-Test beginnt mit `SelectTab(AppResources.TabFeeds)`, weil die App auf dem **Unread-Tab** startet (Tab-Aktivierung statt angenommener Vorbedingung); eine geschobene Detailseite poppt `SelectTab` dabei über `TryPopPushedPage`.
 
-**Umsetzung:** `SmokeTests` + `E2ETestCollection` (`src/Reporter.E2ETests/`).
+**Umsetzung:** `SmokeTests`, `FeedDetailTests`, `E2EPageHelpers` + `E2ETestCollection` (`src/Reporter.E2ETests/`).
 
 ## Env-Override-Validierung in der App
 
@@ -125,4 +125,4 @@
 - Diese Hops **nicht** in direkte Bindings umschreiben: Innerhalb eines `DataTemplate`s würde `{Binding IsOnline}` gegen den Item-Typ kompilieren (z. B. `FeedListItem` besitzt kein `IsOnline`) und fehlschlagen bzw. die Favicon-/Initial-Trigger still brechen.
 - `x:Reference`-Bindings auf **direkte** `BindableProperty`s (z. B. `x:Reference Card` auf `IsOnline`/`ToggleSavedCommand` in `ArticleCardView`) kompilieren gegen den View-Typ und bleiben unverändert.
 
-**Umsetzung:** `x:DataType` in `FeedsPage.xaml` (`vm:FeedsViewModel` + `models:FeedSearchResult`/`models:FeedListItem`), `CategoriesPage.xaml` (`vm:CategoriesViewModel` + `models:CategoryWithCount`), `UnreadPage.xaml` (`vm:UnreadViewModel` + `models:CategoryFilterItem`/`models:ItemListItem`), `LaterPage.xaml` (`vm:LaterViewModel` + `models:ItemListItem`), `SettingsPage.xaml` (`vm:SettingsViewModel` + `models:Keyword`), `ArticleCardView.xaml` (`models:ItemListItem`); `ArticleDetailPage.xaml` hatte den typisierten Kontext bereits.
+**Umsetzung:** `x:DataType` in `FeedsPage.xaml` (`vm:FeedsViewModel` + `models:FeedSearchResult`/`models:FeedListItem`), `FeedDetailPage.xaml` (`vm:FeedDetailViewModel` + `models:ItemListItem`), `CategoriesPage.xaml` (`vm:CategoriesViewModel` + `models:CategoryWithCount`), `UnreadPage.xaml` (`vm:UnreadViewModel` + `models:CategoryFilterItem`/`models:ItemListItem`), `LaterPage.xaml` (`vm:LaterViewModel` + `models:ItemListItem`), `SettingsPage.xaml` (`vm:SettingsViewModel` + `models:Keyword`), `ArticleCardView.xaml` (`models:ItemListItem`); `ArticleDetailPage.xaml` hatte den typisierten Kontext bereits.
