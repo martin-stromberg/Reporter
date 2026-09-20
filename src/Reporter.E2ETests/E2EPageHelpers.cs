@@ -525,6 +525,17 @@ public sealed class E2EPageHelpers
             cf => cf.ByName(AppResources.PlaceholderFeedEditUrl).And(cf.ByControlType(ControlType.Edit)),
             description: "edit sheet URL entry");
 
+    /// <summary>
+    /// Finds the keyword entry of the feed detail page's edit sheet by its
+    /// accessible name (SemanticProperties.Description).
+    /// </summary>
+    /// <returns>The edit-sheet keyword entry element.</returns>
+    public AutomationElement WaitForFeedKeywordEntry()
+        => UiRetry.WaitForElement(
+            Window,
+            cf => cf.ByName(AppResources.FeedKeywordPlaceholder).And(cf.ByControlType(ControlType.Edit)),
+            description: "edit sheet keyword entry");
+
     // Returns whether a back navigation was triggered. Covers both the Shell
     // chrome back button (WinUI NavigationView) and the article detail's own
     // back button in the reader control bar — the two affordances that pop a

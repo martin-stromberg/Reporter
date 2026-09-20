@@ -864,6 +864,88 @@ public class FeedSyncServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a feed-scoped keyword filters the matching item of its own feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FeedKeywordMatch_NotSaved()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige", FeedId = feedId });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater mit bis zu 2.600 MBit/s", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+        Assert.Equal("guid-1", items[0].GuidOrHash);
+    }
+
+    /// <summary>
+    /// Verifies that a feed-scoped keyword does not affect another feed: the same
+    /// matching article title is stored for a feed without that keyword.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FeedKeyword_OtherFeedUnaffected()
+    {
+        var feedWithKeyword = await TestDataSeeder.SeedFeedAsync(_feedRepository, "https://example.com/a");
+        var feedWithoutKeyword = await TestDataSeeder.SeedFeedAsync(_feedRepository, "https://example.com/b");
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige", FeedId = feedWithKeyword });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedWithoutKeyword);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedWithoutKeyword);
+        Assert.Single(items);
+        Assert.Equal("guid-ad", items[0].GuidOrHash);
+    }
+
+    /// <summary>
+    /// Verifies that the effective keyword list of a feed is the union of global
+    /// and feed keywords: items matching either list are discarded.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_FeedKeyword_CombinedWithGlobal()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige" });
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Gewinnspiel", FeedId = feedId });
+        var xml = TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Jetzt am Gewinnspiel teilnehmen", "https://example.com/raffle", "guid-raffle", DateTime.UtcNow, "Raffle"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]);
+        var service = CreateService(xml);
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var items = await _itemRepository.GetByFeedAsync(feedId);
+        Assert.Single(items);
+        Assert.Equal("guid-1", items[0].GuidOrHash);
+    }
+
+    /// <summary>
     /// Verifies that a successful sync backfills the favicon URL of a feed that
     /// has none, using the feed URL's authority when the document declares no
     /// alternate site link.

@@ -19,7 +19,6 @@ public partial class SettingsViewModel : ObservableObject
 {
     private const int MinRetentionDays = 1;
     private const int MaxRetentionDays = 365;
-    private const int MaxKeywordLength = 500;
     private const int DefaultRefreshIntervalMinutes = 30;
     private const int DefaultAutoMarkReadDelaySeconds = 5;
 
@@ -639,7 +638,7 @@ public partial class SettingsViewModel : ObservableObject
             LanguageRestartHintVisible = false;
 
             Keywords.Clear();
-            var keywords = await _keywordRepository.GetAllAsync();
+            var keywords = await _keywordRepository.GetByFeedAsync(null);
             foreach (var keyword in keywords)
             {
                 Keywords.Add(keyword);
@@ -840,23 +839,9 @@ public partial class SettingsViewModel : ObservableObject
     private async Task AddKeywordAsync()
     {
         var text = NewKeywordText?.Trim() ?? string.Empty;
-        if (text.Length == 0)
+        if (!KeywordValidator.TryValidate(text, Keywords, out var validationError))
         {
-            ErrorMessage = AppResources.ErrorKeywordEmpty;
-            HasError = true;
-            return;
-        }
-
-        if (text.Length > MaxKeywordLength)
-        {
-            ErrorMessage = AppResources.ErrorKeywordTooLong;
-            HasError = true;
-            return;
-        }
-
-        if (Keywords.Any(k => string.Equals(k.KeywordText, text, StringComparison.OrdinalIgnoreCase)))
-        {
-            ErrorMessage = AppResources.ErrorKeywordDuplicate;
+            ErrorMessage = validationError;
             HasError = true;
             return;
         }

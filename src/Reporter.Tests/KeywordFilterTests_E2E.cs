@@ -148,4 +148,31 @@ public class KeywordFilterTests_E2E : IDisposable
         var log = Assert.Single(logs);
         Assert.Equal(result.Message, log.Message);
     }
+
+    /// <summary>
+    /// Verifies the end-to-end flow for a feed-scoped keyword: a keyword stored
+    /// for the feed filters a matching item out of that feed's sync, so it never
+    /// appears in the unread list.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task E2E_KeywordFilter_FeedScoped_NotInUnreadList()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Anzeige", FeedId = feedId });
+        var service = CreateService(TestFeedXml.Rss(
+        [
+            ("Anzeige: WLAN-Repeater mit bis zu 2.600 MBit/s", "https://example.com/ad", "guid-ad", DateTime.UtcNow, "Sponsored"),
+            ("Regular Article", "https://example.com/1", "guid-1", DateTime.UtcNow, "Description one"),
+        ]));
+
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        Assert.Equal(1, result.NewItems);
+
+        var unread = await _itemRepository.GetUnreadByDateAsync(0, 50);
+        var listed = Assert.Single(unread);
+        Assert.Equal("Regular Article", listed.Title);
+    }
 }

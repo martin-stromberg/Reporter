@@ -35,6 +35,37 @@ public class KeywordRepository : IKeywordRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Keyword>> GetByFeedAsync(Guid? feedId)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.Keywords
+            .AsNoTracking()
+            .Where(k => k.FeedId == feedId)
+            .OrderBy(k => k.KeywordText)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Keyword>> GetEffectiveForFeedAsync(Guid feedId)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var entities = await context.Keywords
+            .AsNoTracking()
+            .Where(k => k.FeedId == null || k.FeedId == feedId)
+            .OrderBy(k => k.KeywordText)
+            .ToListAsync();
+        return entities.Select(MapToModel).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> AnyAsync()
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        return await context.Keywords.AnyAsync();
+    }
+
+    /// <inheritdoc />
     public async Task<Keyword?> GetByIdAsync(Guid id)
     {
         await using var context = await _factory.CreateDbContextAsync();
@@ -86,6 +117,7 @@ public class KeywordRepository : IKeywordRepository
         {
             Id = entity.Id,
             KeywordText = entity.KeywordText,
+            FeedId = entity.FeedId,
         };
     }
 
@@ -95,6 +127,7 @@ public class KeywordRepository : IKeywordRepository
         {
             Id = model.Id,
             KeywordText = model.KeywordText,
+            FeedId = model.FeedId,
         };
     }
 }

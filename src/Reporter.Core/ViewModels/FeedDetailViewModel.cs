@@ -29,6 +29,7 @@ public partial class FeedDetailViewModel : BaseViewModel
     private readonly IFeedRepository _feedRepository;
     private readonly IFeedSyncService _feedSyncService;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IKeywordRepository _keywordRepository;
     private readonly ILocalNotificationService? _localNotificationService;
     private readonly SemaphoreSlim _loadLock = new(1, 1);
 
@@ -45,6 +46,8 @@ public partial class FeedDetailViewModel : BaseViewModel
     private CancellationTokenSource? _searchDebounceSource;
     private string _editUrl = string.Empty;
     private bool _editNotificationsEnabled = true;
+    private string _newFeedKeywordText = string.Empty;
+    private string _feedKeywordErrorMessage = string.Empty;
     private ObservableCollection<Category> _categories = [];
 
     /// <summary>
@@ -55,6 +58,7 @@ public partial class FeedDetailViewModel : BaseViewModel
     /// <param name="feedSyncService">The feed synchronization service.</param>
     /// <param name="categoryRepository">The category repository.</param>
     /// <param name="networkStatusService">The network connectivity status service.</param>
+    /// <param name="keywordRepository">The keyword repository used for the feed-scoped keyword list.</param>
     /// <param name="localNotificationService">The platform notification service, used to detect whether notifications are supported at all.</param>
     public FeedDetailViewModel(
         IItemRepository itemRepository,
@@ -62,12 +66,14 @@ public partial class FeedDetailViewModel : BaseViewModel
         IFeedSyncService feedSyncService,
         ICategoryRepository categoryRepository,
         INetworkStatusService networkStatusService,
+        IKeywordRepository keywordRepository,
         ILocalNotificationService? localNotificationService = null)
     {
         _itemRepository = itemRepository;
         _feedRepository = feedRepository;
         _feedSyncService = feedSyncService;
         _categoryRepository = categoryRepository;
+        _keywordRepository = keywordRepository;
         _localNotificationService = localNotificationService;
         InitConnectivity(networkStatusService);
         LoadMoreCommand = new AsyncRelayCommand(LoadMoreAsync, () => HasMore && !IsLoading);
@@ -78,6 +84,8 @@ public partial class FeedDetailViewModel : BaseViewModel
         EditCommand = new RelayCommand(Edit, () => HasFeed);
         SaveEditCommand = new AsyncRelayCommand(SaveEditAsync);
         CloseEditFormCommand = new RelayCommand(ResetEditForm);
+        AddFeedKeywordCommand = new AsyncRelayCommand(AddFeedKeywordAsync);
+        RemoveFeedKeywordCommand = new AsyncRelayCommand<Keyword?>(RemoveFeedKeywordAsync);
     }
 
     /// <summary>
@@ -119,6 +127,16 @@ public partial class FeedDetailViewModel : BaseViewModel
     /// Gets the command that closes the edit sheet and resets its state.
     /// </summary>
     public RelayCommand CloseEditFormCommand { get; }
+
+    /// <summary>
+    /// Gets the command that adds a feed-scoped keyword from the edit-sheet input.
+    /// </summary>
+    public AsyncRelayCommand AddFeedKeywordCommand { get; }
+
+    /// <summary>
+    /// Gets the command that removes a feed-scoped keyword.
+    /// </summary>
+    public AsyncRelayCommand<Keyword?> RemoveFeedKeywordCommand { get; }
 
     /// <summary>
     /// Gets or sets the callback that performs the back navigation.
@@ -299,6 +317,47 @@ public partial class FeedDetailViewModel : BaseViewModel
     public bool NotificationsSupported => _localNotificationService?.IsSupported == true;
 
     /// <summary>
+    /// Gets the feed-scoped keywords of the current feed.
+    /// </summary>
+    /// <returns>The observable collection of feed keywords.</returns>
+    public ObservableCollection<Keyword> FeedKeywords { get; } = new();
+
+    /// <summary>
+    /// Gets or sets the text of the keyword input in the edit sheet; changing it clears the keyword error.
+    /// </summary>
+    public string NewFeedKeywordText
+    {
+        get => _newFeedKeywordText;
+        set
+        {
+            if (SetProperty(ref _newFeedKeywordText, value))
+            {
+                FeedKeywordErrorMessage = string.Empty;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the validation error of the keyword input in the edit sheet.
+    /// </summary>
+    public string FeedKeywordErrorMessage
+    {
+        get => _feedKeywordErrorMessage;
+        set
+        {
+            if (SetProperty(ref _feedKeywordErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasFeedKeywordError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a keyword error message is present.
+    /// </summary>
+    public bool HasFeedKeywordError => _feedKeywordErrorMessage.Length > 0;
+
+    /// <summary>
     /// Loads the feed header, the categories and the first page of articles.
     /// An unknown feed id leaves <see cref="Feed"/> unset and reports a load error.
     /// </summary>
@@ -312,6 +371,13 @@ public partial class FeedDetailViewModel : BaseViewModel
         {
             Categories = await LoadCategoriesWithNoneAsync(_categoryRepository);
             Feed = (await _feedRepository.GetAllWithDetailsAsync()).FirstOrDefault(f => f.Id == feedId);
+
+            FeedKeywords.Clear();
+            var feedKeywords = await _keywordRepository.GetByFeedAsync(feedId);
+            foreach (var keyword in feedKeywords)
+            {
+                FeedKeywords.Add(keyword);
+            }
         }
         catch (Exception ex)
         {
@@ -634,6 +700,8 @@ public partial class FeedDetailViewModel : BaseViewModel
 
         EditUrl = Feed.Url;
         EditNotificationsEnabled = Feed.NotificationsEnabled;
+        NewFeedKeywordText = string.Empty;
+        FeedKeywordErrorMessage = string.Empty;
         ErrorMessage = string.Empty;
         ShowEditForm = true;
     }
@@ -685,6 +753,8 @@ public partial class FeedDetailViewModel : BaseViewModel
         ShowEditForm = false;
         EditUrl = string.Empty;
         EditNotificationsEnabled = true;
+        NewFeedKeywordText = string.Empty;
+        FeedKeywordErrorMessage = string.Empty;
         ErrorMessage = string.Empty;
     }
 
@@ -722,6 +792,56 @@ public partial class FeedDetailViewModel : BaseViewModel
         }
 
         Items[index] = item.CopyWith(isRead: true);
+    }
+
+    private async Task AddFeedKeywordAsync()
+    {
+        // Without a loaded feed there is no valid feed id — the command cannot
+        // run from the UI in that state (EditCommand is gated on HasFeed), but
+        // the guard keeps the method safe against programmatic calls.
+        if (!HasFeed)
+        {
+            return;
+        }
+
+        var text = NewFeedKeywordText?.Trim() ?? string.Empty;
+        if (!KeywordValidator.TryValidate(text, FeedKeywords, out var validationError))
+        {
+            FeedKeywordErrorMessage = validationError;
+            return;
+        }
+
+        var keyword = new Keyword { Id = Guid.NewGuid(), KeywordText = text, FeedId = _feedId };
+        try
+        {
+            await _keywordRepository.AddAsync(keyword);
+            FeedKeywords.Add(keyword);
+            NewFeedKeywordText = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to add feed keyword: {ex}");
+            FeedKeywordErrorMessage = AppResources.ErrorActionFailed;
+        }
+    }
+
+    private async Task RemoveFeedKeywordAsync(Keyword? keyword)
+    {
+        if (keyword is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _keywordRepository.DeleteAsync(keyword.Id);
+            FeedKeywords.Remove(keyword);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to remove feed keyword: {ex}");
+            FeedKeywordErrorMessage = AppResources.ErrorActionFailed;
+        }
     }
 
     // Rebuilds the stored feed from its list item for partial updates so the

@@ -8,10 +8,17 @@ namespace Reporter.Core.Interfaces;
 public interface IKeywordFilter
 {
     /// <summary>
-    /// Gets the configured keyword texts asynchronously.
+    /// Gets the keyword texts effective for the specified feed scope asynchronously.
     /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the list of keyword texts.</returns>
-    Task<IReadOnlyList<string>> GetKeywordTextsAsync();
+    /// <param name="feedId">The feed identifier, or <c>null</c> for the global keyword list only.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the list of keyword texts; for a feed it is the union of global and feed keywords.</returns>
+    Task<IReadOnlyList<string>> GetKeywordTextsAsync(Guid? feedId);
+
+    /// <summary>
+    /// Checks whether at least one keyword is configured, in any scope (global or feed-scoped).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> when any keyword exists.</returns>
+    Task<bool> HasKeywordsAsync();
 
     /// <summary>
     /// Determines whether the title or the HTML content matches any of the specified keyword texts.

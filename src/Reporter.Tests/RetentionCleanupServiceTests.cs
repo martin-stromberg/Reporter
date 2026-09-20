@@ -1,6 +1,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
 using Microsoft.EntityFrameworkCore;
+using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
 using Reporter.Data.Repositories;
@@ -307,6 +308,127 @@ public class RetentionCleanupServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a feed-scoped keyword only deletes matching items of its own
+    /// feed while the same matching text in another feed is kept.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CleanupAsync_FeedKeywordMatch_DeletesOnlyOwnFeed()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var otherFeedId = await TestDataSeeder.SeedFeedAsync(_factory, "https://example.com/other");
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Werbung", FeedId = feedId });
+        var ownMatch = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Jetzt Werbung sichern",
+            GuidOrHash = "own-match",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow,
+        };
+        var otherMatch = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = otherFeedId,
+            Title = "Jetzt Werbung sichern",
+            GuidOrHash = "other-match",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow,
+        };
+        await _itemRepository.AddAsync(ownMatch);
+        await _itemRepository.AddAsync(otherMatch);
+
+        var deleted = await _service.CleanupAsync();
+
+        Assert.Equal(1, deleted);
+        Assert.Null(await _itemRepository.GetByIdAsync(ownMatch.Id));
+        Assert.NotNull(await _itemRepository.GetByIdAsync(otherMatch.Id));
+    }
+
+    /// <summary>
+    /// Verifies that a global keyword still deletes matching items across feeds.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CleanupAsync_GlobalKeyword_StillDeletesAcrossFeeds()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var otherFeedId = await TestDataSeeder.SeedFeedAsync(_factory, "https://example.com/other");
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Werbung" });
+        var firstMatch = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Jetzt Werbung sichern",
+            GuidOrHash = "first-match",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow,
+        };
+        var secondMatch = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = otherFeedId,
+            Title = "Mehr Werbung",
+            GuidOrHash = "second-match",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow,
+        };
+        await _itemRepository.AddAsync(firstMatch);
+        await _itemRepository.AddAsync(secondMatch);
+
+        var deleted = await _service.CleanupAsync();
+
+        Assert.Equal(2, deleted);
+        Assert.Null(await _itemRepository.GetByIdAsync(firstMatch.Id));
+        Assert.Null(await _itemRepository.GetByIdAsync(secondMatch.Id));
+    }
+
+    /// <summary>
+    /// Verifies that CleanupAsync skips the keyword-candidate query entirely
+    /// when no keywords are configured (neither global nor feed-scoped),
+    /// because no match is possible anyway.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CleanupAsync_NoKeywords_SkipsKeywordCandidateQuery()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var candidate = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Alter Artikel",
+            GuidOrHash = "candidate",
+            IsRead = true,
+            IsSavedForLater = false,
+            PublishedAt = DateTime.UtcNow.AddDays(-60),
+            ReadAt = DateTime.UtcNow,
+        };
+        await _itemRepository.AddAsync(candidate);
+        var counting = new CountingCandidatesItemRepository(_itemRepository);
+        var service = new RetentionCleanupService(
+            _settingsRepository,
+            counting,
+            new KeywordFilter(_keywordRepository, new KeywordMatcher()),
+            _contentStore);
+
+        var deleted = await service.CleanupAsync();
+
+        Assert.Equal(0, deleted);
+        Assert.Equal(0, counting.ExpiredKeywordCandidatesCallCount);
+        Assert.NotNull(await _itemRepository.GetByIdAsync(candidate.Id));
+    }
+
+    /// <summary>
     /// Verifies that CleanupAsync removes content store entries whose item no
     /// longer exists (e.g. left behind by the feed cascade or a partial
     /// failure), keeps the contents of existing items and still returns only
@@ -447,5 +569,35 @@ public class RetentionCleanupServiceTests : IDisposable
         Assert.Equal(0, deleted);
         Assert.Null(await _contentStore.GetImageAsync(orphan.Id));
         Assert.NotNull(await _contentStore.GetImageAsync(kept.Id));
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingItemRepository"/> that counts the keyword-candidate
+    /// queries to observe whether the keyword deletion rule ran at all.
+    /// </summary>
+    private sealed class CountingCandidatesItemRepository : DelegatingItemRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CountingCandidatesItemRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public CountingCandidatesItemRepository(IItemRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <summary>
+        /// Gets the number of <c>GetExpiredKeywordCandidatesAsync</c> calls so far.
+        /// </summary>
+        public int ExpiredKeywordCandidatesCallCount { get; private set; }
+
+        /// <inheritdoc />
+        public override Task<IReadOnlyList<Item>> GetExpiredKeywordCandidatesAsync(
+            DateTime cutoff,
+            CancellationToken cancellationToken = default)
+        {
+            ExpiredKeywordCandidatesCallCount++;
+            return base.GetExpiredKeywordCandidatesAsync(cutoff, cancellationToken);
+        }
     }
 }

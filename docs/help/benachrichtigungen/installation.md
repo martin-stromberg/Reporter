@@ -25,7 +25,7 @@
 | `settings.notification_summary_enabled` | `bool` | `false` | Benachrichtigungsmodus: `false` = eine Benachrichtigung pro Artikel, `true` = Sammel-Benachrichtigung pro Feed; Schalter **Sammel-Benachrichtigung** auf der `SettingsPage`. |
 | `settings.quiet_hours_start` / `settings.quiet_hours_end` | `TimeSpan?` | `null` | Ruhezeit in lokaler Gerätezeit; beide Werte müssen gesetzt sein, `Start == End` gilt als leeres Intervall (keine Ruhezeit). |
 | `feeds.notifications_enabled` | `bool` | `true` | Pro-Feed-Schalter; pflegbar im Feed-Formular auf `FeedsPage`. Bestehende Feeds erhalten per Migration `true`. |
-| `keywords`-Tabelle | — | — | Bestehender Keyword-Filter; Treffer auf `Title`/`ContentHtml` werden regulär bereits beim Feed-Abruf verworfen (Ingest-Filter in `FeedSyncService`) — der Check in `NotificationService` bleibt als Tiefenverteidigung. |
+| `keywords`-Tabelle | — | — | Bestehender Keyword-Filter mit nullable `feed_id` (`NULL` = global, Feed-ID = feed-spezifisch); wirksam pro Feed ist die Union beider Bereiche. Treffer auf `Title`/`ContentHtml` werden regulär bereits beim Feed-Abruf verworfen (Ingest-Filter in `FeedSyncService`) — der Check in `NotificationService` bleibt als Tiefenverteidigung. |
 | `settings.auto_refresh_enabled` | `bool` | `true` | Koppelt den OS-Hintergrundabruf an den Auto-Refresh-Schalter: `false` → `BGTaskScheduler.Shared.Cancel`, `true` → `Submit` mit `EarliestBeginDate` aus dem Intervall. |
 | `settings.refresh_interval_minutes` | `int` | `30` | Liefert über `SettingsValues.ClampRefreshIntervalMinutes` (1–1440) die `EarliestBeginDate` des `BGAppRefreshTask`; iOS behandelt sie nur als Untergrenze — der tatsächliche Ausführungszeitpunkt liegt beim System. |
 

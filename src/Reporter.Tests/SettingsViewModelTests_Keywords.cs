@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using Reporter.Core.Models;
 using Reporter.Core.Resources.Strings;
 using Reporter.Core.ViewModels;
 using Reporter.Data.Repositories;
@@ -132,5 +133,23 @@ public class SettingsViewModelTests_Keywords : IDisposable
 
         Assert.Empty(_viewModel.Keywords);
         Assert.Empty(await _keywordRepository.GetAllAsync());
+    }
+
+    /// <summary>
+    /// Verifies that the global keyword list does not include feed-scoped keywords.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadAsync_ExcludesFeedScopedKeywords()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "global" });
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "feed-only", FeedId = feedId });
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        var keyword = Assert.Single(_viewModel.Keywords);
+        Assert.Equal("global", keyword.KeywordText);
+        Assert.Null(keyword.FeedId);
     }
 }
