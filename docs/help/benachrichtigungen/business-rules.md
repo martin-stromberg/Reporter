@@ -12,7 +12,7 @@
 - `feed.NotificationsEnabled` (Pro-Feed-Schalter) — wird zuerst geprüft, noch vor dem Settings-Ladevorgang.
 - `settings.NotificationsEnabled` (globaler Hauptschalter).
 - Ruhezeit aktiv (s. nächste Regel).
-- Keyword-Filter pro Artikel (`Title` und `ContentHtml`, Teilwort + `OrdinalIgnoreCase` — identische Semantik wie der Ingest-Filter beim Feed-Abruf; `Item.Link` wird nicht gematcht). Keyword-Treffer erreichen den Dienst regulär gar nicht, da `FeedSyncService` sie bereits beim Einspeichern verwirft — der Check bleibt als Tiefenverteidigung bestehen.
+- Keyword-Filter pro Artikel (`Title` und `ContentHtml`, Teilwort + `OrdinalIgnoreCase` — identische Semantik wie der Ingest-Filter beim Feed-Abruf; `Item.Link` wird nicht gematcht). Wirksam ist die Union aus globalen Keywords (`feed_id IS NULL`) und den Keywords des jeweiligen Feeds (`GetKeywordTextsAsync(feed.Id)` → `GetEffectiveForFeedAsync`) — Feed-Schlagworte wirken nur auf ihren eigenen Feed. Keyword-Treffer erreichen den Dienst regulär gar nicht, da `FeedSyncService` sie bereits beim Einspeichern verwirft — der Check bleibt als Tiefenverteidigung bestehen.
 
 **Verhalten:**
 - Feed-Schalter aus oder keine neuen Artikel → sofortiger Abbruch ohne Settings-Zugriff.

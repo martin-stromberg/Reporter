@@ -125,7 +125,11 @@ public class ReporterDbContext : DbContext
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).HasColumnName("id");
         entity.Property(e => e.KeywordText).HasColumnName("keyword_text").HasMaxLength(500).IsRequired();
-        entity.HasIndex(e => e.KeywordText).IsUnique();
+        entity.Property(e => e.FeedId).HasColumnName("feed_id");
+
+        entity.HasOne(e => e.Feed).WithMany().HasForeignKey(e => e.FeedId).IsRequired(false).OnDelete(DeleteBehavior.Cascade);
+        entity.HasIndex(e => new { e.FeedId, e.KeywordText }).IsUnique();
+        entity.HasIndex(e => e.KeywordText).IsUnique().HasFilter("feed_id IS NULL");
     }
 
     private static void ConfigureSettings(EntityTypeBuilder<Settings> entity)

@@ -15,7 +15,7 @@ Nach jedem Feed-Abgleich — ob manuell über **Aktualisieren** im Menü **Feed-
 1. **Benachrichtigungen** in den **Einstellungen** (Karte **Benachrichtigungen & Ruhezeiten**) müssen eingeschaltet sein.
 2. Der Schalter **Benachrichtigungen** des betreffenden Feeds (Seite **Feeds** → Feed antippen → **Aktionen** → **Bearbeiten**) muss eingeschaltet sein — so lassen sich einzelne Feeds stummschalten.
 3. Es darf gerade keine **Ruhezeit (Nicht stören)** laufen. Benachrichtigungen in der Ruhezeit werden verworfen, nicht nachgeholt.
-4. Der Artikel darf kein Filter-Schlagwort in Titel oder Inhalt enthalten — solche Treffer werden bereits beim Abruf verworfen und erscheinen nicht in den Listen.
+4. Der Artikel darf kein Filter-Schlagwort in Titel oder Inhalt enthalten — solche Treffer werden bereits beim Abruf verworfen und erscheinen nicht in den Listen. Wirksam sind dabei die globalen Schlagworte aus den **Einstellungen** und die Schlagworte des jeweiligen Feeds aus dessen Formular **Feed bearbeiten** zusammen; ein Feed-Schlagwort gilt nur für seinen eigenen Feed.
 
 Pro Artikel erscheint höchstens eine Benachrichtigung. Der Titel der Benachrichtigung ist der Feed-Name, der Text der Artikeltitel.
 

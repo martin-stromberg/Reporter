@@ -285,65 +285,125 @@
                     VerticalOptions="End"
                     StrokeShape="RoundRectangle 12,12,0,0"
                     Background="{AppThemeBinding Light={StaticResource LightSurfaceContainerLowest}, Dark={StaticResource DarkSurfaceContainerLowest}}">
-                <VerticalStackLayout Spacing="12">
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="8">
-                        <Label Text="{x:Static strings:AppResources.FeedEditSheetTitle}"
-                               Style="{StaticResource HeadlineSmallStyle}"
-                               VerticalOptions="Center"/>
-                        <Button Grid.Column="1"
-                                Text="{x:Static strings:AppResources.ButtonCancel}"
-                                Command="{Binding CloseEditFormCommand}"
+                <ScrollView MaximumHeightRequest="560">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8">
+                            <Label Text="{x:Static strings:AppResources.FeedEditSheetTitle}"
+                                   Style="{StaticResource HeadlineSmallStyle}"
+                                   VerticalOptions="Center"/>
+                            <Button Grid.Column="1"
+                                    Text="{x:Static strings:AppResources.ButtonCancel}"
+                                    Command="{Binding CloseEditFormCommand}"
+                                    MinimumHeightRequest="44"/>
+                        </Grid>
+                        <Label Text="{Binding ErrorMessage}"
+                               TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                               IsVisible="{Binding HasError}"
+                               Style="{StaticResource BodySmallStyle}"/>
+                        <Entry x:Name="EditUrlEntry"
+                               Text="{Binding EditUrl}"
+                               Placeholder="{x:Static strings:AppResources.PlaceholderFeedEditUrl}"
+                               SemanticProperties.Description="{x:Static strings:AppResources.PlaceholderFeedEditUrl}"
+                               Keyboard="Url"/>
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8"
+                              IsEnabled="{Binding NotificationsSupported}">
+                            <Grid.Triggers>
+                                <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
+                                    <Setter Property="Opacity" Value="0.4"/>
+                                </DataTrigger>
+                            </Grid.Triggers>
+                            <VerticalStackLayout VerticalOptions="Center"
+                                                 Spacing="2">
+                                <Label Text="{x:Static strings:AppResources.FeedNotificationsLabel}"/>
+                                <Label Text="{x:Static strings:AppResources.FeedNotificationsHint}"
+                                       Style="{StaticResource MetaStyle}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding EditNotificationsEnabled}"
+                                    SemanticProperties.Description="{x:Static strings:AppResources.FeedNotificationsLabel}"
+                                    MinimumWidthRequest="44"
+                                    MinimumHeightRequest="44"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                        <Border Padding="10"
+                                StrokeShape="RoundRectangle 8"
+                                Stroke="Transparent"
+                                IsVisible="False"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
+                                   Style="{StaticResource BodySmallStyle}"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                        </Border>
+                        <Label Text="{x:Static strings:AppResources.FeedKeywordsLabel}"
+                               Style="{StaticResource UiLabelStyle}"/>
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8">
+                            <Entry x:Name="FeedKeywordEntry"
+                                   Text="{Binding NewFeedKeywordText}"
+                                   Placeholder="{x:Static strings:AppResources.FeedKeywordPlaceholder}"
+                                   SemanticProperties.Description="{x:Static strings:AppResources.FeedKeywordPlaceholder}"
+                                   ReturnCommand="{Binding AddFeedKeywordCommand}"/>
+                            <Button Grid.Column="1"
+                                    Text="{x:Static strings:AppResources.FeedKeywordAdd}"
+                                    Command="{Binding AddFeedKeywordCommand}"
+                                    SemanticProperties.Description="{x:Static strings:AppResources.FeedKeywordAdd}"
+                                    MinimumHeightRequest="44"/>
+                        </Grid>
+                        <Label Text="{Binding FeedKeywordErrorMessage}"
+                               TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                               IsVisible="{Binding HasFeedKeywordError}"
+                               Style="{StaticResource BodySmallStyle}"/>
+                        <FlexLayout Wrap="Wrap"
+                                    BindableLayout.ItemsSource="{Binding FeedKeywords}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:Keyword">
+                                    <Border Margin="0,0,6,6"
+                                            Padding="10,0,0,0"
+                                            StrokeShape="RoundRectangle 22"
+                                            MinimumHeightRequest="44"
+                                            Stroke="Transparent"
+                                            Background="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}">
+                                        <HorizontalStackLayout Spacing="0"
+                                                               VerticalOptions="Center">
+                                            <Label Text="{Binding KeywordText}"
+                                                   VerticalOptions="Center"/>
+                                            <Button Text="×"
+                                                    SemanticProperties.Description="{Binding KeywordText, StringFormat={x:Static strings:AppResources.FeedKeywordRemoveFormat}}"
+                                                    Command="{Binding BindingContext.RemoveFeedKeywordCommand, Source={x:Reference PageRoot}}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"
+                                                    FontSize="18"
+                                                    Padding="0"
+                                                    MinimumWidthRequest="44"
+                                                    MinimumHeightRequest="44"
+                                                    WidthRequest="44"
+                                                    HeightRequest="44"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                        <Border Padding="10"
+                                StrokeShape="RoundRectangle 8"
+                                Stroke="Transparent"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                            <Label Text="{x:Static strings:AppResources.FeedKeywordsInfo}"
+                                   Style="{StaticResource BodySmallStyle}"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                        </Border>
+                        <Button Text="{x:Static strings:AppResources.ButtonSave}"
+                                Command="{Binding SaveEditCommand}"
                                 MinimumHeightRequest="44"/>
-                    </Grid>
-                    <Label Text="{Binding ErrorMessage}"
-                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
-                           IsVisible="{Binding HasError}"
-                           Style="{StaticResource BodySmallStyle}"/>
-                    <Entry x:Name="EditUrlEntry"
-                           Text="{Binding EditUrl}"
-                           Placeholder="{x:Static strings:AppResources.PlaceholderFeedEditUrl}"
-                           SemanticProperties.Description="{x:Static strings:AppResources.PlaceholderFeedEditUrl}"
-                           Keyboard="Url"/>
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="8"
-                          IsEnabled="{Binding NotificationsSupported}">
-                        <Grid.Triggers>
-                            <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
-                                <Setter Property="Opacity" Value="0.4"/>
-                            </DataTrigger>
-                        </Grid.Triggers>
-                        <VerticalStackLayout VerticalOptions="Center"
-                                             Spacing="2">
-                            <Label Text="{x:Static strings:AppResources.FeedNotificationsLabel}"/>
-                            <Label Text="{x:Static strings:AppResources.FeedNotificationsHint}"
-                                   Style="{StaticResource MetaStyle}"/>
-                        </VerticalStackLayout>
-                        <Switch Grid.Column="1"
-                                IsToggled="{Binding EditNotificationsEnabled}"
-                                SemanticProperties.Description="{x:Static strings:AppResources.FeedNotificationsLabel}"
-                                MinimumWidthRequest="44"
-                                MinimumHeightRequest="44"
-                                VerticalOptions="Center"/>
-                    </Grid>
-                    <Border Padding="10"
-                            StrokeShape="RoundRectangle 8"
-                            Stroke="Transparent"
-                            IsVisible="False"
-                            Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
-                                <Setter Property="IsVisible" Value="True"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
-                               Style="{StaticResource BodySmallStyle}"
-                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
-                    </Border>
-                    <Button Text="{x:Static strings:AppResources.ButtonSave}"
-                            Command="{Binding SaveEditCommand}"
-                            MinimumHeightRequest="44"/>
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </ScrollView>
             </Border>
         </Grid>
     </Grid>

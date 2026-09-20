@@ -291,6 +291,56 @@ public class NotificationServiceTests : IDisposable
         Assert.StartsWith($"{feed.Id}-", notification.Identifier);
     }
 
+    /// <summary>
+    /// Verifies that a feed-scoped keyword match excludes the item from
+    /// notifications of that feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotifyNewItemsAsync_FeedKeywordMatch_SkipsItem()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _keywordRepository.AddAsync(new Keyword
+        {
+            Id = Guid.NewGuid(),
+            KeywordText = "sport",
+            FeedId = feedId,
+        });
+        var feed = CreateFeed(feedId: feedId);
+        var matchedItem = CreateItem(feed.Id, "Latest sport results");
+        var normalItem = CreateItem(feed.Id, "Technology update");
+
+        await CreateService().NotifyNewItemsAsync(feed, [matchedItem, normalItem]);
+
+        var notification = Assert.Single(_localNotifications.ShownNotifications);
+        Assert.Equal(normalItem.Id.ToString(), notification.Identifier);
+        Assert.Equal("Technology update", notification.Body);
+    }
+
+    /// <summary>
+    /// Verifies that a keyword scoped to a different feed does not affect the
+    /// notifications of this feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task NotifyNewItemsAsync_FeedKeyword_OtherFeedScope()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var otherFeedId = await TestDataSeeder.SeedFeedAsync(_factory, "https://example.com/other");
+        await _keywordRepository.AddAsync(new Keyword
+        {
+            Id = Guid.NewGuid(),
+            KeywordText = "sport",
+            FeedId = otherFeedId,
+        });
+        var feed = CreateFeed(feedId: feedId);
+        var item = CreateItem(feed.Id, "Latest sport results");
+
+        await CreateService().NotifyNewItemsAsync(feed, [item]);
+
+        Assert.Single(_localNotifications.ShownNotifications);
+    }
+
     private NotificationService CreateService(TimeProvider? timeProvider = null)
     {
         return new NotificationService(_settingsRepository, _keywordFilter, _localNotifications, timeProvider);
@@ -303,11 +353,11 @@ public class NotificationServiceTests : IDisposable
         return provider;
     }
 
-    private static Feed CreateFeed(bool notificationsEnabled = true)
+    private static Feed CreateFeed(bool notificationsEnabled = true, Guid? feedId = null)
     {
         return new Feed
         {
-            Id = Guid.NewGuid(),
+            Id = feedId ?? Guid.NewGuid(),
             Url = "https://example.com/rss",
             Title = "Test Feed",
             NotificationsEnabled = notificationsEnabled,

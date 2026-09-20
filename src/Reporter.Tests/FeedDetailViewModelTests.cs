@@ -18,6 +18,7 @@ public class FeedDetailViewModelTests : IDisposable
     private readonly ItemRepository _itemRepository;
     private readonly FeedRepository _feedRepository;
     private readonly CategoryRepository _categoryRepository;
+    private readonly KeywordRepository _keywordRepository;
     private readonly FakeFeedSyncService _syncService;
     private readonly FakeNetworkStatusService _networkStatusService;
     private readonly FakeLocalNotificationService _localNotificationService;
@@ -31,6 +32,7 @@ public class FeedDetailViewModelTests : IDisposable
         _itemRepository = new ItemRepository(_factory, new FakeItemContentStore());
         _feedRepository = new FeedRepository(_factory, new FakeItemContentStore());
         _categoryRepository = new CategoryRepository(_factory);
+        _keywordRepository = new KeywordRepository(_factory);
         _syncService = new FakeFeedSyncService();
         _networkStatusService = new FakeNetworkStatusService();
         _localNotificationService = new FakeLocalNotificationService();
@@ -47,7 +49,8 @@ public class FeedDetailViewModelTests : IDisposable
     private FeedDetailViewModel CreateViewModel(
         IItemRepository? itemRepository = null,
         IFeedRepository? feedRepository = null,
-        ICategoryRepository? categoryRepository = null)
+        ICategoryRepository? categoryRepository = null,
+        IKeywordRepository? keywordRepository = null)
     {
         return new FeedDetailViewModel(
             itemRepository ?? _itemRepository,
@@ -55,6 +58,7 @@ public class FeedDetailViewModelTests : IDisposable
             _syncService,
             categoryRepository ?? _categoryRepository,
             _networkStatusService,
+            keywordRepository ?? _keywordRepository,
             _localNotificationService);
     }
 
@@ -1056,6 +1060,231 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that LoadAsync fills the feed keyword list with the keywords
+    /// scoped to the current feed only.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadAsync_LoadsFeedKeywords()
+    {
+        var feedId = await SeedFeedAsync();
+        var otherFeedId = await SeedFeedAsync("Other Feed", "https://example.com/other");
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "feed-only", FeedId = feedId });
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "global" });
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "other-feed", FeedId = otherFeedId });
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadAsync(feedId);
+
+        var keyword = Assert.Single(viewModel.FeedKeywords);
+        Assert.Equal("feed-only", keyword.KeywordText);
+        Assert.Equal(feedId, keyword.FeedId);
+    }
+
+    /// <summary>
+    /// Verifies that a valid keyword is persisted with the feed id and added
+    /// to the keyword list.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddFeedKeyword_Valid_PersistsWithFeedId()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = "  Werbung  ";
+
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        var keyword = Assert.Single(viewModel.FeedKeywords);
+        Assert.Equal("Werbung", keyword.KeywordText);
+        Assert.Equal(feedId, keyword.FeedId);
+        Assert.Equal(string.Empty, viewModel.NewFeedKeywordText);
+        Assert.False(viewModel.HasFeedKeywordError);
+        var persisted = Assert.Single(await _keywordRepository.GetByFeedAsync(feedId));
+        Assert.Equal("Werbung", persisted.KeywordText);
+        Assert.Equal(feedId, persisted.FeedId);
+    }
+
+    /// <summary>
+    /// Verifies that an empty keyword shows the validation error without inserting.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddFeedKeyword_Empty_ShowsError()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = "   ";
+
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasFeedKeywordError);
+        Assert.Equal(AppResources.ErrorKeywordEmpty, viewModel.FeedKeywordErrorMessage);
+        Assert.Empty(viewModel.FeedKeywords);
+        Assert.Empty(await _keywordRepository.GetByFeedAsync(feedId));
+    }
+
+    /// <summary>
+    /// Verifies that a keyword longer than 500 characters shows the validation
+    /// error without inserting.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddFeedKeyword_TooLong_ShowsError()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = new string('x', 501);
+
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasFeedKeywordError);
+        Assert.Equal(AppResources.ErrorKeywordTooLong, viewModel.FeedKeywordErrorMessage);
+        Assert.Empty(viewModel.FeedKeywords);
+        Assert.Empty(await _keywordRepository.GetByFeedAsync(feedId));
+    }
+
+    /// <summary>
+    /// Verifies that a case-insensitive duplicate within the same feed shows
+    /// the validation error without inserting.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddFeedKeyword_Duplicate_ShowsError()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = "Werbung";
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        viewModel.NewFeedKeywordText = "WERBUNG";
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasFeedKeywordError);
+        Assert.Equal(AppResources.ErrorKeywordDuplicate, viewModel.FeedKeywordErrorMessage);
+        Assert.Single(viewModel.FeedKeywords);
+        Assert.Single(await _keywordRepository.GetByFeedAsync(feedId));
+    }
+
+    /// <summary>
+    /// Verifies that removing a keyword deletes the repository row and the chip.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RemoveFeedKeyword_DeletesFromRepository()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = "Werbung";
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+        var keyword = viewModel.FeedKeywords[0];
+
+        await viewModel.RemoveFeedKeywordCommand.ExecuteAsync(keyword);
+
+        Assert.Empty(viewModel.FeedKeywords);
+        Assert.Empty(await _keywordRepository.GetByFeedAsync(feedId));
+    }
+
+    /// <summary>
+    /// Verifies that closing the edit sheet clears the keyword input and error
+    /// while keeping the already persisted keywords.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task CloseEditForm_ResetsKeywordInput()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = "Werbung";
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+        viewModel.NewFeedKeywordText = "   ";
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+        Assert.True(viewModel.HasFeedKeywordError);
+        viewModel.NewFeedKeywordText = "leftover";
+
+        viewModel.CloseEditFormCommand.Execute(null);
+
+        Assert.False(viewModel.ShowEditForm);
+        Assert.Equal(string.Empty, viewModel.NewFeedKeywordText);
+        Assert.False(viewModel.HasFeedKeywordError);
+        Assert.Single(viewModel.FeedKeywords);
+    }
+
+    /// <summary>
+    /// Verifies that adding a keyword without a loaded feed does not persist a
+    /// keyword with an empty feed id.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddFeedKeyword_WithoutLoadedFeed_DoesNotAddKeyword()
+    {
+        var keywords = new RecordingKeywordRepository(_keywordRepository);
+        var viewModel = CreateViewModel(keywordRepository: keywords);
+        viewModel.NewFeedKeywordText = "Werbung";
+
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        Assert.Empty(keywords.AddedKeywords);
+        Assert.Empty(viewModel.FeedKeywords);
+        Assert.Empty(await _keywordRepository.GetAllAsync());
+    }
+
+    /// <summary>
+    /// Verifies that a repository failure while adding a keyword surfaces the
+    /// localized action error in the sheet instead of failing silently.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddFeedKeyword_WhenRepositoryThrows_SetsKeywordError()
+    {
+        var feedId = await SeedFeedAsync();
+        var viewModel = CreateViewModel(keywordRepository: new ThrowingKeywordRepository(_keywordRepository));
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+        viewModel.NewFeedKeywordText = "Werbung";
+
+        await viewModel.AddFeedKeywordCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasFeedKeywordError);
+        Assert.Equal(AppResources.ErrorActionFailed, viewModel.FeedKeywordErrorMessage);
+        Assert.Empty(viewModel.FeedKeywords);
+        Assert.Empty(await _keywordRepository.GetByFeedAsync(feedId));
+    }
+
+    /// <summary>
+    /// Verifies that a repository failure while removing a keyword surfaces the
+    /// localized action error in the sheet and keeps the chip.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task RemoveFeedKeyword_WhenRepositoryThrows_SetsKeywordError()
+    {
+        var feedId = await SeedFeedAsync();
+        await _keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "Werbung", FeedId = feedId });
+        var viewModel = CreateViewModel(keywordRepository: new ThrowingKeywordRepository(_keywordRepository));
+        await viewModel.LoadAsync(feedId);
+        viewModel.EditCommand.Execute(null);
+
+        await viewModel.RemoveFeedKeywordCommand.ExecuteAsync(viewModel.FeedKeywords[0]);
+
+        Assert.True(viewModel.HasFeedKeywordError);
+        Assert.Equal(AppResources.ErrorActionFailed, viewModel.FeedKeywordErrorMessage);
+        Assert.Single(viewModel.FeedKeywords);
+    }
+
+    /// <summary>
     /// A <see cref="DelegatingItemRepository"/> that fails the paged feed query
     /// to simulate a load failure.
     /// </summary>
@@ -1130,6 +1359,62 @@ public class FeedDetailViewModelTests : IDisposable
         public override Task<Feed?> GetByUrlAsync(string url)
         {
             return Task.FromException<Feed?>(new InvalidOperationException("Simulated save failure."));
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingKeywordRepository"/> that records the keywords
+    /// passed to <c>AddAsync</c> to observe persistence attempts.
+    /// </summary>
+    private sealed class RecordingKeywordRepository : DelegatingKeywordRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RecordingKeywordRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public RecordingKeywordRepository(IKeywordRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <summary>
+        /// Gets the keywords passed to <c>AddAsync</c> so far.
+        /// </summary>
+        public List<Keyword> AddedKeywords { get; } = [];
+
+        /// <inheritdoc />
+        public override Task AddAsync(Keyword keyword)
+        {
+            AddedKeywords.Add(keyword);
+            return base.AddAsync(keyword);
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingKeywordRepository"/> that fails the add and delete
+    /// calls to simulate a repository failure in the keyword commands.
+    /// </summary>
+    private sealed class ThrowingKeywordRepository : DelegatingKeywordRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThrowingKeywordRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public ThrowingKeywordRepository(IKeywordRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <inheritdoc />
+        public override Task AddAsync(Keyword keyword)
+        {
+            return Task.FromException(new InvalidOperationException("Simulated add failure."));
+        }
+
+        /// <inheritdoc />
+        public override Task DeleteAsync(Guid id)
+        {
+            return Task.FromException(new InvalidOperationException("Simulated delete failure."));
         }
     }
 

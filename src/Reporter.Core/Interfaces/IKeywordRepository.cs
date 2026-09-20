@@ -16,6 +16,26 @@ public interface IKeywordRepository
     Task<IReadOnlyList<Keyword>> GetAllAsync();
 
     /// <summary>
+    /// Gets the keywords assigned to the specified feed scope asynchronously.
+    /// </summary>
+    /// <param name="feedId">The feed identifier, or <c>null</c> for global keywords only.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the keywords of the requested scope ordered by text.</returns>
+    Task<IReadOnlyList<Keyword>> GetByFeedAsync(Guid? feedId);
+
+    /// <summary>
+    /// Gets the effective keyword list for the specified feed asynchronously (global keywords plus the feed's own keywords).
+    /// </summary>
+    /// <param name="feedId">The feed identifier.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the union of global and feed keywords ordered by text.</returns>
+    Task<IReadOnlyList<Keyword>> GetEffectiveForFeedAsync(Guid feedId);
+
+    /// <summary>
+    /// Checks whether at least one keyword exists asynchronously, in any scope (global or feed-scoped).
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> when any keyword row exists.</returns>
+    Task<bool> AnyAsync();
+
+    /// <summary>
     /// Gets the keyword with the specified identifier asynchronously.
     /// </summary>
     /// <param name="id">The keyword identifier.</param>

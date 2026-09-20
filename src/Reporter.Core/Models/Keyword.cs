@@ -16,4 +16,9 @@ public class Keyword
     /// Gets the keyword text.
     /// </summary>
     public required string KeywordText { get; init; }
+
+    /// <summary>
+    /// Gets the optional feed this keyword is scoped to; <c>null</c> marks a global keyword.
+    /// </summary>
+    public Guid? FeedId { get; init; }
 }

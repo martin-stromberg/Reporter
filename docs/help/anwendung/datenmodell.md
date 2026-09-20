@@ -73,6 +73,7 @@ Domänenmodell des Artikelbilds; wird beim Lesen aus den drei `image_*`-Spalten 
 |-------------|-----|--------------|
 | `Id` | `Guid` | Eindeutige Kennung des Keywords. |
 | `KeywordText` | `string` | Der Keyword-Text. |
+| `FeedId` | `Guid?` | Optionale Feed-Zuordnung (Spalte `feed_id`, FK auf `feeds.id`); `null` kennzeichnet ein globales Schlagwort. |
 
 ### `Settings`
 
@@ -121,6 +122,7 @@ Domänenmodell des Artikelbilds; wird beim Lesen aus den drei `image_*`-Spalten 
 - Ein `Feed` gehört optional zu einer `Category` (`CategoryId`).
 - Ein `Item` gehört immer zu einem `Feed` (`FeedId`).
 - Ein `SyncLog` gehört optional zu einem `Feed` (`FeedId`).
+- Ein `Keyword` gehört optional zu einem `Feed` (`FeedId`, `null` = globales Schlagwort); beim Löschen eines Feeds werden seine feed-spezifischen Schlagworte per `ON DELETE CASCADE` mitentfernt — globale Schlagworte sind nicht betroffen.
 - `DebugLogEntry` hat keine Beziehungen — die Einträge sind sitzungsbezogen und werden beim App-Start bis auf `Error`-Einträge zurückgesetzt.
 
 ## Datenzugriff
@@ -139,5 +141,6 @@ Die App verwendet eine saubere Schichtung:
 - Für die lokalen Benachrichtigungen wurden per Migration `AddFeedNotificationsEnabled` die Spalte `feeds.notifications_enabled` (Default `true`) und per `AddSettingsNotificationSummary` die Spalte `settings.notification_summary_enabled` (Default `false`, inkl. `UpdateData` des Singletons) ergänzt — Details siehe [Benachrichtigungen](../benachrichtigungen/index.md).
 - Für die Feed-Symbole wurde per Migration `AddFeedFaviconUrl` die Spalte `feeds.favicon_url` ergänzt; für Start-Abruf und Ungelesen-Sortierung per `AddSettingsStartupRefreshAndSortOrder` die Spalten `settings.refresh_on_startup_enabled` (Default `true`, inkl. `UpdateData` des Singletons) und `settings.unread_sort_order` (Default `"desc"`, inkl. `UpdateData` des Singletons).
 - Für die Diagnose-Funktion wurden per Migration `AddSettingsDebugCollection` die Spalte `settings.debug_collection_enabled` (Default `false`) und per `AddDebugLogEntries` die Tabelle `debug_log_entries` (`id`, `timestamp` mit Index `IX_debug_log_entries_timestamp`, `level` max. 20, `category` max. 50, `message`, `details`) ergänzt — Details zum Session-Log siehe [Einstellungen](../einstellungen/index.md).
+- Für die feed-spezifischen Schlagworte hat die Migration `AddKeywordFeedId` die Spalte `keywords.feed_id` (nullable, FK `feeds.id`, `ON DELETE CASCADE`) ergänzt und die Eindeutigkeit neu gebaut: Der bisherige Unique-Index auf `keyword_text` wurde durch einen Composite-Unique-Index `(feed_id, keyword_text)` plus einem gefilterten Unique-Index `keyword_text WHERE feed_id IS NULL` ersetzt — SQLite wertet `NULL`-FK-Werte im Composite-Index als verschieden, der Partial Index erhält daher die globale Eindeutigkeit. Dasselbe Schlagwort darf damit global und in mehreren Feeds gleichzeitig existieren; bestehende Zeilen bleiben global (`feed_id = NULL`, kein Backfill nötig). Gepflegt werden globale Schlagworte in den Einstellungen und Feed-Schlagworte im Formular **Feed bearbeiten** der Feeddetailansicht (Details siehe [Einstellungen](../einstellungen/index.md) und [Feeddetailansicht](feeddetailansicht.md)).
 - Für die Fehlerdetails-Anzeige hat die Migration `AddFeedLastError` die Spalten `feeds.last_error_kind` (max. 50 Zeichen, nullable — ein `FeedSyncErrorKind`-Wert wie `InsecureHttpBlocked`, `HttpStatus`, `Network`, `Parse` oder `Unknown`) und `feeds.last_error_message` (nullable — die technische Rohmeldung, identisch zum `SyncLog.Message`-Text des Fehlschlags) ergänzt. Beide werden bei jedem fehlgeschlagenen Abruf gesetzt und beim nächsten erfolgreichen Abruf auf `null` zurückgesetzt; `SyncLog` bleibt der Verlauf, die Feed-Spalten den aktuellen Stand — Details siehe [Feeds synchronisieren](synchronisation.md).
 - Beim allerersten Start — erkannt daran, dass die Datenbankdatei vor der Migration noch nicht existiert — legt `DemoContentService` einmalig die Kategorie „News" und den Feed `https://www.apple.com/newsroom/rss-feed.rss` (Titel „Apple Newsroom", `NotificationsEnabled = false`) über die regulären Repositories an. Das Seeden entfällt bei Bestandsdatenbanken, bei bereits vorhandenem Demo-Feed (`feeds.url`-Abgleich) sowie bei gesetzter Umgebungsvariable `REPORTER_DISABLE_DEMO_SEED` (E2E-/CI-Läufe); eine vorhandene Kategorie „News" wird wiederverwendet statt dupliziert.

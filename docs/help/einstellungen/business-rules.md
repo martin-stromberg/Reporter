@@ -38,6 +38,18 @@
 
 **Umsetzung:** `KeywordFilter.MatchesAny` (delegiert an `KeywordMatcher.MatchesAny`)
 
+## Keyword-Geltungsbereich: global und pro Feed
+
+**Beschreibung:** Keywords besitzen einen Scope über die nullable Spalte `keywords.feed_id`: `NULL` = global (gepflegt in den **Einstellungen**), Feed-ID = feed-spezifisch (gepflegt im Bearbeiten-Sheet der Feeddetailansicht). Wirksam pro Feed ist die **Union** beider Bereiche (`IKeywordRepository.GetEffectiveForFeedAsync(feedId)` = `feed_id IS NULL OR feed_id = @feedId`); die globale Liste allein liefert `GetByFeedAsync(null)`.
+
+**Bedingungen:**
+- Feed-Schlagworte wirken ausschließlich auf ihren eigenen Feed — beim Ingest (`GetKeywordTextsAsync(feed.Id)`) und beim Retention-Cleanup (Kandidaten gruppiert nach `Item.FeedId`, Liste pro Gruppe). Ein Keyword eines anderen Feeds beeinflusst den aktuellen Feed nie; es gibt keinen Whitelist-Modus und keine Möglichkeit, globale Keywords pro Feed auszunehmen.
+- Die Einstellungsliste zeigt bewusst nur globale Einträge (`GetByFeedAsync(null)`) — Feed-Schlagworte tauchen dort nicht auf.
+- Eindeutigkeit gilt pro Scope: zusammengesetzter Index `(feed_id, keyword_text)` plus gefilterter Index `keyword_text WHERE feed_id IS NULL` — dasselbe Schlagwort darf global und in mehreren Feeds gleichzeitig existieren, aber nicht doppelt im selben Scope. Die UI-Dublettenprüfung (`KeywordValidator.TryValidate`) prüft jeweils nur gegen die Liste des Zielbereichs.
+- Das Löschen eines Feeds entfernt seine Feed-Schlagworte per `ON DELETE CASCADE`; globale Keywords bleiben erhalten.
+
+**Umsetzung:** `Keyword.FeedId` (`Guid?`), `KeywordRepository.GetByFeedAsync`/`GetEffectiveForFeedAsync`/`AnyAsync`, `KeywordFilter.GetKeywordTextsAsync(feedId)`, Migration `AddKeywordFeedId`, `FeedDetailViewModel` (Feed-Keywords) — siehe [Feeddetailansicht — Technischer Ablauf](../anwendung/feeddetailansicht-technisch.md) und [Datenmodell](../anwendung/datenmodell.md).
+
 ## RetentionDays-Schutzregel
 
 **Beschreibung:** `RetentionDays <= 0` deaktiviert das gesamte Aufräumen (beide Regeln). Ohne diesen Abbruch läge der `cutoff` in der Zukunft und alle gelesenen Artikel würden gelöscht.

@@ -51,19 +51,32 @@ public class RetentionCleanupService : IRetentionCleanupService
         var cutoff = DateTime.UtcNow.AddDays(-settings.RetentionDays);
         var deleted = await _itemRepository.DeleteExpiredAsync(cutoff, cancellationToken);
 
-        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync();
-        if (keywordTexts.Count > 0)
+        // Ohne konfigurierte Stichworte (weder global noch feed-spezifisch)
+        // kann die Keyword-Regel nichts treffen — die Kandidatenabfrage wird
+        // dann komplett uebersprungen.
+        if (!await _keywordFilter.HasKeywordsAsync())
         {
-            var candidates = await _itemRepository.GetExpiredKeywordCandidatesAsync(cutoff, cancellationToken);
-            var matchedIds = candidates
-                .Where(i => _keywordFilter.MatchesAny(i.Title, i.ContentHtml, keywordTexts))
-                .Select(i => i.Id)
-                .ToList();
+            return deleted;
+        }
 
-            if (matchedIds.Count > 0)
+        var candidates = await _itemRepository.GetExpiredKeywordCandidatesAsync(cutoff, cancellationToken);
+        var matchedIds = new List<Guid>();
+        foreach (var group in candidates.GroupBy(i => i.FeedId))
+        {
+            var keywordTexts = await _keywordFilter.GetKeywordTextsAsync(group.Key);
+            if (keywordTexts.Count == 0)
             {
-                deleted += await _itemRepository.DeleteRangeAsync(matchedIds, cancellationToken);
+                continue;
             }
+
+            matchedIds.AddRange(group
+                .Where(i => _keywordFilter.MatchesAny(i.Title, i.ContentHtml, keywordTexts))
+                .Select(i => i.Id));
+        }
+
+        if (matchedIds.Count > 0)
+        {
+            deleted += await _itemRepository.DeleteRangeAsync(matchedIds, cancellationToken);
         }
 
         return deleted;

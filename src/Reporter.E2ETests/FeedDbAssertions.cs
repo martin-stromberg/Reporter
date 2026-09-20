@@ -71,6 +71,54 @@ public static class FeedDbAssertions
                 title));
 
     /// <summary>
+    /// Polls the <c>keywords</c> table until a feed-scoped row for the feed with
+    /// the given URL exists or the timeout elapses. The keyword is matched via a
+    /// join on <c>feeds</c> so the assertion proves the keyword is attached to
+    /// this feed and not just present anywhere. Mirrors the polling structure of
+    /// <see cref="FeedExistsAsync"/>.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="feedUrl">The URL of the feed the keyword belongs to.</param>
+    /// <param name="keywordText">The keyword text to look for.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether a feed-scoped keyword row exists.</returns>
+    public static Task<bool> KeywordExistsForFeedAsync(
+        string databasePath,
+        string feedUrl,
+        string keywordText,
+        TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => FeedKeywordExistsCoreAsync(path, feedUrl, keywordText));
+
+    // Runs the read-only keyword check with both the feed URL and the keyword
+    // text as parameters — ExistsCoreAsync only covers single-parameter
+    // queries, so the join needs its own core.
+    private static async Task<bool> FeedKeywordExistsCoreAsync(
+        string databasePath,
+        string feedUrl,
+        string keywordText)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return false;
+        }
+
+        await using var connection = CreateReadOnlyConnection(databasePath);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT COUNT(*) FROM keywords k " +
+            "JOIN feeds f ON f.id = k.feed_id " +
+            "WHERE f.url = $url AND k.keyword_text = $keyword";
+        command.Parameters.AddWithValue("$url", feedUrl);
+        command.Parameters.AddWithValue("$keyword", keywordText);
+        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        return result is long count && count > 0;
+    }
+
+    /// <summary>
     /// Polls until the item with the given title (looked up in
     /// <paramref name="databasePath"/>) has a non-empty <c>image_data</c> row in
     /// the separate <c>item_contents</c> table of
@@ -216,10 +264,12 @@ public static class FeedDbAssertions
     /// <returns>A task that represents the asynchronous operation.</returns>
     public static Task DeleteAllFeedsAsync(string databasePath)
     {
-        // The items are removed explicitly instead of relying on the
-        // foreign-key cascade so the cleanup does not depend on the
-        // connection's FK enforcement.
-        return ExecuteWriteWithRetryAsync(databasePath, "DELETE FROM items; DELETE FROM feeds");
+        // The items and feed-scoped keywords are removed explicitly instead of
+        // relying on the foreign-key cascade so the cleanup does not depend on
+        // the connection's FK enforcement.
+        return ExecuteWriteWithRetryAsync(
+            databasePath,
+            "DELETE FROM items; DELETE FROM keywords WHERE feed_id IS NOT NULL; DELETE FROM feeds");
     }
 
     // Runs a single write statement against the app's database, retrying

@@ -347,6 +347,21 @@
   <data name="SettingsKeywordRemoveFormat" xml:space="preserve">
     <value>Remove keyword {0}</value>
   </data>
+  <data name="FeedKeywordsLabel" xml:space="preserve">
+    <value>Keyword filter</value>
+  </data>
+  <data name="FeedKeywordPlaceholder" xml:space="preserve">
+    <value>Enter keyword…</value>
+  </data>
+  <data name="FeedKeywordAdd" xml:space="preserve">
+    <value>+ Add</value>
+  </data>
+  <data name="FeedKeywordRemoveFormat" xml:space="preserve">
+    <value>Remove keyword {0}</value>
+  </data>
+  <data name="FeedKeywordsInfo" xml:space="preserve">
+    <value>These keywords apply only to this feed and are combined with the global keyword filter. Filtered articles are discarded while the feed is fetched. Changes to keywords take effect immediately; no separate save is needed.</value>
+  </data>
   <data name="FeedNotificationsLabel" xml:space="preserve">
     <value>Notifications</value>
   </data>

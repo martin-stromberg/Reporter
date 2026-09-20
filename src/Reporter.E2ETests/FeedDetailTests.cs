@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Globalization;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using Reporter.Core.Resources.Strings;
@@ -104,6 +105,42 @@ public sealed class FeedDetailTests : IDisposable
         FeedDbAssertions.MarkAllItemsReadAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
 
         _page.SelectTab(AppResources.TabFeeds);
+    }
+
+    // Opens the feed detail page's edit sheet via the action sheet and waits
+    // for the keyword entry as its stable anchor — it sits at the bottom of
+    // the scrollable sheet, so it proves the whole sheet rendered.
+    private void OpenEditSheet(string feedTitle)
+    {
+        _page.OpenFeedDetail(feedTitle);
+        ReopenEditSheet();
+    }
+
+    // Opens the edit sheet while already on the feed detail page.
+    private void ReopenEditSheet()
+    {
+        _page.OpenFeedDetailActions(AppResources.ButtonEdit);
+        var edit = _page.WaitForElementInScopeByName(AppResources.ButtonEdit);
+        UiRetry.InvokeOrClick(edit);
+        _page.WaitForFeedKeywordEntry();
+    }
+
+    // Closes the edit sheet via its Cancel button (CloseEditFormCommand).
+    // Keywords added inside the sheet stay persisted because add/remove write
+    // through immediately and are not part of the URL save.
+    private void CloseEditSheet()
+    {
+        var cancel = _page.WaitForElementByName(AppResources.ButtonCancel, ControlType.Button);
+        UiRetry.InvokeOrClick(cancel);
+    }
+
+    // Types a keyword into the open edit sheet's keyword entry and taps its
+    // add button. The caller waits for the resulting chip or error label.
+    private void AddFeedKeywordViaSheet(string keyword)
+    {
+        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), keyword);
+        var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
+        UiRetry.InvokeOrClick(add);
     }
 
     // Whether any Text element in the app's UI scope carries the given text as
@@ -411,5 +448,184 @@ public sealed class FeedDetailTests : IDisposable
         _page.OpenFeedDetailActions(AppResources.ButtonRename);
         Assert.Null(
             _page.TryFindElementInScopeByName(AppResources.ButtonShowErrorDetails, timeout: TimeSpan.FromSeconds(3)));
+    }
+
+    /// <summary>
+    /// A keyword added in the edit sheet renders as a chip and is persisted
+    /// for the feed (database row joined to it). The chip survives closing and
+    /// reopening the sheet — and even a full reload of the detail page, which
+    /// proves the database roundtrip instead of just the in-memory list.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public async Task FeedDetail_Edit_AddKeyword_PersistsAndShowsChip()
+    {
+        var title = _page.AddFeedViaUi("kwadd");
+        var feedUrl = $"{_fixture.Server.BaseUrl}/feeds/kwadd.xml";
+        OpenEditSheet(title);
+
+        AddFeedKeywordViaSheet("e2e-kw-add");
+        _page.WaitForElementByName("e2e-kw-add");
+        Assert.True(
+            await FeedDbAssertions.KeywordExistsForFeedAsync(_fixture.DatabasePath, feedUrl, "e2e-kw-add"),
+            "No feed-scoped keyword row found — the keyword was not persisted for the feed.");
+
+        // Closing the sheet does not discard the persisted keyword.
+        CloseEditSheet();
+        ReopenEditSheet();
+        _page.WaitForElementByName("e2e-kw-add");
+
+        // A full page reload proves the chip is re-rendered from the database.
+        CloseEditSheet();
+        _page.NavigateBackToFeedList();
+        OpenEditSheet(title);
+        _page.WaitForElementByName("e2e-kw-add");
+    }
+
+    /// <summary>
+    /// The "×" button on a keyword chip removes the keyword through the UI:
+    /// the chip disappears from the sheet and the keywords row is deleted from
+    /// the database.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public async Task FeedDetail_Edit_RemoveKeyword_RemovesChipAndRow()
+    {
+        _page.AddFeedViaUi("kwremove");
+        var feedUrl = $"{_fixture.Server.BaseUrl}/feeds/kwremove.xml";
+        OpenEditSheet("kwremove.xml");
+
+        AddFeedKeywordViaSheet("e2e-kw-del");
+        _page.WaitForElementByName("e2e-kw-del");
+        Assert.True(
+            await FeedDbAssertions.KeywordExistsForFeedAsync(_fixture.DatabasePath, feedUrl, "e2e-kw-del"),
+            "No feed-scoped keyword row found — the keyword was not persisted for the feed.");
+
+        var removeName = string.Format(
+            CultureInfo.CurrentCulture,
+            AppResources.FeedKeywordRemoveFormat,
+            "e2e-kw-del");
+        var remove = _page.WaitForElementInScopeByName(removeName, ControlType.Button);
+        UiRetry.InvokeOrClick(remove);
+
+        Assert.True(
+            UiRetry.WaitFor(
+                () => UiRetry.TryFindElementByName(Window, "e2e-kw-del", timeout: TimeSpan.FromMilliseconds(500)) is null,
+                TimeSpan.FromSeconds(10)),
+            "The keyword chip is still rendered after removal.");
+        Assert.False(
+            await FeedDbAssertions.KeywordExistsForFeedAsync(
+                _fixture.DatabasePath,
+                feedUrl,
+                "e2e-kw-del",
+                TimeSpan.FromSeconds(3)),
+            "The feed-scoped keyword row still exists — the removal was not persisted.");
+    }
+
+    /// <summary>
+    /// A feed-scoped keyword added in the edit sheet is persisted for that
+    /// feed (database row joined to it) and filters only its own articles
+    /// during sync: the matching article of the keyword feed never reaches the
+    /// database while the article of a second, keyword-free feed is stored.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public async Task FeedDetail_FeedKeyword_FiltersOnlyOwnFeed()
+    {
+        _page.AddFeedViaUi("kwfilter-a");
+        var feedUrlA = $"{_fixture.Server.BaseUrl}/feeds/kwfilter-a.xml";
+        OpenEditSheet("kwfilter-a.xml");
+
+        AddFeedKeywordViaSheet("kwfilter-a");
+        // The added keyword renders as a chip whose label carries the text.
+        _page.WaitForElementByName("kwfilter-a");
+        Assert.True(
+            await FeedDbAssertions.KeywordExistsForFeedAsync(_fixture.DatabasePath, feedUrlA, "kwfilter-a"),
+            "No feed-scoped keyword row found — the keyword was not persisted for the feed.");
+        CloseEditSheet();
+        _page.NavigateBackToFeedList();
+
+        _page.AddFeedViaUi("kwfilter-b");
+        SyncAllViaUnreadTab();
+
+        Assert.True(
+            await FeedDbAssertions.ItemExistsAsync(_fixture.DatabasePath, "kwfilter-b article"),
+            "The unfiltered feed's article was not stored — the sync did not complete.");
+        Assert.False(
+            await FeedDbAssertions.ItemExistsAsync(
+                _fixture.DatabasePath,
+                "kwfilter-a article",
+                TimeSpan.FromSeconds(3)),
+            "The keyword-filtered article was stored although the keyword is scoped to its own feed.");
+    }
+
+    /// <summary>
+    /// The keyword input of the edit sheet validates visibly: an empty entry,
+    /// an overlong entry and a duplicate each surface their localized error
+    /// label inside the sheet.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public void FeedDetail_Edit_FeedKeywordValidation_ShowsErrors()
+    {
+        _page.AddFeedViaUi("kwvalidate");
+        OpenEditSheet("kwvalidate.xml");
+
+        var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
+        UiRetry.InvokeOrClick(add);
+        _page.WaitForElementByName(AppResources.ErrorKeywordEmpty);
+
+        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), new string('x', 501));
+        UiRetry.InvokeOrClick(_page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button));
+        _page.WaitForElementByName(AppResources.ErrorKeywordTooLong);
+
+        AddFeedKeywordViaSheet("e2e-dup");
+        _page.WaitForElementByName("e2e-dup");
+        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), "e2e-dup");
+        UiRetry.InvokeOrClick(_page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button));
+        _page.WaitForElementByName(AppResources.ErrorKeywordDuplicate);
+    }
+
+    /// <summary>
+    /// A feed-scoped keyword never shows up in the global keyword list on the
+    /// Settings page: a control keyword added there renders its chip while the
+    /// feed keyword stays absent.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public void FeedDetail_FeedKeyword_NotInGlobalSettings()
+    {
+        _page.AddFeedViaUi("kwsettings");
+        OpenEditSheet("kwsettings.xml");
+        AddFeedKeywordViaSheet("e2e-feed-only");
+        _page.WaitForElementByName("e2e-feed-only");
+        CloseEditSheet();
+        _page.NavigateBackToFeedList();
+
+        _page.SelectTab(AppResources.TabSettings);
+        var entry = UiRetry.WaitForElementByName(
+            Window,
+            AppResources.SettingsKeywordPlaceholder,
+            ControlType.Edit);
+        UiRetry.SetText(entry, "e2e-global-ctl");
+        var add = _page.WaitForElementByName(AppResources.SettingsKeywordAdd, ControlType.Button);
+        UiRetry.InvokeOrClick(add);
+
+        // The control chip proves the global keyword list actually rendered.
+        _page.WaitForElementByName("e2e-global-ctl");
+        Assert.Null(
+            UiRetry.TryFindElementByName(Window, "e2e-feed-only", timeout: TimeSpan.FromSeconds(3)));
+
+        // Remove the control keyword again so it cannot accumulate in the
+        // shared settings list across tests.
+        var removeName = string.Format(
+            CultureInfo.CurrentCulture,
+            AppResources.SettingsKeywordRemoveFormat,
+            "e2e-global-ctl");
+        var remove = UiRetry.TryFindElementByName(Window, removeName, ControlType.Button, TimeSpan.FromSeconds(5));
+        if (remove is not null)
+        {
+            UiRetry.InvokeOrClick(remove);
+        }
     }
 }
