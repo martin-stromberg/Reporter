@@ -68,10 +68,11 @@
 
 **Lösung:**
 1. Prüfen, ob das Keyword tatsächlich in `Title` oder `ContentHtml` vorkommt (Teilwort, `OrdinalIgnoreCase`; `Link` wird nicht gematcht).
-2. Den Sync-Verlauf prüfen — die `SyncLog.Message` weist verworfene Treffer als `, N filtered` aus.
-3. Für bereits gespeicherte Treffer: Artikel als gelesen markieren und App neu starten — die Löschregel läuft nur beim Start.
-4. `settings.retention_days > 0` verifizieren — `<= 0` deaktiviert beide Löschregeln.
-5. Debug-Ausgabe auf `App.OnStart retention cleanup failed` prüfen.
+2. Den Geltungsbereich des Keywords prüfen: Ein Feed-Schlagwort (`keywords.feed_id` gesetzt, gepflegt im Bearbeiten-Sheet der Feeddetailansicht) wirkt nur auf Artikel des eigenen Feeds — für Artikel anderer Feeds muss das Schlagwort global angelegt sein (`feed_id IS NULL`, Einstellungsliste) oder dem betreffenden Feed zugeordnet. Wirksam pro Feed ist die Union beider Bereiche (`GetEffectiveForFeedAsync`).
+3. Den Sync-Verlauf prüfen — die `SyncLog.Message` weist verworfene Treffer als `, N filtered` aus.
+4. Für bereits gespeicherte Treffer: Artikel als gelesen markieren und App neu starten — die Löschregel läuft nur beim Start und wertet pro Feed-Gruppe (`Item.FeedId`) die wirksame Liste aus.
+5. `settings.retention_days > 0` verifizieren — `<= 0` deaktiviert beide Löschregeln.
+6. Debug-Ausgabe auf `App.OnStart retention cleanup failed` prüfen.
 
 ## „Automatisch als gelesen markieren“ greift nicht
 

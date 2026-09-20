@@ -6,12 +6,12 @@
 
 ## Anwendung
 
-- [Anwendung](anwendung/index.md) — Übersicht, Bedienung, Feed-Suche und Hinzufügen-Flow inkl. Feed-Symbolen (Favicon/Initialen), lokal gespeicherte Artikelbilder, Offline-Verhalten, Sprache (System/Deutsch/Englisch), Barrierefreiheit, Architektur und Datenmodell der Reporter-App.
+- [Anwendung](anwendung/index.md) — Übersicht, Bedienung, Feed-Suche und Hinzufügen-Flow inkl. Feed-Symbolen (Favicon/Initialen), Feeddetailansicht mit Bearbeiten-Formular (Feed-Adresse, Benachrichtigungen, feed-spezifische Schlagwort-Filter als Ergänzung zur globalen Liste), lokal gespeicherte Artikelbilder, Offline-Verhalten, Sprache (System/Deutsch/Englisch), Barrierefreiheit, Architektur und Datenmodell der Reporter-App.
 - [Benachrichtigungen](benachrichtigungen/index.md) — Reporter informiert auf iOS-Geräten per lokaler Benachrichtigung über neue Artikel: Nach jedem Feed-Abgleich wird geprüft, ob neue Artikel eingetroffen sind, und — abhängig von Schaltern, Ruhezeit und Schlagwort-Filtern — eine Benachrichtigung erzeugt; sichtbar wird sie nur aus dem automatischen Hintergrund-Abgleich bei geschlossener App.
 
 ## Konfiguration
 
-- [Einstellungen](einstellungen/index.md) — Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, Keyword-Filter, automatische Aktualisierung, Abruf beim Programmstart, Sortierung der Ungelesen-Liste und Lesefluss, Benachrichtigungen mit Ruhezeiten, das Erscheinungsbild, die Sprache sowie Diagnose & Support (Debug-Sammlung und Debugbericht per E-Mail).
+- [Einstellungen](einstellungen/index.md) — Die Einstellungen-Seite bündelt alle konfigurierbaren Optionen der Reporter-App: Aufbewahrungsdauer, den globalen Keyword-Filter (feed-spezifische Schlagworte werden pro Feed in der Feeddetailansicht gepflegt), automatische Aktualisierung, Abruf beim Programmstart, Sortierung der Ungelesen-Liste und Lesefluss, Benachrichtigungen mit Ruhezeiten, das Erscheinungsbild, die Sprache sowie Diagnose & Support (Debug-Sammlung und Debugbericht per E-Mail).
 
 ## Systemverwaltung
 

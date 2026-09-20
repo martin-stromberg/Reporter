@@ -1062,6 +1062,51 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Keyword filter ähnelt.
+        /// </summary>
+        public static string FeedKeywordsLabel {
+            get {
+                return ResourceManager.GetString("FeedKeywordsLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Enter keyword… ähnelt.
+        /// </summary>
+        public static string FeedKeywordPlaceholder {
+            get {
+                return ResourceManager.GetString("FeedKeywordPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die + Add ähnelt.
+        /// </summary>
+        public static string FeedKeywordAdd {
+            get {
+                return ResourceManager.GetString("FeedKeywordAdd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Remove keyword {0} ähnelt.
+        /// </summary>
+        public static string FeedKeywordRemoveFormat {
+            get {
+                return ResourceManager.GetString("FeedKeywordRemoveFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die These keywords apply only to this feed and are combined with the global keyword filter. Filtered articles are discarded while the feed is fetched. Changes to keywords take effect immediately; no separate save is needed. ähnelt.
+        /// </summary>
+        public static string FeedKeywordsInfo {
+            get {
+                return ResourceManager.GetString("FeedKeywordsInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Notifications ähnelt.
         /// </summary>
         public static string FeedNotificationsLabel {

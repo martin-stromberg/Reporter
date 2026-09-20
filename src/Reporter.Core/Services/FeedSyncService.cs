@@ -181,7 +181,7 @@ public class FeedSyncService : IFeedSyncService
 
         var feedItems = syndicationFeed.Items.ToList();
 
-        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
+        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync(feed.Id).ConfigureAwait(false);
         var imageItemIds = await _contentStore
             .GetImageIdsAsync(existingItems.Select(i => i.Id).ToList(), cancellationToken)
             .ConfigureAwait(false);

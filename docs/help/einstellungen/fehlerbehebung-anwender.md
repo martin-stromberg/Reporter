@@ -10,8 +10,21 @@
 
 **Lösung:**
 1. *Bitte gib ein Schlagwort ein.* → Text in das Feld **Schlagwort eingeben…** eingeben.
-2. *Dieses Schlagwort existiert bereits.* → Das Schlagwort ist bereits als Chip vorhanden; Groß-/Kleinschreibung spielt dabei keine Rolle.
+2. *Dieses Schlagwort existiert bereits.* → Das Schlagwort ist bereits als Chip vorhanden; Groß-/Kleinschreibung spielt dabei keine Rolle. Die Prüfung gilt pro Liste: Dasselbe Schlagwort darf gleichzeitig global (Einstellungen) und in einem Feed (Formular **Feed bearbeiten**) existieren — dort gilt jeweils eine eigene Duplikat-Prüfung.
 3. *Das Schlagwort darf höchstens 500 Zeichen lang sein.* → Begriff kürzen.
+
+> **Hinweis:** Dieselbe Prüfung und dieselben Meldungen gelten für die Schlagwort-Eingabe im Formular **Feed bearbeiten** der Feeddetailansicht — dort angelegte Schlagworte erscheinen nur in diesem Feed und nicht in der Liste der Einstellungen.
+
+## Ein Schlagwort greift nicht wie erwartet
+
+**Symptom:** Neue Artikel eines Feeds werden nicht gefiltert, obwohl das Schlagwort eingerichtet ist — oder Artikel anderer Feeds werden unerwartet gefiltert.
+
+**Ursache:** Der Geltungsbereich passt nicht zur Absicht: Die Schlagwort-Liste in den **Einstellungen** gilt für alle Feeds; ein Schlagwort im Formular **Feed bearbeiten** gilt nur für diesen einen Feed. Für jeden Feed wirken beide Listen zusammen — Feed-Schlagworte können den globalen Filter nicht aufheben, nur ergänzen.
+
+**Lösung:**
+1. Soll das Schlagwort alle Feeds betreffen, lege es in den **Einstellungen** unter **Schlagwort-Filter** an.
+2. Soll es nur einen Feed betreffen, lege es auf der Seite **Feeds** → Feed antippen → **Aktionen** → **Bearbeiten** unter **Schlagwort-Filter** an — und entferne eine gleichnamige globale Zeile in den **Einstellungen**, falls andere Feeds betroffen sind.
+3. Beachte, dass ein frisch angelegtes Schlagwort nur Neuzugänge ab dem nächsten Abruf verwirft; bereits gespeicherte Artikel bleiben sichtbar, bis sie gelesen wurden und die Aufbewahrungsfrist abläuft.
 
 ## Artikel wurde nicht automatisch gelöscht
 

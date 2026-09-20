@@ -67,7 +67,7 @@ public class NotificationService : INotificationService
             return;
         }
 
-        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync().ConfigureAwait(false);
+        var keywordTexts = await _keywordFilter.GetKeywordTextsAsync(feed.Id).ConfigureAwait(false);
         var candidates = newItems
             .Where(i => !_keywordFilter.MatchesAny(i.Title, i.ContentHtml, keywordTexts))
             .ToList();

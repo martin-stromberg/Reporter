@@ -15,15 +15,16 @@ public static class TestDataSeeder
     /// Seeds a feed with default values and returns its identifier.
     /// </summary>
     /// <param name="factory">The test context factory.</param>
+    /// <param name="url">The feed URL; defaults to a fixed value.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the feed identifier.</returns>
-    public static async Task<Guid> SeedFeedAsync(TestDbContextFactory factory)
+    public static async Task<Guid> SeedFeedAsync(TestDbContextFactory factory, string url = "https://example.com/feed")
     {
         var feedId = Guid.NewGuid();
         await using var context = factory.CreateDbContext();
         context.Feeds.Add(new Entities.Feed
         {
             Id = feedId,
-            Url = "https://example.com/feed",
+            Url = url,
             Title = "Example Feed",
         });
         await context.SaveChangesAsync();

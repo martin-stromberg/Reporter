@@ -332,4 +332,26 @@ public class FeedRepositoryTests : IDisposable
         Assert.Null(await _contentStore.GetImageAsync(item.Id));
         Assert.Empty(await _contentStore.GetImageIdsAsync(new List<Guid> { item.Id }));
     }
+
+    /// <summary>
+    /// Verifies that deleting a feed removes its feed-scoped keywords via the
+    /// foreign key cascade while global keywords remain.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task DeleteAsync_RemovesFeedScopedKeywords_KeepsGlobal()
+    {
+        var feed = new Feed { Id = Guid.NewGuid(), Url = "https://example.com/feed", Title = "Feed", NotificationsEnabled = true };
+        await _repository.AddAsync(feed);
+        var keywordRepository = new KeywordRepository(_factory);
+        await keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "feed-only", FeedId = feed.Id });
+        await keywordRepository.AddAsync(new Keyword { Id = Guid.NewGuid(), KeywordText = "global" });
+
+        await _repository.DeleteAsync(feed.Id);
+
+        var keywords = await keywordRepository.GetAllAsync();
+        var global = Assert.Single(keywords);
+        Assert.Equal("global", global.KeywordText);
+        Assert.Null(global.FeedId);
+    }
 }

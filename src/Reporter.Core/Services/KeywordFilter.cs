@@ -26,10 +26,18 @@ public class KeywordFilter : IKeywordFilter
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<string>> GetKeywordTextsAsync()
+    public async Task<IReadOnlyList<string>> GetKeywordTextsAsync(Guid? feedId)
     {
-        var keywords = await _keywordRepository.GetAllAsync().ConfigureAwait(false);
+        var keywords = feedId.HasValue
+            ? await _keywordRepository.GetEffectiveForFeedAsync(feedId.Value).ConfigureAwait(false)
+            : await _keywordRepository.GetByFeedAsync(null).ConfigureAwait(false);
         return keywords.Select(k => k.KeywordText).ToList();
+    }
+
+    /// <inheritdoc />
+    public Task<bool> HasKeywordsAsync()
+    {
+        return _keywordRepository.AnyAsync();
     }
 
     /// <inheritdoc />
