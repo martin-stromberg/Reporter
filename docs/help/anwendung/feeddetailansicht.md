@@ -15,7 +15,7 @@ Oben stehen die Eckdaten des Feeds:
 - **Meta-Zeile**: Kategorie, Datum und Uhrzeit des letzten Abrufs sowie die Zahl ungelesener Artikel (**Ungelesen**). Fehlt eine Angabe, steht dort ein Gedankenstrich.
 - **Status-Badge**: Der Gesundheitsstatus des Feeds als farbige Pille mit Punkt und Text — **In Ordnung**, **Warnung** oder **Fehler** (Bedeutung siehe [Feeds synchronisieren](synchronisation.md)).
 - **Zurück-Pfeil**: Oben links führt zurück zur Feed-Übersicht.
-- **Aktionen**: Der Button oben rechts öffnet das Menü **Feed-Aktionen** (siehe unten). Er ist nur aktiv, wenn der Feed geladen werden konnte.
+- **Aktionen**: Das Symbol ⋮ (drei Punkte) oben rechts öffnet das Menü **Feed-Aktionen** (siehe unten). Es ist nur aktiv, wenn der Feed geladen werden konnte.
 
 ## Artikelliste
 
@@ -37,7 +37,7 @@ Das Suchfeld **„Artikel in diesem Feed suchen…"** unter dem Kopfbereich durc
 
 ## Feed-Aktionen
 
-Der Button **Aktionen** im Kopf öffnet das Menü **Feed-Aktionen**:
+Das Symbol ⋮ (**Aktionen**) im Kopf öffnet das Menü **Feed-Aktionen**:
 
 - **Aktualisieren** — ruft nur diesen Feed neu ab und lädt danach Kopfdaten und Liste neu.
 - **Umbenennen** — öffnet den Dialog **Feed umbenennen**, in dem das Feld **Neuer Anzeigetitel** bereits den bisherigen Titel enthält. **OK** übernimmt den neuen Namen; ein leerer Titel wird mit dem Hinweis **„Bitte gib einen Anzeigetitel ein."** abgelehnt.

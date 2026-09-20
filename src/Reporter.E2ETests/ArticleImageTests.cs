@@ -21,6 +21,10 @@ public sealed class ArticleImageTests
     private const string ItemTitle = "image-feed article";
     private const string BrokenItemTitle = "broken-image-feed article";
 
+    // One short poll per subtree search so the caller can re-resolve the
+    // search root between polls instead of waiting on a stale proxy.
+    private static readonly TimeSpan SinglePollTimeout = TimeSpan.FromMilliseconds(300);
+
     private readonly ReporterAppFixture _fixture;
     private readonly E2EPageHelpers _page;
 
@@ -69,30 +73,56 @@ public sealed class ArticleImageTests
             $"No image_data row for '{ItemTitle}' found in {_fixture.ContentDatabasePath} — the article image was not downloaded.");
 
         // The card must render a thumbnail: the local image bytes are bound to
-        // an Image element inside the card subtree. WaitForCard resolves the
-        // transparent tap overlay that carries the title name — its subtree is
-        // empty, so the lookup falls back to the overlay's parent (the card
-        // content grid) where the thumbnail branch lives.
+        // an Image element inside the card subtree. Both card and thumbnail are
+        // re-resolved from the window on every poll — the CollectionView can
+        // re-render the card while HasLocalImage hydrates, which stale-mates an
+        // element proxy resolved earlier and would hide the thumbnail from a
+        // subtree search for the rest of the wait.
         var card = UiRetry.WaitForCard(Window, ItemTitle, TimeSpan.FromSeconds(10));
-        var thumbnail = UiRetry.TryFindElement(
-            card,
-            cf => cf.ByAutomationId("ArticleCardThumbnail").And(cf.ByControlType(ControlType.Image)),
-            TimeSpan.FromSeconds(3))
-            ?? UiRetry.TryFindElement(
-                card.Parent,
-                cf => cf.ByAutomationId("ArticleCardThumbnail").And(cf.ByControlType(ControlType.Image)),
-                TimeSpan.FromSeconds(10));
-        Assert.NotNull(thumbnail);
-        Assert.False(thumbnail.Properties.IsOffscreen.ValueOrDefault, "The card thumbnail is offscreen.");
+        AutomationElement? thumbnail = null;
+        var thumbnailFound = UiRetry.WaitFor(
+            () =>
+            {
+                var scope = UiRetry.TryFindElementByName(
+                                Window, ItemTitle, ControlType.Group, SinglePollTimeout)
+                            ?? UiRetry.TryFindElementByName(Window, ItemTitle, timeout: SinglePollTimeout)
+                            ?? card;
+                thumbnail = TryFindCardThumbnail(scope)
+                            ?? (scope.Parent is { } parent ? TryFindCardThumbnail(parent) : null);
+                if (thumbnail is not null)
+                {
+                    card = scope;
+                }
+
+                return thumbnail is not null;
+            },
+            TimeSpan.FromSeconds(15));
+        Assert.True(thumbnailFound && thumbnail is not null, "The article card did not render a thumbnail (ArticleCardThumbnail) in time.");
+        Assert.False(thumbnail!.Properties.IsOffscreen.ValueOrDefault, "The card thumbnail is offscreen.");
 
         // Detail view: the WebView exposes the article image as a UIA Image
-        // element once the page finished rendering.
+        // element once the page finished rendering. A swallowed click or a
+        // stale card proxy is retried after re-resolving the card.
         AutomationElement? openInBrowser = null;
         for (var attempt = 0; attempt < 4 && openInBrowser is null; attempt++)
         {
-            UiRetry.InvokeOrClick(card);
+            try
+            {
+                UiRetry.InvokeOrClick(card);
+            }
+            catch (Exception)
+            {
+                // Stale proxy or click lost while the list re-rendered — retry.
+            }
+
             openInBrowser = UiRetry.TryFindElementByName(
                 Window, AppResources.ArticleOpenInBrowser, timeout: TimeSpan.FromSeconds(5));
+            if (openInBrowser is null)
+            {
+                card = UiRetry.TryFindElementByName(
+                           Window, ItemTitle, ControlType.Group, TimeSpan.FromSeconds(3))
+                       ?? card;
+            }
         }
 
         Assert.NotNull(openInBrowser);
@@ -162,6 +192,16 @@ public sealed class ArticleImageTests
         // favicon / feed initial).
         var card = UiRetry.WaitForCard(Window, BrokenItemTitle, TimeSpan.FromSeconds(10));
         Assert.NotNull(card);
+    }
+
+    // Searches a single subtree for the rendered card thumbnail with one short
+    // poll, so callers can re-resolve the search root between attempts.
+    private static AutomationElement? TryFindCardThumbnail(AutomationElement root)
+    {
+        return UiRetry.TryFindElement(
+            root,
+            cf => cf.ByAutomationId("ArticleCardThumbnail").And(cf.ByControlType(ControlType.Image)),
+            SinglePollTimeout);
     }
 
     // Opens the add sheet on the Feeds tab, enters the stub feed URL and

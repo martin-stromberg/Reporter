@@ -167,14 +167,36 @@
                     </Border>
                 </Grid>
 
-                <Button Grid.Column="2"
-                        Text="{x:Static strings:AppResources.ButtonFeedActions}"
-                        SemanticProperties.Description="{x:Static strings:AppResources.ButtonFeedActions}"
-                        Clicked="OnFeedActionsClicked"
-                        IsEnabled="{Binding HasFeed}"
-                        MinimumHeightRequest="44"
-                        MinimumWidthRequest="44"
-                        VerticalOptions="Center"/>
+                <!-- Actions button: same overlay pattern as the back button —
+                     the Path only paints the icon; the transparent Button on
+                     top supplies the native automation peer and the 44×44
+                     touch target. -->
+                <Grid Grid.Column="2"
+                      WidthRequest="44"
+                      HeightRequest="44"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center">
+                    <Path Data="M12,4 A2,2 0 1,1 12,8 A2,2 0 1,1 12,4 Z M12,10 A2,2 0 1,1 12,14 A2,2 0 1,1 12,10 Z M12,16 A2,2 0 1,1 12,20 A2,2 0 1,1 12,16 Z"
+                          Fill="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                          Aspect="Uniform"
+                          WidthRequest="20"
+                          HeightRequest="20"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"
+                          InputTransparent="True">
+                        <Path.Triggers>
+                            <DataTrigger TargetType="Path" Binding="{Binding HasFeed}" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </DataTrigger>
+                        </Path.Triggers>
+                    </Path>
+                    <Button Clicked="OnFeedActionsClicked"
+                            IsEnabled="{Binding HasFeed}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ButtonFeedActions}"
+                            Background="Transparent"
+                            Padding="0"
+                            CornerRadius="22"/>
+                </Grid>
             </Grid>
 
             <Border Padding="10"
