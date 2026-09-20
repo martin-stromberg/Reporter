@@ -1,0 +1,89 @@
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+← [Zurück zur Übersicht](index.md)
+
+# Feeddetailansicht — Technischer Ablauf
+
+## Übersicht
+
+Der Tap auf eine Feed-Karte in der `FeedsPage` navigiert per Shell-Route `feeddetail?feedId={id}` auf die `FeedDetailPage` (`ContentPage` mit `IQueryAttributable`, Muster `ArticleDetailPage`). Die Seite zeigt die Feed-Metadaten im Kopf, eine `SearchBar` mit 300-ms-Debounce und alle `Item`-Datensätze des Feeds als pagede `CollectionView` mit `ArticleCardView`-Karten (`PageSize = 20`, Infinite Scroll, `RefreshView` für Einzel-Feed-Sync). Die früher im `FeedsViewModel`/`FeedsPage` lebende Feed-Aktionslogik (Aktualisieren, Umbenennen, Kategorie ändern, Bearbeiten, Fehlerdetails, Löschen) ist ins `FeedDetailViewModel` bzw. das Code-Behind der `FeedDetailPage` umgezogen; das Aktionsblatt bleibt UI-Ebene (`DisplayActionSheetAsync`). `FeedDetailPage` und `FeedDetailViewModel` sind transient registriert — jede Navigation erhält eine frische Instanz mit eigenem `feedId`-Kontext.
+
+## Beteiligte Komponenten
+
+|| Komponente | Typ | Rolle |
+||------------|-----|-------|
+|| `FeedDetailPage` (`src/Reporter/Views/FeedDetailPage.xaml` + `.xaml.cs`) | `ContentPage`, `IQueryAttributable` (transient) | Kopfdaten (Favicon/`FeedInitial`-Kreis, Titel, Meta-Zeile, `HealthStatus`-Micro-Pill-Badge), `SearchBar` (`AutomationId="FeedDetailSearchBar"`), `CollectionView` in `RefreshView`, Aktions-Button + `DisplayActionSheetAsync`, Edit-Bottom-Sheet-Overlay. `ApplyQueryAttributes` parst `feedId` (fehlende/unparsebare Werte → `ErrorMessage = ErrorLoadFailed`, keine Ladung) und verdrahtet `NavigateBackAsync` mit `Shell.Current.GoToAsync("..")`. `OnBackButtonPressed` schließt ein offenes Edit-Sheet statt zu navigieren; `PropertyChanged` auf `ShowEditForm` fokussiert `EditUrlEntry`. |
+|| `FeedDetailViewModel` (`src/Reporter.Core/ViewModels`, `BaseViewModel`, transient) | ViewModel | Paging-Liste `Items` (`ObservableCollection<ItemListItem>`), `PageSize = 20`, `LoadMoreCommand` (CanExecute `HasMore && !IsLoading`), `SearchText` mit Debounce, `Feed`/`HasFeed`, `Categories`, `RefreshCommand`, `GoBackCommand`, `ToggleSavedCommand`, `MarkReadCommand`, `EditCommand`/`SaveEditCommand`/`CloseEditFormCommand`, `ShowEditForm`/`EditUrl`/`EditNotificationsEnabled`/`NotificationsSupported`, `ErrorMessage`/`HasError`, `SyncErrorMessage`/`HasSyncError`, `IsSyncing`; Methoden `LoadAsync`, `RenameFeedAsync`, `ChangeFeedCategoryAsync`, `DeleteFeedAsync`, `GetFeedErrorMessage`, `MakeUniqueOptionLabels` (static), `AttachConnectivity`/`DetachConnectivity`. Konstruktor-Deps: `IItemRepository`, `IFeedRepository`, `IFeedSyncService`, `ICategoryRepository`, `INetworkStatusService`, optional `ILocalNotificationService`. |
+|| `IItemRepository.GetByFeedAsync(Guid, int, int, string?)` | Interface-Methode (neu) | Pagede, titelgefilterte Beitragsliste eines Feeds → `Task<IReadOnlyList<ItemListItem>>`; die bisherige `GetByFeedAsync(Guid)` bleibt für `FeedSyncService` unverändert. |
+|| `ItemRepository` (`src/Reporter.Data/Repositories`) | Repository | Implementierung: `Where(i => i.FeedId == feedId)`, optional `i.Title.Contains(searchTerm.Trim())`, `OrderByDescending(i => i.PublishedAt).ThenBy(i => i.Id)`, `Skip`/`Take`, `SelectListItemRows`-Projektion sowie `GetContentsAsync`/`GetImageIdsAsync`/`MapToListItem`-Hydration exakt wie `GetSavedForLaterAsync`. |
+|| `BaseViewModel` (`src/Reporter.Core/ViewModels`) | Basisklasse | Neu: `RunFeedSyncAsync(Func<Task<SyncResult>>)` — Einmal-Sync mit privatem `_isSyncInProgress`-Reentrancy-Guard (die gebundene `IsSyncing` wird vom `RefreshView.IsRefreshing`-TwoWay-Binding vorgezogen und kann nicht als Sperre dienen), Offline-Early-Return (`SetIsSyncing(false)` damit der Indikator nicht hängt), `SyncStatusError` bei `FeedHealth.Error` oder Exception; Hooks `SetIsSyncing`/`ReportSyncError`; `LoadCategoriesWithNoneAsync` lädt Kategorien mit führendem `Guid.Empty`/`CategoryNone`-Pseudo-Eintrag. `FeedsViewModel.SyncAsync` und `FeedDetailViewModel.RefreshAsync` nutzen beide diesen Baustein. |
+|| `FeedUrlValidator` (`src/Reporter.Core.Services`, statisch, neu) | Hilfsklasse | `IsValidFeedUrl(url)` — `Uri.TryCreate` absolut + Scheme `http`/`https`; löst die früher private `FeedsViewModel.IsValidFeedUrl` ab und wird von `FeedsViewModel` (Direkt-Add) und `FeedDetailViewModel.SaveEditAsync` geteilt. |
+|| `AppShell` / `MauiProgram` | Navigation / DI | `Routing.RegisterRoute("feeddetail", typeof(FeedDetailPage))`; `AddTransient<FeedDetailViewModel>()` + `AddTransient<FeedDetailPage>()`. |
+|| `ArticleCardView` | View | `ItemTemplate` der Liste; Default-`OpenArticleCommand` navigiert zu `articledetail?itemId=…`; `ToggleSavedCommand`/`MarkReadCommand`/`IsOnline` werden über `x:Reference PageRoot` ans `FeedDetailViewModel` gebunden. |
+
+## Ablauf
+
+### 1. Navigation und erstmaliges Laden
+
+1. `FeedsPage.OnFeedTapped` → `Shell.Current.GoToAsync($"feeddetail?feedId={feed.Id}")` (try/catch + `Debug.WriteLine`, Muster `ArticleCardView.OpenArticleAsync`).
+2. Shell löst `feeddetail` auf, erstellt die transienten Instanzen und ruft `FeedDetailPage.ApplyQueryAttributes` auf — fehlender/unparsebarer `feedId`-Wert setzt `ErrorMessage = ErrorLoadFailed` und bricht ohne Ladung ab.
+3. `FeedDetailViewModel.LoadAsync(feedId)`: `Categories` via `LoadCategoriesWithNoneAsync` laden; `Feed` = `(await _feedRepository.GetAllWithDetailsAsync()).FirstOrDefault(f => f.Id == feedId)` — bewusst die Gesamtprojektion statt `GetByIdAsync`, weil `FeedListItem` `CategoryName`/`UnreadCount` trägt und exakt der Parametertyp der Aktionsmethoden ist; `Feed == null` → `ErrorLoadFailed` und Abbruch.
+4. `ResetAndLoadFirstPageAsync` unter der `_loadLock`-`SemaphoreSlim`: `Items.Clear()`, `_currentPage = 0`, `HasMore = true`, dann `LoadPageCoreAsync`.
+
+### 2. Paging (Infinite Scroll)
+
+1. `CollectionView.RemainingItemsThresholdReachedCommand` (Schwelle `2`) → `LoadMoreCommand`.
+2. `LoadMoreAsync` prüft `IsLoading`/`HasMore` vor und innerhalb der `_loadLock` (Doppel-Check-Muster aus `LaterViewModel`).
+3. `LoadPageCoreAsync` ruft `GetByFeedAsync(_feedId, _currentPage, PageSize, SearchTermOrNull)`, hängt die Treffer an `Items`, inkrementiert `_currentPage` und setzt `HasMore = items.Count == PageSize`; Exception → `ErrorMessage = ErrorLoadFailed`, `HasMore = false`.
+
+### 3. Suche (Debounce)
+
+1. `SearchBar.Text` bindet an `SearchText`; jeder Setter-Aufruf startet `DebounceRestartList`: Der vorige `CancellationTokenSource` wird gecancelt und disposed, eine neue `RestartListDebouncedAsync`-Aufgabe wartet `SearchDebounceDelay` (300 ms) und ruft `RestartListAsync` → `ResetAndLoadFirstPageAsync` — ein getippter Buchstabe löst keine eigene Datenbankabfrage aus; `OperationCanceledException` wird als „überholt" erwartet.
+2. `SearchTermOrNull` liefert `null` bei leerem/Whitespace-Text, sonst den getrimmten Begriff; das `Title.Contains`-Filtering liegt in der Datenbankabfrage (Titel liegt als Spalte in `items`; `Summary`/`ContentHtml` im separaten Content-Speicher wären nicht SQL-filterbar).
+3. Die `EmptyView` unterscheidet per `DataTrigger` auf `SearchText`: leer → `PlaceholderFeedDetail`, gesetzt → `FeedDetailSearchNoResults`.
+
+### 4. Feed-Aktionen (`OnFeedActionsClicked`)
+
+1. Aktions-Button — Kebab-Icon (⋮) im Icon-Overlay-Pattern des Zurück-Buttons (44×44 `Grid` + `InputTransparent`-`Path` mit `AppThemeBinding` + transparenter `Button` mit `SemanticProperties.Description`=`ButtonFeedActions` als UIA-Name, `IsEnabled="{Binding HasFeed}"`, `Opacity 0.4` im Disabled-Zustand) → `DisplayActionSheetAsync` mit `ActionSheetTitleFeed`: `ButtonRefresh`, `ButtonRename`, `ButtonChangeCategory`, `ButtonEdit`; bei `Feed.HealthStatus == FeedHealth.Error` zusätzlich `ButtonShowErrorDetails`; danach `ButtonDelete`. Früh-Return bei `Feed == null`; Exceptions werden geloggt und als `ErrorActionFailed` auf der Seiten-Fehlerzeile gezeigt (`async void`-Handler darf nichts entkommen lassen).
+2. **Aktualisieren** → `RefreshCommand` → `RefreshAsync` → `RunFeedSyncAsync(() => _feedSyncService.SyncFeedAsync(_feedId))`; bei Erfolg `ReloadFeedAsync()` + `RestartListAsync()`.
+3. **Umbenennen** → `RenameFeedAsync` im Code-Behind (`DisplayPromptAsync`, `initialValue = feed.Title`) → `FeedDetailViewModel.RenameFeedAsync` — leerer Titel → `ErrorFeedTitleEmpty`; sonst `UpdateAsync(ToFeed(feed, url: feed.Url, title: newTitle.Trim(), categoryId: feed.CategoryId, notificationsEnabled: feed.NotificationsEnabled))` + `ReloadFeedAsync`.
+4. **Kategorie ändern** → `ChangeCategoryAsync` im Code-Behind (`DisplayActionSheetAsync` über `Categories`; Kategorien namens `ButtonCancel` werden herausgefiltert, `MakeUniqueOptionLabels` disambiguiert Dubletten per Zählsuffix, Rückabbildung positionsbasiert) → `ChangeFeedCategoryAsync` — `Guid.Empty` löscht die Zuordnung; `UpdateAsync` + `ReloadFeedAsync`.
+5. **Bearbeiten** → `EditCommand` (CanExecute `HasFeed`) → `Edit` befüllt `EditUrl`/`EditNotificationsEnabled`, leert `ErrorMessage`, setzt `ShowEditForm = true`; die Page fokussiert `EditUrlEntry` per `PropertyChanged`-Handler.
+6. **Fehlerdetails anzeigen** → `ShowFeedErrorDetailsAsync` → `DisplayAlertAsync` (`FeedErrorDetailsTitle`) mit `GetFeedErrorMessage(feed)` — `LastErrorKind` → `FeedErrorKind*` (`FeedErrorKindUnknown` als Fallback), plus `LastErrorMessage` als zweiter Absatz.
+7. **Löschen** → `ConfirmDeleteFeedAsync` (`DisplayAlertAsync` `ConfirmDeleteFeedTitle`/`Message`) → `DeleteFeedAsync` → `IFeedRepository.DeleteAsync(feed.Id)` (kaskadiert Items/Content/Bilder) → `GoBackAsync` → `NavigateBackAsync` → `Shell.Current.GoToAsync("..")`.
+
+### 5. Bearbeiten-Sheet
+
+1. `SaveEditCommand` → `SaveEditAsync`: Früh-Return bei `Feed == null`; `EditUrl.Trim()` wird per `FeedUrlValidator.IsValidFeedUrl` geprüft (`ErrorFeedUrlInvalid`) und gegen `GetByUrlAsync` auf Dubletten anderer Feeds (`existing.Id != feed.Id` → `ErrorFeedDuplicate`); bei Erfolg `UpdateAsync(ToFeed(feed, url, feed.Title, feed.CategoryId, EditNotificationsEnabled))` — `CategoryId` und `Title` bleiben erhalten —, dann `ResetEditForm` + `ReloadFeedAsync`.
+2. `CloseEditFormCommand`/`ResetEditForm`, Backdrop-Tap (`TapGestureRecognizer` auf den `BoxView`) und `OnBackButtonPressed` schließen das Sheet und setzen `ShowEditForm`, `EditUrl`, `EditNotificationsEnabled` (Default `true`) und `ErrorMessage` zurück.
+3. Der Benachrichtigungs-`Switch` ist über `NotificationsSupported` (`ILocalNotificationService.IsSupported`) deaktiviert; bei `false` zeigt zusätzlich der `NotificationsIosOnlyHint`-`Border`.
+
+### 6. Beitragskarten, Connectivity, Navigation
+
+1. `ToggleSavedAsync(item)` → `ToggleSavedForLaterAsync` + `Items[index] = item.CopyWith(isSavedForLater: …)`; `MarkReadAsync(item)` → `MarkAsReadAsync` + `CopyWith(isRead: true)` — der Eintrag bleibt (anders als in `LaterPage`) in der Liste, da die Detailansicht alle Items des Feeds zeigt.
+2. `OnAppearing` → `AttachConnectivity` (`TrackConnectivity` + `RefreshConnectivityStatus`), `OnDisappearing` → `DetachConnectivity`; `OnConnectivityChanged` leert `SyncErrorMessage`.
+3. Zurück-Pfeil im Kopf → `GoBackCommand` → `GoBackAsync` → `NavigateBackAsync` (im Konstruktor der Page auf `Shell.Current.GoToAsync("..")` verdrahtet — das ViewModel bleibt frei von UI-Abhängigkeiten und in `Reporter.Tests` testbar).
+
+## Fehlerbehandlung
+
+- **`feedId` fehlt/unparsebar oder Feed unbekannt:** `ErrorLoadFailed` auf der Seite; `HasFeed = false` deaktiviert den Aktions-Button und `EditCommand`; `OnFeedActionsClicked`, `SaveEditAsync`, `DeleteFeedAsync` kehren zusätzlich still zurück (Doppelsicherung).
+- **Listen-Ladefehler:** `LoadPageCoreAsync` fängt Exceptions → `ErrorLoadFailed`, `HasMore = false` (kein Endlos-Retry).
+- **Sync-Fehler:** `RunFeedSyncAsync` meldet `SyncStatusError` über `ReportSyncError` → `SyncErrorMessage`; die technische Detailmeldung bleibt im `SyncLog`; `OnConnectivityChanged` leert die Zeile.
+- **Dialog-/Handler-Exceptions:** `OnFeedActionsClicked` (`async void`) fängt alles → `Debug.WriteLine` + `ErrorActionFailed`; `FeedDetailPage.LoadAsync` loggt still.
+- **Validierung:** siehe Abschnitt 5 (`ErrorFeedUrlInvalid`, `ErrorFeedDuplicate`) und `ErrorFeedTitleEmpty` beim Umbenennen.
+
+## Verschiebungen aus `FeedsViewModel`/`FeedsPage`
+
+Ins `FeedDetailViewModel`/`FeedDetailPage` umgezogen (aus `FeedsViewModel`/`FeedsPage` entfernt): `RefreshCommand`/`RefreshAsync`, `EditCommand`/`EditAsync`, `DeleteCommand`/`DeleteAsync`, `SaveCommand`/`SaveAsync`, `RenameFeedAsync`, `ChangeFeedCategoryAsync`, `GetFeedErrorMessage`, `MakeUniqueOptionLabels`, `ToFeed`, `IsValidFeedUrl` (→ `FeedUrlValidator`), die Eigenschaften `SelectedFeed`, `NewTitle`, `FeedNotificationsEnabled`, `IsEditMode`, `NotificationsSupported`, die Konstruktor-Dep `ILocalNotificationService` sowie im Code-Behind `RenameFeedAsync`, `ChangeCategoryAsync`, `ConfirmDeleteFeedAsync`, `ShowFeedErrorDetailsAsync`. In `BaseViewModel` verallgemeinert: der Sync-Kern (`_isSyncInProgress`-Guard, Offline-Return, `SyncStatusError`) als `RunFeedSyncAsync` samt `SetIsSyncing`/`ReportSyncError`-Hooks und `LoadCategoriesWithNoneAsync`. Das Add-Sheet der `FeedsPage` ist seither reiner Add-Modus — alle `IsEditMode`-`DataTrigger` (Titel, Such-/Direkt-Add-Buttons, Offline-Hinweis) und der komplette Edit-Block entfielen.
+
+## Ressourcenschlüssel
+
+Neu (`AppResources.resx` EN + `AppResources.de.resx` DE, Designer regeneriert): `PageTitleFeedDetail`, `PlaceholderFeedDetailSearch`, `PlaceholderFeedDetail`, `FeedDetailSearchNoResults`, `ButtonFeedActions`, `AccessibilityOpenFeedDetails` (ersetzt `AccessibilityTapForActions` als `SemanticProperties.Hint` der Feed-Karten — die Trefferkarten der Suche und die Kategorien-Karten behalten `AccessibilityTapForActions`), `PlaceholderFeedEditUrl`, `ErrorActionFailed`. Weiterverwendet: `ActionSheetTitleFeed`, `ButtonRefresh`, `ButtonRename`, `ButtonChangeCategory`, `ButtonEdit`, `ButtonShowErrorDetails`, `ButtonDelete`, `ButtonCancel`, `ButtonOk`, `ButtonYes`/`ButtonNo`, `ButtonSave`, `PromptRenameFeed*`, `ConfirmDeleteFeed*`, `FeedErrorDetailsTitle`, `FeedErrorKind*`, `FeedEditSheetTitle`, `FeedNotificationsLabel`/`FeedNotificationsHint`, `NotificationsIosOnlyHint`, `LabelFeedCategory`, `LabelFeedUnreadCount`, `HealthStatus*Label`, `ErrorFeedUrlInvalid`, `ErrorFeedDuplicate`, `ErrorFeedTitleEmpty`, `ErrorLoadFailed`, `OfflineHint`, `SyncStatusError`, `CategoryNone`, `AccessibilityBack`, `AccessibilityDismissSheet`.
+
+## Tests
+
+- `FeedDetailViewModelTests` (`src/Reporter.Tests`): Laden/Feed-nicht-gefunden, Paging (`PageSize`, `HasMore`), Suche inkl. Debounce-Neustart, `RefreshCommand` (Reentrancy, Offline), `RenameFeedAsync`/`ChangeFeedCategoryAsync`/`DeleteFeedAsync`, Edit-Sheet (Vorbefüllung, URL-/Dubletten-Validierung, `ResetEditForm`), `GetFeedErrorMessage`, `MakeUniqueOptionLabels`, `ToggleSaved`/`MarkRead` (In-place-`CopyWith`).
+- `ItemRepositoryTests`: `GetByFeedAsync(feedId, page, pageSize, searchTerm)` — Feed-Filter, Sortierung `PublishedAt` desc + `Id`-Tiebreak, Paging, `Title.Contains`-Filter, `ItemListItem`-Hydration.
+- `DelegatingItemRepository`: Test-Wrapper um den neuen Interface-Member ergänzt (Interface-Bruch).
+- `FeedsViewModelTests`: an die verschlankte Schnittstelle angepasst — Aktions-/Edit-Testgruppen entfielen (nach `FeedDetailViewModelTests` umgezogen); `CreateViewModel` ohne `ILocalNotificationService`.
+- `FeedDetailTests` (`src/Reporter.E2ETests`, 8 Tests, FlaUI-UIA3): Navigation + Artikelliste, Titelsuche, Umbenennen, Kategorie setzen/`Keine Kategorie`, Löschen mit Rückkehr zur Übersicht, Bearbeiten (URL + Benachrichtigungs-`Switch`), Aktualisieren (`SyncFeedAsync`-Einzelabruf), Infinite-Scroll-Laden der zweiten Seite (Fixture `scroll-feed.xml`), Fehlerdetails nur bei Error-Feed — Details siehe [Tests](../tests/index.md).

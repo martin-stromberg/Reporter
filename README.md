@@ -21,7 +21,8 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 
 - Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
 - RSS-/Atom-Feed-Abruf (RSS 2.0, Atom 1.0 und Atom 0.3) mit Feed-Health-Status und Sync-Protokoll
-- Feeds über eine Website-Adresse finden (feedsearch.dev plus Autodiscovery) oder direkt per Feed-URL hinzufügen; Verwaltung per Kontextmenü auf der **Feeds**-Seite
+- Feeds über eine Website-Adresse finden (feedsearch.dev plus Autodiscovery) oder direkt per Feed-URL hinzufügen
+- Feeddetailansicht je Feed: Ein Tap auf eine Feed-Karte zeigt alle Artikel des Feeds — gelesen wie ungelesen — als suchbare Liste mit Infinite Scroll; hinter dem **Aktionen**-Button liegt die Feed-Verwaltung (Aktualisieren, Umbenennen, Kategorie ändern, Bearbeiten, Fehlerdetails, Löschen)
 - Artikeldetailansicht mit dem vom Feed gelieferten Artikeltext (bei vielen Feeds nur ein Teaser; der Originalbeitrag lässt sich über „Im Browser öffnen" aufrufen), automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser — externe Links im Artikeltext werden an den System-Browser übergeben
 - Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und konfigurierbare Sortierung der ungelesenen Artikel
 - Automatische Hintergrund-Aktualisierung (In-App-Timer; unter iOS zusätzlich OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit Ruhezeiten
@@ -97,7 +98,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 
 **Anwendung und Konfiguration**
 
-- [Anwendung im Überblick](docs/help/anwendung/index.md) — Bedienung, Feed-Suche und -Verwaltung, Synchronisation, Offline-Verhalten, Sprache, Barrierefreiheit, Architektur und Datenmodell
+- [Anwendung im Überblick](docs/help/anwendung/index.md) — Bedienung, Feed-Suche, Feed- und Artikeldetailansicht, Synchronisation, Offline-Verhalten, Sprache, Barrierefreiheit, Architektur und Datenmodell
 - [Einstellungen](docs/help/einstellungen/index.md) — Aufbewahrungsdauer, Keyword-Filter, Hintergrund-Aktualisierung, Ungelesen-Sortierung, Benachrichtigungen & Ruhezeiten, Erscheinungsbild, Sprache sowie Diagnose & Support
 - [Benachrichtigungen](docs/help/benachrichtigungen/index.md) — lokale iOS-Benachrichtigungen und der OS-Hintergrundabruf im Detail
 

@@ -32,4 +32,4 @@ Gelesene Artikel werden nach Ablauf der Aufbewahrungsfrist automatisch entfernt 
 ## Einschränkungen
 
 - Die **Später**-Liste sortiert nach Veröffentlichungsdatum, nicht nach dem Zeitpunkt des Merkens.
-- Löschst du einen Feed auf der Seite **Feeds** und bestätigst die Rückfrage, werden auch dessen gemerkte Artikel mit entfernt.
+- Löschst du einen Feed in seiner Detailansicht (Seite **Feeds** → Feed-Karte → **Aktionen** → **Löschen**) und bestätigst die Rückfrage, werden auch dessen gemerkte Artikel mit entfernt.

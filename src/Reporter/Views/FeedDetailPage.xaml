@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             xmlns:views="clr-namespace:Reporter.Views;assembly=Reporter"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             xmlns:vm="clr-namespace:Reporter.Core.ViewModels;assembly=Reporter.Core"
+             x:Name="PageRoot"
+             x:Class="Reporter.Views.FeedDetailPage"
+             x:DataType="vm:FeedDetailViewModel"
+             Title="{Binding Feed.Title, FallbackValue={x:Static strings:AppResources.PageTitleFeedDetail}, TargetNullValue={x:Static strings:AppResources.PageTitleFeedDetail}}"
+             Shell.NavBarIsVisible="False">
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="16,8"
+          RowSpacing="12">
+        <VerticalStackLayout Spacing="8">
+            <Grid ColumnDefinitions="Auto,*,Auto"
+                  ColumnSpacing="8">
+                <!-- Back button: the Path only paints the icon; the transparent
+                     Button on top supplies the native automation peer and the
+                     44×44 touch target. -->
+                <Grid Grid.Column="0"
+                      WidthRequest="44"
+                      HeightRequest="44"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center">
+                    <Path Data="M18,8 L10,16 L18,24"
+                          Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                          StrokeThickness="2"
+                          StrokeLineCap="Round"
+                          StrokeLineJoin="Round"
+                          Aspect="Uniform"
+                          WidthRequest="22"
+                          HeightRequest="22"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"
+                          InputTransparent="True"
+                          Fill="Transparent"/>
+                    <Button Command="{Binding GoBackCommand}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityBack}"
+                            Background="Transparent"
+                            Padding="0"
+                            CornerRadius="22"/>
+                </Grid>
+
+                <Grid Grid.Column="1"
+                      RowDefinitions="Auto,Auto,Auto"
+                      ColumnDefinitions="Auto,*"
+                      RowSpacing="6"
+                      ColumnSpacing="12">
+                    <Grid Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="0"
+                          WidthRequest="40"
+                          HeightRequest="40"
+                          VerticalOptions="Center">
+                        <Image Source="{Binding Feed.FaviconUrl}"
+                               Aspect="AspectFit"
+                               WidthRequest="40"
+                               HeightRequest="40"
+                               IsVisible="False">
+                            <Image.Triggers>
+                                <MultiTrigger TargetType="Image">
+                                    <MultiTrigger.Conditions>
+                                        <BindingCondition Binding="{Binding Feed.FaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                        <BindingCondition Binding="{Binding IsOnline}" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </MultiTrigger>
+                            </Image.Triggers>
+                        </Image>
+                        <Border StrokeShape="RoundRectangle 20"
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+                                IsVisible="False">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Feed.FaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="False">
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="{Binding Feed.FeedInitial}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                    </Grid>
+                    <Label Grid.Row="0"
+                           Grid.Column="1"
+                           Text="{Binding Feed.Title}"
+                           Style="{StaticResource HeadlineSmallStyle}"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="2"
+                           VerticalOptions="Center"/>
+                    <HorizontalStackLayout Grid.Row="1"
+                                           Grid.Column="1"
+                                           Spacing="8"
+                                           VerticalOptions="Center">
+                        <Label Text="{Binding Feed.CategoryName, TargetNullValue='—'}"
+                               Style="{StaticResource MetaStyle}"/>
+                        <Label Text="•"
+                               Style="{StaticResource MetaStyle}"/>
+                        <Label Text="{Binding Feed.LastCheckedAt, StringFormat='{0:g}', TargetNullValue='—'}"
+                               Style="{StaticResource MetaStyle}"/>
+                        <Label Text="•"
+                               Style="{StaticResource MetaStyle}"/>
+                        <Label Text="{x:Static strings:AppResources.LabelFeedUnreadCount}"
+                               Style="{StaticResource MetaStyle}"/>
+                        <Label Text="{Binding Feed.UnreadCount}"
+                               Style="{StaticResource MetaStyle}"/>
+                    </HorizontalStackLayout>
+                    <Border Grid.Row="2"
+                            Grid.ColumnSpan="2"
+                            Padding="8,2"
+                            StrokeShape="RoundRectangle 9999"
+                            Stroke="Transparent"
+                            HorizontalOptions="Start"
+                            IsVisible="{Binding HasFeed}"
+                            Background="{AppThemeBinding Light={StaticResource LightStatusOkTint}, Dark={StaticResource DarkStatusOkTint}}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Feed.HealthStatus}" Value="Warning">
+                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightStatusWarningTint}, Dark={StaticResource DarkStatusWarningTint}}" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Border" Binding="{Binding Feed.HealthStatus}" Value="Error">
+                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightStatusErrorTint}, Dark={StaticResource DarkStatusErrorTint}}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
+                            <BoxView WidthRequest="6"
+                                     HeightRequest="6"
+                                     CornerRadius="3"
+                                     VerticalOptions="Center"
+                                     Color="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}">
+                                <BoxView.Triggers>
+                                    <DataTrigger TargetType="BoxView" Binding="{Binding Feed.HealthStatus}" Value="Warning">
+                                        <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="BoxView" Binding="{Binding Feed.HealthStatus}" Value="Error">
+                                        <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}" />
+                                    </DataTrigger>
+                                </BoxView.Triggers>
+                            </BoxView>
+                            <Label Text="{x:Static strings:AppResources.HealthStatusOkLabel}"
+                                   Style="{StaticResource LabelMetaStyle}"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightStatusOkText}, Dark={StaticResource DarkStatusOkText}}"
+                                   VerticalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Feed.HealthStatus}" Value="Warning">
+                                        <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusWarningLabel}" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusWarningText}, Dark={StaticResource DarkStatusWarningText}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Feed.HealthStatus}" Value="Error">
+                                        <Setter Property="Text" Value="{x:Static strings:AppResources.HealthStatusErrorLabel}" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightStatusErrorText}, Dark={StaticResource DarkStatusErrorText}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Actions button: same overlay pattern as the back button —
+                     the Path only paints the icon; the transparent Button on
+                     top supplies the native automation peer and the 44×44
+                     touch target. -->
+                <Grid Grid.Column="2"
+                      WidthRequest="44"
+                      HeightRequest="44"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center">
+                    <Path Data="M12,4 A2,2 0 1,1 12,8 A2,2 0 1,1 12,4 Z M12,10 A2,2 0 1,1 12,14 A2,2 0 1,1 12,10 Z M12,16 A2,2 0 1,1 12,20 A2,2 0 1,1 12,16 Z"
+                          Fill="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+                          Aspect="Uniform"
+                          WidthRequest="20"
+                          HeightRequest="20"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"
+                          InputTransparent="True">
+                        <Path.Triggers>
+                            <DataTrigger TargetType="Path" Binding="{Binding HasFeed}" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </DataTrigger>
+                        </Path.Triggers>
+                    </Path>
+                    <Button Clicked="OnFeedActionsClicked"
+                            IsEnabled="{Binding HasFeed}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ButtonFeedActions}"
+                            Background="Transparent"
+                            Padding="0"
+                            CornerRadius="22"/>
+                </Grid>
+            </Grid>
+
+            <Border Padding="10"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="Transparent"
+                    IsVisible="False"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                        <Setter Property="IsVisible" Value="True"/>
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{x:Static strings:AppResources.OfflineHint}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+            </Border>
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasError}"
+                   Style="{StaticResource BodySmallStyle}"/>
+            <Label Text="{Binding SyncErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                   IsVisible="{Binding HasSyncError}"
+                   Style="{StaticResource BodySmallStyle}"/>
+            <SearchBar x:Name="FeedDetailSearchBar"
+                       AutomationId="FeedDetailSearchBar"
+                       Text="{Binding SearchText}"
+                       Placeholder="{x:Static strings:AppResources.PlaceholderFeedDetailSearch}"
+                       SemanticProperties.Description="{x:Static strings:AppResources.PlaceholderFeedDetailSearch}"/>
+        </VerticalStackLayout>
+
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsSyncing}"
+                     Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Items}"
+                            RemainingItemsThreshold="2"
+                            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                <!-- The empty view distinguishes a feed without articles from
+                     a finished search without matches: while a search term is
+                     entered the "no results" text replaces the placeholder. -->
+                <CollectionView.EmptyView>
+                    <Label Text="{x:Static strings:AppResources.PlaceholderFeedDetail}"
+                           HorizontalTextAlignment="Center"
+                           VerticalOptions="Center">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label"
+                                         Binding="{Binding SearchText, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                                         Value="True">
+                                <Setter Property="Text"
+                                        Value="{x:Static strings:AppResources.FeedDetailSearchNoResults}"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:ItemListItem">
+                        <views:ArticleCardView ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
+                                               MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
+                                               IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Grid.Row="2"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HeightRequest="24"
+                           Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+
+        <Grid Grid.RowSpan="3"
+              IsVisible="False">
+            <Grid.Triggers>
+                <DataTrigger TargetType="Grid" Binding="{Binding ShowEditForm}" Value="True">
+                    <Setter Property="IsVisible" Value="True"/>
+                </DataTrigger>
+            </Grid.Triggers>
+            <BoxView Opacity="0.5"
+                     Color="{AppThemeBinding Light={StaticResource LightOnSurface}, Dark={StaticResource DarkSurface}}"
+                     SemanticProperties.Description="{x:Static strings:AppResources.AccessibilityDismissSheet}">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CloseEditFormCommand}"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+            <Border Padding="16"
+                    VerticalOptions="End"
+                    StrokeShape="RoundRectangle 12,12,0,0"
+                    Background="{AppThemeBinding Light={StaticResource LightSurfaceContainerLowest}, Dark={StaticResource DarkSurfaceContainerLowest}}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="8">
+                        <Label Text="{x:Static strings:AppResources.FeedEditSheetTitle}"
+                               Style="{StaticResource HeadlineSmallStyle}"
+                               VerticalOptions="Center"/>
+                        <Button Grid.Column="1"
+                                Text="{x:Static strings:AppResources.ButtonCancel}"
+                                Command="{Binding CloseEditFormCommand}"
+                                MinimumHeightRequest="44"/>
+                    </Grid>
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
+                           IsVisible="{Binding HasError}"
+                           Style="{StaticResource BodySmallStyle}"/>
+                    <Entry x:Name="EditUrlEntry"
+                           Text="{Binding EditUrl}"
+                           Placeholder="{x:Static strings:AppResources.PlaceholderFeedEditUrl}"
+                           SemanticProperties.Description="{x:Static strings:AppResources.PlaceholderFeedEditUrl}"
+                           Keyboard="Url"/>
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="8"
+                          IsEnabled="{Binding NotificationsSupported}">
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding NotificationsSupported}" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <VerticalStackLayout VerticalOptions="Center"
+                                             Spacing="2">
+                            <Label Text="{x:Static strings:AppResources.FeedNotificationsLabel}"/>
+                            <Label Text="{x:Static strings:AppResources.FeedNotificationsHint}"
+                                   Style="{StaticResource MetaStyle}"/>
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding EditNotificationsEnabled}"
+                                SemanticProperties.Description="{x:Static strings:AppResources.FeedNotificationsLabel}"
+                                MinimumWidthRequest="44"
+                                MinimumHeightRequest="44"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                    <Border Padding="10"
+                            StrokeShape="RoundRectangle 8"
+                            Stroke="Transparent"
+                            IsVisible="False"
+                            Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding NotificationsSupported}" Value="False">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="{x:Static strings:AppResources.NotificationsIosOnlyHint}"
+                               Style="{StaticResource BodySmallStyle}"
+                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                    </Border>
+                    <Button Text="{x:Static strings:AppResources.ButtonSave}"
+                            Command="{Binding SaveEditCommand}"
+                            MinimumHeightRequest="44"/>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

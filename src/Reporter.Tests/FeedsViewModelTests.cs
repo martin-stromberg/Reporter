@@ -44,9 +44,17 @@ public class FeedsViewModelTests : IDisposable
         _factory.Dispose();
     }
 
-    private FeedsViewModel CreateViewModel()
+    private FeedsViewModel CreateViewModel(
+        IFeedRepository? feedRepository = null,
+        ICategoryRepository? categoryRepository = null)
     {
-        return new FeedsViewModel(_feedRepository, _categoryRepository, _syncService, _searchService, _feedIconService, _networkStatusService);
+        return new FeedsViewModel(
+            feedRepository ?? _feedRepository,
+            categoryRepository ?? _categoryRepository,
+            _syncService,
+            _searchService,
+            _feedIconService,
+            _networkStatusService);
     }
 
     private async Task<Guid> SeedFeedAsync(string title = "Test Feed", string url = "https://example.com/rss", bool notificationsEnabled = true)
@@ -63,24 +71,6 @@ public class FeedsViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that the refresh command invokes the sync service for the selected feed and reloads the list.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RefreshCommand_InvokesSyncService_AndReloadsList()
-    {
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.RefreshCommand.ExecuteAsync(feed);
-
-        Assert.Equal(feedId, _syncService.LastFeedId);
-        Assert.Single(viewModel.Feeds);
-    }
-
-    /// <summary>
     /// Verifies that the refresh all command invokes the sync service and reloads the list.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -94,31 +84,43 @@ public class FeedsViewModelTests : IDisposable
 
         await viewModel.RefreshAllCommand.ExecuteAsync(null);
 
-        Assert.True(_syncService.SyncAllCalled);
+        Assert.True(_syncService.SyncAllCallCount > 0);
         Assert.Equal(2, viewModel.Feeds.Count);
     }
 
     /// <summary>
-    /// Verifies that an error result from the sync service is surfaced via the
-    /// sync error channel as a localized generic message — the raw technical
-    /// result text stays in the SyncLog and is not shown in the UI.
+    /// Verifies that a failing feed repository reports the localized load error
+    /// instead of letting the exception escape to the command's execution task.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task RefreshCommand_WhenSyncReturnsError_SetsLocalizedSyncErrorMessage()
+    public async Task LoadCommand_WhenFeedRepositoryFails_SetsLocalizedErrorMessage()
     {
-        var feedId = await SeedFeedAsync();
-        _syncService.NextResult = new SyncResult(FeedHealth.Error, 0, "Network error");
-        var viewModel = CreateViewModel();
+        var viewModel = CreateViewModel(feedRepository: new ThrowingFeedRepository());
+
         await viewModel.LoadCommand.ExecuteAsync(null);
 
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.RefreshCommand.ExecuteAsync(feed);
+        Assert.True(viewModel.HasError);
+        Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
+        Assert.Empty(viewModel.Feeds);
+    }
 
-        Assert.True(viewModel.HasSyncError);
-        Assert.Equal(AppResources.SyncStatusError, viewModel.SyncErrorMessage);
-        Assert.False(viewModel.HasError);
-        Assert.Equal(string.Empty, viewModel.ErrorMessage);
+    /// <summary>
+    /// Verifies that a failing category repository reports the localized load
+    /// error instead of letting the exception escape to the command's
+    /// execution task.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadCommand_WhenCategoryRepositoryFails_SetsLocalizedErrorMessage()
+    {
+        var viewModel = CreateViewModel(categoryRepository: new ThrowingCategoryRepository());
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal(AppResources.ErrorLoadFailed, viewModel.ErrorMessage);
+        Assert.Empty(viewModel.Feeds);
     }
 
     /// <summary>
@@ -137,7 +139,7 @@ public class FeedsViewModelTests : IDisposable
         await viewModel.RefreshAllCommand.ExecuteAsync(null);
 
         Assert.False(viewModel.IsOnline);
-        Assert.False(_syncService.SyncAllCalled);
+        Assert.Equal(0, _syncService.SyncAllCallCount);
         Assert.Equal(string.Empty, viewModel.SyncErrorMessage);
         Assert.False(viewModel.HasSyncError);
         Assert.False(viewModel.HasError);
@@ -158,27 +160,7 @@ public class FeedsViewModelTests : IDisposable
 
         await viewModel.RefreshAllCommand.ExecuteAsync(null);
 
-        Assert.True(_syncService.SyncAllCalled);
-        Assert.False(viewModel.IsSyncing);
-    }
-
-    /// <summary>
-    /// Verifies that the single-feed sync also runs when IsSyncing was preset by the
-    /// RefreshView TwoWay binding.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RefreshCommand_WhenIsSyncingPresetByBinding_StillSyncs()
-    {
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        viewModel.IsSyncing = true;
-
-        await viewModel.RefreshCommand.ExecuteAsync(feed);
-
-        Assert.Equal(feedId, _syncService.LastFeedId);
+        Assert.True(_syncService.SyncAllCallCount > 0);
         Assert.False(viewModel.IsSyncing);
     }
 
@@ -199,55 +181,7 @@ public class FeedsViewModelTests : IDisposable
         await viewModel.RefreshAllCommand.ExecuteAsync(null);
 
         Assert.False(viewModel.IsSyncing);
-        Assert.False(_syncService.SyncAllCalled);
-        Assert.False(viewModel.HasSyncError);
-        Assert.False(viewModel.HasError);
-    }
-
-    /// <summary>
-    /// Verifies that the offline early return of RefreshCommand resets an IsSyncing
-    /// value preset by the binding, so the refresh indicator stops.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RefreshCommand_WhenOffline_ResetsPresetIsSyncing()
-    {
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        _networkStatusService.IsOnline = false;
-        _networkStatusService.RaiseConnectivityChanged();
-        viewModel.IsSyncing = true;
-
-        await viewModel.RefreshCommand.ExecuteAsync(feed);
-
-        Assert.False(viewModel.IsSyncing);
-        Assert.Null(_syncService.LastFeedId);
-        Assert.False(viewModel.HasSyncError);
-        Assert.False(viewModel.HasError);
-    }
-
-    /// <summary>
-    /// Verifies that RefreshCommand skips the single-feed sync while offline without
-    /// raising a separate error message.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RefreshCommand_WhenOffline_SkipsSyncWithoutError()
-    {
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        _networkStatusService.IsOnline = false;
-        _networkStatusService.RaiseConnectivityChanged();
-        await viewModel.RefreshCommand.ExecuteAsync(feed);
-
-        Assert.False(viewModel.IsOnline);
-        Assert.Null(_syncService.LastFeedId);
-        Assert.Equal(string.Empty, viewModel.SyncErrorMessage);
+        Assert.Equal(0, _syncService.SyncAllCallCount);
         Assert.False(viewModel.HasSyncError);
         Assert.False(viewModel.HasError);
     }
@@ -260,7 +194,7 @@ public class FeedsViewModelTests : IDisposable
     [Fact]
     public async Task RefreshAllCommand_WhenSyncThrows_SetsLocalizedSyncError()
     {
-        _syncService.NextException = new InvalidOperationException("raw provider message");
+        _syncService.SyncAllException = new InvalidOperationException("raw provider message");
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(null);
 
@@ -277,7 +211,7 @@ public class FeedsViewModelTests : IDisposable
     [Fact]
     public async Task ConnectivityChanged_ClearsSyncErrorMessage()
     {
-        _syncService.NextResult = new SyncResult(FeedHealth.Error, 0, "Network error");
+        _syncService.SyncAllResult = new SyncResult(FeedHealth.Error, 0, "Network error");
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(null);
         await viewModel.RefreshAllCommand.ExecuteAsync(null);
@@ -308,23 +242,6 @@ public class FeedsViewModelTests : IDisposable
         _networkStatusService.RaiseConnectivityChanged();
 
         Assert.True(viewModel.IsOnline);
-    }
-
-    /// <summary>
-    /// Verifies that editing a feed loads its notifications flag into the form.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task EditCommand_PopulatesFeedNotificationsEnabled()
-    {
-        var feedId = await SeedFeedAsync(notificationsEnabled: false);
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        await viewModel.EditCommand.ExecuteAsync(feed);
-
-        Assert.False(viewModel.FeedNotificationsEnabled);
     }
 
     /// <summary>
@@ -450,111 +367,6 @@ public class FeedsViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that the direct-add command does not run in edit mode — adding
-    /// a feed from the edit form's URL would silently discard the in-progress
-    /// edit, the same reason the search is blocked there.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task DirectAddCommand_InEditMode_DoesNotAddFeed()
-    {
-        var feedId = await SeedFeedAsync("Edit Me", "https://example.com/edit-me");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        await viewModel.EditCommand.ExecuteAsync(viewModel.Feeds.First(f => f.Id == feedId));
-        viewModel.NewUrl = "https://example.com/changed.xml";
-
-        Assert.False(viewModel.DirectAddCommand.CanExecute(null));
-
-        await viewModel.DirectAddCommand.ExecuteAsync(null);
-
-        Assert.Null(await _feedRepository.GetByUrlAsync("https://example.com/changed.xml"));
-        Assert.Single(viewModel.Feeds);
-        Assert.True(viewModel.ShowAddForm);
-        Assert.True(viewModel.IsEditMode);
-    }
-
-    /// <summary>
-    /// Verifies that updating an existing feed persists the notifications flag from the form.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SaveCommand_ExistingFeed_PersistsNotificationsEnabled()
-    {
-        var feedId = await SeedFeedAsync(notificationsEnabled: true);
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        await viewModel.EditCommand.ExecuteAsync(viewModel.Feeds.First(f => f.Id == feedId));
-
-        viewModel.FeedNotificationsEnabled = false;
-        await viewModel.SaveCommand.ExecuteAsync(null);
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.NotNull(saved);
-        Assert.False(saved.NotificationsEnabled);
-    }
-
-    /// <summary>
-    /// Verifies that a successful save in edit mode resets the notifications flag
-    /// to its default.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SaveCommand_ResetsFeedNotificationsEnabled()
-    {
-        var feedId = await SeedFeedAsync(notificationsEnabled: false);
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        await viewModel.EditCommand.ExecuteAsync(viewModel.Feeds.First(f => f.Id == feedId));
-        Assert.False(viewModel.FeedNotificationsEnabled);
-
-        await viewModel.SaveCommand.ExecuteAsync(null);
-
-        Assert.True(viewModel.FeedNotificationsEnabled);
-    }
-
-    /// <summary>
-    /// Verifies that the save command never adds feeds: the sheet's save button
-    /// only exists in edit mode and adding runs exclusively through the search,
-    /// subscribe and direct-add flows.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SaveCommand_WithoutSelectedFeed_DoesNotAddFeed()
-    {
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        viewModel.NewUrl = "https://example.com/new-feed";
-        viewModel.NewTitle = "New Feed";
-
-        await viewModel.SaveCommand.ExecuteAsync(null);
-
-        Assert.Null(await _feedRepository.GetByUrlAsync("https://example.com/new-feed"));
-        Assert.Empty(viewModel.Feeds);
-    }
-
-    /// <summary>
-    /// Verifies that deleting the feed currently edited resets the notifications flag to its default.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task DeleteCommand_ResetsFeedNotificationsEnabled()
-    {
-        var feedId = await SeedFeedAsync(notificationsEnabled: false);
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.EditCommand.ExecuteAsync(feed);
-        Assert.False(viewModel.FeedNotificationsEnabled);
-
-        await viewModel.DeleteCommand.ExecuteAsync(feed);
-
-        Assert.True(viewModel.FeedNotificationsEnabled);
-        Assert.False(viewModel.ShowAddForm);
-        Assert.False(viewModel.IsEditMode);
-    }
-
-    /// <summary>
     /// Verifies that the search command populates the results list and shows it.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -660,31 +472,6 @@ public class FeedsViewModelTests : IDisposable
         Assert.Equal(0, _searchService.CallCount);
         Assert.Equal(string.Empty, viewModel.SearchErrorMessage);
         Assert.False(viewModel.HasSearchError);
-    }
-
-    /// <summary>
-    /// Verifies that the search does not run in edit mode — triggering it (e.g.
-    /// via the entry's ReturnCommand) must not silently discard an in-progress
-    /// edit by swapping the sheet for the results view.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SearchCommand_InEditMode_DoesNotDiscardEdit()
-    {
-        var feedId = await SeedFeedAsync("Edit Me", "https://example.com/edit-me");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        await viewModel.EditCommand.ExecuteAsync(viewModel.Feeds.First(f => f.Id == feedId));
-
-        Assert.False(viewModel.SearchCommand.CanExecute(null));
-
-        await viewModel.SearchCommand.ExecuteAsync(null);
-
-        Assert.Equal(0, _searchService.CallCount);
-        Assert.True(viewModel.ShowAddForm);
-        Assert.True(viewModel.IsEditMode);
-        Assert.Equal("https://example.com/edit-me", viewModel.NewUrl);
-        Assert.False(viewModel.ShowSearchResults);
     }
 
     /// <summary>
@@ -897,7 +684,6 @@ public class FeedsViewModelTests : IDisposable
         await viewModel.SearchCommand.ExecuteAsync(null);
 
         Assert.Equal("https://other.example.com/feed", viewModel.NewUrl);
-        Assert.Equal(string.Empty, viewModel.NewTitle);
         Assert.False(viewModel.ShowSearchResults);
         Assert.Null(await _feedRepository.GetByUrlAsync("https://other.example.com/feed"));
     }
@@ -1048,7 +834,6 @@ public class FeedsViewModelTests : IDisposable
         await _categoryRepository.AddAsync(new Category { Id = categoryId, Name = "Tech" });
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(null);
-        viewModel.FeedNotificationsEnabled = false;
         var result = new FeedSearchResult
         {
             FeedUrl = "https://example.com/rss",
@@ -1069,7 +854,6 @@ public class FeedsViewModelTests : IDisposable
         Assert.Empty(viewModel.SearchResults);
         Assert.False(viewModel.ShowSearchResults);
         Assert.Single(viewModel.Feeds);
-        Assert.True(viewModel.FeedNotificationsEnabled);
     }
 
     /// <summary>
@@ -1169,33 +953,8 @@ public class FeedsViewModelTests : IDisposable
         viewModel.OpenAddFormCommand.Execute(null);
 
         Assert.True(viewModel.ShowAddForm);
-        Assert.False(viewModel.IsEditMode);
         Assert.False(viewModel.HasError);
         Assert.False(viewModel.HasSearchError);
-    }
-
-    /// <summary>
-    /// Verifies that opening the add sheet after an abandoned edit clears the
-    /// stale edit state, keeping the invariant "add mode implies no selected feed".
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task OpenAddFormCommand_AfterEdit_ClearsStaleEditState()
-    {
-        var feedId = await SeedFeedAsync("Edit Me", "https://example.com/edit-me");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        await viewModel.EditCommand.ExecuteAsync(viewModel.Feeds.First(f => f.Id == feedId));
-        // Simulate the search having closed the sheet without resetting the form.
-        viewModel.ShowAddForm = false;
-
-        viewModel.OpenAddFormCommand.Execute(null);
-
-        Assert.True(viewModel.ShowAddForm);
-        Assert.False(viewModel.IsEditMode);
-        Assert.Null(viewModel.SelectedFeed);
-        Assert.Equal(string.Empty, viewModel.NewUrl);
-        Assert.Equal(string.Empty, viewModel.NewTitle);
     }
 
     /// <summary>
@@ -1205,20 +964,16 @@ public class FeedsViewModelTests : IDisposable
     [Fact]
     public async Task CloseAddFormCommand_ResetsFormAndHidesForm()
     {
-        var feedId = await SeedFeedAsync();
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.EditCommand.ExecuteAsync(feed);
+        viewModel.OpenAddFormCommand.Execute(null);
+        viewModel.NewUrl = "https://example.com/rss";
         Assert.True(viewModel.ShowAddForm);
-        Assert.True(viewModel.IsEditMode);
 
         viewModel.CloseAddFormCommand.Execute(null);
 
         Assert.False(viewModel.ShowAddForm);
-        Assert.False(viewModel.IsEditMode);
         Assert.Equal(string.Empty, viewModel.NewUrl);
-        Assert.Null(viewModel.SelectedFeed);
     }
 
     /// <summary>
@@ -1248,278 +1003,6 @@ public class FeedsViewModelTests : IDisposable
         Assert.Equal(string.Empty, viewModel.ErrorMessage);
         Assert.False(viewModel.HasSearchError);
         Assert.Equal(string.Empty, viewModel.SearchErrorMessage);
-    }
-
-    /// <summary>
-    /// Verifies that editing a feed opens the sheet in edit mode with the feed
-    /// values loaded into the form.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task EditAsync_OpensSheetInEditMode()
-    {
-        var feedId = await SeedFeedAsync("Edit Me", "https://example.com/edit-me");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        await viewModel.EditCommand.ExecuteAsync(feed);
-
-        Assert.True(viewModel.IsEditMode);
-        Assert.True(viewModel.ShowAddForm);
-        Assert.Equal("https://example.com/edit-me", viewModel.NewUrl);
-        Assert.Equal("Edit Me", viewModel.NewTitle);
-    }
-
-    /// <summary>
-    /// Verifies that a failed save in edit mode keeps the sheet open and shows
-    /// the validation error inside it.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SaveCommand_EditMode_WhenInvalidUrl_KeepsSheetOpenAndSetsError()
-    {
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.EditCommand.ExecuteAsync(feed);
-        viewModel.NewUrl = "not a url";
-
-        await viewModel.SaveCommand.ExecuteAsync(null);
-
-        Assert.True(viewModel.ShowAddForm);
-        Assert.True(viewModel.HasError);
-        Assert.Equal(AppResources.ErrorFeedUrlInvalid, viewModel.ErrorMessage);
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal("https://example.com/rss", saved?.Url);
-    }
-
-    /// <summary>
-    /// Verifies that a duplicate URL in edit mode keeps the sheet open, shows the
-    /// duplicate error inside it and does not update the feed.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SaveCommand_EditMode_WhenDuplicate_KeepsSheetOpenAndSetsError()
-    {
-        var feedId = await SeedFeedAsync("Feed A", "https://example.com/feed-a");
-        await SeedFeedAsync("Feed B", "https://example.com/feed-b");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.EditCommand.ExecuteAsync(feed);
-        viewModel.NewUrl = "https://example.com/feed-b";
-
-        await viewModel.SaveCommand.ExecuteAsync(null);
-
-        Assert.True(viewModel.ShowAddForm);
-        Assert.True(viewModel.HasError);
-        Assert.Equal(AppResources.ErrorFeedDuplicate, viewModel.ErrorMessage);
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal("https://example.com/feed-a", saved?.Url);
-    }
-
-    /// <summary>
-    /// Verifies that saving an edited feed keeps its stored category assignment
-    /// — the sheet no longer offers a category picker, so the stored value is
-    /// the only source of truth. Note: the original drift scenario (stale
-    /// <c>SelectedCategory</c> preserve-state reset by <c>LoadAsync</c>) cannot
-    /// be reproduced as a failing test because that write-only state was removed
-    /// with the picker; this test pins the surviving contract.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task SaveCommand_EditMode_PreservesCategoryId()
-    {
-        var categoryId = Guid.NewGuid();
-        await _categoryRepository.AddAsync(new Category { Id = categoryId, Name = "Tech" });
-        var feedId = await SeedFeedAsync();
-        await _feedRepository.UpdateAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Test Feed",
-            CategoryId = categoryId,
-            NotificationsEnabled = true,
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        await viewModel.EditCommand.ExecuteAsync(feed);
-
-        await viewModel.SaveCommand.ExecuteAsync(null);
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal(categoryId, saved?.CategoryId);
-    }
-
-    /// <summary>
-    /// Verifies that renaming a feed persists the new title.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RenameFeedAsync_UpdatesTitle()
-    {
-        var feedId = await SeedFeedAsync("Old Title", "https://example.com/rss");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        await viewModel.RenameFeedAsync(feed, "  New Title  ");
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal("New Title", saved?.Title);
-        Assert.False(viewModel.HasError);
-        Assert.Equal("New Title", viewModel.Feeds.Single().Title);
-    }
-
-    /// <summary>
-    /// Verifies that an empty rename title reports the validation error and keeps
-    /// the current title.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RenameFeedAsync_EmptyTitle_SetsErrorAndKeepsTitle()
-    {
-        var feedId = await SeedFeedAsync("Keep Me", "https://example.com/rss");
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        await viewModel.RenameFeedAsync(feed, "   ");
-
-        Assert.True(viewModel.HasError);
-        Assert.Equal(AppResources.ErrorFeedTitleEmpty, viewModel.ErrorMessage);
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal("Keep Me", saved?.Title);
-    }
-
-    /// <summary>
-    /// Verifies that renaming without a feed does nothing.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RenameFeedAsync_NullFeed_DoesNothing()
-    {
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-
-        await viewModel.RenameFeedAsync(null, "New Title");
-
-        Assert.False(viewModel.HasError);
-        Assert.Empty(viewModel.Feeds);
-    }
-
-    /// <summary>
-    /// Verifies that changing the category persists the selected category id.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task ChangeFeedCategoryAsync_SetsCategoryId()
-    {
-        var categoryId = Guid.NewGuid();
-        await _categoryRepository.AddAsync(new Category { Id = categoryId, Name = "Tech" });
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        var category = viewModel.Categories.First(c => c.Id == categoryId);
-
-        await viewModel.ChangeFeedCategoryAsync(feed, category);
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal(categoryId, saved?.CategoryId);
-        Assert.Equal("Tech", viewModel.Feeds.Single().CategoryName);
-    }
-
-    /// <summary>
-    /// Verifies that the pseudo-category entry clears the feed's category.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task ChangeFeedCategoryAsync_EmptyGuid_ClearsCategory()
-    {
-        var categoryId = Guid.NewGuid();
-        await _categoryRepository.AddAsync(new Category { Id = categoryId, Name = "Tech" });
-        var feedId = await SeedFeedAsync();
-        await _feedRepository.UpdateAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Test Feed",
-            CategoryId = categoryId,
-            NotificationsEnabled = true,
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-        var none = viewModel.Categories.First(c => c.Id == Guid.Empty);
-
-        await viewModel.ChangeFeedCategoryAsync(feed, none);
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Null(saved?.CategoryId);
-    }
-
-    /// <summary>
-    /// Verifies that null arguments abort the category change without touching
-    /// the feed.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task ChangeFeedCategoryAsync_NullArguments_DoNothing()
-    {
-        var feedId = await SeedFeedAsync();
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-
-        await viewModel.ChangeFeedCategoryAsync(null, null);
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.NotNull(saved);
-        Assert.Null(saved.CategoryId);
-    }
-
-    /// <summary>
-    /// Verifies that repeated names get a counter suffix so each option label
-    /// is unique.
-    /// </summary>
-    [Fact]
-    public void MakeUniqueOptionLabels_DuplicateNames_AppendsCounterSuffix()
-    {
-        var labels = FeedsViewModel.MakeUniqueOptionLabels(["News", "News"]);
-
-        Assert.Equal(["News", "News (2)"], labels);
-    }
-
-    /// <summary>
-    /// Verifies that a literal name colliding with a generated suffix still
-    /// produces unique labels — the action sheet returns the tapped button's
-    /// text, so a duplicated label would map the selection to the wrong entry.
-    /// </summary>
-    [Fact]
-    public void MakeUniqueOptionLabels_WhenLiteralNameCollidesWithGeneratedSuffix_KeepsEveryLabelUnique()
-    {
-        var labels = FeedsViewModel.MakeUniqueOptionLabels(["News", "News", "News (2)"]);
-
-        Assert.Equal(3, labels.Distinct(StringComparer.Ordinal).Count());
-        Assert.Equal("News", labels[0]);
-        Assert.Equal("News (2)", labels[1]);
-    }
-
-    /// <summary>
-    /// Verifies the same collision guarantee when the literal suffix name is
-    /// stored before the duplicates that would generate it.
-    /// </summary>
-    [Fact]
-    public void MakeUniqueOptionLabels_WhenLiteralSuffixNameComesFirst_KeepsEveryLabelUnique()
-    {
-        var labels = FeedsViewModel.MakeUniqueOptionLabels(["News (2)", "News", "News"]);
-
-        Assert.Equal(3, labels.Distinct(StringComparer.Ordinal).Count());
-        Assert.Equal("News (2)", labels[0]);
-        Assert.Equal("News", labels[1]);
     }
 
     /// <summary>
@@ -1611,189 +1094,5 @@ public class FeedsViewModelTests : IDisposable
         Assert.NotNull(saved);
         Assert.Null(saved.FaviconUrl);
         Assert.Empty(_feedIconService.RequestedSiteUrls);
-    }
-
-    /// <summary>
-    /// Verifies that renaming a feed keeps the stored favicon URL.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RenameFeedAsync_PreservesFaviconUrl()
-    {
-        var feedId = Guid.NewGuid();
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Old Title",
-            NotificationsEnabled = true,
-            FaviconUrl = "https://example.com/favicon.ico",
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        await viewModel.RenameFeedAsync(feed, "New Title");
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.NotNull(saved);
-        Assert.Equal("New Title", saved.Title);
-        Assert.Equal("https://example.com/favicon.ico", saved.FaviconUrl);
-    }
-
-    /// <summary>
-    /// Verifies that GetFeedErrorMessage maps a stored error kind to the
-    /// matching localized <c>FeedErrorKind*</c> text.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task GetFeedErrorMessage_MapsKindToLocalizedText()
-    {
-        var feedId = Guid.NewGuid();
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Broken",
-            NotificationsEnabled = true,
-            HealthStatus = FeedHealth.Error,
-            LastErrorKind = FeedSyncErrorKind.Network,
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        var message = viewModel.GetFeedErrorMessage(feed);
-
-        Assert.Equal(AppResources.FeedErrorKindNetwork, message);
-    }
-
-    /// <summary>
-    /// Verifies that an empty or unknown error kind falls back to the generic
-    /// unknown-error text.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task GetFeedErrorMessage_FallsBackToUnknown()
-    {
-        var feedId = Guid.NewGuid();
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Broken",
-            NotificationsEnabled = true,
-            HealthStatus = FeedHealth.Error,
-            LastErrorKind = "NotARealKind",
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        var message = viewModel.GetFeedErrorMessage(feed);
-
-        Assert.Equal(AppResources.FeedErrorKindUnknown, message);
-    }
-
-    /// <summary>
-    /// Verifies that the stored technical message is appended to the localized
-    /// category text.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task GetFeedErrorMessage_AppendsTechnicalMessage()
-    {
-        var feedId = Guid.NewGuid();
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Broken",
-            NotificationsEnabled = true,
-            HealthStatus = FeedHealth.Error,
-            LastErrorKind = FeedSyncErrorKind.Parse,
-            LastErrorMessage = "Synchronization failed: invalid xml",
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        var message = viewModel.GetFeedErrorMessage(feed);
-
-        Assert.StartsWith(AppResources.FeedErrorKindParse, message);
-        Assert.Contains("Synchronization failed: invalid xml", message);
-    }
-
-    /// <summary>
-    /// Verifies that renaming a feed keeps the stored sync error fields.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task RenameFeedAsync_PreservesLastError()
-    {
-        var feedId = Guid.NewGuid();
-        await _feedRepository.AddAsync(new Feed
-        {
-            Id = feedId,
-            Url = "https://example.com/rss",
-            Title = "Old Title",
-            NotificationsEnabled = true,
-            HealthStatus = FeedHealth.Error,
-            LastErrorKind = FeedSyncErrorKind.HttpStatus,
-            LastErrorMessage = "Synchronization failed: 404",
-        });
-        var viewModel = CreateViewModel();
-        await viewModel.LoadCommand.ExecuteAsync(null);
-        var feed = viewModel.Feeds.First(f => f.Id == feedId);
-
-        await viewModel.RenameFeedAsync(feed, "New Title");
-
-        var saved = await _feedRepository.GetByIdAsync(feedId);
-        Assert.NotNull(saved);
-        Assert.Equal("New Title", saved.Title);
-        Assert.Equal(FeedSyncErrorKind.HttpStatus, saved.LastErrorKind);
-        Assert.Equal("Synchronization failed: 404", saved.LastErrorMessage);
-    }
-
-    private sealed class FakeFeedSyncService : IFeedSyncService
-    {
-        /// <summary>
-        /// Gets the identifier of the feed passed to the last <see cref="SyncFeedAsync"/> call.
-        /// </summary>
-        public Guid? LastFeedId { get; private set; }
-
-        /// <summary>
-        /// Gets a value indicating whether <see cref="SyncAllAsync"/> was called.
-        /// </summary>
-        public bool SyncAllCalled { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the result returned by the fake service.
-        /// </summary>
-        /// <returns>The <see cref="SyncResult"/> used by the fake service.</returns>
-        public SyncResult NextResult { get; set; } = new SyncResult(FeedHealth.Ok, 0);
-
-        /// <summary>
-        /// Gets or sets the exception thrown by the fake service, if any.
-        /// </summary>
-        public Exception? NextException { get; set; }
-
-        /// <inheritdoc />
-        public Task<SyncResult> SyncFeedAsync(Guid feedId, CancellationToken cancellationToken = default)
-        {
-            LastFeedId = feedId;
-            return NextException is not null
-                ? Task.FromException<SyncResult>(NextException)
-                : Task.FromResult(NextResult);
-        }
-
-        /// <inheritdoc />
-        public Task<SyncResult> SyncAllAsync(CancellationToken cancellationToken = default)
-        {
-            SyncAllCalled = true;
-            return NextException is not null
-                ? Task.FromException<SyncResult>(NextException)
-                : Task.FromResult(NextResult);
-        }
     }
 }

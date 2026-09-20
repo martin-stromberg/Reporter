@@ -45,13 +45,20 @@ Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 - Öffne **Feeds**.
 - Ziehe die Feed-Liste nach unten (Ziehen zum Aktualisieren), um alle Feeds abzurufen.
 - Ist in den **Einstellungen** der Schalter **Beim Programmstart abrufen** eingeschaltet (Voreinstellung), hat die App die Feeds bereits beim Öffnen im Hintergrund abgerufen — ein manuelles Aktualisieren ist dann meist nicht nötig.
-- Oder tippe eine Feed-Karte an und wähle **Aktualisieren**, um nur diesen Feed abzurufen.
+- Oder tippe eine Feed-Karte an, um die Detailansicht des Feeds zu öffnen, und wähle dort **Aktionen** → **Aktualisieren**, um nur diesen Feed abzurufen — alternativ genügt ein Herunterziehen der Artikelliste in der Detailansicht.
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**. Die App speichert dabei neben dem Artikeltext auch das Artikelbild lokal — beides bleibt später ohne Internetverbindung verfügbar (Details siehe [Offline lesen](offline.md)).
 - Bei geöffneter App erscheint dabei bewusst keine Benachrichtigung — die Artikel stehen direkt in **Ungelesen**. Auf iOS kommen Mitteilungen aus dem automatischen Hintergrund-Abgleich bei geschlossener App — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
 
-> **Hinweis:** Trägt ein Feed das Badge **Fehler**, findest du den Grund über den Menüeintrag **Fehlerdetails anzeigen** der Feed-Karte (Details siehe [Feeds synchronisieren](synchronisation.md)).
+> **Hinweis:** Trägt ein Feed das Badge **Fehler**, findest du den Grund in seiner Detailansicht über **Aktionen** → **Fehlerdetails anzeigen** (Details siehe [Feeds synchronisieren](synchronisation.md)).
 
-### 5. Artikel für später merken
+### 5. Artikel eines Feeds durchsehen
+
+- Tippe auf **Feeds** eine Feed-Karte an — die Detailansicht zeigt alle gespeicherten Artikel des Feeds, die neuesten zuerst; beim Weiterscrollen laden ältere Artikel automatisch nach.
+- Über das Suchfeld **„Artikel in diesem Feed suchen…"** filterst du die Liste nach Begriffen im Artikeltitel.
+- Der Button **Aktionen** bündelt die Feed-Verwaltung: **Aktualisieren**, **Umbenennen**, **Kategorie ändern**, **Bearbeiten** (Feed-Adresse und Benachrichtigungs-Schalter) und **Löschen** — der Zurück-Pfeil führt zurück zur Übersicht.
+- Details siehe [Feeddetailansicht](feeddetailansicht.md).
+
+### 6. Artikel für später merken
 
 - Tippe auf einer Artikelkarte auf das Lesezeichen-Symbol, um den Artikel zu merken.
 - Alle gemerkten Artikel findest du gesammelt unter **Später**. Ein erneutes Tippen auf das Lesezeichen-Symbol entfernt die Merkung.

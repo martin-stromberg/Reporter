@@ -235,6 +235,36 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<ItemListItem>> GetByFeedAsync(
+        Guid feedId,
+        int page,
+        int pageSize,
+        string? searchTerm = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => i.FeedId == feedId);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(i => i.Title.Contains(term));
+        }
+
+        var rows = await SelectListItemRows(query
+                .OrderByDescending(i => i.PublishedAt)
+                .ThenBy(i => i.Id)
+                .Skip(page * pageSize)
+                .Take(pageSize))
+            .ToListAsync();
+
+        var contents = await GetContentsAsync(rows, r => r.Id);
+        var imageItemIds = await _contentStore.GetImageIdsAsync(rows.Select(r => r.Id).ToList());
+        return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id), imageItemIds.Contains(r.Id))).ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId)
     {
         await using var context = await _factory.CreateDbContextAsync();

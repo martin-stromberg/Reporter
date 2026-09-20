@@ -97,6 +97,21 @@ public interface IItemRepository
     Task<IReadOnlyList<Item>> GetByFeedAsync(Guid feedId);
 
     /// <summary>
+    /// Gets a paged list of items belonging to the specified feed, sorted by
+    /// publication date descending with the item id as tie-breaker.
+    /// </summary>
+    /// <param name="feedId">The feed identifier.</param>
+    /// <param name="page">The zero-based page index.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <param name="searchTerm">An optional term matched against the item title; <c>null</c> or whitespace disables filtering.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the matching list items for the page.</returns>
+    Task<IReadOnlyList<ItemListItem>> GetByFeedAsync(
+        Guid feedId,
+        int page,
+        int pageSize,
+        string? searchTerm = null);
+
+    /// <summary>
     /// Gets all items belonging to feeds in the specified category asynchronously.
     /// </summary>
     /// <param name="categoryId">The category identifier.</param>

@@ -593,4 +593,28 @@
   <data name="FeedErrorKindUnknown" xml:space="preserve">
     <value>Die Synchronisation ist mit einem unerwarteten Fehler fehlgeschlagen.</value>
   </data>
+  <data name="PageTitleFeedDetail" xml:space="preserve">
+    <value>Feed-Details</value>
+  </data>
+  <data name="PlaceholderFeedDetailSearch" xml:space="preserve">
+    <value>Artikel in diesem Feed suchen…</value>
+  </data>
+  <data name="PlaceholderFeedDetail" xml:space="preserve">
+    <value>Hier erscheinen Artikel dieses Feeds.</value>
+  </data>
+  <data name="FeedDetailSearchNoResults" xml:space="preserve">
+    <value>Keine Artikel zu diesem Suchbegriff gefunden.</value>
+  </data>
+  <data name="ButtonFeedActions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="AccessibilityOpenFeedDetails" xml:space="preserve">
+    <value>Tippen, um die Feed-Details zu öffnen</value>
+  </data>
+  <data name="PlaceholderFeedEditUrl" xml:space="preserve">
+    <value>Feed-URL</value>
+  </data>
+  <data name="ErrorActionFailed" xml:space="preserve">
+    <value>Die Aktion konnte nicht ausgeführt werden.</value>
+  </data>
 </root>

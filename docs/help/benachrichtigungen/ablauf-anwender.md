@@ -32,8 +32,8 @@
 
 ### 4. Optional: Einzelne Feeds stummschalten
 
-1. Öffne die Seite **Feeds**.
-2. Tippe auf den Feed und wähle im Aktionsmenü **Bearbeiten**.
+1. Öffne die Seite **Feeds** und tippe auf den Feed — seine Detailansicht öffnet sich.
+2. Tippe auf **Aktionen** und wähle im Menü **Feed-Aktionen** den Eintrag **Bearbeiten**.
 3. Schalte **Benachrichtigungen** („Bei neuen Artikeln dieses Feeds benachrichtigen") aus und tippe auf **Speichern**.
 
 ### 5. Benachrichtigung empfangen und öffnen
