@@ -134,13 +134,43 @@ public sealed class FeedDetailTests : IDisposable
         UiRetry.InvokeOrClick(cancel);
     }
 
-    // Types a keyword into the open edit sheet's keyword entry and taps its
-    // add button. The caller waits for the resulting chip or error label.
+    // Types a keyword into the open edit sheet's keyword entry, taps its add
+    // button and waits until the fresh chip renders.
     private void AddFeedKeywordViaSheet(string keyword)
+        => TapKeywordAddUntil(keyword, keyword);
+
+    // Taps the open edit sheet's keyword add button — typing keyword first
+    // when given — until the expected element renders (the new chip or a
+    // validation label). A tap on the button can be swallowed while the
+    // sheet is still settling, so type, tap and wait repeat until the
+    // deadline; re-adding the same keyword only raises the duplicate label
+    // and leaves the existing chip untouched, which keeps the retry
+    // idempotent for every caller.
+    private void TapKeywordAddUntil(string expectedName, string? keyword = null)
     {
-        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), keyword);
-        var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
-        UiRetry.InvokeOrClick(add);
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (true)
+        {
+            if (keyword is not null)
+            {
+                UiRetry.SetText(_page.WaitForFeedKeywordEntry(), keyword);
+            }
+
+            var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
+            UiRetry.InvokeOrClick(add);
+            if (UiRetry.TryFindElementByName(Window, expectedName, timeout: TimeSpan.FromSeconds(5)) is not null)
+            {
+                return;
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                // Same failure signature as a regular wait: reports the
+                // missing element after the last retry.
+                _page.WaitForElementByName(expectedName);
+                return;
+            }
+        }
     }
 
     // Whether any Text element in the app's UI scope carries the given text as
@@ -620,19 +650,16 @@ public sealed class FeedDetailTests : IDisposable
         _page.AddFeedViaUi("kwvalidate");
         OpenEditSheet("kwvalidate.xml");
 
-        var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
-        UiRetry.InvokeOrClick(add);
-        _page.WaitForElementByName(AppResources.ErrorKeywordEmpty);
+        // Every validation step goes through TapKeywordAddUntil: a tap on the
+        // add button can be swallowed while the sheet settles, which used to
+        // surface as a timeout on the expected chip or error label.
+        TapKeywordAddUntil(AppResources.ErrorKeywordEmpty);
 
         UiRetry.SetText(_page.WaitForFeedKeywordEntry(), new string('x', 501));
-        UiRetry.InvokeOrClick(_page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button));
-        _page.WaitForElementByName(AppResources.ErrorKeywordTooLong);
+        TapKeywordAddUntil(AppResources.ErrorKeywordTooLong);
 
         AddFeedKeywordViaSheet("e2e-dup");
-        _page.WaitForElementByName("e2e-dup");
-        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), "e2e-dup");
-        UiRetry.InvokeOrClick(_page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button));
-        _page.WaitForElementByName(AppResources.ErrorKeywordDuplicate);
+        TapKeywordAddUntil(AppResources.ErrorKeywordDuplicate, "e2e-dup");
     }
 
     /// <summary>
