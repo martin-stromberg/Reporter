@@ -1782,20 +1782,20 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Sync error ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Sync message ähnelt.
         /// </summary>
-        public static string FeedErrorDetailsTitle {
+        public static string FeedMessageDetailsTitle {
             get {
-                return ResourceManager.GetString("FeedErrorDetailsTitle", resourceCulture);
+                return ResourceManager.GetString("FeedMessageDetailsTitle", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Show error details ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Show message ähnelt.
         /// </summary>
-        public static string ButtonShowErrorDetails {
+        public static string ButtonShowMessage {
             get {
-                return ResourceManager.GetString("ButtonShowErrorDetails", resourceCulture);
+                return ResourceManager.GetString("ButtonShowMessage", resourceCulture);
             }
         }
         
@@ -1841,6 +1841,33 @@ namespace Reporter.Core.Resources.Strings {
         public static string FeedErrorKindUnknown {
             get {
                 return ResourceManager.GetString("FeedErrorKindUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed returned far fewer articles than are stored — the source may be incomplete. ähnelt.
+        /// </summary>
+        public static string FeedWarningKindFewerItems {
+            get {
+                return ResourceManager.GetString("FeedWarningKindFewerItems", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed has not published new articles for more than 30 days — it may be abandoned. ähnelt.
+        /// </summary>
+        public static string FeedWarningKindNoRecentItems {
+            get {
+                return ResourceManager.GetString("FeedWarningKindNoRecentItems", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The synchronization reported a warning. ähnelt.
+        /// </summary>
+        public static string FeedWarningKindUnknown {
+            get {
+                return ResourceManager.GetString("FeedWarningKindUnknown", resourceCulture);
             }
         }
         

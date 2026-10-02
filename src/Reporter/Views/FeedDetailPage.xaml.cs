@@ -12,7 +12,7 @@ namespace Reporter.Views;
 
 /// <summary>
 /// Detail page for a single feed: shows the paged article list and hosts the
-/// feed-level actions (refresh, rename, category, edit, error details, delete).
+/// feed-level actions (refresh, rename, category, edit, sync message, delete).
 /// </summary>
 public partial class FeedDetailPage : ContentPage, IQueryAttributable
 {
@@ -113,9 +113,9 @@ public partial class FeedDetailPage : ContentPage, IQueryAttributable
                 AppResources.ButtonEdit,
             };
 
-            if (feed.HealthStatus == FeedHealth.Error)
+            if (feed.HealthStatus is FeedHealth.Error or FeedHealth.Warning)
             {
-                actions.Add(AppResources.ButtonShowErrorDetails);
+                actions.Add(AppResources.ButtonShowMessage);
             }
 
             actions.Add(AppResources.ButtonDelete);
@@ -142,9 +142,9 @@ public partial class FeedDetailPage : ContentPage, IQueryAttributable
             {
                 _viewModel.EditCommand.Execute(null);
             }
-            else if (action == AppResources.ButtonShowErrorDetails)
+            else if (action == AppResources.ButtonShowMessage)
             {
-                await ShowFeedErrorDetailsAsync(feed);
+                await ShowFeedMessageAsync(feed);
             }
             else if (action == AppResources.ButtonDelete)
             {
@@ -234,16 +234,16 @@ public partial class FeedDetailPage : ContentPage, IQueryAttributable
     }
 
     /// <summary>
-    /// Shows the last sync error of the feed: a localized category text plus
-    /// the stored technical message when present.
+    /// Shows the last sync message of the feed — error or warning alike: a
+    /// localized category text plus the stored technical message when present.
     /// </summary>
-    /// <param name="feed">The feed whose error details are shown.</param>
+    /// <param name="feed">The feed whose sync message is shown.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task ShowFeedErrorDetailsAsync(FeedListItem feed)
+    private async Task ShowFeedMessageAsync(FeedListItem feed)
     {
         await DisplayAlertAsync(
-            AppResources.FeedErrorDetailsTitle,
-            _viewModel.GetFeedErrorMessage(feed),
+            AppResources.FeedMessageDetailsTitle,
+            _viewModel.GetFeedMessage(feed),
             AppResources.ButtonOk);
     }
 

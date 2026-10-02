@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<rss version="2.0">
+  <channel>
+    <title>Stub Feed {name}</title>
+    <link>http://127.0.0.1/{name}</link>
+    <description>Stub feed whose fixed pubDate values are far in the past so a second sync triggers the no-recent-items warning.</description>
+    <item>
+      <title>{name} article one</title>
+      <link>http://127.0.0.1/articles/{name}-1</link>
+      <guid>stale-feed-guid-1</guid>
+      <pubDate>Mon, 08 Jan 2024 08:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>{name} article two</title>
+      <link>http://127.0.0.1/articles/{name}-2</link>
+      <guid>stale-feed-guid-2</guid>
+      <pubDate>Tue, 09 Jan 2024 08:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
