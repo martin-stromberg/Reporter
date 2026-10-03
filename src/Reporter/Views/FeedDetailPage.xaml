@@ -99,23 +99,26 @@
                            LineBreakMode="TailTruncation"
                            MaxLines="2"
                            VerticalOptions="Center"/>
-                    <HorizontalStackLayout Grid.Row="1"
-                                           Grid.Column="1"
-                                           Spacing="8"
-                                           VerticalOptions="Center">
-                        <Label Text="{Binding Feed.CategoryName, TargetNullValue='—'}"
-                               Style="{StaticResource MetaStyle}"/>
-                        <Label Text="•"
-                               Style="{StaticResource MetaStyle}"/>
-                        <Label Text="{Binding Feed.LastCheckedAt, StringFormat='{0:g}', TargetNullValue='—'}"
-                               Style="{StaticResource MetaStyle}"/>
-                        <Label Text="•"
-                               Style="{StaticResource MetaStyle}"/>
-                        <Label Text="{x:Static strings:AppResources.LabelFeedUnreadCount}"
-                               Style="{StaticResource MetaStyle}"/>
-                        <Label Text="{Binding Feed.UnreadCount}"
-                               Style="{StaticResource MetaStyle}"/>
-                    </HorizontalStackLayout>
+                    <!-- Single Label with FormattedString instead of a
+                         HorizontalStackLayout: the info text wraps inside
+                         its column and can no longer slide under the
+                         actions button. -->
+                    <Label Grid.Row="1"
+                           Grid.Column="1"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="{Binding Feed.CategoryName, TargetNullValue='—'}"/>
+                                <Span Text=" • "/>
+                                <Span Text="{Binding Feed.LastCheckedAt, StringFormat='{0:g}', TargetNullValue='—'}"/>
+                                <Span Text=" • "/>
+                                <Span Text="{x:Static strings:AppResources.LabelFeedUnreadCount}"/>
+                                <Span Text=" "/>
+                                <Span Text="{Binding Feed.UnreadCount}"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
                     <Border Grid.Row="2"
                             Grid.ColumnSpan="2"
                             Padding="8,2"
