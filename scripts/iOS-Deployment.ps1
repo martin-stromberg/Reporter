@@ -35,6 +35,8 @@
         REPORTER_IOS_API_KEY_PATH    -> Pfad zum App Store Connect API Key (.p8, ausserhalb des Repo)
         REPORTER_IOS_API_KEY_ID      -> Key-ID aus App Store Connect
         REPORTER_IOS_API_ISSUER_ID   -> Issuer-ID aus App Store Connect
+        REPORTER_IOS_TRANSPORTER_PATH -> Pfad zu iTMSTransporter auf dem Mac
+                                         (ueberschreibt die automatische Suche)
 #>
 
 param(
@@ -65,6 +67,8 @@ param(
     [string]$ApiKeyPath = $env:REPORTER_IOS_API_KEY_PATH,
     [string]$ApiKeyId = $env:REPORTER_IOS_API_KEY_ID,
     [string]$ApiIssuerId = $env:REPORTER_IOS_API_ISSUER_ID,
+    [Parameter(HelpMessage = "Pfad zu iTMSTransporter auf dem Mac. Ueberschreibt die automatische Suche (Transporter-App, /usr/local/itms, Xcode, PATH, Spotlight).")]
+    [string]$TransporterPath = $env:REPORTER_IOS_TRANSPORTER_PATH,
     [Parameter(HelpMessage = "Pfad zu einer vorhandenen .ipa (nur Aktion 'upload').")]
     [string]$IpaPath = "",
     [Parameter(HelpMessage = "Bei 'device' via SSH: App-Output (--console) nach dem Start streamen (Ctrl+C zum Loesen).")]
@@ -411,15 +415,77 @@ function Assert-StorePrerequisites {
     }
 }
 
+function Get-TransporterFindScript {
+    # Liefert Bash-Code, der $ITMS auf den iTMSTransporter-Pfad auf dem Mac
+    # setzt (leer, wenn nichts gefunden wird). Apple liefert das Werkzeug an
+    # mehreren Orten aus - ein fester Pfad allein bricht daher je nach
+    # Installationsweg:
+    #   1. expliziter Override (-TransporterPath / REPORTER_IOS_TRANSPORTER_PATH)
+    #   2. Transporter-App aus dem Mac App Store (/Applications und
+    #      ~/Applications - MAS-Installation kann pro Benutzer landen)
+    #   3. Standalone-pkg aus dem Apple Transporter User Guide
+    #      (/usr/local/itms - offizieller CLI-Installationsweg)
+    #   4. PATH (z. B. manuell verlinkt)
+    #   5. aeltere Xcode-Installationen (xcrun -f bzw.
+    #      ContentDeliveryServices.framework)
+    #   6. Transporter.app an beliebigem Ort (Spotlight)
+    $override = ""
+    if ($TransporterPath) { $override = $TransporterPath -replace "'", "'\''" }
+    return @"
+ITMS=""
+if [ -n '$override' ] && [ -x '$override' ]; then ITMS='$override'; fi
+if [ -z "`$ITMS" ]; then
+    for ITMS_CAND in \
+        "/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter" \
+        "`$HOME/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter" \
+        "/usr/local/itms/bin/iTMSTransporter"; do
+        if [ -x "`$ITMS_CAND" ]; then ITMS="`$ITMS_CAND"; break; fi
+    done
+fi
+if [ -z "`$ITMS" ]; then ITMS=`$(xcrun -f iTMSTransporter 2>/dev/null || true); fi
+if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then ITMS=`$(command -v iTMSTransporter 2>/dev/null || true); fi
+if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then
+    DEVDIR=`$(xcode-select -p 2>/dev/null || true)
+    if [ -n "`$DEVDIR" ]; then
+        for ITMS_CAND in \
+            "`$DEVDIR/usr/bin/iTMSTransporter" \
+            "`$DEVDIR/../SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/bin/iTMSTransporter"; do
+            if [ -x "`$ITMS_CAND" ]; then ITMS="`$ITMS_CAND"; break; fi
+        done
+    fi
+fi
+if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then
+    TAPP=`$(mdfind "kMDItemCFBundleIdentifier == 'com.apple.Transporter'" 2>/dev/null | head -1 || true)
+    if [ -n "`$TAPP" ] && [ -x "`$TAPP/Contents/itms/bin/iTMSTransporter" ]; then
+        ITMS="`$TAPP/Contents/itms/bin/iTMSTransporter"
+    fi
+fi
+if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then ITMS=""; fi
+"@
+}
+
 function Assert-TransporterAvailable {
-    $check = 'ITMS="/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"; [ -x "$ITMS" ] || xcrun -f iTMSTransporter >/dev/null 2>&1'
-    $code = Invoke-OnMac -Script $check -Description "iTMSTransporter-Verfuegbarkeit" -ReturnExitCode
-    if ($code -ne 0) {
-        Write-Host "Fehler: iTMSTransporter auf dem Mac nicht gefunden." -ForegroundColor Red
-        Write-Host "Seit Xcode 16 gehoert es zur Transporter-App - aus dem Mac App Store installieren:" -ForegroundColor Yellow
-        Write-Host "https://apps.apple.com/us/app/transporter/id1450874784" -ForegroundColor Yellow
+    $check = (Get-TransporterFindScript) + "`n" + 'if [ -n "$ITMS" ]; then echo "FOUND:$ITMS"; fi'
+    $lines = @(Invoke-MacCapture -Script $check)
+    $found = $lines | Where-Object { $_ -like 'FOUND:*' } | Select-Object -First 1
+    if ($found) {
+        Write-Host "iTMSTransporter gefunden: $($found.Substring(6))" -ForegroundColor Gray
+        return
+    }
+    if (-not $isMacOS -and $LASTEXITCODE -eq 255) {
+        Write-Host "Fehler: SSH-Verbindung zu ${ServerUser}@${ServerAddress} fehlgeschlagen." -ForegroundColor Red
+        Write-Host "Der iTMSTransporter-Check konnte nicht ausgefuehrt werden - schluesselbasiertes SSH pruefen." -ForegroundColor Yellow
         exit 1
     }
+    Write-Host "Fehler: iTMSTransporter auf dem Mac nicht gefunden." -ForegroundColor Red
+    Write-Host "Gesucht wurde in: Transporter-App (/Applications + ~/Applications), /usr/local/itms" -ForegroundColor Yellow
+    Write-Host "(Standalone-pkg), PATH, Xcode (xcrun -f / ContentDeliveryServices) und via Spotlight." -ForegroundColor Yellow
+    Write-Host "Installationsoptionen:" -ForegroundColor Yellow
+    Write-Host "  1) Transporter-App aus dem Mac App Store: https://apps.apple.com/us/app/transporter/id1450874784" -ForegroundColor Yellow
+    Write-Host "  2) iTMSTransporter-pkg aus dem Apple Transporter User Guide (installiert nach /usr/local/itms):" -ForegroundColor Yellow
+    Write-Host "     https://help.apple.com/itc/transporteruserguide/" -ForegroundColor Yellow
+    Write-Host "Oder -TransporterPath / REPORTER_IOS_TRANSPORTER_PATH auf den Pfad auf dem Mac setzen." -ForegroundColor Yellow
+    exit 1
 }
 
 function Update-BuildNumber {
@@ -563,6 +629,7 @@ function Get-MacIpaPath {
 
 function Invoke-IpaValidation {
     param([string]$MacIpa)
+    $findItms = Get-TransporterFindScript
     $macScript = @"
 set -e
 IPA="$MacIpa"
@@ -613,21 +680,17 @@ fi
 echo "==> iTMSTransporter -m verify"
 # altool ist bei Apple deprecated; iTMSTransporter nutzt dieselbe
 # API-Key-Authentifizierung und denselben Schluesselsuchpfad
-# ~/.appstoreconnect/private_keys. Seit Xcode 16 liefert Xcode das
-# Werkzeug nicht mehr mit: es gehoert zur Transporter-App aus dem
-# Mac App Store und liegt dann unter
-# /Applications/Transporter.app/Contents/itms/bin/iTMSTransporter.
-# xcrun -f dient als Fallback fuer aeltere Xcode-Versionen. Fuer Apps
-# (.ipa/.pkg) verlangt iTMSTransporter -assetFile; -f gilt nur fuer
-# .itmsp-Pakete (Apple Transporter User Guide). Falls das Werkzeug
-# fehlt oder -m verify fuer iOS-IPAs nicht unterstuetzt wird,
-# entfaellt die Remote-Validierung: die lokale codesign-Pruefung oben
-# ist bestanden und der Upload validiert serverseitig
-# (dokumentierter Fallback).
-ITMS="/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
-if [ ! -x "`$ITMS" ]; then ITMS=`$(xcrun -f iTMSTransporter 2>/dev/null || true); fi
-if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then
-    echo "WARNUNG: iTMSTransporter nicht gefunden - Transporter-App aus dem Mac App Store installieren. Remote-Validierung entfaellt, der Upload validiert serverseitig (Fallback)."
+# ~/.appstoreconnect/private_keys. Fuer Apps (.ipa/.pkg) verlangt
+# iTMSTransporter -assetFile; -f gilt nur fuer .itmsp-Pakete (Apple
+# Transporter User Guide). Die Pfadsuche steht in
+# Get-TransporterFindScript (Transporter-App, /usr/local/itms, Xcode,
+# PATH, Spotlight). Falls das Werkzeug fehlt oder -m verify fuer
+# iOS-IPAs nicht unterstuetzt wird, entfaellt die Remote-Validierung:
+# die lokale codesign-Pruefung oben ist bestanden und der Upload
+# validiert serverseitig (dokumentierter Fallback).
+$findItms
+if [ -z "`$ITMS" ]; then
+    echo "WARNUNG: iTMSTransporter nicht gefunden - Remote-Validierung entfaellt, der Upload validiert serverseitig (Fallback)."
 elif ! "`$ITMS" -m verify -assetFile "`$IPA" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"; then
     echo "WARNUNG: iTMSTransporter -m verify fehlgeschlagen oder nicht unterstuetzt - Remote-Validierung entfaellt, der Upload validiert serverseitig (Fallback)."
 fi
@@ -638,18 +701,18 @@ echo "==> Validierung abgeschlossen"
 
 function Invoke-StoreUpload {
     param([string]$MacIpa)
+    $findItms = Get-TransporterFindScript
     $macScript = @"
 set -e
 # -assetFile statt -f: -f ist fuer .itmsp-Pakete reserviert und darf fuer
 # App-Uploads nicht verwendet werden (Apple Transporter User Guide).
-# iTMSTransporter wird seit Xcode 16 nicht mehr mit Xcode geliefert:
-# es gehoert zur Transporter-App aus dem Mac App Store.
-ITMS="/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
-if [ ! -x "`$ITMS" ]; then ITMS=`$(xcrun -f iTMSTransporter 2>/dev/null || true); fi
-if [ -z "`$ITMS" ] || [ ! -x "`$ITMS" ]; then
-    echo "FEHLER: iTMSTransporter nicht gefunden - Transporter-App aus dem Mac App Store installieren."
+# Die Pfadsuche steht in Get-TransporterFindScript.
+$findItms
+if [ -z "`$ITMS" ]; then
+    echo "FEHLER: iTMSTransporter nicht gefunden - Transporter-App (Mac App Store) oder iTMSTransporter-pkg (Apple Transporter User Guide) installieren."
     exit 1
 fi
+echo "==> Verwende iTMSTransporter: `$ITMS"
 "`$ITMS" -m upload -assetFile "$MacIpa" -apiKey "$ApiKeyId" -apiIssuer "$ApiIssuerId"
 echo "==> Upload erfolgreich - der Build erscheint nach der Verarbeitung in App Store Connect / TestFlight"
 "@

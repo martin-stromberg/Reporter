@@ -82,8 +82,8 @@ public class DemoContentServiceTests : IDisposable
         Assert.Null(feed.HealthLastChange);
         Assert.False(feed.NotificationsEnabled);
         Assert.Null(feed.FaviconUrl);
-        Assert.Null(feed.LastErrorKind);
-        Assert.Null(feed.LastErrorMessage);
+        Assert.Null(feed.LastMessageKind);
+        Assert.Null(feed.LastMessage);
     }
 
     /// <summary>

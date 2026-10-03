@@ -557,11 +557,11 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that renaming a feed keeps the stored sync error fields.
+    /// Verifies that renaming a feed keeps the stored sync message fields.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task RenameFeedAsync_PreservesLastError()
+    public async Task RenameFeedAsync_PreservesLastMessage()
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
@@ -571,8 +571,8 @@ public class FeedDetailViewModelTests : IDisposable
             Title = "Old Title",
             NotificationsEnabled = true,
             HealthStatus = FeedHealth.Error,
-            LastErrorKind = FeedSyncErrorKind.HttpStatus,
-            LastErrorMessage = "Synchronization failed: 404",
+            LastMessageKind = FeedSyncErrorKind.HttpStatus,
+            LastMessage = "Synchronization failed: 404",
         });
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync(feedId);
@@ -583,8 +583,8 @@ public class FeedDetailViewModelTests : IDisposable
         var saved = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(saved);
         Assert.Equal("New Title", saved.Title);
-        Assert.Equal(FeedSyncErrorKind.HttpStatus, saved.LastErrorKind);
-        Assert.Equal("Synchronization failed: 404", saved.LastErrorMessage);
+        Assert.Equal(FeedSyncErrorKind.HttpStatus, saved.LastMessageKind);
+        Assert.Equal("Synchronization failed: 404", saved.LastMessage);
     }
 
     /// <summary>
@@ -658,12 +658,12 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that GetFeedErrorMessage maps a stored error kind to the
+    /// Verifies that GetFeedMessage maps a stored error kind to the
     /// matching localized <c>FeedErrorKind*</c> text.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task GetFeedErrorMessage_MapsKindToLocalizedText()
+    public async Task GetFeedMessage_MapsKindToLocalizedText()
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
@@ -673,15 +673,69 @@ public class FeedDetailViewModelTests : IDisposable
             Title = "Broken",
             NotificationsEnabled = true,
             HealthStatus = FeedHealth.Error,
-            LastErrorKind = FeedSyncErrorKind.Network,
+            LastMessageKind = FeedSyncErrorKind.Network,
         });
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync(feedId);
         var feed = viewModel.Feed;
 
-        var message = viewModel.GetFeedErrorMessage(feed!);
+        var message = viewModel.GetFeedMessage(feed!);
 
         Assert.Equal(AppResources.FeedErrorKindNetwork, message);
+    }
+
+    /// <summary>
+    /// Verifies that GetFeedMessage maps a stored empty-feed warning kind
+    /// to the matching localized <c>FeedWarningKind*</c> text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetFeedMessage_NoItemsWarning_MapsToLocalizedText()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss-empty",
+            Title = "Empty",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Warning,
+            LastMessageKind = FeedSyncWarningKind.NoItems,
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        var feed = viewModel.Feed;
+
+        var message = viewModel.GetFeedMessage(feed!);
+
+        Assert.Equal(AppResources.FeedWarningKindNoItems, message);
+    }
+
+    /// <summary>
+    /// Verifies that GetFeedMessage maps a stored stale-feed warning kind
+    /// to the matching localized <c>FeedWarningKind*</c> text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetFeedMessage_NoRecentItemsWarning_MapsToLocalizedText()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss-stale",
+            Title = "Stale",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Warning,
+            LastMessageKind = FeedSyncWarningKind.NoRecentItems,
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        var feed = viewModel.Feed;
+
+        var message = viewModel.GetFeedMessage(feed!);
+
+        Assert.Equal(AppResources.FeedWarningKindNoRecentItems, message);
     }
 
     /// <summary>
@@ -690,7 +744,7 @@ public class FeedDetailViewModelTests : IDisposable
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task GetFeedErrorMessage_FallsBackToUnknown()
+    public async Task GetFeedMessage_FallsBackToUnknown()
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
@@ -700,15 +754,42 @@ public class FeedDetailViewModelTests : IDisposable
             Title = "Broken",
             NotificationsEnabled = true,
             HealthStatus = FeedHealth.Error,
-            LastErrorKind = "NotARealKind",
+            LastMessageKind = "NotARealKind",
         });
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync(feedId);
         var feed = viewModel.Feed;
 
-        var message = viewModel.GetFeedErrorMessage(feed!);
+        var message = viewModel.GetFeedMessage(feed!);
 
         Assert.Equal(AppResources.FeedErrorKindUnknown, message);
+    }
+
+    /// <summary>
+    /// Verifies that a warning feed without a stored message kind falls back
+    /// to the generic unknown-warning text.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetFeedMessage_WarningFallsBackToUnknown()
+    {
+        var feedId = Guid.NewGuid();
+        await _feedRepository.AddAsync(new Feed
+        {
+            Id = feedId,
+            Url = "https://example.com/rss",
+            Title = "Warning",
+            NotificationsEnabled = true,
+            HealthStatus = FeedHealth.Warning,
+            LastMessageKind = null,
+        });
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        var feed = viewModel.Feed;
+
+        var message = viewModel.GetFeedMessage(feed!);
+
+        Assert.Equal(AppResources.FeedWarningKindUnknown, message);
     }
 
     /// <summary>
@@ -717,7 +798,7 @@ public class FeedDetailViewModelTests : IDisposable
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task GetFeedErrorMessage_AppendsTechnicalMessage()
+    public async Task GetFeedMessage_AppendsTechnicalMessage()
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
@@ -727,14 +808,14 @@ public class FeedDetailViewModelTests : IDisposable
             Title = "Broken",
             NotificationsEnabled = true,
             HealthStatus = FeedHealth.Error,
-            LastErrorKind = FeedSyncErrorKind.Parse,
-            LastErrorMessage = "Synchronization failed: invalid xml",
+            LastMessageKind = FeedSyncErrorKind.Parse,
+            LastMessage = "Synchronization failed: invalid xml",
         });
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync(feedId);
         var feed = viewModel.Feed;
 
-        var message = viewModel.GetFeedErrorMessage(feed!);
+        var message = viewModel.GetFeedMessage(feed!);
 
         Assert.StartsWith(AppResources.FeedErrorKindParse, message);
         Assert.Contains("Synchronization failed: invalid xml", message);

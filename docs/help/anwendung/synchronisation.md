@@ -68,8 +68,8 @@ Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt
 | Status | Bedeutung |
 |--------|-----------|
 | In Ordnung | Abruf erfolgreich, Feed-Daten gültig. |
-| Warnung | Abruf erfolgreich, aber auffällig wenige Artikel oder seit längerer Zeit keine neuen Artikel (über 30 Tage). |
-| Fehler | Feed nicht erreichbar oder Feed-Daten nicht verarbeitbar — die Fehlerursache ist über **Fehlerdetails anzeigen** einsehbar (siehe unten). |
+| Warnung | Abruf erfolgreich, aber der Feed enthält keine Artikel oder seit längerer Zeit keine neuen Artikel (über 30 Tage) — der Grund ist über **Meldung anzeigen** einsehbar (siehe unten). |
+| Fehler | Feed nicht erreichbar oder Feed-Daten nicht verarbeitbar — die Fehlerursache ist über **Meldung anzeigen** einsehbar (siehe unten). |
 
 ## Verhalten bei Fehlern
 
@@ -77,9 +77,11 @@ Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt
 - Bestehende Artikel werden bei einem Fehler **nicht** gelöscht.
 - Für jeden Abruf wird ein Protokolleintrag mit Status, Zeitstempel und ggf. Fehlermeldung gespeichert.
 
-### Fehlerdetails eines Feeds anzeigen
+### Meldung eines Feeds anzeigen
 
-Zeigt ein Feed den Status **Fehler**, enthält das Menü **Feed-Aktionen** in seiner Detailansicht den zusätzlichen Eintrag **Fehlerdetails anzeigen**. Er öffnet den Dialog **Synchronisierungsfehler** mit dem Grund des letzten fehlgeschlagenen Abrufs:
+Zeigt ein Feed den Status **Fehler** oder **Warnung**, enthält das Menü **Feed-Aktionen** in seiner Detailansicht den zusätzlichen Eintrag **Meldung anzeigen**. Er öffnet den Dialog **Synchronisierungsmeldung** mit dem Grund des letzten auffälligen Abrufs.
+
+Beim Status **Fehler** sind die möglichen Gründe:
 
 - **Unverschlüsselte Verbindung blockiert** — die `http://`-Adresse wurde blockiert oder der Server verweigert Klartext; der Dialog empfiehlt die Umstellung auf HTTPS.
 - **HTTP-Fehler des Servers** — der Feed-Server hat geantwortet, aber einen Fehler gemeldet.
@@ -87,4 +89,9 @@ Zeigt ein Feed den Status **Fehler**, enthält das Menü **Feed-Aktionen** in se
 - **Unlesbares Feed-Format** — die abgerufenen Daten ließen sich nicht als Feed verarbeiten.
 - **Unerwarteter Fehler** — keiner der genannten Gründe trifft zu.
 
-Unter dem verständlichen Grund zeigt der Dialog in einem zweiten Absatz die technische Meldung des letzten Abrufs. Bei Feeds ohne Fehler erscheint der Menüeintrag nicht; sobald der nächste Abruf erfolgreich ist, verschwindet er wieder zusammen mit dem Fehler-Badge.
+Beim Status **Warnung** sind die möglichen Gründe:
+
+- **Keine Artikel** — der Feed hat gar keine Artikel geliefert; die Quelle ist möglicherweise leer oder die Adresse falsch. Ein Feed, der nur weniger Artikel ausliefert als gespeichert sind, gilt dagegen als erfolgreich — Quellen liefern üblicherweise nicht ihre gesamte Historie aus.
+- **Keine neuen Artikel seit über 30 Tagen** — der Feed hat lange nichts mehr veröffentlicht und ist möglicherweise verwaist.
+
+Unter dem verständlichen Grund zeigt der Dialog in einem zweiten Absatz die technische Meldung des letzten Abrufs. Bei Feeds ohne Fehler und ohne Warnung erscheint der Menüeintrag nicht; sobald der nächste Abruf erfolgreich ist, verschwindet er wieder zusammen mit dem Status-Badge.

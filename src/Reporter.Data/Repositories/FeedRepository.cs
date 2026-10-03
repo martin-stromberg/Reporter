@@ -73,8 +73,8 @@ public class FeedRepository : IFeedRepository
         entity.HealthLastChange = feed.HealthLastChange;
         entity.NotificationsEnabled = feed.NotificationsEnabled;
         entity.FaviconUrl = feed.FaviconUrl;
-        entity.LastErrorKind = feed.LastErrorKind;
-        entity.LastErrorMessage = feed.LastErrorMessage;
+        entity.LastMessageKind = feed.LastMessageKind;
+        entity.LastMessage = feed.LastMessage;
         await context.SaveChangesAsync();
     }
 
@@ -121,8 +121,8 @@ public class FeedRepository : IFeedRepository
                 HealthLastChange = f.HealthLastChange,
                 NotificationsEnabled = f.NotificationsEnabled,
                 FaviconUrl = f.FaviconUrl,
-                LastErrorKind = f.LastErrorKind,
-                LastErrorMessage = f.LastErrorMessage,
+                LastMessageKind = f.LastMessageKind,
+                LastMessage = f.LastMessage,
                 UnreadCount = items.Count(i => i.FeedId == f.Id && !i.IsRead),
             })
             .ToListAsync();
@@ -153,8 +153,8 @@ public class FeedRepository : IFeedRepository
             HealthLastChange = entity.HealthLastChange,
             NotificationsEnabled = entity.NotificationsEnabled,
             FaviconUrl = entity.FaviconUrl,
-            LastErrorKind = entity.LastErrorKind,
-            LastErrorMessage = entity.LastErrorMessage,
+            LastMessageKind = entity.LastMessageKind,
+            LastMessage = entity.LastMessage,
         };
     }
 
@@ -171,8 +171,8 @@ public class FeedRepository : IFeedRepository
             HealthLastChange = model.HealthLastChange,
             NotificationsEnabled = model.NotificationsEnabled,
             FaviconUrl = model.FaviconUrl,
-            LastErrorKind = model.LastErrorKind,
-            LastErrorMessage = model.LastErrorMessage,
+            LastMessageKind = model.LastMessageKind,
+            LastMessage = model.LastMessage,
         };
     }
 }

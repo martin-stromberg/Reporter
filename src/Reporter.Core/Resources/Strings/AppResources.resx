@@ -587,11 +587,11 @@
   <data name="DebugReportSectionSessionLog" xml:space="preserve">
     <value>Session debug log</value>
   </data>
-  <data name="FeedErrorDetailsTitle" xml:space="preserve">
-    <value>Sync error</value>
+  <data name="FeedMessageDetailsTitle" xml:space="preserve">
+    <value>Sync message</value>
   </data>
-  <data name="ButtonShowErrorDetails" xml:space="preserve">
-    <value>Show error details</value>
+  <data name="ButtonShowMessage" xml:space="preserve">
+    <value>Show message</value>
   </data>
   <data name="FeedErrorKindInsecureHttpBlocked" xml:space="preserve">
     <value>The feed address uses unencrypted HTTP — the insecure connection was blocked or the server refused plaintext. Update the feed to HTTPS if possible.</value>
@@ -607,6 +607,15 @@
   </data>
   <data name="FeedErrorKindUnknown" xml:space="preserve">
     <value>The synchronization failed with an unexpected error.</value>
+  </data>
+  <data name="FeedWarningKindNoItems" xml:space="preserve">
+    <value>The feed contains no articles — the source may be empty or the address incorrect.</value>
+  </data>
+  <data name="FeedWarningKindNoRecentItems" xml:space="preserve">
+    <value>The feed has not published new articles for more than 30 days — it may be abandoned.</value>
+  </data>
+  <data name="FeedWarningKindUnknown" xml:space="preserve">
+    <value>The synchronization reported a warning.</value>
   </data>
   <data name="PageTitleFeedDetail" xml:space="preserve">
     <value>Feed detail</value>

@@ -49,7 +49,7 @@ Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 - Neue ungelesene Artikel werden automatisch in der Datenbank gespeichert und erscheinen unter **Ungelesen**. Die App speichert dabei neben dem Artikeltext auch das Artikelbild lokal — beides bleibt später ohne Internetverbindung verfügbar (Details siehe [Offline lesen](offline.md)).
 - Bei geöffneter App erscheint dabei bewusst keine Benachrichtigung — die Artikel stehen direkt in **Ungelesen**. Auf iOS kommen Mitteilungen aus dem automatischen Hintergrund-Abgleich bei geschlossener App — ein Tipp darauf öffnet den Artikel direkt in der App (Details siehe [Benachrichtigungen](../benachrichtigungen/index.md)).
 
-> **Hinweis:** Trägt ein Feed das Badge **Fehler**, findest du den Grund in seiner Detailansicht über **Aktionen** → **Fehlerdetails anzeigen** (Details siehe [Feeds synchronisieren](synchronisation.md)).
+> **Hinweis:** Trägt ein Feed das Badge **Fehler** oder **Warnung**, findest du den Grund in seiner Detailansicht über **Aktionen** → **Meldung anzeigen** (Details siehe [Feeds synchronisieren](synchronisation.md)).
 
 ### 5. Artikel eines Feeds durchsehen
 

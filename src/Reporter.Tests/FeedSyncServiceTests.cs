@@ -99,6 +99,72 @@ public class FeedSyncServiceTests : IDisposable
         return new NotificationService(_settingsRepository, _keywordFilter, localNotificationService);
     }
 
+    // The second sync shrinks the feed from four items to one. Shrinking alone
+    // is a normal feed behavior (sources rarely serve their full history) and
+    // must not trip a warning. Returns the feed id, the four-item service and
+    // the shrinking sync's result.
+    private async Task<(Guid FeedId, FeedSyncService FullService, SyncResult ShrinkResult)> SeedThenShrinkFeedAsync()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var pubDate = DateTime.UtcNow;
+        var fourItems = TestFeedXml.Rss(
+        [
+            ("A", "https://example.com/a", "guid-a", pubDate, "A"),
+            ("B", "https://example.com/b", "guid-b", pubDate, "B"),
+            ("C", "https://example.com/c", "guid-c", pubDate, "C"),
+            ("D", "https://example.com/d", "guid-d", pubDate, "D"),
+        ]);
+        var oneItem = TestFeedXml.Rss([
+            ("A", "https://example.com/a", "guid-a", pubDate, "A"),
+        ]);
+
+        var service = CreateService(fourItems);
+        await service.SyncFeedAsync(feedId);
+
+        var shrinkResult = await CreateService(oneItem).SyncFeedAsync(feedId);
+        return (feedId, service, shrinkResult);
+    }
+
+    // The second sync serves an empty feed, which trips the no-items warning.
+    // Returns the feed id, the four-item service (for a follow-up sync that
+    // lifts the warning again) and the empty sync's result.
+    private async Task<(Guid FeedId, FeedSyncService FullService, SyncResult EmptyResult)> SeedThenEmptyFeedAsync()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var pubDate = DateTime.UtcNow;
+        var fourItems = TestFeedXml.Rss(
+        [
+            ("A", "https://example.com/a", "guid-a", pubDate, "A"),
+            ("B", "https://example.com/b", "guid-b", pubDate, "B"),
+            ("C", "https://example.com/c", "guid-c", pubDate, "C"),
+            ("D", "https://example.com/d", "guid-d", pubDate, "D"),
+        ]);
+        var empty = TestFeedXml.Rss([]);
+
+        var service = CreateService(fourItems);
+        await service.SyncFeedAsync(feedId);
+
+        var emptyResult = await CreateService(empty).SyncFeedAsync(feedId);
+        return (feedId, service, emptyResult);
+    }
+
+    // The first sync stores one item published 40 days ago; the resync finds
+    // no new items and trips the no-recent-items warning. Returns the feed id
+    // and the resync's result.
+    private async Task<(Guid FeedId, SyncResult StaleResult)> SeedStaleFeedThenResyncAsync()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
+        var pubDate = DateTime.UtcNow.AddDays(-40);
+        var xml = TestFeedXml.Rss([
+            ("Old Item", "https://example.com/old", "guid-old", pubDate, "Old"),
+        ]);
+        var service = CreateService(xml);
+        await service.SyncFeedAsync(feedId);
+
+        var staleResult = await service.SyncFeedAsync(feedId);
+        return (feedId, staleResult);
+    }
+
     /// <summary>
     /// Verifies that a valid RSS feed creates new items and updates feed health to OK.
     /// </summary>
@@ -282,30 +348,29 @@ public class FeedSyncServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that a feed returning significantly fewer items sets health to Warning.
+    /// Verifies that a feed returning fewer items than stored still counts as
+    /// a successful sync — sources rarely serve their full history.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task SyncFeedAsync_FewerItems_SetsWarning()
+    public async Task SyncFeedAsync_FewerItems_SyncsOk()
     {
-        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
-        var pubDate = DateTime.UtcNow;
-        var fourItems = TestFeedXml.Rss(
-        [
-            ("A", "https://example.com/a", "guid-a", pubDate, "A"),
-            ("B", "https://example.com/b", "guid-b", pubDate, "B"),
-            ("C", "https://example.com/c", "guid-c", pubDate, "C"),
-            ("D", "https://example.com/d", "guid-d", pubDate, "D"),
-        ]);
-        var oneItem = TestFeedXml.Rss([
-            ("A", "https://example.com/a", "guid-a", pubDate, "A"),
-        ]);
+        var (feedId, _, result) = await SeedThenShrinkFeedAsync();
 
-        var service = CreateService(fourItems);
-        await service.SyncFeedAsync(feedId);
+        Assert.Equal(FeedHealth.Ok, result.Status);
 
-        var secondService = CreateService(oneItem);
-        var result = await secondService.SyncFeedAsync(feedId);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedHealth.Ok, feed?.HealthStatus);
+    }
+
+    /// <summary>
+    /// Verifies that a feed returning no items at all sets health to Warning.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_EmptyFeed_SetsWarning()
+    {
+        var (feedId, _, result) = await SeedThenEmptyFeedAsync();
 
         Assert.Equal(FeedHealth.Warning, result.Status);
 
@@ -320,17 +385,95 @@ public class FeedSyncServiceTests : IDisposable
     [Fact]
     public async Task SyncFeedAsync_NoNewItemsForThirtyDays_SetsWarning()
     {
-        var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
-        var pubDate = DateTime.UtcNow.AddDays(-40);
-        var xml = TestFeedXml.Rss([
-            ("Old Item", "https://example.com/old", "guid-old", pubDate, "Old"),
-        ]);
-        var service = CreateService(xml);
-        await service.SyncFeedAsync(feedId);
-
-        var result = await service.SyncFeedAsync(feedId);
+        var (_, result) = await SeedStaleFeedThenResyncAsync();
 
         Assert.Equal(FeedHealth.Warning, result.Status);
+    }
+
+    /// <summary>
+    /// Verifies that the empty-feed warning persists its warning kind and a
+    /// technical message on the feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_EmptyFeed_PersistsWarningMessage()
+    {
+        var (feedId, _, result) = await SeedThenEmptyFeedAsync();
+
+        Assert.Equal(FeedHealth.Warning, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Warning, feed.HealthStatus);
+        Assert.Equal(FeedSyncWarningKind.NoItems, feed.LastMessageKind);
+        Assert.False(string.IsNullOrWhiteSpace(feed.LastMessage));
+    }
+
+    /// <summary>
+    /// Verifies that the stale-feed warning persists its warning kind and a
+    /// technical message on the feed.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_NoNewItemsForThirtyDays_PersistsWarningMessage()
+    {
+        var (feedId, result) = await SeedStaleFeedThenResyncAsync();
+
+        Assert.Equal(FeedHealth.Warning, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Warning, feed.HealthStatus);
+        Assert.Equal(FeedSyncWarningKind.NoRecentItems, feed.LastMessageKind);
+        Assert.False(string.IsNullOrWhiteSpace(feed.LastMessage));
+    }
+
+    /// <summary>
+    /// Verifies that a successful sync after a warning clears the persisted
+    /// warning kind and message.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_SuccessAfterWarning_ClearsLastMessage()
+    {
+        var (feedId, service, _) = await SeedThenEmptyFeedAsync();
+
+        var feedAfterWarning = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedSyncWarningKind.NoItems, feedAfterWarning?.LastMessageKind);
+
+        // Serving items again lifts the empty-feed warning; the
+        // shared message fields are cleared on the Ok status.
+        var result = await service.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Ok, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Ok, feed.HealthStatus);
+        Assert.Null(feed.LastMessageKind);
+        Assert.Null(feed.LastMessage);
+    }
+
+    /// <summary>
+    /// Verifies that a failed sync after a warning replaces the warning kind
+    /// with the classified error kind — the shared message fields keep the
+    /// message of the latest status.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SyncFeedAsync_ErrorAfterWarning_OverwritesLastMessage()
+    {
+        var (feedId, _, _) = await SeedThenEmptyFeedAsync();
+
+        var feedAfterWarning = await _feedRepository.GetByIdAsync(feedId);
+        Assert.Equal(FeedSyncWarningKind.NoItems, feedAfterWarning?.LastMessageKind);
+
+        var failingService = CreateFailingService(new HttpRequestException("No connection"));
+        var result = await failingService.SyncFeedAsync(feedId);
+
+        Assert.Equal(FeedHealth.Error, result.Status);
+        var feed = await _feedRepository.GetByIdAsync(feedId);
+        Assert.NotNull(feed);
+        Assert.Equal(FeedHealth.Error, feed.HealthStatus);
+        Assert.Equal(FeedSyncErrorKind.Network, feed.LastMessageKind);
+        Assert.Equal("Synchronization failed: No connection", feed.LastMessage);
     }
 
     /// <summary>
@@ -1068,24 +1211,24 @@ public class FeedSyncServiceTests : IDisposable
 
         var feed = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(feed);
-        Assert.Equal(FeedSyncErrorKind.Network, feed.LastErrorKind);
-        Assert.Equal("Synchronization failed: No connection", feed.LastErrorMessage);
+        Assert.Equal(FeedSyncErrorKind.Network, feed.LastMessageKind);
+        Assert.Equal("Synchronization failed: No connection", feed.LastMessage);
     }
 
     /// <summary>
-    /// Verifies that a successful sync clears the error fields persisted by a
+    /// Verifies that a successful sync clears the message fields persisted by a
     /// previous failure.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task SyncFeedAsync_Success_ClearsLastError()
+    public async Task SyncFeedAsync_Success_ClearsLastMessage()
     {
         var feedId = await TestDataSeeder.SeedFeedAsync(_feedRepository);
         var failingService = CreateFailingService(new HttpRequestException("No connection"));
         await failingService.SyncFeedAsync(feedId);
 
         var feedAfterFailure = await _feedRepository.GetByIdAsync(feedId);
-        Assert.NotNull(feedAfterFailure?.LastErrorKind);
+        Assert.NotNull(feedAfterFailure?.LastMessageKind);
 
         var xml = TestFeedXml.Rss(
         [
@@ -1099,8 +1242,8 @@ public class FeedSyncServiceTests : IDisposable
         var feed = await _feedRepository.GetByIdAsync(feedId);
         Assert.NotNull(feed);
         Assert.Equal(FeedHealth.Ok, feed.HealthStatus);
-        Assert.Null(feed.LastErrorKind);
-        Assert.Null(feed.LastErrorMessage);
+        Assert.Null(feed.LastMessageKind);
+        Assert.Null(feed.LastMessage);
     }
 
     /// <summary>
@@ -1119,7 +1262,7 @@ public class FeedSyncServiceTests : IDisposable
 
         Assert.Equal(FeedHealth.Error, result.Status);
         var feed = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal(FeedSyncErrorKind.InsecureHttpBlocked, feed?.LastErrorKind);
+        Assert.Equal(FeedSyncErrorKind.InsecureHttpBlocked, feed?.LastMessageKind);
     }
 
     /// <summary>
@@ -1137,7 +1280,7 @@ public class FeedSyncServiceTests : IDisposable
 
         Assert.Equal(FeedHealth.Error, result.Status);
         var feed = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal(FeedSyncErrorKind.HttpStatus, feed?.LastErrorKind);
+        Assert.Equal(FeedSyncErrorKind.HttpStatus, feed?.LastMessageKind);
     }
 
     /// <summary>
@@ -1155,7 +1298,7 @@ public class FeedSyncServiceTests : IDisposable
 
         Assert.Equal(FeedHealth.Error, result.Status);
         var feed = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal(FeedSyncErrorKind.Parse, feed?.LastErrorKind);
+        Assert.Equal(FeedSyncErrorKind.Parse, feed?.LastMessageKind);
     }
 
     /// <summary>
@@ -1174,7 +1317,7 @@ public class FeedSyncServiceTests : IDisposable
 
         Assert.Equal(FeedHealth.Error, result.Status);
         var feed = await _feedRepository.GetByIdAsync(feedId);
-        Assert.Equal(FeedSyncErrorKind.Network, feed?.LastErrorKind);
+        Assert.Equal(FeedSyncErrorKind.Network, feed?.LastMessageKind);
     }
 
     /// <summary>

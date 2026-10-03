@@ -587,11 +587,11 @@
   <data name="DebugReportSectionSessionLog" xml:space="preserve">
     <value>Session-Debug-Log</value>
   </data>
-  <data name="FeedErrorDetailsTitle" xml:space="preserve">
-    <value>Synchronisierungsfehler</value>
+  <data name="FeedMessageDetailsTitle" xml:space="preserve">
+    <value>Synchronisierungsmeldung</value>
   </data>
-  <data name="ButtonShowErrorDetails" xml:space="preserve">
-    <value>Fehlerdetails anzeigen</value>
+  <data name="ButtonShowMessage" xml:space="preserve">
+    <value>Meldung anzeigen</value>
   </data>
   <data name="FeedErrorKindInsecureHttpBlocked" xml:space="preserve">
     <value>Die Feed-Adresse verwendet unverschlüsseltes HTTP — die unsichere Verbindung wurde blockiert oder der Server verweigert Klartext. Stelle den Feed wenn möglich auf HTTPS um.</value>
@@ -607,6 +607,15 @@
   </data>
   <data name="FeedErrorKindUnknown" xml:space="preserve">
     <value>Die Synchronisation ist mit einem unerwarteten Fehler fehlgeschlagen.</value>
+  </data>
+  <data name="FeedWarningKindNoItems" xml:space="preserve">
+    <value>Der Feed enthält keine Artikel — die Quelle ist möglicherweise leer oder die Adresse falsch.</value>
+  </data>
+  <data name="FeedWarningKindNoRecentItems" xml:space="preserve">
+    <value>Der Feed hat seit über 30 Tagen keine neuen Artikel veröffentlicht — er ist möglicherweise verwaist.</value>
+  </data>
+  <data name="FeedWarningKindUnknown" xml:space="preserve">
+    <value>Die Synchronisation hat eine Warnung gemeldet.</value>
   </data>
   <data name="PageTitleFeedDetail" xml:space="preserve">
     <value>Feed-Details</value>

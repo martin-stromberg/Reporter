@@ -14,7 +14,7 @@ namespace Reporter.Core.ViewModels;
 /// <summary>
 /// View model for the feed detail page: shows the paged article list of a
 /// single feed including its feed-level actions (refresh, rename, category,
-/// edit, error details, delete).
+/// edit, sync message, delete).
 /// </summary>
 public partial class FeedDetailViewModel : BaseViewModel
 {
@@ -481,27 +481,31 @@ public partial class FeedDetailViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Builds the localized error detail text for the feed's last sync failure:
-    /// the stored <see cref="FeedListItem.LastErrorKind"/> maps to a
-    /// <c>FeedErrorKind*</c> resource and the raw technical message is appended
-    /// as a second paragraph when present.
+    /// Builds the localized message text for the feed's last sync error or
+    /// warning: the stored <see cref="FeedListItem.LastMessageKind"/> maps to a
+    /// <c>FeedErrorKind*</c> or <c>FeedWarningKind*</c> resource and the raw
+    /// technical message is appended as a second paragraph when present.
     /// </summary>
-    /// <param name="feed">The feed whose error should be described.</param>
-    /// <returns>The localized error text, optionally followed by the raw message.</returns>
-    public string GetFeedErrorMessage(FeedListItem feed)
+    /// <param name="feed">The feed whose message should be described.</param>
+    /// <returns>The localized message text, optionally followed by the raw message.</returns>
+    public string GetFeedMessage(FeedListItem feed)
     {
-        var kindText = feed.LastErrorKind switch
+        var kindText = feed.LastMessageKind switch
         {
             FeedSyncErrorKind.InsecureHttpBlocked => AppResources.FeedErrorKindInsecureHttpBlocked,
             FeedSyncErrorKind.HttpStatus => AppResources.FeedErrorKindHttpStatus,
             FeedSyncErrorKind.Network => AppResources.FeedErrorKindNetwork,
             FeedSyncErrorKind.Parse => AppResources.FeedErrorKindParse,
-            _ => AppResources.FeedErrorKindUnknown,
+            FeedSyncWarningKind.NoItems => AppResources.FeedWarningKindNoItems,
+            FeedSyncWarningKind.NoRecentItems => AppResources.FeedWarningKindNoRecentItems,
+            _ => feed.HealthStatus == FeedHealth.Warning
+                ? AppResources.FeedWarningKindUnknown
+                : AppResources.FeedErrorKindUnknown,
         };
 
-        return string.IsNullOrWhiteSpace(feed.LastErrorMessage)
+        return string.IsNullOrWhiteSpace(feed.LastMessage)
             ? kindText
-            : $"{kindText}\n\n{feed.LastErrorMessage}";
+            : $"{kindText}\n\n{feed.LastMessage}";
     }
 
     /// <summary>
@@ -860,8 +864,8 @@ public partial class FeedDetailViewModel : BaseViewModel
             HealthLastChange = feed.HealthLastChange,
             NotificationsEnabled = notificationsEnabled,
             FaviconUrl = feed.FaviconUrl,
-            LastErrorKind = feed.LastErrorKind,
-            LastErrorMessage = feed.LastErrorMessage,
+            LastMessageKind = feed.LastMessageKind,
+            LastMessage = feed.LastMessage,
         };
     }
 }

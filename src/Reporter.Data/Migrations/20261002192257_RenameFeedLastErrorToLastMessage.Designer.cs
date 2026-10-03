@@ -4,6 +4,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Reporter.Data;
 
@@ -12,9 +13,11 @@ using Reporter.Data;
 namespace Reporter.Data.Migrations
 {
     [DbContext(typeof(ReporterDbContext))]
-    partial class ReporterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002192257_RenameFeedLastErrorToLastMessage")]
+    partial class RenameFeedLastErrorToLastMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");

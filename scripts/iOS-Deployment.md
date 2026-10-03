@@ -59,9 +59,15 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
   Skript erzwungen). Das Skript spiegelt sie nach
   `~/.appstoreconnect/private_keys/AuthKey_<KeyId>.p8` auf dem Mac —
   dem festen Suchpfad von `iTMSTransporter` (identisch zu `altool`).
-- Fuer `store`/`upload`: die **Transporter-App** aus dem Mac App Store
-  auf dem Ziel-Mac installiert (liefert `iTMSTransporter` — seit
-  Xcode 16 nicht mehr in Xcode enthalten).
+- Fuer `store`/`upload`: `iTMSTransporter` auf dem Ziel-Mac — seit
+  Xcode 16 nicht mehr in Xcode enthalten. Das Skript sucht der
+  Reihe nach in der **Transporter-App** (`/Applications` und
+  `~/Applications`), im **Standalone-pkg** aus dem Apple Transporter
+  User Guide (`/usr/local/itms`), im `PATH`, in aelteren
+  Xcode-Installationen (`xcrun -f` bzw. `ContentDeliveryServices`)
+  sowie via Spotlight nach einer Transporter-App an beliebigem Ort.
+  Ein fester Pfad laesst sich per `-TransporterPath` bzw.
+  `REPORTER_IOS_TRANSPORTER_PATH` erzwingen.
 - Auf Windows: zusaetzlich schluesselbasiertes SSH zum Mac
   (`ssh <macuser>@<mac>` muss ohne Passwort funktionieren). Die von
   Visual Studio Pair-to-Mac angelegten Keys liegen unter
@@ -152,14 +158,18 @@ fuer den Upload — beide mit `-assetFile`, da `-f` nur fuer
 `.itmsp`-Pakete gilt). Authentifizierung und Schluesselsuchpfad
 (`~/.appstoreconnect/private_keys/`) sind identisch — `Copy-ApiKeyToMac`
 bleibt kompatibel. Seit Xcode 16 liefert Xcode `iTMSTransporter`
-nicht mehr mit: das Skript loest das Binary aus der
-**Transporter-App** (Mac App Store) unter
-`/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter`
-auf, mit `xcrun -f iTMSTransporter` als Fallback fuer aeltere
-Xcode-Versionen. Fehlt das Werkzeug beim Upload, bricht das Skript
-mit Installationshinweis ab; `-m verify` entfaellt dann dokumentiert
+nicht mehr mit — es steht an mehreren Orten zur Verfuegung
+(Transporter-App aus dem Mac App Store unter
+`/Applications/Transporter.app/Contents/itms/bin/` bzw.
+`~/Applications/...`, Standalone-pkg aus dem Apple Transporter
+User Guide unter `/usr/local/itms/bin/`, `PATH`, aeltere
+Xcode-Installationen, Transporter.app via Spotlight).
+`Get-TransporterFindScript` sucht diese Orte der Reihe nach ab;
+`-TransporterPath` / `REPORTER_IOS_TRANSPORTER_PATH` ueberschreibt
+die Suche. Fehlt das Werkzeug beim Upload, bricht das Skript mit
+Installationshinweis ab; `-m verify` entfaellt dann dokumentiert
 mit Warnung (lokale `codesign`-Pruefung + serverseitige Validierung).
-Vorab pruefbar auf dem Ziel-Mac:
+Vorab pruefbar auf dem Ziel-Mac z. B. mit:
 `/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter --version`.
 
 ### SSH-Delegation von Windows

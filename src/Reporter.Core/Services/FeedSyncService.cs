@@ -1,5 +1,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.ServiceModel.Syndication;
@@ -28,6 +29,7 @@ public class FeedSyncService : IFeedSyncService
     private readonly IItemContentStore _contentStore;
     private readonly IDebugLogService? _debugLogService;
     private readonly SemaphoreSlim _syncAllLock = new(1, 1);
+    private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _feedSyncLocks = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedSyncService"/> class.
@@ -77,39 +79,55 @@ public class FeedSyncService : IFeedSyncService
             return new SyncResult(FeedHealth.Error, 0, AppResources.OfflineHint);
         }
 
-        var log = new SyncLog
-        {
-            Id = Guid.NewGuid(),
-            FeedId = feedId,
-            StartedAt = DateTime.UtcNow,
-            Status = FeedHealth.Ok,
-        };
-        await _syncLogRepository.AddAsync(log);
-
-        var feed = await _feedRepository.GetByIdAsync(feedId);
-        if (feed is null)
-        {
-            const string Message = "Feed not found.";
-            await UpdateLogAsync(log, FeedHealth.Error, Message).ConfigureAwait(false);
-            return new SyncResult(FeedHealth.Error, 0, Message);
-        }
-
+        // Ein manueller Einzelabruf kann parallel zu einem laufenden
+        // SyncAllAsync denselben Feed synchronisieren; beide Laeufe wuerden
+        // denselben Feed-Snapshot lesen, identische neue Items einspielen
+        // (Unique-Index-Verletzung) und den Health-/Meldungszustand per
+        // Last-Writer-Wins mit veralteten Werten ueberschreiben. Der Lock
+        // serialisiert nur die Syncs desselben Feeds — SyncAllAsync haelt
+        // ihn pro Feed nur fuer die Dauer des eigenen Durchlaufs.
+        var feedLock = _feedSyncLocks.GetOrAdd(feedId, static _ => new SemaphoreSlim(1, 1));
+        await feedLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return await RunSyncAsync(feed, log, cancellationToken).ConfigureAwait(false);
+            var log = new SyncLog
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                StartedAt = DateTime.UtcNow,
+                Status = FeedHealth.Ok,
+            };
+            await _syncLogRepository.AddAsync(log);
+
+            var feed = await _feedRepository.GetByIdAsync(feedId);
+            if (feed is null)
+            {
+                const string Message = "Feed not found.";
+                await UpdateLogAsync(log, FeedHealth.Error, Message).ConfigureAwait(false);
+                return new SyncResult(FeedHealth.Error, 0, Message);
+            }
+
+            try
+            {
+                return await RunSyncAsync(feed, log, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                var message = $"Synchronization failed: {ex.Message}";
+                var errorKind = FeedSyncErrorKind.Classify(ex, feed.Url);
+                await UpdateFeedHealthAsync(feed, FeedHealth.Error, new FeedHealthUpdate(MessageKind: errorKind, Message: message)).ConfigureAwait(false);
+                await UpdateLogAsync(log, FeedHealth.Error, message).ConfigureAwait(false);
+                _ = _debugLogService?.LogAsync(
+                    DebugLogCategory.Sync,
+                    $"Synchronization failed for feed '{feed.Title}'",
+                    ex.ToString(),
+                    DebugLogLevel.Error);
+                return new SyncResult(FeedHealth.Error, 0, message);
+            }
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        finally
         {
-            var message = $"Synchronization failed: {ex.Message}";
-            var errorKind = FeedSyncErrorKind.Classify(ex, feed.Url);
-            await UpdateFeedHealthAsync(feed, FeedHealth.Error, new FeedHealthUpdate(ErrorKind: errorKind, ErrorMessage: message)).ConfigureAwait(false);
-            await UpdateLogAsync(log, FeedHealth.Error, message).ConfigureAwait(false);
-            _ = _debugLogService?.LogAsync(
-                DebugLogCategory.Sync,
-                $"Synchronization failed for feed '{feed.Title}'",
-                ex.ToString(),
-                DebugLogLevel.Error);
-            return new SyncResult(FeedHealth.Error, 0, message);
+            feedLock.Release();
         }
     }
 
@@ -213,9 +231,9 @@ public class FeedSyncService : IFeedSyncService
             await _contentStore.SetRangeAsync(collected.ContentBackfill).ConfigureAwait(false);
         }
 
-        var status = DetermineStatus(newItems, feedItems.Count, existingCount, lastPublishedAt);
+        var decision = DetermineHealth(newItems, feedItems.Count, existingCount, lastPublishedAt);
         var filteredSuffix = collected.FilteredCount > 0 ? $", {collected.FilteredCount} filtered" : string.Empty;
-        var message = status == FeedHealth.Warning
+        var message = decision.Status == FeedHealth.Warning
             ? $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}. Health warning triggered."
             : $"Synchronized {feedItems.Count} items, {newItems} new{filteredSuffix}.";
 
@@ -226,8 +244,11 @@ public class FeedSyncService : IFeedSyncService
         // strictly isolated inside the icon service.
         var faviconUrl = feed.FaviconUrl ?? await TryFindFaviconUrlAsync(feed.Url, syndicationFeed, cancellationToken).ConfigureAwait(false);
 
-        await UpdateFeedHealthAsync(feed, status, new FeedHealthUpdate(resolvedTitle, faviconUrl)).ConfigureAwait(false);
-        await UpdateLogAsync(log, status, message).ConfigureAwait(false);
+        await UpdateFeedHealthAsync(
+            feed,
+            decision.Status,
+            new FeedHealthUpdate(resolvedTitle, faviconUrl, MessageKind: decision.Kind, Message: decision.Message)).ConfigureAwait(false);
+        await UpdateLogAsync(log, decision.Status, message).ConfigureAwait(false);
 
         if (collected.NewItems.Count > 0)
         {
@@ -247,7 +268,7 @@ public class FeedSyncService : IFeedSyncService
             }
         }
 
-        return new SyncResult(status, newItems, message);
+        return new SyncResult(decision.Status, newItems, message);
     }
 
     private CollectResult CollectNewItems(CollectContext context, CancellationToken cancellationToken)
@@ -406,20 +427,28 @@ public class FeedSyncService : IFeedSyncService
             string.Equals(feed.Title, feedUri.Host, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string DetermineStatus(int newItems, int fetchedCount, int existingCount, DateTime lastPublishedAt)
+    private static HealthDecision DetermineHealth(int newItems, int fetchedCount, int existingCount, DateTime lastPublishedAt)
     {
-        if (fetchedCount < existingCount * 0.5 && existingCount > 0)
+        if (fetchedCount == 0)
         {
-            return FeedHealth.Warning;
+            return new HealthDecision(
+                FeedHealth.Warning,
+                FeedSyncWarningKind.NoItems,
+                existingCount > 0
+                    ? $"Feed returned no items, but {existingCount} are stored."
+                    : "Feed returned no items.");
         }
 
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         if (newItems == 0 && lastPublishedAt != default && lastPublishedAt < thirtyDaysAgo)
         {
-            return FeedHealth.Warning;
+            return new HealthDecision(
+                FeedHealth.Warning,
+                FeedSyncWarningKind.NoRecentItems,
+                $"No new items; the most recent stored item was published at {lastPublishedAt:O}.");
         }
 
-        return FeedHealth.Ok;
+        return new HealthDecision(FeedHealth.Ok, null, null);
     }
 
     private async Task UpdateFeedHealthAsync(Feed feed, string status, FeedHealthUpdate update)
@@ -441,8 +470,8 @@ public class FeedSyncService : IFeedSyncService
             HealthLastChange = healthLastChange,
             NotificationsEnabled = feed.NotificationsEnabled,
             FaviconUrl = update.FaviconUrl ?? feed.FaviconUrl,
-            LastErrorKind = update.ErrorKind,
-            LastErrorMessage = update.ErrorMessage,
+            LastMessageKind = update.MessageKind,
+            LastMessage = update.Message,
         }).ConfigureAwait(false);
     }
 
@@ -543,4 +572,15 @@ public class FeedSyncService : IFeedSyncService
         int FilteredCount,
         List<ItemContentEntry> ContentBackfill,
         List<(Guid ItemId, string ImageUrl)> ImageCandidates);
+
+    /// <summary>
+    /// The outcome of <see cref="DetermineHealth"/>: the health status plus the
+    /// classified warning kind and its technical message — both <c>null</c>
+    /// for a healthy feed so the stored message fields are cleared.
+    /// </summary>
+    /// <param name="Status">The <see cref="FeedHealth"/> status to persist.</param>
+    /// <param name="Kind">The <see cref="FeedSyncWarningKind"/> value, or <c>null</c>.</param>
+    /// <param name="Message">The raw technical detail message, or <c>null</c>.</param>
+    /// <returns>A result record carrying the outcome of <see cref="DetermineHealth"/>.</returns>
+    private sealed record HealthDecision(string Status, string? Kind, string? Message);
 }

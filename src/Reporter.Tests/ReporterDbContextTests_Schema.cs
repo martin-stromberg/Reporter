@@ -77,4 +77,31 @@ public class ReporterDbContextTests_Schema
         Assert.Equal("debug_collection_enabled", debugProperty.GetColumnName());
         Assert.Equal(false, debugProperty.GetDefaultValue());
     }
+
+    /// <summary>
+    /// Verifies that the feed entity maps the last sync message fields to the
+    /// expected columns.
+    /// </summary>
+    [Fact]
+    public void Feed_LastMessage_MappedToExpectedColumns()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ReporterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        using var context = new ReporterDbContext(options);
+
+        var entityType = context.Model.FindEntityType(typeof(Reporter.Data.Entities.Feed));
+        Assert.NotNull(entityType);
+        var kindProperty = entityType.FindProperty(nameof(Reporter.Data.Entities.Feed.LastMessageKind));
+        Assert.NotNull(kindProperty);
+        Assert.Equal("last_message_kind", kindProperty.GetColumnName());
+        Assert.Equal(50, kindProperty.GetMaxLength());
+        var messageProperty = entityType.FindProperty(nameof(Reporter.Data.Entities.Feed.LastMessage));
+        Assert.NotNull(messageProperty);
+        Assert.Equal("last_message", messageProperty.GetColumnName());
+    }
 }

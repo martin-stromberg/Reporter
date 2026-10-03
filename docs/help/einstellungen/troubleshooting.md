@@ -39,7 +39,7 @@
 
 ## Feed-Abruf scheitert mit „Unlesbares Feed-Format" (`Parse`)
 
-**Symptom:** Der Feed trägt den Status **Fehler**; der Dialog **Fehlerdetails anzeigen** meldet „Unlesbares Feed-Format" mit einer `XmlException`-Meldung als technischem Detail (`feeds.last_error_kind` = `Parse`, `SyncLog.Message` = `"Synchronization failed: …"`).
+**Symptom:** Der Feed trägt den Status **Fehler**; der Dialog **Synchronisierungsmeldung** (über **Meldung anzeigen**) meldet „Unlesbares Feed-Format" mit einer `XmlException`-Meldung als technischem Detail (`feeds.last_message_kind` = `Parse`, `SyncLog.Message` = `"Synchronization failed: …"`).
 
 **Ursache:** `SyndicationFeed.Load` akzeptiert RSS 2.0, Atom 1.0 und — über die Normalisierung in `Atom03NormalizingXmlReader` — Atom 0.3 (Root-Element `feed` im Namespace `http://purl.org/atom/ns#`). Alles andere (HTML-Seiten, JSON, fremde Feed-Dialekte) läuft in den `catch` von `SyncFeedAsync` → `FeedSyncErrorKind.Classify` → `Parse`. Auch ein als Atom 0.3 erkanntes Dokument kann scheitern — etwa bei `content`/`summary` mit `mode="xml"` ohne Atom-1.0-konformen `div`-Wrapper; dieser Sonderfall ist bewusst nicht abgedeckt.
 
@@ -47,7 +47,7 @@
 1. `debug_log_entries` (Kategorie `Sync`) bzw. das `SyncLog` auf den Eintrag `Synchronization failed: …` prüfen — Zeile/Position der `XmlException` verrät die Stelle im Dokument.
 2. Das Root-Element der Feed-URL prüfen: `feed` mit `xmlns="http://purl.org/atom/ns#"` (Atom 0.3), `feed` mit `xmlns="http://www.w3.org/2005/Atom"` (Atom 1.0) oder `rss`/`rdf:RDF` (RSS) ist lesbar; alles andere nicht.
 3. Beachten: Das `version`-Attribut am Root-Element ist irrelevant — die Erkennung prüft nur Namespace und Elementname.
-4. Kein Fehler, aber erklärungsbedürftig: Atom-0.3-Einträge ohne `issued` werden mit `PublishedAt = null` gespeichert — sie erscheinen ohne Veröffentlichungsdatum (Sortierung wie bei anderen datumslosen Artikeln). Enthält der gesamte Feed keine Datumswerte, bleibt `lastPublishedAt` auf `default` und die 30-Tage-`Warning` in `DetermineStatus` kann für diesen Feed nie auslösen (Bedingung `lastPublishedAt != default`).
+4. Kein Fehler, aber erklärungsbedürftig: Atom-0.3-Einträge ohne `issued` werden mit `PublishedAt = null` gespeichert — sie erscheinen ohne Veröffentlichungsdatum (Sortierung wie bei anderen datumslosen Artikeln). Enthält der gesamte Feed keine Datumswerte, bleibt `lastPublishedAt` auf `default` und die 30-Tage-`Warning` in `DetermineHealth` kann für diesen Feed nie auslösen (Bedingung `lastPublishedAt != default`).
 
 ## Ungelesen-Liste zeigt falsche Reihenfolge
 
