@@ -80,7 +80,10 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
    `.p8`-Datei (ausserhalb Repo) und dass `CodesignKey` kein
    Development-Zertifikat ist.
 2. `ApplicationVersion` im csproj wird um 1 erhoeht (Apple akzeptiert jede
-   `CFBundleVersion` nur einmal). Opt-out: `-NoBumpBuildNumber`.
+   `CFBundleVersion` nur einmal je Version-Train). Opt-out:
+   `-NoBumpBuildNumber`. Mit `-Version x.y.z` wird zuerst
+   `ApplicationDisplayVersion` gesetzt; aendert sie sich, wird die
+   Buildnummer automatisch auf 1 zurueckgesetzt (statt erhoeht).
 3. `dotnet publish -c Release -p:ArchiveOnBuild=true` mit
    Distribution-Signing erzeugt die `.ipa`
    (`src/Reporter/bin/Release/net10.0-ios/ios-arm64/`).
@@ -201,9 +204,52 @@ Fuer `store`/`upload` ist die SSH-Delegation umgesetzt (siehe oben);
 App-Ausgabe (inkl. Managed-Exceptions bei Absturz) ins lokale Terminal.
 `list` fragt per SSH `devicectl list devices` + `simctl list` ab.
 
-Offen bleibt der SSH-Pfad fuer `simulator` — das Skript koennte nach dem
-Build dieselben `xcrun simctl`-Befehle remote ausfuehren, die
-`Invoke-SimulatorMac` lokal nutzt (boot/install/launch/screenshot).
+### CI-Pfad: Release → TestFlight
+
+Der `release`-Workflow baut iOS sobald `vars.IOS_SIGNING_ENABLED == 'true'`
+und die Secrets gesetzt sind (Action `package-ios`, alles Repository
+Secrets unter Settings → Secrets and variables → Actions):
+
+- `IOS_CODESIGN_KEY` / `IOS_PROVISIONING_PROFILE`: Name der
+  Signaturidentitaet bzw. des Profils (an `dotnet publish` durchgereicht)
+- `IOS_CERTIFICATE_P12_BASE64` + `IOS_CERTIFICATE_P12_PASSWORD`:
+  .p12-Export (Schlüsselbundverwaltung, mit privatem Key), base64
+- `IOS_PROVISIONING_PROFILE_BASE64`: die `.mobileprovision`-Datei, base64
+- `IOS_API_KEY_ID`, `IOS_API_ISSUER_ID`, `IOS_API_KEY_P8` (Inhalt der .p8):
+  aktivieren den TestFlight-Upload per `iTMSTransporter -m upload`
+
+Ohne die Zertifikats-/Profil-Secrets wird der Import-Step uebersprungen
+und der Codesign-Teil des Builds schlaegt fehl — die Runner-Images
+enthalten keine Signing-Identitaeten. Die Release-Version wird per
+`-p:ApplicationDisplayVersion=<version>` in die App gebracht — die csproj-
+Werte gelten nur als lokaler Fallback. Als Buildnummer dient
+`github.run_number` (monoton steigend, eindeutig, kein Commit-Back noetig).
+Die Einstellungen-Seite zeigt die faktische Version unten an
+(„Version x.y.z (Build n)" via `AppInfo.Current`), sodass lokale und
+CI-Builds unterscheidbar sind.
+
+`simulator` laeuft von Windows ebenfalls ueber SSH (`Invoke-SimulatorViaSsh`):
+`dotnet build` via Pair-to-Mac erzeugt `iossimulator-<arch>` (Architektur
+wird remote per `uname -m` ermittelt). Das nach Windows zurueckgesyncte
+`.app`-Bundle ist unvollstaendig (0-Byte-Stub), daher wird das echte Bundle
+direkt im Remote-Build-Cache gesucht — neuestes `bin/<config>/net10.0-ios/
+<rid>/Reporter.app` unter `~/Library/Caches/maui/PairToMac/Builds/` bzw.
+`~/Library/Caches/Xamarin/mtbs/builds/` (VS 2022). Ohne `-Device` wird
+automatisch ein **iPhone Pro Max** gewaehlt: das 6,9"-Display liefert die
+fuer App-Store-Screenshots benoetigten 1320 × 2868 px, Apple skaliert die
+kleineren Groessen selbst. Der Screenshot landet lokal unter
+`src/Reporter/bin/<config>/net10.0-ios/<rid>/simulator-screenshot-<zeitstempel>.png`.
+Das Simulator-Fenster wird per `open` auf dem Mac geoeffnet, sodass die App
+anschliessend dort bedienbar ist.
+
+Mit `-Video` wird zusaetzlich eine **App-Vorschau** aufgenommen:
+`xcrun simctl io <udid> recordVideo --codec=h264` laeuft detached
+(nohup + PID-Datei) auf dem Mac, waehrend die App im Simulator-Fenster
+bedient wird; Enter (oder `-VideoSeconds` bei `-NoPrompt`) sendet SIGINT,
+finalisiert die Datei und holt sie als
+`simulator-preview-<zeitstempel>.mov` zurueck. `--codec=h264` ist
+Pflicht — `recordVideo` liefert sonst HEVC, das App Store Connect fuer
+Vorschauen nicht akzeptiert. Zieldauer: 15-30 Sekunden.
 
 Dieser Workaround ist **nicht offiziell unterstuetzt** und koennte bei
 .NET-/Xcode-Updates wieder brechen.
