@@ -70,7 +70,7 @@ Ein Tipp auf eine Feed-Karte öffnet die [Feeddetailansicht](feeddetailansicht.m
 - **Umbenennen** — öffnet den Dialog **Feed umbenennen**, in dem das Feld **Neuer Anzeigetitel** bereits den bisherigen Titel enthält. **OK** übernimmt den neuen Namen; ein leerer Titel wird mit dem Hinweis **„Bitte gib einen Anzeigetitel ein."** abgelehnt.
 - **Kategorie ändern** — zeigt eine Auswahlliste aller Kategorien, an oberster Stelle **Keine Kategorie** zum Entfernen der Zuordnung. Kommt ein Kategoriename mehrfach vor, werden die Einträge nummeriert (z. B. „News", „News (2)"), damit jede Auswahl eindeutig ist.
 - **Bearbeiten** — öffnet in der Detailansicht das Formular **Feed bearbeiten**, das sich von unten über die Seite schiebt: Hier änderst du die Feed-Adresse im Feld **Feed-URL** und den Schalter **Benachrichtigungen** und schließt mit **Speichern** ab. Auf Plattformen ohne Benachrichtigungsfunktion ist der Schalter deaktiviert und mit dem Hinweis **„Benachrichtigungen sind derzeit nur auf iOS verfügbar."** versehen.
-- **Fehlerdetails anzeigen** — nur vorhanden, wenn der Feed den Status **Fehler** trägt; öffnet den Dialog **Synchronisierungsfehler** mit dem verständlichen Grund und der technischen Meldung des letzten fehlgeschlagenen Abrufs (Details siehe [Feeds synchronisieren](synchronisation.md)).
+- **Meldung anzeigen** — nur vorhanden, wenn der Feed den Status **Fehler** oder **Warnung** trägt; öffnet den Dialog **Synchronisierungsmeldung** mit dem verständlichen Grund und der technischen Meldung des letzten auffälligen Abrufs (Details siehe [Feeds synchronisieren](synchronisation.md)).
 - **Löschen** — entfernt den Feed nach Rückfrage (**Feed löschen?**) inklusive aller zugehörigen Artikel und kehrt zur Feed-Übersicht zurück.
 
 ## Weitere Hinweise

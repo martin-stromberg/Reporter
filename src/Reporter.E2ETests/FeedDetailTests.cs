@@ -10,7 +10,7 @@ namespace Reporter.E2ETests;
 /// <summary>
 /// FlaUI tests for the feed detail page: tapping a feed card on the feed list
 /// navigates to the paged article list of that feed, and the feed-level
-/// actions (refresh, rename, category, edit, error details, delete) live in
+/// actions (refresh, rename, category, edit, sync message, delete) live in
 /// the detail page's action sheet. Like <see cref="SmokeTests"/> the app under
 /// test is fully real; only the network is stubbed via <see cref="StubFeedServer"/>.
 /// All tests share one app instance through <see cref="E2ETestCollection"/> and
@@ -134,13 +134,43 @@ public sealed class FeedDetailTests : IDisposable
         UiRetry.InvokeOrClick(cancel);
     }
 
-    // Types a keyword into the open edit sheet's keyword entry and taps its
-    // add button. The caller waits for the resulting chip or error label.
+    // Types a keyword into the open edit sheet's keyword entry, taps its add
+    // button and waits until the fresh chip renders.
     private void AddFeedKeywordViaSheet(string keyword)
+        => TapKeywordAddUntil(keyword, keyword);
+
+    // Taps the open edit sheet's keyword add button — typing keyword first
+    // when given — until the expected element renders (the new chip or a
+    // validation label). A tap on the button can be swallowed while the
+    // sheet is still settling, so type, tap and wait repeat until the
+    // deadline; re-adding the same keyword only raises the duplicate label
+    // and leaves the existing chip untouched, which keeps the retry
+    // idempotent for every caller.
+    private void TapKeywordAddUntil(string expectedName, string? keyword = null)
     {
-        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), keyword);
-        var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
-        UiRetry.InvokeOrClick(add);
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (true)
+        {
+            if (keyword is not null)
+            {
+                UiRetry.SetText(_page.WaitForFeedKeywordEntry(), keyword);
+            }
+
+            var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
+            UiRetry.InvokeOrClick(add);
+            if (UiRetry.TryFindElementByName(Window, expectedName, timeout: TimeSpan.FromSeconds(5)) is not null)
+            {
+                return;
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                // Same failure signature as a regular wait: reports the
+                // missing element after the last retry.
+                _page.WaitForElementByName(expectedName);
+                return;
+            }
+        }
     }
 
     // Whether any Text element in the app's UI scope carries the given text as
@@ -399,14 +429,15 @@ public sealed class FeedDetailTests : IDisposable
     }
 
     /// <summary>
-    /// "Show error details" only appears in the action sheet for feeds with
-    /// error health: a feed whose URL answers 404 gains the entry after a
-    /// failed refresh and the alert shows the localized error text, while a
-    /// healthy feed does not offer the entry at all.
+    /// "Show message" appears in the action sheet for feeds with error or
+    /// warning health — this test covers the error path: a feed whose URL
+    /// answers 404 gains the entry after a failed refresh and the alert
+    /// shows the localized error text, while a healthy feed does not offer
+    /// the entry at all.
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
-    public void FeedDetail_ErrorDetails_OnlyForErrorFeed()
+    public void FeedDetail_Message_ForErrorFeed()
     {
         // A URL outside /feeds/ hits the stub server's 404 fallback, so the
         // feed can be stored but never synchronized.
@@ -423,11 +454,11 @@ public sealed class FeedDetailTests : IDisposable
         UiRetry.InvokeOrClick(refresh);
 
         // The failed sync surfaces the generic sync error on the page and
-        // flips the feed health to Error, which enables the details entry.
+        // flips the feed health to Error, which enables the message entry.
         _page.WaitForElementByName(AppResources.SyncStatusError);
 
-        _page.OpenFeedDetailActions(AppResources.ButtonShowErrorDetails);
-        var details = _page.WaitForElementInScopeByName(AppResources.ButtonShowErrorDetails);
+        _page.OpenFeedDetailActions(AppResources.ButtonShowMessage);
+        var details = _page.WaitForElementInScopeByName(AppResources.ButtonShowMessage);
         UiRetry.InvokeOrClick(details);
 
         // The alert body is one multi-line Text element (localized kind plus
@@ -437,17 +468,65 @@ public sealed class FeedDetailTests : IDisposable
             UiRetry.WaitFor(
                 () => ScopedTextContains(AppResources.FeedErrorKindHttpStatus),
                 TimeSpan.FromSeconds(10)),
-            "The error details alert does not show the localized HTTP error text.");
+            "The sync message alert does not show the localized HTTP error text.");
         var ok = _page.WaitForElementInScopeByName(AppResources.ButtonOk, ControlType.Button);
         UiRetry.InvokeOrClick(ok);
 
-        // A healthy feed must not offer the error details entry.
+        // A healthy feed must not offer the message entry.
         _page.NavigateBackToFeedList();
         var healthyTitle = _page.AddFeedViaUi("healthy-target");
         _page.OpenFeedDetail(healthyTitle);
         _page.OpenFeedDetailActions(AppResources.ButtonRename);
         Assert.Null(
-            _page.TryFindElementInScopeByName(AppResources.ButtonShowErrorDetails, timeout: TimeSpan.FromSeconds(3)));
+            _page.TryFindElementInScopeByName(AppResources.ButtonShowMessage, timeout: TimeSpan.FromSeconds(3)));
+    }
+
+    /// <summary>
+    /// "Show message" appears in the action sheet for feeds with error or
+    /// warning health — this test covers the warning path: the stale-feed
+    /// fixture stores old articles on the first sync, so the second
+    /// sync — triggered via the detail page's refresh action — sees no new
+    /// items with a most recent article older than 30 days and flips the feed
+    /// to Warning; the alert then shows the localized warning text.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public void FeedDetail_Message_ForWarningFeed()
+    {
+        _page.AddFeedViaUi("stale-feed");
+        SyncAllViaUnreadTab();
+
+        _page.OpenFeedDetail("Stub Feed stale-feed");
+        _page.OpenFeedDetailActions(AppResources.ButtonRefresh);
+        var refresh = _page.WaitForElementInScopeByName(AppResources.ButtonRefresh);
+        UiRetry.InvokeOrClick(refresh);
+
+        // The warning sync flips the feed health to Warning, which shows the
+        // warning badge and enables the message entry.
+        _page.WaitForElementByName(AppResources.HealthStatusWarningLabel);
+
+        _page.OpenFeedDetailActions(AppResources.ButtonShowMessage);
+        var details = _page.WaitForElementInScopeByName(AppResources.ButtonShowMessage);
+        UiRetry.InvokeOrClick(details);
+
+        // The alert body is one multi-line Text element (localized kind plus
+        // the stored technical message), so the localized kind can only be
+        // verified as part of the text, not via an exact name lookup.
+        Assert.True(
+            UiRetry.WaitFor(
+                () => ScopedTextContains(AppResources.FeedWarningKindNoRecentItems),
+                TimeSpan.FromSeconds(10)),
+            "The sync message alert does not show the localized warning text.");
+        var ok = _page.WaitForElementInScopeByName(AppResources.ButtonOk, ControlType.Button);
+        UiRetry.InvokeOrClick(ok);
+
+        // A healthy feed must not offer the message entry.
+        _page.NavigateBackToFeedList();
+        var healthyTitle = _page.AddFeedViaUi("healthy-target");
+        _page.OpenFeedDetail(healthyTitle);
+        _page.OpenFeedDetailActions(AppResources.ButtonRename);
+        Assert.Null(
+            _page.TryFindElementInScopeByName(AppResources.ButtonShowMessage, timeout: TimeSpan.FromSeconds(3)));
     }
 
     /// <summary>
@@ -571,19 +650,16 @@ public sealed class FeedDetailTests : IDisposable
         _page.AddFeedViaUi("kwvalidate");
         OpenEditSheet("kwvalidate.xml");
 
-        var add = _page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button);
-        UiRetry.InvokeOrClick(add);
-        _page.WaitForElementByName(AppResources.ErrorKeywordEmpty);
+        // Every validation step goes through TapKeywordAddUntil: a tap on the
+        // add button can be swallowed while the sheet settles, which used to
+        // surface as a timeout on the expected chip or error label.
+        TapKeywordAddUntil(AppResources.ErrorKeywordEmpty);
 
         UiRetry.SetText(_page.WaitForFeedKeywordEntry(), new string('x', 501));
-        UiRetry.InvokeOrClick(_page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button));
-        _page.WaitForElementByName(AppResources.ErrorKeywordTooLong);
+        TapKeywordAddUntil(AppResources.ErrorKeywordTooLong);
 
         AddFeedKeywordViaSheet("e2e-dup");
-        _page.WaitForElementByName("e2e-dup");
-        UiRetry.SetText(_page.WaitForFeedKeywordEntry(), "e2e-dup");
-        UiRetry.InvokeOrClick(_page.WaitForElementByName(AppResources.FeedKeywordAdd, ControlType.Button));
-        _page.WaitForElementByName(AppResources.ErrorKeywordDuplicate);
+        TapKeywordAddUntil(AppResources.ErrorKeywordDuplicate, "e2e-dup");
     }
 
     /// <summary>

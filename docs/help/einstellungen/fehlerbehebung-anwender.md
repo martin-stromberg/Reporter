@@ -62,12 +62,12 @@
 
 ## Feed zeigt Status „Fehler“ — „Unlesbares Feed-Format"
 
-**Symptom:** Eine Feed-Karte trägt das rote Badge **Fehler**; der Dialog **Synchronisierungsfehler** (über **Fehlerdetails anzeigen** im Menü **Feed-Aktionen**) nennt als Grund „Unlesbares Feed-Format".
+**Symptom:** Eine Feed-Karte trägt das rote Badge **Fehler**; der Dialog **Synchronisierungsmeldung** (über **Meldung anzeigen** im Menü **Feed-Aktionen**) nennt als Grund „Unlesbares Feed-Format".
 
 **Ursache:** Die hinterlegte Adresse liefert Daten, die die App nicht als Feed lesen kann — etwa eine normale Webseite statt eines Feeds oder ein Feed-Format, das die App nicht kennt. Gelesen werden Feeds im RSS- und Atom-Format, einschließlich des älteren Atom-Formats (Atom 0.3).
 
 **Lösung:**
-1. Prüfe im Dialog **Synchronisierungsfehler** die technische Meldung im zweiten Absatz — sie verrät, wo das Lesen scheiterte.
+1. Prüfe im Dialog **Synchronisierungsmeldung** die technische Meldung im zweiten Absatz — sie verrät, wo das Lesen scheiterte.
 2. Vergewissere dich, dass die Adresse wirklich einen Feed liefert: Öffne sie im Browser — ein Feed zeigt Daten im XML-Stil, keine normale Webseite.
 3. Hast du eine Website-Adresse statt der eigentlichen Feed-Adresse eingetragen, korrigiere sie über **Feed-Aktionen** → **Bearbeiten** — oder lösche den Feed und füge ihn über **Suchen** neu hinzu: Die App findet die richtige Feed-Adresse meist selbst.
 4. Bleibt der Fehler bestehen, nutzt der Anbieter möglicherweise ein nicht unterstütztes Format — notiere die Feed-Adresse und wende dich an den Support bzw. die Entwicklung.

@@ -8,11 +8,11 @@ namespace Reporter.Core.Services;
 /// </summary>
 /// <param name="ResolvedTitle">The feed title resolved from the feed document, if any.</param>
 /// <param name="FaviconUrl">The favicon URL discovered during the sync, if any.</param>
-/// <param name="ErrorKind">The classified error kind, or <c>null</c> to clear it.</param>
-/// <param name="ErrorMessage">The raw technical error message, or <c>null</c> to clear it.</param>
+/// <param name="MessageKind">The classified error or warning kind, or <c>null</c> to clear it.</param>
+/// <param name="Message">The raw technical message, or <c>null</c> to clear it.</param>
 /// <returns>A new <see cref="FeedHealthUpdate"/> instance.</returns>
 public record FeedHealthUpdate(
     string? ResolvedTitle = null,
     string? FaviconUrl = null,
-    string? ErrorKind = null,
-    string? ErrorMessage = null);
+    string? MessageKind = null,
+    string? Message = null);

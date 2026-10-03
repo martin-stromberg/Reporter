@@ -53,13 +53,13 @@ public class Feed
     public string? FaviconUrl { get; init; }
 
     /// <summary>
-    /// Gets the category of the last sync error (a <see cref="Services.FeedSyncErrorKind"/> value),
-    /// or <c>null</c> when the last sync succeeded.
+    /// Gets the category of the last sync error or warning (a <see cref="Services.FeedSyncErrorKind"/>
+    /// or <see cref="Services.FeedSyncWarningKind"/> value), or <c>null</c> when the last sync succeeded.
     /// </summary>
-    public string? LastErrorKind { get; init; }
+    public string? LastMessageKind { get; init; }
 
     /// <summary>
-    /// Gets the technical message of the last sync error, or <c>null</c> when the last sync succeeded.
+    /// Gets the technical message of the last sync error or warning, or <c>null</c> when the last sync succeeded.
     /// </summary>
-    public string? LastErrorMessage { get; init; }
+    public string? LastMessage { get; init; }
 }

@@ -87,8 +87,8 @@ public class DemoContentService : IDemoContentService
             HealthLastChange = null,
             NotificationsEnabled = false,
             FaviconUrl = null,
-            LastErrorKind = null,
-            LastErrorMessage = null,
+            LastMessageKind = null,
+            LastMessage = null,
         });
 
         if (_debugLogService is not null)
