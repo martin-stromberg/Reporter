@@ -49,10 +49,14 @@ inputs:
 runs:
   using: composite
   steps:
+    # SDK-Band 10.0.1xx pinnen: die iOS-Workload-Manifeste werden pro
+    # SDK-Band publiziert; 26.x-Manifeste (Release-Xcode-kompatibel)
+    # existieren nur im 10.0.100-Feed, der 10.0.400-Feed kennt nur
+    # 27.x-Workloads, die Beta-Xcode verlangen (Store lehnt Beta ab).
     - name: Setup .NET
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: '10.0.1xx'
 
     # Workload-Version pinnen: 'workload restore' wuerde sonst das
     # neueste iOS-Manifest ziehen (aktuell 27.x), das Beta-Xcode
