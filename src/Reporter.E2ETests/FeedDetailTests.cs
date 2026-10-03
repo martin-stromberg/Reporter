@@ -201,6 +201,40 @@ public sealed class FeedDetailTests : IDisposable
         return false;
     }
 
+    // Resolves the feed detail header's meta line: the Text element whose UIA
+    // name contains the marker. With the wrapping FormattedString the name is
+    // the whole meta line, so a contains-match finds it; the retry loop covers
+    // the re-render after the action sheet closes.
+    private AutomationElement WaitForMetaLine(string marker)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (true)
+        {
+            try
+            {
+                var meta = Window
+                    .FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
+                    .FirstOrDefault(e => e.Name?.Contains(marker, StringComparison.Ordinal) == true);
+                if (meta is not null)
+                {
+                    return meta;
+                }
+            }
+            catch (Exception)
+            {
+                // Transient UIA tree unavailability while the page re-renders.
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                throw new InvalidOperationException(
+                    $"No meta text containing '{marker}' rendered on the feed detail page.");
+            }
+
+            Thread.Sleep(250);
+        }
+    }
+
     /// <summary>
     /// Tapping a feed card navigates to the feed detail page and shows the
     /// feed's articles instead of the old action sheet.
@@ -316,6 +350,43 @@ public sealed class FeedDetailTests : IDisposable
         Assert.True(
             UiRetry.WaitFor(() => !CardShowsCategory(title, categoryName), TimeSpan.FromSeconds(5)),
             $"The card '{title}' still shows the category '{categoryName}' after clearing it.");
+    }
+
+    /// <summary>
+    /// Regression test for the overlapping actions button (issue #127): with a
+    /// long feed info text — here a deliberately long category name — the meta
+    /// line wraps inside its column instead of sliding under the button. Both
+    /// assertions compare UIA bounding rectangles on the 390 × 844 pt window:
+    /// the meta text must end left of the button and must be taller than a
+    /// single meta line (~16–20 px at 12 pt).
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public void FeedDetail_MetaInfo_WrapsInsteadOfOverlappingActionsButton()
+    {
+        const string categoryName =
+            "E2E-Kategorie mit einem bewusst sehr langen Namen für den Zeilenumbruch";
+        AddCategoryViaUi(categoryName);
+        var title = _page.AddFeedViaUi("meta-wrap-target");
+        SyncAllViaUnreadTab();
+        _page.OpenFeedDetail(title);
+        _page.OpenFeedDetailActions(AppResources.ButtonChangeCategory);
+        var changeCategory = _page.WaitForElementInScopeByName(AppResources.ButtonChangeCategory);
+        UiRetry.InvokeOrClick(changeCategory);
+        var option = _page.WaitForElementInScopeByName(categoryName);
+        UiRetry.InvokeOrClick(option);
+
+        var actions = _page.WaitForElementByName(AppResources.ButtonFeedActions, ControlType.Button);
+        var meta = WaitForMetaLine(categoryName);
+
+        var actionsRect = actions.BoundingRectangle;
+        var metaRect = meta.BoundingRectangle;
+        Assert.True(
+            metaRect.Right <= actionsRect.Left + 1,
+            $"The feed info text {metaRect} reaches under the actions button {actionsRect}.");
+        Assert.True(
+            metaRect.Height > 24,
+            $"The feed info text did not wrap (bounding rectangle {metaRect}).");
     }
 
     /// <summary>
