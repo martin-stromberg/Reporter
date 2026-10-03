@@ -56,8 +56,10 @@ runs:
       env:
         IncludeAndroidTarget: false
 
+    # -r ios-arm64 ist Pflicht: publish unten laeuft mit
+    # --no-restore und braucht das RID-Ziel im assets file.
     - name: Restore
-      run: dotnet restore src/Reporter/Reporter.csproj
+      run: dotnet restore src/Reporter/Reporter.csproj -r ios-arm64
       shell: bash
       env:
         IncludeAndroidTarget: false
