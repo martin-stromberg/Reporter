@@ -557,6 +557,9 @@
   <data name="SettingsDebugEmailUnsupportedHint" xml:space="preserve">
     <value>Auf diesem Gerät ist keine E-Mail-App verfügbar, daher kann kein Debugbericht gesendet werden.</value>
   </data>
+  <data name="SettingsVersionText" xml:space="preserve">
+    <value>Version {0} (Build {1})</value>
+  </data>
   <data name="DebugReportFailedTitle" xml:space="preserve">
     <value>Senden fehlgeschlagen</value>
   </data>

@@ -77,6 +77,8 @@ param(
     [switch]$Video,
     [Parameter(HelpMessage = "Dauer der Videoaufnahme in Sekunden bei -NoPrompt (Standard: 30).")]
     [int]$VideoSeconds = 30,
+    [Parameter(HelpMessage = "Marketing-Version (ApplicationDisplayVersion, z. B. 0.3.1). Bei Aenderung wird die Buildnummer auf 1 zurueckgesetzt.")]
+    [string]$Version = "",
     [Parameter(HelpMessage = "Pfad zu einer vorhandenen .ipa (nur Aktion 'upload').")]
     [string]$IpaPath = "",
     [Parameter(HelpMessage = "Bei 'device' via SSH: App-Output (--console) nach dem Start streamen (Ctrl+C zum Loesen).")]
@@ -516,15 +518,35 @@ function Assert-TransporterAvailable {
 function Update-BuildNumber {
     $csprojPath = $projectPath
     $content = [System.IO.File]::ReadAllText($csprojPath)
-    $m = [regex]::Match($content, '<ApplicationVersion>(\d+)</ApplicationVersion>')
-    if (-not $m.Success) {
+    $mVer = [regex]::Match($content, '<ApplicationVersion>(\d+)</ApplicationVersion>')
+    if (-not $mVer.Success) {
         Write-Host "Warnung: <ApplicationVersion> nicht in $csprojPath gefunden - kein Buildnummer-Bump." -ForegroundColor Yellow
         return
     }
-    $old = [int]$m.Groups[1].Value
-    $new = $old + 1
-    $content = $content.Replace($m.Value, "<ApplicationVersion>$new</ApplicationVersion>")
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    # Neue Marketing-Version (-Version): DisplayVersion setzen und die
+    # Buildnummer auf 1 zuruecksetzen - Apple verlangt Eindeutigkeit nur
+    # innerhalb eines Version-Trains.
+    if ($Version) {
+        if ($Version -notmatch '^\d+\.\d+(\.\d+)?$') {
+            Write-Host "Fehler: -Version muss dem Muster X.Y oder X.Y.Z folgen ('$Version')." -ForegroundColor Red
+            exit 1
+        }
+        $mDisp = [regex]::Match($content, '<ApplicationDisplayVersion>([^<]+)</ApplicationDisplayVersion>')
+        if (-not $mDisp.Success) {
+            Write-Host "Warnung: <ApplicationDisplayVersion> nicht in $csprojPath gefunden - -Version ignoriert." -ForegroundColor Yellow
+        }
+        elseif ($mDisp.Groups[1].Value -ne $Version) {
+            $content = $content.Replace($mDisp.Value, "<ApplicationDisplayVersion>$Version</ApplicationDisplayVersion>")
+            $content = $content.Replace($mVer.Value, "<ApplicationVersion>1</ApplicationVersion>")
+            [System.IO.File]::WriteAllText($csprojPath, $content, $utf8NoBom)
+            Write-Host "Version gesetzt: $($mDisp.Groups[1].Value) -> $Version (Buildnummer zurueckgesetzt auf 1)" -ForegroundColor Green
+            return
+        }
+    }
+    $old = [int]$mVer.Groups[1].Value
+    $new = $old + 1
+    $content = $content.Replace($mVer.Value, "<ApplicationVersion>$new</ApplicationVersion>")
     [System.IO.File]::WriteAllText($csprojPath, $content, $utf8NoBom)
     Write-Host "Buildnummer erhoeht (CFBundleVersion): $old -> $new" -ForegroundColor Green
 }

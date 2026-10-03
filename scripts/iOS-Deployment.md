@@ -80,7 +80,10 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
    `.p8`-Datei (ausserhalb Repo) und dass `CodesignKey` kein
    Development-Zertifikat ist.
 2. `ApplicationVersion` im csproj wird um 1 erhoeht (Apple akzeptiert jede
-   `CFBundleVersion` nur einmal). Opt-out: `-NoBumpBuildNumber`.
+   `CFBundleVersion` nur einmal je Version-Train). Opt-out:
+   `-NoBumpBuildNumber`. Mit `-Version x.y.z` wird zuerst
+   `ApplicationDisplayVersion` gesetzt; aendert sie sich, wird die
+   Buildnummer automatisch auf 1 zurueckgesetzt (statt erhoeht).
 3. `dotnet publish -c Release -p:ArchiveOnBuild=true` mit
    Distribution-Signing erzeugt die `.ipa`
    (`src/Reporter/bin/Release/net10.0-ios/ios-arm64/`).
@@ -200,6 +203,30 @@ Fuer `store`/`upload` ist die SSH-Delegation umgesetzt (siehe oben);
 `devicectl device process launch` installiert/gestartet wird. `-Console` haengt `--console` an den Launch und streamt die
 App-Ausgabe (inkl. Managed-Exceptions bei Absturz) ins lokale Terminal.
 `list` fragt per SSH `devicectl list devices` + `simctl list` ab.
+
+### CI-Pfad: Release → TestFlight
+
+Der `release`-Workflow baut iOS sobald `vars.IOS_SIGNING_ENABLED == 'true'`
+und die Secrets gesetzt sind (Action `package-ios`, alles Repository
+Secrets unter Settings → Secrets and variables → Actions):
+
+- `IOS_CODESIGN_KEY` / `IOS_PROVISIONING_PROFILE`: Name der
+  Signaturidentitaet bzw. des Profils (an `dotnet publish` durchgereicht)
+- `IOS_CERTIFICATE_P12_BASE64` + `IOS_CERTIFICATE_P12_PASSWORD`:
+  .p12-Export (Schlüsselbundverwaltung, mit privatem Key), base64
+- `IOS_PROVISIONING_PROFILE_BASE64`: die `.mobileprovision`-Datei, base64
+- `IOS_API_KEY_ID`, `IOS_API_ISSUER_ID`, `IOS_API_KEY_P8` (Inhalt der .p8):
+  aktivieren den TestFlight-Upload per `iTMSTransporter -m upload`
+
+Ohne die Zertifikats-/Profil-Secrets wird der Import-Step uebersprungen
+und der Codesign-Teil des Builds schlaegt fehl — die Runner-Images
+enthalten keine Signing-Identitaeten. Die Release-Version wird per
+`-p:ApplicationDisplayVersion=<version>` in die App gebracht — die csproj-
+Werte gelten nur als lokaler Fallback. Als Buildnummer dient
+`github.run_number` (monoton steigend, eindeutig, kein Commit-Back noetig).
+Die Einstellungen-Seite zeigt die faktische Version unten an
+(„Version x.y.z (Build n)" via `AppInfo.Current`), sodass lokale und
+CI-Builds unterscheidbar sind.
 
 `simulator` laeuft von Windows ebenfalls ueber SSH (`Invoke-SimulatorViaSsh`):
 `dotnet build` via Pair-to-Mac erzeugt `iossimulator-<arch>` (Architektur
