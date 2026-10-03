@@ -8,10 +8,10 @@ namespace Reporter.Core.Services;
 public static class FeedSyncWarningKind
 {
     /// <summary>
-    /// Category for a feed that returned far fewer items than are already
-    /// stored — the source may be incomplete.
+    /// Category for a feed that returned no items at all — the source may be
+    /// empty or the address incorrect.
     /// </summary>
-    public const string FewerItems = "FewerItems";
+    public const string NoItems = "NoItems";
 
     /// <summary>
     /// Category for a feed that delivered no new items while its most recent

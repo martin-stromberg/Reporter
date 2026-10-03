@@ -18,6 +18,6 @@
 
 ## Neuerungen
 
-- Feed-Detailansicht: Bei Feeds mit Status „Warnung" bietet das Aktionsmenü jetzt „Meldung anzeigen" — ein Dialog „Synchronisierungsmeldung" nennt den Grund (z. B. liefert der Feed deutlich weniger Artikel als gespeichert sind oder hat seit über 30 Tagen keine neuen Beiträge veröffentlicht) und zeigt die technische Detailmeldung; bisher gab es „Fehlerdetails anzeigen" nur bei Fehlern.
+- Feed-Detailansicht: Bei Feeds mit Status „Warnung" bietet das Aktionsmenü jetzt „Meldung anzeigen" — ein Dialog „Synchronisierungsmeldung" nennt den Grund (z. B. enthält der Feed keine Artikel oder hat seit über 30 Tagen keine neuen Beiträge veröffentlicht) und zeigt die technische Detailmeldung; bisher gab es „Fehlerdetails anzeigen" nur bei Fehlern.
 - Die bisherige Aktion „Fehlerdetails anzeigen" heißt jetzt „Meldung anzeigen" (Dialog „Synchronisierungsmeldung") und gilt für Fehler und Warnungen gleichermaßen; Fehler- und Warnungsdetails werden in denselben vereinheitlichten Feldern gespeichert (automatische Datenbankmigration beim App-Start).
 - Behoben: Ein manueller Abruf eines Feeds parallel zum automatischen Gesamt-Abgleich konnte mit einem Doppelschlüssel-Fehler fehlschlagen oder Status und Meldung des Feeds mit veralteten Werten überschreiben — Synchronisationen desselben Feeds werden jetzt serialisiert.

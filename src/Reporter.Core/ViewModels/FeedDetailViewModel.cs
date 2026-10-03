@@ -496,7 +496,7 @@ public partial class FeedDetailViewModel : BaseViewModel
             FeedSyncErrorKind.HttpStatus => AppResources.FeedErrorKindHttpStatus,
             FeedSyncErrorKind.Network => AppResources.FeedErrorKindNetwork,
             FeedSyncErrorKind.Parse => AppResources.FeedErrorKindParse,
-            FeedSyncWarningKind.FewerItems => AppResources.FeedWarningKindFewerItems,
+            FeedSyncWarningKind.NoItems => AppResources.FeedWarningKindNoItems,
             FeedSyncWarningKind.NoRecentItems => AppResources.FeedWarningKindNoRecentItems,
             _ => feed.HealthStatus == FeedHealth.Warning
                 ? AppResources.FeedWarningKindUnknown
