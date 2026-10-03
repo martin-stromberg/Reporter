@@ -429,12 +429,14 @@ public class FeedSyncService : IFeedSyncService
 
     private static HealthDecision DetermineHealth(int newItems, int fetchedCount, int existingCount, DateTime lastPublishedAt)
     {
-        if (fetchedCount < existingCount * 0.5 && existingCount > 0)
+        if (fetchedCount == 0)
         {
             return new HealthDecision(
                 FeedHealth.Warning,
-                FeedSyncWarningKind.FewerItems,
-                $"Feed returned {fetchedCount} items, but {existingCount} are stored.");
+                FeedSyncWarningKind.NoItems,
+                existingCount > 0
+                    ? $"Feed returned no items, but {existingCount} are stored."
+                    : "Feed returned no items.");
         }
 
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);

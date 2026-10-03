@@ -608,8 +608,8 @@
   <data name="FeedErrorKindUnknown" xml:space="preserve">
     <value>The synchronization failed with an unexpected error.</value>
   </data>
-  <data name="FeedWarningKindFewerItems" xml:space="preserve">
-    <value>The feed returned far fewer articles than are stored — the source may be incomplete.</value>
+  <data name="FeedWarningKindNoItems" xml:space="preserve">
+    <value>The feed contains no articles — the source may be empty or the address incorrect.</value>
   </data>
   <data name="FeedWarningKindNoRecentItems" xml:space="preserve">
     <value>The feed has not published new articles for more than 30 days — it may be abandoned.</value>
