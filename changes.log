@@ -1,5 +1,11 @@
 Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
+## 2026-10-02 — Warnung nur bei leerem Feed
+
+- **„FewerItems"-Warnung entfernt:** Die Warnung „deutlich weniger Artikel als gespeichert" traf faktisch fast jeden Feed — Quellen liefern üblicherweise nicht ihre gesamte Historie aus — und wurde ersatzlos gestrichen. `DetermineHealth` meldet jetzt `FeedSyncWarningKind.NoItems` nur noch, wenn der Feed gar keine Artikel liefert (`fetchedCount == 0`); ein lediglich geschrumpfter Feed gilt als `Ok`. Konstante `FewerItems` → `NoItems`, Ressource `FeedWarningKindFewerItems` → `FeedWarningKindNoItems` (EN: „The feed contains no articles — the source may be empty or the address incorrect.", DE: „Der Feed enthält keine Artikel — die Quelle ist möglicherweise leer oder die Adresse falsch.").
+- **Tests:** Neuer Helper `SeedThenEmptyFeedAsync` (4 Items seeden, dann leerer Feed) triggert die Warnung in `SyncFeedAsync_EmptyFeed_SetsWarning`, `_EmptyFeed_PersistsWarningMessage`, `_SuccessAfterWarning_ClearsLastMessage` und `_ErrorAfterWarning_OverwritesLastMessage`; `SeedThenShrinkFeedAsync` (4 → 1 Item) bleibt als Negativnachweis `SyncFeedAsync_FewerItems_SyncsOk` erhalten. `GetFeedMessage_NoItemsWarning_MapsToLocalizedText` in `FeedDetailViewModelTests` umbenannt.
+- **Doku:** `synchronisation.md`, `feed-suche-technisch.md`, `architektur.md`, `datenmodell.md` und `RELEASE_NOTES.md` auf den leeren-Feed-Auslöser umgestellt.
+
 ## 2026-10-02 — Ausgabe der Warnung (Issue #126)
 
 - **Warnungsgrund persistiert und in der Feeddetailansicht einsehbar:** Feeds im Status **Warnung** geben jetzt — wie bisher nur Feeds im Status **Fehler** — den Grund des letzten auffälligen Abrufs preis. `FeedSyncService.DetermineStatus` wurde zu `DetermineHealth` mit dem privaten Rückgabe-Record `HealthDecision` (Status + Kind + technische Meldung) erweitert; die zwei Warnungsauslöser werden über die neue Konstantenklasse `FeedSyncWarningKind` klassifiziert (`FewerItems` = deutlich weniger gelieferte als gespeicherte Artikel, `NoRecentItems` = keine neuen Artikel und jüngster Artikel älter als 30 Tage) und tragen eine englische Kennzahl (gelieferte/gespeicherte Artikelzahl bzw. Datum des jüngsten Artikels) als technische Meldung.

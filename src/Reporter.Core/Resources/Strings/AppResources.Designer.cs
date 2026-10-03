@@ -1845,11 +1845,11 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die The feed returned far fewer articles than are stored — the source may be incomplete. ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die The feed contains no articles — the source may be empty or the address incorrect. ähnelt.
         /// </summary>
-        public static string FeedWarningKindFewerItems {
+        public static string FeedWarningKindNoItems {
             get {
-                return ResourceManager.GetString("FeedWarningKindFewerItems", resourceCulture);
+                return ResourceManager.GetString("FeedWarningKindNoItems", resourceCulture);
             }
         }
         

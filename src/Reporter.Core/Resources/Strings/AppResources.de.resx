@@ -608,8 +608,8 @@
   <data name="FeedErrorKindUnknown" xml:space="preserve">
     <value>Die Synchronisation ist mit einem unerwarteten Fehler fehlgeschlagen.</value>
   </data>
-  <data name="FeedWarningKindFewerItems" xml:space="preserve">
-    <value>Der Feed liefert deutlich weniger Artikel als gespeichert sind — die Quelle ist möglicherweise unvollständig.</value>
+  <data name="FeedWarningKindNoItems" xml:space="preserve">
+    <value>Der Feed enthält keine Artikel — die Quelle ist möglicherweise leer oder die Adresse falsch.</value>
   </data>
   <data name="FeedWarningKindNoRecentItems" xml:space="preserve">
     <value>Der Feed hat seit über 30 Tagen keine neuen Artikel veröffentlicht — er ist möglicherweise verwaist.</value>
