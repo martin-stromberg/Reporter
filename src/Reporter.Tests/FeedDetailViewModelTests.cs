@@ -685,22 +685,22 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that GetFeedMessage maps a stored fewer-items warning kind
+    /// Verifies that GetFeedMessage maps a stored empty-feed warning kind
     /// to the matching localized <c>FeedWarningKind*</c> text.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
-    public async Task GetFeedMessage_FewerItemsWarning_MapsToLocalizedText()
+    public async Task GetFeedMessage_NoItemsWarning_MapsToLocalizedText()
     {
         var feedId = Guid.NewGuid();
         await _feedRepository.AddAsync(new Feed
         {
             Id = feedId,
-            Url = "https://example.com/rss-fewer",
-            Title = "Incomplete",
+            Url = "https://example.com/rss-empty",
+            Title = "Empty",
             NotificationsEnabled = true,
             HealthStatus = FeedHealth.Warning,
-            LastMessageKind = FeedSyncWarningKind.FewerItems,
+            LastMessageKind = FeedSyncWarningKind.NoItems,
         });
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync(feedId);
@@ -708,7 +708,7 @@ public class FeedDetailViewModelTests : IDisposable
 
         var message = viewModel.GetFeedMessage(feed!);
 
-        Assert.Equal(AppResources.FeedWarningKindFewerItems, message);
+        Assert.Equal(AppResources.FeedWarningKindNoItems, message);
     }
 
     /// <summary>

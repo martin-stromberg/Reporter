@@ -68,7 +68,7 @@ Der Status erscheint auf jeder Feed-Karte als kompaktes Badge mit farbigem Punkt
 | Status | Bedeutung |
 |--------|-----------|
 | In Ordnung | Abruf erfolgreich, Feed-Daten gültig. |
-| Warnung | Abruf erfolgreich, aber auffällig wenige Artikel oder seit längerer Zeit keine neuen Artikel (über 30 Tage) — der Grund ist über **Meldung anzeigen** einsehbar (siehe unten). |
+| Warnung | Abruf erfolgreich, aber der Feed enthält keine Artikel oder seit längerer Zeit keine neuen Artikel (über 30 Tage) — der Grund ist über **Meldung anzeigen** einsehbar (siehe unten). |
 | Fehler | Feed nicht erreichbar oder Feed-Daten nicht verarbeitbar — die Fehlerursache ist über **Meldung anzeigen** einsehbar (siehe unten). |
 
 ## Verhalten bei Fehlern
@@ -91,7 +91,7 @@ Beim Status **Fehler** sind die möglichen Gründe:
 
 Beim Status **Warnung** sind die möglichen Gründe:
 
-- **Deutlich weniger Artikel** — der Feed hat deutlich weniger Artikel geliefert als gespeichert sind; die Quelle ist möglicherweise unvollständig.
+- **Keine Artikel** — der Feed hat gar keine Artikel geliefert; die Quelle ist möglicherweise leer oder die Adresse falsch. Ein Feed, der nur weniger Artikel ausliefert als gespeichert sind, gilt dagegen als erfolgreich — Quellen liefern üblicherweise nicht ihre gesamte Historie aus.
 - **Keine neuen Artikel seit über 30 Tagen** — der Feed hat lange nichts mehr veröffentlicht und ist möglicherweise verwaist.
 
 Unter dem verständlichen Grund zeigt der Dialog in einem zweiten Absatz die technische Meldung des letzten Abrufs. Bei Feeds ohne Fehler und ohne Warnung erscheint der Menüeintrag nicht; sobald der nächste Abruf erfolgreich ist, verschwindet er wieder zusammen mit dem Status-Badge.
