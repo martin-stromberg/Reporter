@@ -58,6 +58,17 @@ runs:
       with:
         dotnet-version: '10.0.1xx'
 
+    # global.json nur im CI-Workspace: der Runner bringt zusaetzlich ein
+    # neueres SDK (10.0.4xx) mit; ohne global.json waehlt der Host-Resolver
+    # immer das hoechste SDK und der Workload-Band waere wieder 10.0.400.
+    # Die Datei wird absichtlich nicht committed - lokal darf jede
+    # 10.0.x-SDK verwendet werden.
+    - name: Pin SDK band for this job
+      run: |
+        printf '{"sdk":{"version":"10.0.100","rollForward":"latestPatch","allowPrerelease":false}}\n' > global.json
+        dotnet --version
+      shell: bash
+
     # Workload-Version pinnen: 'workload restore' wuerde sonst das
     # neueste iOS-Manifest ziehen (aktuell 27.x), das Beta-Xcode
     # verlangt - Store-Uploads aus Beta-Xcode werden abgelehnt.
