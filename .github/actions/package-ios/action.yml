@@ -124,17 +124,23 @@ runs:
     # ApplicationDisplayVersion/ApplicationVersion explizit setzen: die
     # csproj pinnt beide fuer lokale Builds. Die Buildnummer ist der
     # monoton steigende Run-Zaehler (eindeutig pro Version-Train).
+    # ApplicationDisplayVersion akzeptiert nur dreiteilige numerische
+    # Versionen - bei Pre-Releases (0.4.0-rc.1) wird der Suffix abgeschnitten
+    # (CFBundleShortVersionString muss numerisch sein).
     - name: Publish (ios)
-      run: >
-        dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }}
-        -p:ApplicationDisplayVersion=${{ inputs.release-version }}
-        -p:ApplicationVersion=${{ github.run_number }}
-        --configuration Release --framework net10.0-ios
-        -p:RuntimeIdentifier=ios-arm64
-        -p:ArchiveOnBuild=true
-        -p:CodesignKey="${{ inputs.codesign-key }}"
-        -p:CodesignProvision="${{ inputs.provisioning-profile }}"
-        --no-restore
+      run: |
+        set -euo pipefail
+        DISPLAY_VERSION="${{ inputs.release-version }}"
+        DISPLAY_VERSION="${DISPLAY_VERSION%%-*}"
+        dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }} \
+          -p:ApplicationDisplayVersion="$DISPLAY_VERSION" \
+          -p:ApplicationVersion=${{ github.run_number }} \
+          --configuration Release --framework net10.0-ios \
+          -p:RuntimeIdentifier=ios-arm64 \
+          -p:ArchiveOnBuild=true \
+          -p:CodesignKey="${{ inputs.codesign-key }}" \
+          -p:CodesignProvision="${{ inputs.provisioning-profile }}" \
+          --no-restore
       shell: bash
       env:
         IncludeAndroidTarget: false
