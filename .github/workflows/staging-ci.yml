@@ -228,6 +228,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build and package release candidate (win-x64)
         uses: ./.github/actions/build-and-package
@@ -251,6 +253,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build and package release candidate (android)
         uses: ./.github/actions/package-android
@@ -276,6 +280,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build and package release candidate (ios)
         uses: ./.github/actions/package-ios
