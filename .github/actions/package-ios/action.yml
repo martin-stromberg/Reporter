@@ -137,6 +137,9 @@ runs:
     # ApplicationDisplayVersion akzeptiert nur dreiteilige numerische
     # Versionen - bei Pre-Releases (0.4.0-rc.1) wird der Suffix abgeschnitten
     # (CFBundleShortVersionString muss numerisch sein).
+    # MauiEnableXamlCBindingWithSourceCompilation=false: der Binding-
+    # SourceGen erzeugt in der iOS-Kompilierung invaliden Code fuer
+    # DataTrigger/MultiTrigger (bool?->bool, static-Funktion mit this).
     - name: Publish (ios)
       run: |
         set -euo pipefail
@@ -150,6 +153,7 @@ runs:
           -p:ArchiveOnBuild=true \
           -p:CodesignKey="${{ inputs.codesign-key }}" \
           -p:CodesignProvision="${{ inputs.provisioning-profile }}" \
+          -p:MauiEnableXamlCBindingWithSourceCompilation=false \
           --no-restore
       shell: bash
       env:
