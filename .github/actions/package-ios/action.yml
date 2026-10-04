@@ -202,11 +202,11 @@ runs:
         mkdir -p "$HOME/.appstoreconnect/private_keys"
         chmod 700 "$HOME/.appstoreconnect/private_keys"
         printf '%s' "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-        # iTMSTransporter finden: Developer/usr/bin enthaelt auf neuen
-        # Xcode-Versionen nur einen Stub, der "iTMSTransporter is now part
-        # of Transporter" meldet - das echte Binary liegt im
-        # ContentDeliveryServices.framework. Kandidaten daher zuerst die
-        # echten Orte pruefen und jede Fundstelle auf den Stub testen.
+        # iTMSTransporter finden: Developer/usr/bin (und xcrun) liefern
+        # auf aktuellem Xcode nur einen Stub, der 'iTMSTransporter is now
+        # part of Transporter' meldet - die echten Orte sind die
+        # Transporter.app-Installation und das Standalone-Paket unter
+        # /usr/local/itms bzw. das ContentDeliveryServices.framework.
         DEVDIR="$(xcode-select -p 2>/dev/null || true)"
         CANDIDATES=(
           "/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
@@ -216,22 +216,25 @@ runs:
         if [ -n "$DEVDIR" ]; then
           CANDIDATES+=(
             "$DEVDIR/../SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/bin/iTMSTransporter"
-            "$DEVDIR/usr/bin/iTMSTransporter"
           )
-        fi
-        XCRUN_FOUND="$(xcrun -f iTMSTransporter 2>/dev/null || true)"
-        if [ -n "$XCRUN_FOUND" ]; then
-          CANDIDATES+=("$XCRUN_FOUND")
         fi
         ITMS=""
         for c in "${CANDIDATES[@]}"; do
-          [ -x "$c" ] || continue
-          # Stub-Erkennung: das Shim meldet sich selbst als veraltet.
-          if "$c" -h 2>&1 | head -5 | grep -q "now part of Transporter"; then
-            continue
-          fi
-          ITMS="$c"; break
+          if [ -x "$c" ]; then ITMS="$c"; break; fi
         done
+        # Fallback: offizielles Standalone-Paket von Apples CDN
+        # installieren (Transporter.app ist auf den Runnern nicht
+        # vorinstalliert, Xcode liefert nur den Stub).
+        if [ -z "$ITMS" ]; then
+          echo "Kein funktionierender iTMSTransporter gefunden - installiere Standalone-Paket ..."
+          curl -fsSL "https://itunesconnect.apple.com/WebObjects/iTunesConnect.woa/ra/resources/download/public/Transporter__OSX/bin/" \
+            -o "$RUNNER_TEMP/itmstransporter.pkg"
+          sudo installer -pkg "$RUNNER_TEMP/itmstransporter.pkg" -target /
+          rm -f "$RUNNER_TEMP/itmstransporter.pkg"
+          if [ -x /usr/local/itms/bin/iTMSTransporter ]; then
+            ITMS=/usr/local/itms/bin/iTMSTransporter
+          fi
+        fi
         if [ -z "$ITMS" ]; then
           echo "::error::iTMSTransporter not found on runner (or only the deprecated stub)."
           exit 1
