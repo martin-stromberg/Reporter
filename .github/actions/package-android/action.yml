@@ -35,13 +35,18 @@ runs:
     # ApplicationDisplayVersion/ApplicationVersion explizit setzen: die
     # csproj pinnt beide fuer lokale Builds. Die Buildnummer ist der
     # monoton steigende Run-Zaehler (eindeutig, kein Repo-State noetig).
+    # ApplicationDisplayVersion akzeptiert nur dreiteilige numerische
+    # Versionen - bei Pre-Releases (0.4.0-rc.1) wird der Suffix abgeschnitten.
     - name: Publish (android)
-      run: >
-        dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }}
-        -p:ApplicationDisplayVersion=${{ inputs.release-version }}
-        -p:ApplicationVersion=${{ github.run_number }}
-        --configuration Release --framework net10.0-android
-        -p:AndroidPackageFormat=apk --no-restore
+      run: |
+        set -euo pipefail
+        DISPLAY_VERSION="${{ inputs.release-version }}"
+        DISPLAY_VERSION="${DISPLAY_VERSION%%-*}"
+        dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }} \
+          -p:ApplicationDisplayVersion="$DISPLAY_VERSION" \
+          -p:ApplicationVersion=${{ github.run_number }} \
+          --configuration Release --framework net10.0-android \
+          -p:AndroidPackageFormat=apk --no-restore
       shell: bash
       env:
         IncludeIosTarget: false
