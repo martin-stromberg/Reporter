@@ -34,6 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IDebugReportService? _debugReportService;
     private readonly IDebugLogService? _debugLogService;
     private readonly TimeProvider _timeProvider;
+    private readonly IDeviceInfoProvider? _deviceInfoProvider;
 
     private string _title = AppResources.PageTitleSettings;
     private Settings? _settings;
@@ -75,6 +76,7 @@ public partial class SettingsViewModel : ObservableObject
     /// <param name="localNotificationService">The platform notification service used to request authorization when notifications are turned on.</param>
     /// <param name="debugReportService">The debug report service used to send the collected debug report.</param>
     /// <param name="debugLogService">The session debug log service switched by the debug collection toggle.</param>
+    /// <param name="deviceInfoProvider">The device info provider used for the version label at the bottom of the page.</param>
     public SettingsViewModel(
         ISettingsRepository settingsRepository,
         IKeywordRepository keywordRepository,
@@ -83,7 +85,8 @@ public partial class SettingsViewModel : ObservableObject
         TimeProvider? timeProvider = null,
         ILocalNotificationService? localNotificationService = null,
         IDebugReportService? debugReportService = null,
-        IDebugLogService? debugLogService = null)
+        IDebugLogService? debugLogService = null,
+        IDeviceInfoProvider? deviceInfoProvider = null)
     {
         _settingsRepository = settingsRepository;
         _keywordRepository = keywordRepository;
@@ -92,6 +95,7 @@ public partial class SettingsViewModel : ObservableObject
         _localNotificationService = localNotificationService;
         _debugReportService = debugReportService;
         _debugLogService = debugLogService;
+        _deviceInfoProvider = deviceInfoProvider;
         _timeProvider = timeProvider ?? TimeProvider.System;
 
         _retentionDaysText = FormatRetentionDays(_retentionDays);
@@ -471,6 +475,22 @@ public partial class SettingsViewModel : ObservableObject
     /// When <c>false</c>, the settings page disables the send action and shows a hint.
     /// </summary>
     public bool DebugEmailSupported => _debugReportService?.IsSupported == true;
+
+    /// <summary>
+    /// Gets the formatted application version shown unobtrusively at the bottom of the
+    /// settings page (for example <c>Version 0.3.1 (Build 15)</c>), or an empty string
+    /// when no device info provider is available.
+    /// </summary>
+    public string AppVersionText
+    {
+        get
+        {
+            var info = _deviceInfoProvider?.GetSnapshot();
+            return info is null
+                ? string.Empty
+                : string.Format(CultureInfo.CurrentCulture, AppResources.SettingsVersionText, info.AppVersion, info.AppBuild);
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether the send-debug-report action is enabled:

@@ -588,6 +588,9 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <Label Text="{Binding AppVersionText}"
+                       Style="{StaticResource MetaStyle}"
+                       HorizontalTextAlignment="Center"/>
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

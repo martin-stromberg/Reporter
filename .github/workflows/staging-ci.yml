@@ -228,6 +228,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build and package release candidate (win-x64)
         uses: ./.github/actions/build-and-package
@@ -251,6 +253,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build and package release candidate (android)
         uses: ./.github/actions/package-android
@@ -276,6 +280,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build and package release candidate (ios)
         uses: ./.github/actions/package-ios
@@ -284,6 +290,12 @@ jobs:
           release-tag: ${{ needs.version.outputs.rc_tag }}
           codesign-key: ${{ secrets.IOS_CODESIGN_KEY }}
           provisioning-profile: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          api-key-id: ${{ secrets.IOS_API_KEY_ID }}
+          api-issuer-id: ${{ secrets.IOS_API_ISSUER_ID }}
+          api-key-p8: ${{ secrets.IOS_API_KEY_P8 }}
+          certificate-p12-base64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          certificate-p12-password: ${{ secrets.IOS_CERTIFICATE_P12_PASSWORD }}
+          provisioning-profile-base64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

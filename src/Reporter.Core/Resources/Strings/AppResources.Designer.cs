@@ -1692,6 +1692,15 @@ namespace Reporter.Core.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Version {0} (Build {1}) ähnelt.
+        /// </summary>
+        public static string SettingsVersionText {
+            get {
+                return ResourceManager.GetString("SettingsVersionText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Sending failed ähnelt.
         /// </summary>
         public static string DebugReportFailedTitle {
