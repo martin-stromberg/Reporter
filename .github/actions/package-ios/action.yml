@@ -202,26 +202,41 @@ runs:
         mkdir -p "$HOME/.appstoreconnect/private_keys"
         chmod 700 "$HOME/.appstoreconnect/private_keys"
         printf '%s' "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-        ITMS=""
-        for c in "/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter" \
-                 "$HOME/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter" \
-                 "/usr/local/itms/bin/iTMSTransporter"; do
-          [ -x "$c" ] && { ITMS="$c"; break; }
-        done
-        if [ -z "$ITMS" ] || [ ! -x "$ITMS" ]; then ITMS="$(xcrun -f iTMSTransporter 2>/dev/null || true)"; fi
-        if [ -z "$ITMS" ] || [ ! -x "$ITMS" ]; then
-          DEVDIR="$(xcode-select -p 2>/dev/null || true)"
-          if [ -n "$DEVDIR" ]; then
-            for c in "$DEVDIR/usr/bin/iTMSTransporter" \
-                     "$DEVDIR/../SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/bin/iTMSTransporter"; do
-              [ -x "$c" ] && { ITMS="$c"; break; }
-            done
-          fi
+        # iTMSTransporter finden: Developer/usr/bin enthaelt auf neuen
+        # Xcode-Versionen nur einen Stub, der "iTMSTransporter is now part
+        # of Transporter" meldet - das echte Binary liegt im
+        # ContentDeliveryServices.framework. Kandidaten daher zuerst die
+        # echten Orte pruefen und jede Fundstelle auf den Stub testen.
+        DEVDIR="$(xcode-select -p 2>/dev/null || true)"
+        CANDIDATES=(
+          "/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
+          "$HOME/Applications/Transporter.app/Contents/itms/bin/iTMSTransporter"
+          "/usr/local/itms/bin/iTMSTransporter"
+        )
+        if [ -n "$DEVDIR" ]; then
+          CANDIDATES+=(
+            "$DEVDIR/../SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/bin/iTMSTransporter"
+            "$DEVDIR/usr/bin/iTMSTransporter"
+          )
         fi
-        if [ -z "$ITMS" ] || [ ! -x "$ITMS" ]; then
-          echo "::error::iTMSTransporter not found on runner."
+        XCRUN_FOUND="$(xcrun -f iTMSTransporter 2>/dev/null || true)"
+        if [ -n "$XCRUN_FOUND" ]; then
+          CANDIDATES+=("$XCRUN_FOUND")
+        fi
+        ITMS=""
+        for c in "${CANDIDATES[@]}"; do
+          [ -x "$c" ] || continue
+          # Stub-Erkennung: das Shim meldet sich selbst als veraltet.
+          if "$c" -h 2>&1 | head -5 | grep -q "now part of Transporter"; then
+            continue
+          fi
+          ITMS="$c"; break
+        done
+        if [ -z "$ITMS" ]; then
+          echo "::error::iTMSTransporter not found on runner (or only the deprecated stub)."
           exit 1
         fi
+        echo "Using iTMSTransporter: $ITMS"
         "$ITMS" -m upload -assetFile release-ios.ipa -apiKey "$ASC_KEY_ID" -apiIssuer "$ASC_ISSUER_ID"
 
     # Keychain-Reste entfernen, auch bei Fehlschlag.
