@@ -32,8 +32,8 @@ runs:
 
     # ApplicationDisplayVersion/ApplicationVersion muessen explizit gesetzt
     # werden: die csproj pinnt beide fuer lokale Builds, -p:Version allein
-    # wuerde nicht durchschlagen. Als Buildnummer dient der monoton
-    # steigende Run-Zaehler - Apple/Android verlangen Eindeutigkeit.
+    # wuerde nicht durchschlagen. Als Buildnummer dient die Commit-Anzahl
+    # (repo-weit monoton - github.run_number zaehlt nur pro Workflow).
     # ApplicationDisplayVersion akzeptiert nur dreiteilige numerische
     # Versionen - bei Pre-Releases (0.4.0-rc.1) wird der Suffix abgeschnitten.
     - name: Publish (win-x64, self-contained)
@@ -41,9 +41,10 @@ runs:
         set -euo pipefail
         DISPLAY_VERSION="${{ inputs.release-version }}"
         DISPLAY_VERSION="${DISPLAY_VERSION%%-*}"
+        BUILD_NUMBER=$(( $(git rev-list --count HEAD) + ${{ github.run_attempt }} - 1 ))
         dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }} \
           -p:ApplicationDisplayVersion="$DISPLAY_VERSION" \
-          -p:ApplicationVersion=${{ github.run_number }} \
+          -p:ApplicationVersion=$BUILD_NUMBER \
           --configuration Release --framework net10.0-windows10.0.19041.0 --runtime win-x64 \
           --self-contained true -p:PublishReadyToRun=false --no-restore --output artifacts/publish-win-x64
       shell: bash

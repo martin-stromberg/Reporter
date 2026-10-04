@@ -132,8 +132,11 @@ runs:
         unset KEYCHAIN_PASSWORD
 
     # ApplicationDisplayVersion/ApplicationVersion explizit setzen: die
-    # csproj pinnt beide fuer lokale Builds. Die Buildnummer ist der
-    # monoton steigende Run-Zaehler (eindeutig pro Version-Train).
+    # csproj pinnt beide fuer lokale Builds. Die Buildnummer ist die
+    # Commit-Anzahl - repo-weit monoton, anders als github.run_number,
+    # das pro Workflow zaehlt (staging-ci und release wuerden sonst
+    # kollidierende CFBundleVersion-Werte erzeugen). run_attempt erhoeht
+    # bei Repair-Uploads desselben Commits.
     # ApplicationDisplayVersion akzeptiert nur dreiteilige numerische
     # Versionen - bei Pre-Releases (0.4.0-rc.1) wird der Suffix abgeschnitten
     # (CFBundleShortVersionString muss numerisch sein).
@@ -146,9 +149,10 @@ runs:
         set -euo pipefail
         DISPLAY_VERSION="${{ inputs.release-version }}"
         DISPLAY_VERSION="${DISPLAY_VERSION%%-*}"
+        BUILD_NUMBER=$(( $(git rev-list --count HEAD) + ${{ github.run_attempt }} - 1 ))
         dotnet publish src/Reporter/Reporter.csproj -p:Version=${{ inputs.release-version }} \
           -p:ApplicationDisplayVersion="$DISPLAY_VERSION" \
-          -p:ApplicationVersion=${{ github.run_number }} \
+          -p:ApplicationVersion=$BUILD_NUMBER \
           --configuration Release --framework net10.0-ios \
           -p:RuntimeIdentifier=ios-arm64 \
           -p:ArchiveOnBuild=true \
