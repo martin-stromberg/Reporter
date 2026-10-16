@@ -223,6 +223,34 @@
     <Color x:Key="LightBookmarkGold">#D97706</Color>
     <Color x:Key="DarkBookmarkGold">#f59e0b</Color>
 
+    <!-- Start page (Unread) refresh: swipe actions, skeleton, hero overlay, elevation -->
+    <Color x:Key="LightSwipeDone">#0F766E</Color>
+    <Color x:Key="DarkSwipeDone">#10B981</Color>
+
+    <Color x:Key="LightSwipeSave">#D97706</Color>
+    <Color x:Key="DarkSwipeSave">#F59E0B</Color>
+
+    <Color x:Key="LightOnSwipeAction">#FFFFFF</Color>
+    <Color x:Key="DarkOnSwipeAction">#0B0F17</Color>
+
+    <Color x:Key="LightSkeleton">#E6EAF0</Color>
+    <Color x:Key="DarkSkeleton">#1C2535</Color>
+
+    <Color x:Key="LightFilterTrack">#EEF1F5</Color>
+    <Color x:Key="DarkFilterTrack">#121A28</Color>
+
+    <Color x:Key="LightHairline">#0F0F172A</Color>
+    <Color x:Key="DarkHairline">#1E293B</Color>
+
+    <Color x:Key="LightCardShadow">#0F172A</Color>
+    <Color x:Key="DarkCardShadow">#000000</Color>
+
+    <Color x:Key="LightCoverTint">#E8EDF5</Color>
+    <Color x:Key="DarkCoverTint">#1F293D</Color>
+
+    <Color x:Key="HeroScrimTop">#00000000</Color>
+    <Color x:Key="HeroScrimBottom">#B3000000</Color>
+
     <!-- Utility -->
     <Color x:Key="Transparent">Transparent</Color>
 

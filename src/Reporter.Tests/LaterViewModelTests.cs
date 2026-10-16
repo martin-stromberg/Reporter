@@ -26,7 +26,7 @@ public class LaterViewModelTests : IDisposable
         _factory = new TestDbContextFactory();
         _itemRepository = new ItemRepository(_factory, new FakeItemContentStore());
         _networkStatusService = new FakeNetworkStatusService();
-        _viewModel = new LaterViewModel(_itemRepository, _networkStatusService);
+        _viewModel = new LaterViewModel(_itemRepository, new CategoryRepository(_factory), _networkStatusService);
     }
 
     /// <summary>
@@ -314,7 +314,7 @@ public class LaterViewModelTests : IDisposable
     [Fact]
     public async Task LoadCommand_WhenRepositoryFails_SetsLocalizedErrorMessage()
     {
-        var viewModel = new LaterViewModel(new FailingItemRepository(_itemRepository), _networkStatusService);
+        var viewModel = new LaterViewModel(new FailingItemRepository(_itemRepository), new CategoryRepository(_factory), _networkStatusService);
 
         await viewModel.LoadCommand.ExecuteAsync(null);
 
@@ -348,7 +348,7 @@ public class LaterViewModelTests : IDisposable
         }
 
         var gatedRepository = new GatedItemRepository(_itemRepository);
-        var viewModel = new LaterViewModel(gatedRepository, _networkStatusService);
+        var viewModel = new LaterViewModel(gatedRepository, new CategoryRepository(_factory), _networkStatusService);
 
         await viewModel.LoadCommand.ExecuteAsync(null);
         Assert.Equal(LaterViewModel.PageSize, viewModel.SavedItems.Count);
@@ -370,7 +370,7 @@ public class LaterViewModelTests : IDisposable
 
     /// <summary>
     /// A <see cref="DelegatingItemRepository"/> that can block the next
-    /// <see cref="IItemRepository.GetSavedForLaterAsync(int, int)"/> call on a gate.
+    /// <see cref="IItemRepository.GetSavedForLaterAsync(int, int, Guid?)"/> call on a gate.
     /// </summary>
     private sealed class GatedItemRepository : DelegatingItemRepository
     {
@@ -394,7 +394,7 @@ public class LaterViewModelTests : IDisposable
         }
 
         /// <inheritdoc />
-        public override async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
+        public override async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null)
         {
             var gate = _gate;
             if (gate is not null)
@@ -402,7 +402,7 @@ public class LaterViewModelTests : IDisposable
                 await gate.Task;
             }
 
-            return await base.GetSavedForLaterAsync(page, pageSize);
+            return await base.GetSavedForLaterAsync(page, pageSize, categoryId);
         }
     }
 
@@ -422,7 +422,7 @@ public class LaterViewModelTests : IDisposable
         }
 
         /// <inheritdoc />
-        public override Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
+        public override Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null)
         {
             return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
         }

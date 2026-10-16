@@ -12,202 +12,357 @@
              x:DataType="vm:UnreadViewModel"
              Title="{x:Static strings:AppResources.PageTitleUnread}"
              Shell.NavBarIsVisible="False">
-    <Grid RowDefinitions="Auto,*"
-          Padding="16,8"
-          RowSpacing="12">
-        <VerticalStackLayout Spacing="8">
-            <Label Text="{x:Static strings:AppResources.PageTitleUnread}"
-                   Style="{StaticResource HeadlineStyle}"/>
+    <Grid x:Name="LayoutRoot"
+          RowDefinitions="Auto,Auto,Auto,*">
 
-            <Grid ColumnDefinitions="Auto,*,Auto"
-                  ColumnSpacing="12"
-                  RowDefinitions="Auto">
-                <Border Grid.Column="0"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        Background="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
-                        SemanticProperties.Description="{x:Static strings:AppResources.ButtonRefresh}"
-                        VerticalOptions="Center">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
-                            <Setter Property="Opacity" Value="0.4"/>
-                        </DataTrigger>
-                    </Border.Triggers>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding RefreshCommand}"/>
-                    </Border.GestureRecognizers>
-                    <Path Data="M24,4 A20,20 0 1,1 24,44 A20,20 0 1,1 24,4 Z M24,32 L32,24 M24,32 L16,24"
-                          Stroke="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-                          StrokeThickness="2"
-                          StrokeLineCap="Round"
-                          StrokeLineJoin="Round"
-                          Aspect="Uniform"
-                          WidthRequest="24"
-                          HeightRequest="24"
-                          HorizontalOptions="Center"
-                          VerticalOptions="Center"
-                          Fill="Transparent">
-                        <Path.Triggers>
-                            <DataTrigger TargetType="Path" Binding="{Binding IsOnline}" Value="False">
-                                <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+        <!-- ═════════ Header: Datum + Aktionen, Display-Titel, Status ═════════ -->
+        <VerticalStackLayout Grid.Row="0"
+                             Padding="20,8,16,0"
+                             Spacing="2">
+            <Grid ColumnDefinitions="*,Auto"
+                  MinimumHeightRequest="44">
+                <Label Text="{Binding HeaderDateText}"
+                       Style="{StaticResource EyebrowStyle}"
+                       VerticalOptions="Center"/>
+
+                <HorizontalStackLayout Grid.Column="1"
+                                       Spacing="0"
+                                       Margin="0,0,-6,0">
+                    <Border x:Name="RefreshButton"
+                            Style="{StaticResource IconButtonStyle}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ButtonRefresh}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
                             </DataTrigger>
-                        </Path.Triggers>
-                    </Path>
-                </Border>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding RefreshCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Path x:Name="RefreshIcon"
+                              Style="{StaticResource IconPathStyle}"
+                              Data="M21,12 A9,9 0 1,1 18.36,5.64 M21,3 L21,9 L15,9"
+                              Scale="0.85"
+                              StrokeThickness="1.9"/>
+                    </Border>
 
-                <VerticalStackLayout Grid.Column="1"
-                                     Spacing="2"
-                                     VerticalOptions="Center">
-                    <Label Text="{Binding UnreadCountText}"
-                           Style="{StaticResource BodySmallStyle}"/>
-                    <Label Text="{x:Static strings:AppResources.LabelPullToRefresh}"
-                           Style="{StaticResource MetaStyle}"/>
-                    <Label Text="{x:Static strings:AppResources.OfflineHint}"
-                           Style="{StaticResource MetaStyle}"
-                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-                           IsVisible="False">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="False">
-                                <Setter Property="IsVisible" Value="True"/>
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
-                </VerticalStackLayout>
+                    <Border Style="{StaticResource IconButtonStyle}"
+                            SemanticProperties.Description="{Binding LayoutToggleDescription}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnLayoutToggleTapped"/>
+                        </Border.GestureRecognizers>
+                        <Grid InputTransparent="True">
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M6,3 L18,3 A2,2 0 0,1 20,5 L20,15 A2,2 0 0,1 18,17 L6,17 A2,2 0 0,1 4,15 L4,5 A2,2 0 0,1 6,3 Z M8,21 L16,21"
+                                  Scale="0.8"
+                                  StrokeThickness="2"
+                                  IsVisible="{Binding IsListLayout}"/>
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M9,6 L20,6 M9,12 L20,12 M9,18 L20,18 M4,6 L4.01,6 M4,12 L4.01,12 M4,18 L4.01,18"
+                                  Scale="0.8"
+                                  StrokeThickness="2.2"
+                                  IsVisible="{Binding IsCardLayout}"/>
+                        </Grid>
+                    </Border>
 
-                <Border Grid.Column="2"
-                        Padding="12,8"
-                        StrokeShape="RoundRectangle 22"
-                        Background="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
-                        MinimumHeightRequest="44"
-                        MinimumWidthRequest="44"
-                        SemanticProperties.Description="{x:Static strings:AppResources.ButtonMarkAllRead}"
-                        VerticalOptions="Center">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding MarkAllReadCommand}"/>
-                    </Border.GestureRecognizers>
-                    <HorizontalStackLayout Spacing="6"
-                                           VerticalOptions="Center">
-                        <Path Data="M4,18 L12,26 L24,14 M16,18 L24,26 L36,14"
-                              Stroke="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"
-                              StrokeThickness="2"
-                              StrokeLineCap="Round"
-                              StrokeLineJoin="Round"
-                              Aspect="Uniform"
-                              WidthRequest="20"
-                              HeightRequest="20"
-                              HorizontalOptions="Center"
-                              VerticalOptions="Center"
-                              Fill="Transparent"/>
-                        <Label Text="{x:Static strings:AppResources.ButtonMarkAllRead}"
-                               TextColor="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"
-                               FontSize="12"
-                               VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
-                </Border>
+                    <Border Style="{StaticResource IconButtonStyle}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ButtonMarkAllRead}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnMarkAllReadTapped"/>
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource IconPathStyle}"
+                              Data="M18,6 L7,17 L2,12 M22,10 L14.5,17.5 L13,16"
+                              Scale="0.8"
+                              StrokeThickness="2"/>
+                    </Border>
+                </HorizontalStackLayout>
             </Grid>
 
-            <CollectionView ItemsSource="{Binding Categories}"
-                            MinimumHeightRequest="44">
-                <CollectionView.ItemsLayout>
-                    <LinearItemsLayout Orientation="Horizontal"
-                                       ItemSpacing="8"/>
-                </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:CategoryFilterItem">
-                        <Border MinimumHeightRequest="44"
-                                Padding="0"
-                                Stroke="Transparent"
-                                StrokeShape="RoundRectangle 22"
-                                Background="Transparent"
-                                SemanticProperties.Description="{Binding AccessibilityDescription}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding BindingContext.SelectCategoryCommand, Source={x:Reference PageRoot}}"
-                                                      CommandParameter="{Binding .}"/>
-                            </Border.GestureRecognizers>
-                            <Border Padding="12,6"
-                                    StrokeShape="RoundRectangle 9999"
-                                    Stroke="{AppThemeBinding Light={StaticResource LightBorderSubtle}, Dark={StaticResource DarkBorderSubtle}}"
-                                    Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkSurfaceCard}}"
-                                    VerticalOptions="Center">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
-                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <HorizontalStackLayout Spacing="6">
-                                    <Label Text="{Binding Name}"
-                                           Style="{StaticResource LabelMdStyle}"
-                                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-                                           VerticalOptions="Center">
-                                        <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"/>
-                                            </DataTrigger>
-                                        </Label.Triggers>
-                                    </Label>
-                                    <Border Padding="6,2"
-                                            StrokeShape="RoundRectangle 10"
-                                            Stroke="Transparent"
-                                            Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}"
-                                            VerticalOptions="Center">
-                                        <Border.Triggers>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightChipCountCapsule}, Dark={StaticResource DarkChipCountCapsule}}"/>
-                                            </DataTrigger>
-                                        </Border.Triggers>
-                                        <Label Text="{Binding Count}"
-                                               Style="{StaticResource LabelSmStyle}"
-                                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-                                               VerticalOptions="Center">
-                                            <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"/>
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
-                                    </Border>
-                                </HorizontalStackLayout>
-                            </Border>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+            <Label Text="{x:Static strings:AppResources.PageTitleUnread}"
+                   Style="{StaticResource DisplayTitleStyle}"
+                   SemanticProperties.HeadingLevel="Level1"
+                   Margin="0,2,0,0"/>
 
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
-                   IsVisible="{Binding HasError}"
-                   Style="{StaticResource BodySmallStyle}"/>
-
-            <Label Text="{Binding SyncErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
-                   IsVisible="{Binding HasSyncError}"
-                   Style="{StaticResource BodySmallStyle}"/>
+            <HorizontalStackLayout Spacing="8"
+                                   Margin="0,6,0,0">
+                <Ellipse x:Name="StatusDot"
+                         WidthRequest="7"
+                         HeightRequest="7"
+                         VerticalOptions="Center"
+                         Fill="{AppThemeBinding Light={StaticResource LightStatusOk}, Dark={StaticResource DarkStatusOk}}">
+                    <Ellipse.Triggers>
+                        <DataTrigger TargetType="Ellipse" Binding="{Binding HasSyncError}" Value="True">
+                            <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightStatusError}, Dark={StaticResource DarkStatusError}}"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Ellipse" Binding="{Binding IsSyncing}" Value="True">
+                            <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightStatusWarning}, Dark={StaticResource DarkStatusWarning}}"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Ellipse" Binding="{Binding IsOnline}" Value="False">
+                            <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"/>
+                        </DataTrigger>
+                    </Ellipse.Triggers>
+                </Ellipse>
+                <Label Text="{Binding UnreadBadgeText}"
+                       Style="{StaticResource MetaStrongStyle}"
+                       VerticalOptions="Center"/>
+                <Label Text="·"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding SyncStatusText, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+                <Label Text="{Binding SyncStatusText}"
+                       Style="{StaticResource MetaStyle}"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding SyncStatusText, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+            </HorizontalStackLayout>
         </VerticalStackLayout>
 
-        <RefreshView Grid.Row="1"
-                     IsRefreshing="{Binding IsSyncing}"
-                     Command="{Binding RefreshCommand}">
-            <CollectionView x:Name="ArticlesCollection"
-                            ItemsSource="{Binding Articles}"
-                            RemainingItemsThreshold="2"
-                            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
-                            EmptyView="{x:Static strings:AppResources.PlaceholderUnread}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:ItemListItem">
-                        <views:ArticleCardView ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
-                                               MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
-                                               IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </RefreshView>
+        <!-- ═════════ Animierte Filter-Tabs ═════════ -->
+        <views:CategoryFilterTabs Grid.Row="1"
+                                  Margin="0,14,0,4"
+                                  ItemsSource="{Binding Categories}"
+                                  SelectCommand="{Binding BindingContext.SelectCategoryCommand, Source={x:Reference PageRoot}}"/>
 
-        <ActivityIndicator Grid.Row="1"
-                           IsRunning="{Binding IsLoading}"
-                           IsVisible="{Binding IsLoading}"
-                           VerticalOptions="End"
+        <!-- ═════════ Fehlerhinweise ═════════ -->
+        <VerticalStackLayout Grid.Row="2"
+                             Padding="16,4,16,0"
+                             Spacing="6">
+            <Border Padding="14,10"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 14"
+                    Background="{AppThemeBinding Light={StaticResource LightStatusErrorTint}, Dark={StaticResource DarkStatusErrorTint}}"
+                    IsVisible="{Binding HasError}">
+                <Label Text="{Binding ErrorMessage}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightStatusErrorText}, Dark={StaticResource DarkStatusErrorText}}"/>
+            </Border>
+            <Border Padding="14,10"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 14"
+                    Background="{AppThemeBinding Light={StaticResource LightStatusErrorTint}, Dark={StaticResource DarkStatusErrorTint}}"
+                    IsVisible="{Binding HasSyncError}">
+                <Label Text="{Binding SyncErrorMessage}"
+                       Style="{StaticResource BodySmallStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightStatusErrorText}, Dark={StaticResource DarkStatusErrorText}}"/>
+            </Border>
+        </VerticalStackLayout>
+
+        <!-- ═════════ Inhalt ═════════ -->
+        <Grid x:Name="ContentHost"
+              Grid.Row="3">
+
+            <!-- Variante 1: Scroll-Liste -->
+            <RefreshView x:Name="ListHost"
+                         IsVisible="{Binding IsListLayout}"
+                         IsRefreshing="{Binding IsSyncing}"
+                         Command="{Binding RefreshCommand}">
+                <CollectionView x:Name="ArticlesCollection"
+                                ItemsSource="{Binding Articles}"
+                                RemainingItemsThreshold="4"
+                                RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                    <CollectionView.Triggers>
+                        <DataTrigger TargetType="CollectionView" Binding="{Binding IsCardLayout}" Value="True">
+                            <Setter Property="ItemsSource" Value="{x:Null}"/>
+                        </DataTrigger>
+                    </CollectionView.Triggers>
+                    <CollectionView.Header>
+                        <BoxView HeightRequest="4"
+                                 Color="Transparent"
+                                 BackgroundColor="Transparent"/>
+                    </CollectionView.Header>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ItemListItem">
+                            <views:ArticleRowView ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
+                                                  MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
+                                                  IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                    <CollectionView.Footer>
+                        <Grid Padding="0,12,0,32">
+                            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                               IsVisible="{Binding HasArticles}"
+                                               WidthRequest="22"
+                                               HeightRequest="22"
+                                               HorizontalOptions="Center">
+                                <ActivityIndicator.Triggers>
+                                    <DataTrigger TargetType="ActivityIndicator" Binding="{Binding IsLoading}" Value="False">
+                                        <Setter Property="IsVisible" Value="False"/>
+                                    </DataTrigger>
+                                </ActivityIndicator.Triggers>
+                            </ActivityIndicator>
+                        </Grid>
+                    </CollectionView.Footer>
+                </CollectionView>
+            </RefreshView>
+
+            <!-- Variante 2: Karten-Triage -->
+            <Grid x:Name="CardsHost"
+                  RowDefinitions="*,Auto"
+                  IsVisible="{Binding IsCardLayout}">
+                <!-- Kartenstapel: oben die aktuelle Karte, dahinter die nächste -->
+                <Grid x:Name="CardStage"
+                      Grid.Row="0"
+                      Margin="20,10,20,6">
+                    <views:ArticleHeroCardView x:Name="BackCard"
+                                               BindingContext="{Binding NextCard}"
+                                               IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"
+                                               InputTransparent="True"
+                                               Margin="0,0,0,14"
+                                               Scale="0.93"
+                                               TranslationY="26"
+                                               Opacity="0.55"
+                                               IsVisible="{Binding BindingContext.NextCard, Source={x:Reference PageRoot}, Converter={StaticResource IsNotNullConverter}}"/>
+                    <views:ArticleHeroCardView x:Name="FrontCard"
+                                               Margin="0,0,0,14"
+                                               BindingContext="{Binding CurrentCard}"
+                                               IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"
+                                               IsVisible="{Binding BindingContext.HasArticles, Source={x:Reference PageRoot}}"/>
+                </Grid>
+
+                <!-- Aktionsleiste -->
+                <VerticalStackLayout Grid.Row="1"
+                                     Padding="0,0,0,12"
+                                     Spacing="8"
+                                     IsVisible="{Binding HasArticles}">
+                    <Label Text="{Binding CardPositionText}"
+                           Style="{StaticResource EyebrowStyle}"
                            HorizontalOptions="Center"/>
+
+                    <HorizontalStackLayout Spacing="14"
+                                           HorizontalOptions="Center">
+                        <Border Style="{StaticResource IconButtonStyle}"
+                                SemanticProperties.Description="{x:Static strings:AppResources.UnreadCardPrevious}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding CanGoToPreviousCard}" Value="False">
+                                    <Setter Property="Opacity" Value="0.3"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCardPreviousTapped"/>
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M15,18 L9,12 L15,6"
+                                  StrokeThickness="2"
+                                  Stroke="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                        </Border>
+
+                        <Border x:Name="CardSaveButton"
+                                Style="{StaticResource IconButtonFilledStyle}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                StrokeShape="RoundRectangle 28"
+                                SemanticProperties.Description="{x:Static strings:AppResources.ArticleBookmarkSet}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding CurrentCard.IsSavedForLater}" Value="True">
+                                    <Setter Property="SemanticProperties.Description" Value="{x:Static strings:AppResources.ArticleBookmarkRemove}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCardSaveTapped"/>
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M19,21 L12,16 L5,21 L5,5 A2,2 0 0,1 7,3 L17,3 A2,2 0 0,1 19,5 Z"
+                                  StrokeThickness="1.75">
+                                <Path.Triggers>
+                                    <DataTrigger TargetType="Path" Binding="{Binding CurrentCard.IsSavedForLater}" Value="True">
+                                        <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                                    </DataTrigger>
+                                </Path.Triggers>
+                            </Path>
+                        </Border>
+
+                        <Border x:Name="CardOpenButton"
+                                Style="{StaticResource IconButtonStyle}"
+                                WidthRequest="68"
+                                HeightRequest="68"
+                                StrokeShape="RoundRectangle 34"
+                                Background="{AppThemeBinding Light={StaticResource LightPrimaryContainer}, Dark={StaticResource DarkPrimary}}"
+                                SemanticProperties.Description="{x:Static strings:AppResources.UnreadActionRead}"
+                                SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityOpenArticle}">
+                            <Border.Shadow>
+                                <Shadow Brush="{AppThemeBinding Light={StaticResource LightCardShadow}, Dark={StaticResource DarkCardShadow}}"
+                                        Opacity="0.22"
+                                        Radius="16"
+                                        Offset="0,6"/>
+                            </Border.Shadow>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCardOpenTapped"/>
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M2,4 L8,4 A4,4 0 0,1 12,8 L12,21 A3,3 0 0,0 9,18 L2,18 Z M22,4 L16,4 A4,4 0 0,0 12,8 L12,21 A3,3 0 0,1 15,18 L22,18 Z"
+                                  StrokeThickness="1.75"
+                                  Stroke="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"/>
+                        </Border>
+
+                        <Border x:Name="CardDoneButton"
+                                Style="{StaticResource IconButtonFilledStyle}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                StrokeShape="RoundRectangle 28"
+                                SemanticProperties.Description="{x:Static strings:AppResources.ArticleMarkAsRead}"
+                                SemanticProperties.Hint="{x:Static strings:AppResources.UnreadCardSwipeHint}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCardDoneTapped"/>
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M20,6 L9,17 L4,12"
+                                  StrokeThickness="2"/>
+                        </Border>
+
+                        <Border Style="{StaticResource IconButtonStyle}"
+                                SemanticProperties.Description="{x:Static strings:AppResources.UnreadCardNext}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding CanGoToNextCard}" Value="False">
+                                    <Setter Property="Opacity" Value="0.3"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCardNextTapped"/>
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M9,18 L15,12 L9,6"
+                                  StrokeThickness="2"
+                                  Stroke="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                        </Border>
+                    </HorizontalStackLayout>
+
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Lade-Skelett (nur beim ersten Laden ohne Inhalt) -->
+            <views:ListSkeletonView IsVisible="{Binding ShowSkeleton}"/>
+
+            <!-- Leerer Zustand -->
+            <VerticalStackLayout x:Name="EmptyState"
+                                 Padding="40,0,40,64"
+                                 Spacing="12"
+                                 VerticalOptions="Center"
+                                 InputTransparent="True"
+                                 IsVisible="{Binding ShowEmptyState}">
+                <Border WidthRequest="76"
+                        HeightRequest="76"
+                        HorizontalOptions="Center"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 38"
+                        Background="{AppThemeBinding Light={StaticResource LightCoverTint}, Dark={StaticResource DarkCoverTint}}">
+                    <Path Style="{StaticResource IconPathStyle}"
+                          Data="M12,2 A10,10 0 1,1 12,22 A10,10 0 1,1 12,2 Z M8,12 L11,15 L16,9"
+                          Scale="1.35"
+                          StrokeThickness="1.4"
+                          Stroke="{AppThemeBinding Light={StaticResource LightSwipeDone}, Dark={StaticResource DarkSwipeDone}}"/>
+                </Border>
+                <Label Text="{x:Static strings:AppResources.UnreadEmptyTitle}"
+                       Style="{StaticResource DisplayTitleStyle}"
+                       FontSize="32"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,8,0,0"/>
+                <Label Text="{x:Static strings:AppResources.UnreadEmptySubtitle}"
+                       Style="{StaticResource RowSummaryStyle}"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+        </Grid>
     </Grid>
 </ContentPage>

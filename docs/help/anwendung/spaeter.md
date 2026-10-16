@@ -8,22 +8,23 @@ Artikel, die du dir merken möchtest, markierst du mit einem Lesezeichen. Alle g
 
 ## Artikel merken
 
-- **In der Liste:** Tippe auf einer Artikelkarte (z. B. unter **Ungelesen**) auf das Lesezeichen-Symbol rechts unten. Das Symbol füllt sich golden, sobald der Artikel gemerkt ist.
+- **In der Liste Ungelesen:** Wische eine Zeile nach rechts (**Merken**) oder tippe auf das Lesezeichen-Symbol. Das Symbol füllt sich golden, sobald der Artikel gemerkt ist. In der Kartenansicht nutzt du die Lesezeichen-Schaltfläche unter der Karte.
 - **In der Detailansicht:** Tippe in der schwebenden Aktionsleiste am unteren Rand auf das Lesezeichen-Symbol. Die Aktion ist als **Lesezeichen setzen** bzw. **Lesezeichen entfernen** beschriftet.
 
 ## Später-Ansicht
 
-- Öffne den Tab **Später** in der unteren Navigationsleiste.
-- Die Liste zeigt ausschließlich gemerkte Artikel, absteigend nach Veröffentlichungsdatum sortiert.
-- Beim Scrollen ans Ende werden weitere gemerkte Artikel automatisch nachgeladen — währenddessen erscheint ein Ladeindikator unter der Liste.
-- Jede Karte zeigt Feed-Titel, Datum, Titel, Bild, einen kurzen Teasertext und die geschätzte Lesezeit — wie auf der Seite **Ungelesen** (fehlt das Artikelbild, erscheint das Favicon des Feeds oder ein Kreis mit dessen Anfangsbuchstaben; bei höchstens einer Minute Lesezeit entfällt die Angabe). Ein kleiner Punkt in der Kopfzeile markiert Artikel, die du noch nicht gelesen hast.
-- Ist kein Artikel gemerkt, erscheint der Hinweis „Hier erscheinen Artikel, die du dir für später merkst."
-- Ohne Internetverbindung erscheint oberhalb der Liste das Hinweis-Banner **„Keine Internetverbindung."**; lokal gespeicherte Artikelbilder bleiben auf den Karten sichtbar, nur Karten ohne gespeichertes Bild blenden das Vorschaubild aus (siehe [Offline lesen](offline.md)).
-- Konnte die Liste nicht geladen werden, erscheint unter dem Seitentitel die Fehlermeldung **„Die Artikel konnten nicht geladen werden."** — beim nächsten Öffnen der Seite wird der Ladevorgang erneut versucht.
+- **Kopfbereich:** Über dem großen Seitentitel steht **Merkliste**, darunter die Anzahl gemerkter Artikel (z. B. **„5 gemerkt"**, ohne Internetverbindung ergänzt um **„· Offline"**) und der Hinweis **„Gemerkte Artikel werden nie automatisch gelöscht."**
+- **Filter-Tabs:** Sobald gemerkte Artikel einer Kategorie zugeordnet sind, erscheint eine Tab-Leiste mit **Alle** und jeder Kategorie, die gemerkte Artikel enthält, jeweils mit Anzahl. Die Auswahl gleitet animiert zum gewählten Tab und filtert die Liste.
+- **Liste:** Ausschließlich gemerkte Artikel, absteigend nach Veröffentlichungsdatum; beim Scrollen ans Ende wird automatisch nachgeladen. Jede Zeile zeigt Quelle, relative Zeit, Überschrift, Teaser, Vorschaubild, Kategorie und Lesezeit — im selben Design wie die Startseite. Noch ungelesene Artikel tragen einen kleinen farbigen Punkt; gelesene erscheinen mit gedämpfter Überschrift.
+- **Antippen** öffnet die [Artikeldetailansicht](artikeldetailansicht.md).
+- **Nach links wischen** oder **Als gelesen** markiert den Artikel als gelesen — er bleibt in der Merkliste.
+- Ist nichts gemerkt, erscheint **„Noch nichts gemerkt"** mit einem kurzen Hinweis; beim ersten Laden zeigt ein pulsierendes Platzhalter-Skelett den Ladevorgang.
+- Ohne Internetverbindung bleiben lokal gespeicherte Artikelbilder sichtbar, nur online verfügbare Bilder werden ausgeblendet (siehe [Offline lesen](offline.md)).
+- Konnte die Liste nicht geladen werden, erscheint ein Hinweis **„Die Artikel konnten nicht geladen werden."** — beim nächsten Öffnen der Seite wird der Ladevorgang erneut versucht.
 
 ## Merkung entfernen
 
-Tippe in der **Später**-Liste (oder in der Detailansicht) erneut auf das Lesezeichen-Symbol. Die Karte verschwindet sofort aus der **Später**-Liste, der Artikel bleibt aber erhalten.
+**Nach rechts wischen** (**Entfernen**) oder auf das goldene Lesezeichen tippen (bzw. in der Detailansicht das Lesezeichen erneut antippen). Die Zeile blendet sich aus der **Später**-Liste aus, Zähler und Tabs werden angepasst; der Artikel selbst bleibt erhalten.
 
 ## Aufbewahrung
 

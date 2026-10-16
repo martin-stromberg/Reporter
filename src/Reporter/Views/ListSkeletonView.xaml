@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Reporter.Views.ListSkeletonView"
+             InputTransparent="True">
+    <VerticalStackLayout x:Name="Rows"
+                         Padding="16,8"
+                         Spacing="10">
+        <Border Padding="18,16"
+                StrokeThickness="0"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 22"
+                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}">
+            <Grid ColumnDefinitions="*,84"
+                  ColumnSpacing="14"
+                  RowDefinitions="12,20,20,12"
+                  RowSpacing="10">
+                <BoxView WidthRequest="140" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="1" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="2" WidthRequest="170" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="3" WidthRequest="90" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Column="1" Grid.RowSpan="3" CornerRadius="16" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+            </Grid>
+        </Border>
+        <Border Padding="18,16"
+                StrokeThickness="0"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 22"
+                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}">
+            <Grid ColumnDefinitions="*,84"
+                  ColumnSpacing="14"
+                  RowDefinitions="12,20,20,12"
+                  RowSpacing="10">
+                <BoxView WidthRequest="110" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="1" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="2" WidthRequest="140" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="3" WidthRequest="70" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Column="1" Grid.RowSpan="3" CornerRadius="16" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+            </Grid>
+        </Border>
+        <Border Padding="18,16"
+                StrokeThickness="0"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 22"
+                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}">
+            <Grid RowDefinitions="12,20,20,12"
+                  RowSpacing="10">
+                <BoxView WidthRequest="120" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="1" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="2" WidthRequest="200" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+                <BoxView Grid.Row="3" WidthRequest="80" HorizontalOptions="Start" CornerRadius="6" Color="{AppThemeBinding Light={StaticResource LightSkeleton}, Dark={StaticResource DarkSkeleton}}"/>
+            </Grid>
+        </Border>
+    </VerticalStackLayout>
+</ContentView>

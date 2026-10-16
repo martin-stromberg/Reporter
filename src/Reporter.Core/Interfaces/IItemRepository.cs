@@ -123,8 +123,16 @@ public interface IItemRepository
     /// </summary>
     /// <param name="page">The zero-based page index.</param>
     /// <param name="pageSize">The number of items per page.</param>
+    /// <param name="categoryId">The optional category filter; <c>null</c> returns saved items of all categories.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the saved items for the page.</returns>
-    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize);
+    Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null);
+
+    /// <summary>
+    /// Gets the number of items saved for later asynchronously.
+    /// </summary>
+    /// <param name="categoryId">The optional category filter; <c>null</c> counts saved items of all categories.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of saved items.</returns>
+    Task<int> GetSavedCountAsync(Guid? categoryId = null);
 
     /// <summary>
     /// Adds the specified items asynchronously in a single batch.
