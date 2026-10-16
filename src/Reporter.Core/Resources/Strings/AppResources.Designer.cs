@@ -1951,5 +1951,275 @@ namespace Reporter.Core.Resources.Strings {
                 return ResourceManager.GetString("ErrorActionFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Start page layout ähnelt.
+        /// </summary>
+        public static string SettingsUnreadLayoutLabel {
+            get {
+                return ResourceManager.GetString("SettingsUnreadLayoutLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die List to scan quickly, cards to swipe through one article at a time. ähnelt.
+        /// </summary>
+        public static string SettingsUnreadLayoutHint {
+            get {
+                return ResourceManager.GetString("SettingsUnreadLayoutHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die List ähnelt.
+        /// </summary>
+        public static string SettingsUnreadLayoutList {
+            get {
+                return ResourceManager.GetString("SettingsUnreadLayoutList", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Cards ähnelt.
+        /// </summary>
+        public static string SettingsUnreadLayoutCards {
+            get {
+                return ResourceManager.GetString("SettingsUnreadLayoutCards", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Switch to card view ähnelt.
+        /// </summary>
+        public static string UnreadLayoutSwitchToCards {
+            get {
+                return ResourceManager.GetString("UnreadLayoutSwitchToCards", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Switch to list view ähnelt.
+        /// </summary>
+        public static string UnreadLayoutSwitchToList {
+            get {
+                return ResourceManager.GetString("UnreadLayoutSwitchToList", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die All caught up ähnelt.
+        /// </summary>
+        public static string UnreadEmptyTitle {
+            get {
+                return ResourceManager.GetString("UnreadEmptyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die New articles appear here as soon as your feeds update. ähnelt.
+        /// </summary>
+        public static string UnreadEmptySubtitle {
+            get {
+                return ResourceManager.GetString("UnreadEmptySubtitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} unread ähnelt.
+        /// </summary>
+        public static string UnreadCountFormat {
+            get {
+                return ResourceManager.GetString("UnreadCountFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Updated {0} ähnelt.
+        /// </summary>
+        public static string UnreadSyncedFormat {
+            get {
+                return ResourceManager.GetString("UnreadSyncedFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Updating… ähnelt.
+        /// </summary>
+        public static string UnreadSyncing {
+            get {
+                return ResourceManager.GetString("UnreadSyncing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Offline ähnelt.
+        /// </summary>
+        public static string UnreadOffline {
+            get {
+                return ResourceManager.GetString("UnreadOffline", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} of {1} ähnelt.
+        /// </summary>
+        public static string UnreadCardPositionFormat {
+            get {
+                return ResourceManager.GetString("UnreadCardPositionFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Swipe up to mark as read ähnelt.
+        /// </summary>
+        public static string UnreadCardSwipeHint {
+            get {
+                return ResourceManager.GetString("UnreadCardSwipeHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Read ähnelt.
+        /// </summary>
+        public static string UnreadActionRead {
+            get {
+                return ResourceManager.GetString("UnreadActionRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Save ähnelt.
+        /// </summary>
+        public static string UnreadSwipeSave {
+            get {
+                return ResourceManager.GetString("UnreadSwipeSave", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Done ähnelt.
+        /// </summary>
+        public static string UnreadSwipeDone {
+            get {
+                return ResourceManager.GetString("UnreadSwipeDone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die just now ähnelt.
+        /// </summary>
+        public static string RelativeTimeJustNow {
+            get {
+                return ResourceManager.GetString("RelativeTimeJustNow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} min ago ähnelt.
+        /// </summary>
+        public static string RelativeTimeMinutes {
+            get {
+                return ResourceManager.GetString("RelativeTimeMinutes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} h ago ähnelt.
+        /// </summary>
+        public static string RelativeTimeHours {
+            get {
+                return ResourceManager.GetString("RelativeTimeHours", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die yesterday ähnelt.
+        /// </summary>
+        public static string RelativeTimeYesterday {
+            get {
+                return ResourceManager.GetString("RelativeTimeYesterday", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} days ago ähnelt.
+        /// </summary>
+        public static string RelativeTimeDays {
+            get {
+                return ResourceManager.GetString("RelativeTimeDays", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Previous article ähnelt.
+        /// </summary>
+        public static string UnreadCardPrevious {
+            get {
+                return ResourceManager.GetString("UnreadCardPrevious", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Next article ähnelt.
+        /// </summary>
+        public static string UnreadCardNext {
+            get {
+                return ResourceManager.GetString("UnreadCardNext", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Reading list ähnelt.
+        /// </summary>
+        public static string LaterEyebrow {
+            get {
+                return ResourceManager.GetString("LaterEyebrow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0} saved ähnelt.
+        /// </summary>
+        public static string LaterSavedCountFormat {
+            get {
+                return ResourceManager.GetString("LaterSavedCountFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Saved articles are never cleaned up automatically. ähnelt.
+        /// </summary>
+        public static string LaterArchiveHint {
+            get {
+                return ResourceManager.GetString("LaterArchiveHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Nothing saved yet ähnelt.
+        /// </summary>
+        public static string LaterEmptyTitle {
+            get {
+                return ResourceManager.GetString("LaterEmptyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Swipe an article to the right or tap the bookmark to keep it for later. ähnelt.
+        /// </summary>
+        public static string LaterEmptySubtitle {
+            get {
+                return ResourceManager.GetString("LaterEmptySubtitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Remove ähnelt.
+        /// </summary>
+        public static string UnreadSwipeRemove {
+            get {
+                return ResourceManager.GetString("UnreadSwipeRemove", resourceCulture);
+            }
+        }
     }
 }

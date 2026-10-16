@@ -69,6 +69,11 @@ public class Settings
     public string? UnreadSortOrder { get; init; } = SettingsValues.SortOrderDescending;
 
     /// <summary>
+    /// Gets the layout of the unread articles start page ("list" or "cards").
+    /// </summary>
+    public string? UnreadListLayout { get; init; } = SettingsValues.UnreadLayoutList;
+
+    /// <summary>
     /// Gets the appearance theme ("system", "light" or "dark").
     /// </summary>
     public string? Theme { get; init; } = SettingsValues.ThemeSystem;
@@ -89,4 +94,32 @@ public class Settings
     /// (session debug log) is enabled.
     /// </summary>
     public required bool DebugCollectionEnabled { get; init; }
+
+    /// <summary>
+    /// Creates a copy of these settings with the given unread list layout applied.
+    /// </summary>
+    /// <param name="unreadListLayout">The new unread list layout value.</param>
+    /// <returns>A new <see cref="Settings"/> instance with all other values unchanged.</returns>
+    public Settings WithUnreadListLayout(string unreadListLayout)
+    {
+        return new Settings
+        {
+            Id = Id,
+            RetentionDays = RetentionDays,
+            AutoMarkReadMode = AutoMarkReadMode,
+            AutoMarkReadDelaySeconds = AutoMarkReadDelaySeconds,
+            NotificationsEnabled = NotificationsEnabled,
+            QuietHoursStart = QuietHoursStart,
+            QuietHoursEnd = QuietHoursEnd,
+            AutoRefreshEnabled = AutoRefreshEnabled,
+            RefreshIntervalMinutes = RefreshIntervalMinutes,
+            RefreshOnStartupEnabled = RefreshOnStartupEnabled,
+            UnreadSortOrder = UnreadSortOrder,
+            UnreadListLayout = unreadListLayout,
+            Theme = Theme,
+            NotificationSummaryEnabled = NotificationSummaryEnabled,
+            Language = Language,
+            DebugCollectionEnabled = DebugCollectionEnabled,
+        };
+    }
 }

@@ -325,7 +325,7 @@ public class FeedSyncService : IFeedSyncService
                 continue;
             }
 
-            var title = feedItem.Title?.Text;
+            var title = feedItem.Title?.Text?.Trim();
             var contentHtml = GetContentHtml(feedItem);
 
             if (_keywordFilter.MatchesAny(title, contentHtml, context.KeywordTexts))

@@ -154,6 +154,13 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
+    public async Task<int> GetSavedCountAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        return await SavedItemsQuery(context, categoryId).CountAsync();
+    }
+
+    /// <inheritdoc />
     public async Task<int> GetUnreadCountAsync(Guid? categoryId = null)
     {
         await using var context = await _factory.CreateDbContextAsync();
@@ -281,12 +288,10 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
+    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null)
     {
         await using var context = await _factory.CreateDbContextAsync();
-        var rows = await SelectListItemRows(context.Items
-                .AsNoTracking()
-                .Where(i => i.IsSavedForLater)
+        var rows = await SelectListItemRows(SavedItemsQuery(context, categoryId)
                 .OrderByDescending(i => i.PublishedAt)
                 .ThenBy(i => i.Id)
                 .Skip(page * pageSize)
@@ -399,13 +404,24 @@ public class ItemRepository : IItemRepository
         });
     }
 
+    private static IQueryable<ItemEntity> SavedItemsQuery(ReporterDbContext context, Guid? categoryId)
+    {
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => i.IsSavedForLater);
+
+        return categoryId.HasValue
+            ? query.Where(i => i.Feed.CategoryId == categoryId.Value)
+            : query;
+    }
+
     private ItemListItem MapToListItem(ItemListRow row, string? contentHtml, bool hasLocalImage)
     {
         return new ItemListItem
         {
             Id = row.Id,
             FeedId = row.FeedId,
-            Title = row.Title,
+            Title = row.Title.Trim(),
             Link = row.Link,
             PublishedAt = row.PublishedAt,
             IsRead = row.IsRead,

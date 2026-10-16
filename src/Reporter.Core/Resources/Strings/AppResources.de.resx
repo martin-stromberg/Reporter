@@ -644,4 +644,94 @@
   <data name="ErrorActionFailed" xml:space="preserve">
     <value>Die Aktion konnte nicht ausgeführt werden.</value>
   </data>
+  <data name="SettingsUnreadLayoutLabel" xml:space="preserve">
+    <value>Ansicht der Startseite</value>
+  </data>
+  <data name="SettingsUnreadLayoutHint" xml:space="preserve">
+    <value>Liste zum schnellen Überfliegen, Karten zum Durchwischen – Artikel für Artikel.</value>
+  </data>
+  <data name="SettingsUnreadLayoutList" xml:space="preserve">
+    <value>Liste</value>
+  </data>
+  <data name="SettingsUnreadLayoutCards" xml:space="preserve">
+    <value>Karten</value>
+  </data>
+  <data name="UnreadLayoutSwitchToCards" xml:space="preserve">
+    <value>Zur Kartenansicht wechseln</value>
+  </data>
+  <data name="UnreadLayoutSwitchToList" xml:space="preserve">
+    <value>Zur Listenansicht wechseln</value>
+  </data>
+  <data name="UnreadEmptyTitle" xml:space="preserve">
+    <value>Alles gelesen</value>
+  </data>
+  <data name="UnreadEmptySubtitle" xml:space="preserve">
+    <value>Neue Artikel erscheinen hier, sobald deine Feeds aktualisiert werden.</value>
+  </data>
+  <data name="UnreadCountFormat" xml:space="preserve">
+    <value>{0} ungelesen</value>
+  </data>
+  <data name="UnreadSyncedFormat" xml:space="preserve">
+    <value>Aktualisiert {0}</value>
+  </data>
+  <data name="UnreadSyncing" xml:space="preserve">
+    <value>Wird aktualisiert …</value>
+  </data>
+  <data name="UnreadOffline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="UnreadCardPositionFormat" xml:space="preserve">
+    <value>{0} von {1}</value>
+  </data>
+  <data name="UnreadCardSwipeHint" xml:space="preserve">
+    <value>Nach oben wischen, um als gelesen zu markieren</value>
+  </data>
+  <data name="UnreadActionRead" xml:space="preserve">
+    <value>Lesen</value>
+  </data>
+  <data name="UnreadSwipeSave" xml:space="preserve">
+    <value>Merken</value>
+  </data>
+  <data name="UnreadSwipeDone" xml:space="preserve">
+    <value>Gelesen</value>
+  </data>
+  <data name="RelativeTimeJustNow" xml:space="preserve">
+    <value>gerade eben</value>
+  </data>
+  <data name="RelativeTimeMinutes" xml:space="preserve">
+    <value>vor {0} Min.</value>
+  </data>
+  <data name="RelativeTimeHours" xml:space="preserve">
+    <value>vor {0} Std.</value>
+  </data>
+  <data name="RelativeTimeYesterday" xml:space="preserve">
+    <value>gestern</value>
+  </data>
+  <data name="RelativeTimeDays" xml:space="preserve">
+    <value>vor {0} Tagen</value>
+  </data>
+  <data name="UnreadCardPrevious" xml:space="preserve">
+    <value>Vorheriger Artikel</value>
+  </data>
+  <data name="UnreadCardNext" xml:space="preserve">
+    <value>Nächster Artikel</value>
+  </data>
+  <data name="LaterEyebrow" xml:space="preserve">
+    <value>Merkliste</value>
+  </data>
+  <data name="LaterSavedCountFormat" xml:space="preserve">
+    <value>{0} gemerkt</value>
+  </data>
+  <data name="LaterArchiveHint" xml:space="preserve">
+    <value>Gemerkte Artikel werden nie automatisch gelöscht.</value>
+  </data>
+  <data name="LaterEmptyTitle" xml:space="preserve">
+    <value>Noch nichts gemerkt</value>
+  </data>
+  <data name="LaterEmptySubtitle" xml:space="preserve">
+    <value>Wische einen Artikel nach rechts oder tippe auf das Lesezeichen, um ihn für später zu behalten.</value>
+  </data>
+  <data name="UnreadSwipeRemove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
 </root>
