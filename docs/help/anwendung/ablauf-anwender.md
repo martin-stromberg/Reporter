@@ -54,7 +54,7 @@ Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 ### 5. Artikel eines Feeds durchsehen
 
 - Tippe auf **Feeds** eine Feed-Karte an — die Detailansicht zeigt alle gespeicherten Artikel des Feeds, die neuesten zuerst; beim Weiterscrollen laden ältere Artikel automatisch nach.
-- Über das Suchfeld **„Artikel in diesem Feed suchen…"** filterst du die Liste nach Begriffen im Artikeltitel.
+- Über das Suchfeld **„Artikel in diesem Feed suchen…"** filterst du die Liste nach Begriffen im Artikeltitel und in den Schlagworten der Artikel.
 - Der Button **Aktionen** bündelt die Feed-Verwaltung: **Aktualisieren**, **Umbenennen**, **Kategorie ändern**, **Bearbeiten** (Feed-Adresse und Benachrichtigungs-Schalter) und **Löschen** — der Zurück-Pfeil führt zurück zur Übersicht.
 - Details siehe [Feeddetailansicht](feeddetailansicht.md).
 

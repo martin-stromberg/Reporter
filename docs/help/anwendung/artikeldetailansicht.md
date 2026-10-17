@@ -17,6 +17,10 @@ Tippe auf einen Artikel in der Liste (z. B. unter **Ungelesen** oder **Später**
 - **Schriftgröße/Lesemodus**: Sobald verfügbar, passt dieses Symbol die Schriftgröße im Artikelbereich an.
 - **Zurück**: Tippe auf den Zurück-Pfeil in der schwebenden Leiste oder nutze die System-Navigation, um zur vorherigen Seite zurückzukehren.
 
+## Schlagworte
+
+Liefert der Feed Schlagworte zu einem Artikel mit — etwa als Stichwortliste oder als Kategorien — erscheinen sie als schlichte Textzeile am Ende des Artikeltexts im Lesefenster. Die Zeile scrollt mit dem Inhalt mit und ist farblich schwächer vom Fließtext abgegrenzt, in Light- wie in Dark-Mode. Ohne Schlagworte entfällt die Zeile vollständig. Auch Artikel ohne gespeicherten Inhalt zeigen keine Schlagworte an — die Zeile hängt am Artikeltext, bleibt der leer, wird nichts angezeigt.
+
 ## Lesestatus
 
 Wenn **Auto-Gelesen** aktiv ist, wird der Artikel nach dem Öffnen automatisch als gelesen markiert. Zwei Bedingungen müssen erfüllt sein: Der globale Schalter **Automatisch als gelesen markieren** auf der Seite **Einstellungen** muss eingeschaltet sein, und der lokale **Auto-Gelesen**-Schalter in der Detailansicht darf für diese Sitzung nicht abgewählt worden sein. Bei ausgeschalteter globaler Option ist der lokale Schalter deaktiviert und abgedunkelt und trägt die Beschriftung *Auto-Gelesen (in den Einstellungen deaktiviert)*. Die **Verzögerung bis Markierung** (*Sofort*, *1 Sekunde*, *3 Sekunden*, *5 Sekunden*) wird ebenfalls in den Einstellungen gewählt — siehe [Einstellungen](../einstellungen/index.md). Konnten die Einstellungen nicht geladen werden, gilt ein Fallback von fünf Sekunden.

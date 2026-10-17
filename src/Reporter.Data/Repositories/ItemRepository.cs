@@ -89,6 +89,7 @@ public class ItemRepository : IItemRepository
         entity.IsRead = item.IsRead;
         entity.IsSavedForLater = item.IsSavedForLater;
         entity.ReadAt = item.ReadAt;
+        entity.Tags = SerializeTags(item.Tags);
         await context.SaveChangesAsync();
 
         await _contentStore.SetAsync(item.Id, item.ContentHtml);
@@ -256,7 +257,7 @@ public class ItemRepository : IItemRepository
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var term = searchTerm.Trim();
-            query = query.Where(i => i.Title.Contains(term));
+            query = query.Where(i => i.Title.Contains(term) || (i.Tags != null && i.Tags.Contains(term)));
         }
 
         var rows = await SelectListItemRows(query
@@ -320,6 +321,24 @@ public class ItemRepository : IItemRepository
             .Select(i => new ItemContentEntry(i.Id, i.ContentHtml, i.Image))
             .ToList();
         await _contentStore.SetRangeAsync(contentEntries);
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateTagsAsync(IReadOnlyDictionary<Guid, IReadOnlyList<string>> tagsByItemId)
+    {
+        if (tagsByItemId.Count == 0)
+        {
+            return;
+        }
+
+        await using var context = await _factory.CreateDbContextAsync();
+        foreach (var (itemId, tags) in tagsByItemId)
+        {
+            var serialized = SerializeTags(tags);
+            await context.Items
+                .Where(i => i.Id == itemId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(i => i.Tags, serialized));
+        }
     }
 
     /// <inheritdoc />
@@ -490,6 +509,7 @@ public class ItemRepository : IItemRepository
             ReadAt = entity.ReadAt,
             ContentHtml = contentHtml,
             Image = image,
+            Tags = DeserializeTags(entity.Tags),
         };
     }
 
@@ -506,7 +526,30 @@ public class ItemRepository : IItemRepository
             IsRead = model.IsRead,
             IsSavedForLater = model.IsSavedForLater,
             ReadAt = model.ReadAt,
+            Tags = SerializeTags(model.Tags),
         };
+    }
+
+    // The tag list is stored in a single text column with the ASCII unit
+    // separator (U+001F) between terms: a comma delimiter would not round-trip
+    // losslessly because a feed category name may itself contain a comma, and
+    // U+001F is not a valid XML 1.0 character, so no feed-derived tag can ever
+    // contain it — the mapping stays injective without any escaping. The
+    // delimiter cannot be typed into the search box either, so the
+    // Contains-based substring search keeps its semantics. An empty list maps
+    // to null so tag-less rows stay distinguishable and compact.
+    private const char TagSeparator = '\x1F';
+
+    private static string? SerializeTags(IReadOnlyList<string> tags)
+    {
+        return tags.Count == 0 ? null : string.Join(TagSeparator, tags);
+    }
+
+    private static IReadOnlyList<string> DeserializeTags(string? tags)
+    {
+        return string.IsNullOrWhiteSpace(tags)
+            ? []
+            : tags.Split(TagSeparator, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
     }
 
     /// <summary>
