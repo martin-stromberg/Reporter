@@ -221,6 +221,24 @@
                                   ColumnSpacing="8">
                                 <VerticalStackLayout VerticalOptions="Center"
                                                      Spacing="2">
+                                    <Label Text="{x:Static strings:AppResources.SettingsUnreadLayoutLabel}"/>
+                                    <Label Text="{x:Static strings:AppResources.SettingsUnreadLayoutHint}"
+                                           Style="{StaticResource MetaStyle}"/>
+                                </VerticalStackLayout>
+                                <Picker Grid.Column="1"
+                                        ItemsSource="{Binding UnreadLayoutOptions}"
+                                        SelectedItem="{Binding SelectedUnreadLayout}"
+                                        ItemDisplayBinding="{Binding Label}"
+                                        SemanticProperties.Description="{x:Static strings:AppResources.SettingsUnreadLayoutLabel}"
+                                        MinimumWidthRequest="44"
+                                        MinimumHeightRequest="44"
+                                        VerticalOptions="Center"
+                                        HorizontalTextAlignment="End"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <VerticalStackLayout VerticalOptions="Center"
+                                                     Spacing="2">
                                     <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadLabel}"/>
                                     <Label Text="{x:Static strings:AppResources.SettingsAutoMarkReadHint}"
                                            Style="{StaticResource MetaStyle}"/>

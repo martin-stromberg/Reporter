@@ -12,50 +12,158 @@
              x:DataType="vm:LaterViewModel"
              Title="{x:Static strings:AppResources.PageTitleLater}"
              Shell.NavBarIsVisible="False">
-    <Grid RowDefinitions="Auto,*,Auto"
-          Padding="16,8"
-          RowSpacing="12">
-        <VerticalStackLayout Spacing="8">
+    <Grid x:Name="LayoutRoot"
+          RowDefinitions="Auto,Auto,Auto,*">
+
+        <!-- ═════════ Header: Eyebrow, Display-Titel, Status, Archiv-Hinweis ═════════ -->
+        <VerticalStackLayout Grid.Row="0"
+                             Padding="20,8,16,0"
+                             Spacing="2">
+            <Grid MinimumHeightRequest="44">
+                <Label Text="{x:Static strings:AppResources.LaterEyebrow}"
+                       Style="{StaticResource EyebrowStyle}"
+                       VerticalOptions="Center"/>
+            </Grid>
+
             <Label Text="{x:Static strings:AppResources.PageTitleLater}"
-                   Style="{StaticResource HeadlineStyle}"/>
-            <Border Padding="10"
-                    StrokeShape="RoundRectangle 8"
-                    Stroke="Transparent"
-                    IsVisible="False"
-                    Background="{AppThemeBinding Light={StaticResource LightSurfaceSubtle}, Dark={StaticResource DarkSurfaceSubtle}}">
-                <Border.Triggers>
-                    <DataTrigger TargetType="Border" Binding="{Binding IsOnline}" Value="False">
-                        <Setter Property="IsVisible" Value="True"/>
-                    </DataTrigger>
-                </Border.Triggers>
-                <Label Text="{x:Static strings:AppResources.OfflineHint}"
-                       Style="{StaticResource BodySmallStyle}"
-                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
-            </Border>
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}"
-                   IsVisible="{Binding HasError}"
-                   Style="{StaticResource BodySmallStyle}"/>
+                   Style="{StaticResource DisplayTitleStyle}"
+                   SemanticProperties.HeadingLevel="Level1"
+                   Margin="0,2,0,0"/>
+
+            <HorizontalStackLayout Spacing="8"
+                                   Margin="0,6,0,0">
+                <Path Style="{StaticResource IconPathStyle}"
+                      Data="M19,21 L12,16 L5,21 L5,5 A2,2 0 0,1 7,3 L17,3 A2,2 0 0,1 19,5 Z"
+                      Scale="0.55"
+                      Margin="-6"
+                      StrokeThickness="2.4"
+                      Fill="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"
+                      Stroke="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                <Label Text="{Binding SavedCountText}"
+                       Style="{StaticResource MetaStrongStyle}"
+                       VerticalOptions="Center"/>
+                <HorizontalStackLayout Spacing="8"
+                                       IsVisible="False">
+                    <HorizontalStackLayout.Triggers>
+                        <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding IsOnline}" Value="False">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                    </HorizontalStackLayout.Triggers>
+                    <Label Text="·"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center"/>
+                    <Label Text="{x:Static strings:AppResources.UnreadOffline}"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout Spacing="8"
+                                   Margin="0,4,0,0">
+                <Path Style="{StaticResource IconPathStyle}"
+                      Data="M12,22 C12,22 20,18 20,12 L20,5 L12,2 L4,5 L4,12 C4,18 12,22 12,22 Z M9,12 L11,14 L15,10"
+                      Scale="0.55"
+                      Margin="-6"
+                      StrokeThickness="2.4"
+                      Stroke="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"/>
+                <Label Text="{x:Static strings:AppResources.LaterArchiveHint}"
+                       Style="{StaticResource MetaStyle}"
+                       TextColor="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
         </VerticalStackLayout>
 
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding SavedItems}"
-                        RemainingItemsThreshold="2"
-                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
-                        EmptyView="{x:Static strings:AppResources.PlaceholderLater}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:ItemListItem">
-                    <views:ArticleCardView ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
-                                           MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
-                                           IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <!-- ═════════ Animierte Filter-Tabs ═════════ -->
+        <views:CategoryFilterTabs Grid.Row="1"
+                                  Margin="0,14,0,4"
+                                  ItemsSource="{Binding Categories}"
+                                  IsVisible="{Binding ShowCategoryTabs}"
+                                  SelectCommand="{Binding BindingContext.SelectCategoryCommand, Source={x:Reference PageRoot}}"/>
 
-        <ActivityIndicator Grid.Row="2"
-                           IsRunning="{Binding IsLoading}"
-                           IsVisible="{Binding IsLoading}"
-                           HeightRequest="24"
-                           Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"/>
+        <!-- ═════════ Fehlerhinweis ═════════ -->
+        <Border Grid.Row="2"
+                Margin="16,4,16,0"
+                Padding="14,10"
+                StrokeThickness="0"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 14"
+                Background="{AppThemeBinding Light={StaticResource LightStatusErrorTint}, Dark={StaticResource DarkStatusErrorTint}}"
+                IsVisible="{Binding HasError}">
+            <Label Text="{Binding ErrorMessage}"
+                   Style="{StaticResource BodySmallStyle}"
+                   TextColor="{AppThemeBinding Light={StaticResource LightStatusErrorText}, Dark={StaticResource DarkStatusErrorText}}"/>
+        </Border>
+
+        <!-- ═════════ Inhalt ═════════ -->
+        <Grid Grid.Row="3">
+            <CollectionView x:Name="SavedCollection"
+                            ItemsSource="{Binding SavedItems}"
+                            RemainingItemsThreshold="4"
+                            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                <CollectionView.Header>
+                    <BoxView HeightRequest="4"
+                             Color="Transparent"
+                             BackgroundColor="Transparent"/>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:ItemListItem">
+                        <views:ArticleRowView IsSavedList="True"
+                                              ToggleSavedCommand="{Binding BindingContext.ToggleSavedCommand, Source={x:Reference PageRoot}}"
+                                              MarkReadCommand="{Binding BindingContext.MarkReadCommand, Source={x:Reference PageRoot}}"
+                                              IsOnline="{Binding BindingContext.IsOnline, Source={x:Reference PageRoot}}"/>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.Footer>
+                    <Grid Padding="0,12,0,32">
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                           IsVisible="False"
+                                           WidthRequest="22"
+                                           HeightRequest="22"
+                                           HorizontalOptions="Center">
+                            <ActivityIndicator.Triggers>
+                                <MultiTrigger TargetType="ActivityIndicator">
+                                    <MultiTrigger.Conditions>
+                                        <BindingCondition Binding="{Binding IsLoading}" Value="True"/>
+                                        <BindingCondition Binding="{Binding HasItems}" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </MultiTrigger>
+                            </ActivityIndicator.Triggers>
+                        </ActivityIndicator>
+                    </Grid>
+                </CollectionView.Footer>
+            </CollectionView>
+
+            <views:ListSkeletonView IsVisible="{Binding ShowSkeleton}"/>
+
+            <!-- Leerer Zustand -->
+            <VerticalStackLayout Padding="40,0,40,64"
+                                 Spacing="12"
+                                 VerticalOptions="Center"
+                                 InputTransparent="True"
+                                 IsVisible="{Binding ShowEmptyState}">
+                <Border WidthRequest="76"
+                        HeightRequest="76"
+                        HorizontalOptions="Center"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 38"
+                        Background="{AppThemeBinding Light={StaticResource LightCoverTint}, Dark={StaticResource DarkCoverTint}}">
+                    <Path Style="{StaticResource IconPathStyle}"
+                          Data="M19,21 L12,16 L5,21 L5,5 A2,2 0 0,1 7,3 L17,3 A2,2 0 0,1 19,5 Z"
+                          Scale="1.3"
+                          StrokeThickness="1.4"
+                          Stroke="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                </Border>
+                <Label Text="{x:Static strings:AppResources.LaterEmptyTitle}"
+                       Style="{StaticResource DisplayTitleStyle}"
+                       FontSize="32"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,8,0,0"/>
+                <Label Text="{x:Static strings:AppResources.LaterEmptySubtitle}"
+                       Style="{StaticResource RowSummaryStyle}"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+        </Grid>
     </Grid>
 </ContentPage>

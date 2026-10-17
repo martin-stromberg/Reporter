@@ -62,6 +62,7 @@ public class SettingsRepository : ISettingsRepository
         entity.RefreshIntervalMinutes = settings.RefreshIntervalMinutes;
         entity.RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled;
         entity.UnreadSortOrder = settings.UnreadSortOrder;
+        entity.UnreadListLayout = settings.UnreadListLayout;
         entity.Theme = settings.Theme;
         entity.NotificationSummaryEnabled = settings.NotificationSummaryEnabled;
         entity.Language = settings.Language;
@@ -85,6 +86,7 @@ public class SettingsRepository : ISettingsRepository
             RefreshIntervalMinutes = entity.RefreshIntervalMinutes,
             RefreshOnStartupEnabled = entity.RefreshOnStartupEnabled,
             UnreadSortOrder = entity.UnreadSortOrder,
+            UnreadListLayout = entity.UnreadListLayout,
             Theme = entity.Theme,
             NotificationSummaryEnabled = entity.NotificationSummaryEnabled,
             Language = entity.Language,

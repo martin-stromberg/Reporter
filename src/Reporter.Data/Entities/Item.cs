@@ -53,6 +53,12 @@ public class Item
     public DateTime? ReadAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the tag terms of the item joined with the ASCII unit
+    /// separator (U+001F), or <see langword="null"/> when the item has no tags.
+    /// </summary>
+    public string? Tags { get; set; }
+
+    /// <summary>
     /// Gets or sets the feed the item belongs to.
     /// </summary>
     public Feed Feed { get; set; } = null!;

@@ -360,48 +360,7 @@ public partial class ArticleDetailViewModel : BaseViewModel
         }
 
         var baseSize = _fontSizeIndex == 0 ? 19 : 22;
-        var html = $@"<!DOCTYPE html>
-<html>
-<head>
-<meta name='viewport' content='width=device-width, initial-scale=1'>
-<meta name='color-scheme' content='light dark'>
-<meta http-equiv='Content-Security-Policy' content=""default-src 'none'; style-src 'unsafe-inline'; img-src * data: blob:; font-src 'none'; script-src 'none';"" >
-<style>
-:root {{ color-scheme: light dark; }}
-body {{
-    margin: 16px;
-    font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
-    font-size: {baseSize}px;
-    line-height: 1.6;
-    color: #0f172a;
-    background-color: #ffffff;
-}}
-@media (prefers-color-scheme: dark) {{
-    body {{
-        color: #f1f5f9;
-        background-color: #0f131c;
-    }}
-    a {{ color: #4edea3; }}
-}}
-h1, h2, h3, h4, h5, h6 {{
-    font-family: 'Newsreader', Georgia, serif;
-    line-height: 1.25;
-}}
-p {{ margin: 0 0 1em 0; }}
-img {{ max-width: 100%; height: auto; border-radius: 8px; }}
-a {{ color: #0051d5; }}
-blockquote {{
-    border-left: 4px solid currentColor;
-    padding-left: 16px;
-    margin: 1em 0;
-    opacity: 0.9;
-}}
-</style>
-</head>
-<body>{content}</body>
-</html>";
-
-        HtmlSource = html;
+        HtmlSource = ArticleHtmlBuilder.Build(content, Item?.Tags ?? Array.Empty<string>(), baseSize);
     }
 
     private void OnAutoMarkReadChanged()
@@ -583,6 +542,7 @@ blockquote {{
             ContentHtml = Item.ContentHtml,
             Image = Item.Image,
             ReadAt = readAt,
+            Tags = Item.Tags,
         };
     }
 }

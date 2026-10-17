@@ -24,6 +24,7 @@ public static class TestSettingsHelper
     /// <param name="refreshOnStartupEnabled">The startup-refresh switch override, or <see langword="null"/> to keep the persisted value.</param>
     /// <param name="unreadSortOrder">The unread sort order override, or <see langword="null"/> to keep the persisted value.</param>
     /// <param name="debugCollectionEnabled">The debug collection switch override, or <see langword="null"/> to keep the persisted value.</param>
+    /// <param name="unreadListLayout">The unread list layout override, or <see langword="null"/> to keep the persisted value.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public static async Task SaveAsync(
         ISettingsRepository repository,
@@ -34,7 +35,8 @@ public static class TestSettingsHelper
         string? language = null,
         bool? refreshOnStartupEnabled = null,
         string? unreadSortOrder = null,
-        bool? debugCollectionEnabled = null)
+        bool? debugCollectionEnabled = null,
+        string? unreadListLayout = null)
     {
         var settings = await repository.GetAsync();
         await repository.SaveAsync(new Settings
@@ -51,6 +53,7 @@ public static class TestSettingsHelper
             RefreshIntervalMinutes = settings.RefreshIntervalMinutes,
             RefreshOnStartupEnabled = refreshOnStartupEnabled ?? settings.RefreshOnStartupEnabled,
             UnreadSortOrder = unreadSortOrder ?? settings.UnreadSortOrder,
+            UnreadListLayout = unreadListLayout ?? settings.UnreadListLayout,
             Theme = settings.Theme,
             Language = language ?? settings.Language,
             DebugCollectionEnabled = debugCollectionEnabled ?? settings.DebugCollectionEnabled,

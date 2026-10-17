@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             x:Name="Row"
+             x:Class="Reporter.Views.ArticleRowView"
+             x:DataType="models:ItemListItem">
+    <SwipeView x:Name="Swipe"
+               Threshold="96"
+               Margin="16,5"
+               BackgroundColor="Transparent">
+        <!-- Nach rechts wischen: merken -->
+        <SwipeView.LeftItems>
+            <SwipeItems Mode="Execute">
+                <SwipeItemView Invoked="OnSwipeSaveInvoked">
+                    <Border StrokeThickness="0"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 22"
+                            Margin="0,0,8,0"
+                            WidthRequest="104"
+                            Background="{AppThemeBinding Light={StaticResource LightSwipeSave}, Dark={StaticResource DarkSwipeSave}}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSavedList, Source={x:Reference Row}}" Value="True">
+                                <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LightPrimaryContainer}, Dark={StaticResource DarkSurfaceContainerHighest}}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <VerticalStackLayout Spacing="4"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center">
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M19,21 L12,16 L5,21 L5,5 A2,2 0 0,1 7,3 L17,3 A2,2 0 0,1 19,5 Z"
+                                  Stroke="{AppThemeBinding Light={StaticResource LightOnSwipeAction}, Dark={StaticResource DarkOnSwipeAction}}">
+                                <Path.Triggers>
+                                    <DataTrigger TargetType="Path" Binding="{Binding IsSavedList, Source={x:Reference Row}}" Value="True">
+                                        <Setter Property="Data" Value="M19,21 L12,16 L5,21 L5,5 A2,2 0 0,1 7,3 L17,3 A2,2 0 0,1 19,5 Z M9,8 L15,14 M15,8 L9,14"/>
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkTextPrimary}}"/>
+                                    </DataTrigger>
+                                </Path.Triggers>
+                            </Path>
+                            <Label Text="{x:Static strings:AppResources.UnreadSwipeSave}"
+                                   Style="{StaticResource LabelSmStyle}"
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightOnSwipeAction}, Dark={StaticResource DarkOnSwipeAction}}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSavedList, Source={x:Reference Row}}" Value="True">
+                                        <Setter Property="Text" Value="{x:Static strings:AppResources.UnreadSwipeRemove}"/>
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkTextPrimary}}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </VerticalStackLayout>
+                    </Border>
+                </SwipeItemView>
+            </SwipeItems>
+        </SwipeView.LeftItems>
+
+        <!-- Nach links wischen: gelesen -->
+        <SwipeView.RightItems>
+            <SwipeItems Mode="Execute">
+                <SwipeItemView Invoked="OnSwipeDoneInvoked">
+                    <Border StrokeThickness="0"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 22"
+                            Margin="8,0,0,0"
+                            WidthRequest="104"
+                            Background="{AppThemeBinding Light={StaticResource LightSwipeDone}, Dark={StaticResource DarkSwipeDone}}">
+                        <VerticalStackLayout Spacing="4"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center">
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M20,6 L9,17 L4,12"
+                                  Stroke="{AppThemeBinding Light={StaticResource LightOnSwipeAction}, Dark={StaticResource DarkOnSwipeAction}}"/>
+                            <Label Text="{x:Static strings:AppResources.UnreadSwipeDone}"
+                                   Style="{StaticResource LabelSmStyle}"
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightOnSwipeAction}, Dark={StaticResource DarkOnSwipeAction}}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </SwipeItemView>
+            </SwipeItems>
+        </SwipeView.RightItems>
+
+        <Border x:Name="Surface"
+                Padding="18,16,10,8"
+                StrokeShape="RoundRectangle 22"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource LightHairline}, Dark={StaticResource DarkHairline}}"
+                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto"
+                  RowSpacing="8">
+
+                <!-- Quelle · Zeit -->
+                <HorizontalStackLayout Grid.Row="0"
+                                       Grid.ColumnSpan="2"
+                                       Spacing="6"
+                                       Margin="0,0,8,0">
+                    <Ellipse WidthRequest="7"
+                             HeightRequest="7"
+                             VerticalOptions="Center"
+                             IsVisible="False"
+                             Fill="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkPrimary}}">
+                        <Ellipse.Triggers>
+                            <MultiTrigger TargetType="Ellipse">
+                                <MultiTrigger.Conditions>
+                                    <BindingCondition Binding="{Binding IsSavedList, Source={x:Reference Row}}" Value="True"/>
+                                    <BindingCondition Binding="{Binding IsRead}" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="IsVisible" Value="True"/>
+                            </MultiTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+                    <Grid WidthRequest="20"
+                          HeightRequest="20"
+                          VerticalOptions="Center">
+                        <Border StrokeThickness="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 6"
+                                Background="{AppThemeBinding Light={StaticResource LightCoverTint}, Dark={StaticResource DarkCoverTint}}">
+                            <Label Text="{Binding FeedInitial}"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="10"
+                                   FontAutoScalingEnabled="False"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                        </Border>
+                        <Border StrokeThickness="0"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 6"
+                                Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}"
+                                IsVisible="False">
+                            <Border.Triggers>
+                                <MultiTrigger TargetType="Border">
+                                    <MultiTrigger.Conditions>
+                                        <BindingCondition Binding="{Binding FeedFaviconUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                        <BindingCondition Binding="{Binding IsOnline, Source={x:Reference Row}}" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="IsVisible" Value="True"/>
+                                </MultiTrigger>
+                            </Border.Triggers>
+                            <Image Source="{Binding FeedFaviconUrl}"
+                                   Aspect="AspectFit"/>
+                        </Border>
+                    </Grid>
+                    <Label Text="{Binding FeedTitle}"
+                           Style="{StaticResource MetaStrongStyle}"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           MaximumWidthRequest="190"
+                           VerticalOptions="Center"/>
+                    <Label Text="{Binding PublishedAt, Converter={StaticResource RelativeTimeConverter}, ConverterParameter='·  '}"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <Label Grid.Row="1"
+                       Grid.Column="0"
+                       Text="{Binding Title}"
+                       Style="{StaticResource RowTitleStyle}"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="3"
+                       Margin="0,0,8,0">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsRead}" Value="True">
+                            <Setter Property="FontFamily" Value="NewsreaderMedium"/>
+                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextMuted}}"/>
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+
+                <Label Grid.Row="2"
+                       Grid.Column="0"
+                       Text="{Binding Summary}"
+                       Style="{StaticResource RowSummaryStyle}"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="2"
+                       Margin="0,0,8,0"
+                       IsVisible="{Binding Summary, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+
+                <!-- Vorschaubild: lokal gespeichertes Bild, sonst Remote-Bild nur online -->
+                <Border Grid.Row="1"
+                        Grid.RowSpan="2"
+                        Grid.Column="1"
+                        WidthRequest="84"
+                        HeightRequest="84"
+                        Margin="6,2,8,0"
+                        VerticalOptions="Start"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 16"
+                        Background="{AppThemeBinding Light={StaticResource LightCoverTint}, Dark={StaticResource DarkCoverTint}}"
+                        IsVisible="False">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding HasLocalImage}" Value="True">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                        <MultiTrigger TargetType="Border">
+                            <MultiTrigger.Conditions>
+                                <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                <BindingCondition Binding="{Binding IsOnline, Source={x:Reference Row}}" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="IsVisible" Value="True"/>
+                        </MultiTrigger>
+                    </Border.Triggers>
+                    <Grid>
+                        <Image Source="{Binding LocalImageLoader, Converter={StaticResource LocalImageLoaderToImageSourceConverter}}"
+                               AutomationId="ArticleCardThumbnail"
+                               Aspect="AspectFill"
+                               IsVisible="{Binding HasLocalImage}"/>
+                        <Image Source="{Binding ImageUrl}"
+                               Aspect="AspectFill"
+                               IsVisible="{Binding HasLocalImage, Converter={StaticResource InverseBoolConverter}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Kategorie · Lesezeit | Aktionen -->
+                <Grid Grid.Row="3"
+                      Grid.ColumnSpan="2"
+                      ColumnDefinitions="*,Auto,Auto">
+                    <HorizontalStackLayout Grid.Column="0"
+                                           Spacing="8"
+                                           VerticalOptions="Center">
+                        <Label Text="{Binding CategoryName}"
+                               Style="{StaticResource TagStyle}"
+                               VerticalOptions="Center"
+                               IsVisible="{Binding CategoryName, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+                        <HorizontalStackLayout Spacing="4"
+                                               VerticalOptions="Center"
+                                               IsVisible="{Binding ReadingTimeText, Converter={StaticResource StringNotEmptyToBoolConverter}}">
+                            <Path Style="{StaticResource IconPathStyle}"
+                                  Data="M12,2 A10,10 0 1,1 12,22 A10,10 0 1,1 12,2 Z M12,6 L12,12 L16,14"
+                                  Scale="0.6"
+                                  StrokeThickness="2.2"
+                                  Margin="-5"
+                                  Stroke="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"/>
+                            <Label Text="{Binding ReadingTimeText}"
+                                   Style="{StaticResource MetaStyle}"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <Border Grid.Column="1"
+                            Style="{StaticResource IconButtonStyle}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ArticleBookmarkSet}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSavedForLater}" Value="True">
+                                <Setter Property="SemanticProperties.Description" Value="{x:Static strings:AppResources.ArticleBookmarkRemove}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBookmarkTapped"/>
+                        </Border.GestureRecognizers>
+                        <Path x:Name="BookmarkIcon"
+                              Style="{StaticResource IconPathStyle}"
+                              Data="M19,21 L12,16 L5,21 L5,5 A2,2 0 0,1 7,3 L17,3 A2,2 0 0,1 19,5 Z"
+                              Scale="0.8"
+                              StrokeThickness="2"
+                              Stroke="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}">
+                            <Path.Triggers>
+                                <DataTrigger TargetType="Path" Binding="{Binding IsSavedForLater}" Value="True">
+                                    <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBookmarkGold}, Dark={StaticResource DarkBookmarkGold}}"/>
+                                </DataTrigger>
+                            </Path.Triggers>
+                        </Path>
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            Style="{StaticResource IconButtonStyle}"
+                            SemanticProperties.Description="{x:Static strings:AppResources.ArticleMarkAsRead}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsRead}" Value="True">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnMarkReadTapped"/>
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource IconPathStyle}"
+                              Data="M20,6 L9,17 L4,12"
+                              Scale="0.8"
+                              StrokeThickness="2"
+                              Stroke="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                    </Border>
+                </Grid>
+
+                <!-- Tippfläche: öffnet den Artikel (Screenreader: Titel + Hinweis) -->
+                <Grid Grid.Row="0"
+                      Grid.RowSpan="3"
+                      Grid.ColumnSpan="2"
+                      Background="Transparent"
+                      SemanticProperties.Description="{Binding Title}"
+                      SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityOpenArticle}">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOpenTapped"/>
+                    </Grid.GestureRecognizers>
+                </Grid>
+            </Grid>
+        </Border>
+    </SwipeView>
+</ContentView>

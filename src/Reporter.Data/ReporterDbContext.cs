@@ -114,6 +114,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.IsRead).HasColumnName("is_read");
         entity.Property(e => e.IsSavedForLater).HasColumnName("is_saved_for_later");
         entity.Property(e => e.ReadAt).HasColumnName("read_at");
+        entity.Property(e => e.Tags).HasColumnName("tags");
 
         entity.HasOne(e => e.Feed).WithMany().HasForeignKey(e => e.FeedId).IsRequired().OnDelete(DeleteBehavior.Cascade);
         entity.HasIndex(e => new { e.FeedId, e.GuidOrHash }).IsUnique();
@@ -147,6 +148,7 @@ public class ReporterDbContext : DbContext
         entity.Property(e => e.RefreshIntervalMinutes).HasColumnName("refresh_interval_minutes").IsRequired().HasDefaultValue(30);
         entity.Property(e => e.RefreshOnStartupEnabled).HasColumnName("refresh_on_startup_enabled").IsRequired().HasDefaultValue(true);
         entity.Property(e => e.UnreadSortOrder).HasColumnName("unread_sort_order").HasMaxLength(50);
+        entity.Property(e => e.UnreadListLayout).HasColumnName("unread_list_layout").HasMaxLength(50);
         entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
         entity.Property(e => e.NotificationSummaryEnabled).HasColumnName("notification_summary_enabled").IsRequired().HasDefaultValue(false);
         entity.Property(e => e.Language).HasColumnName("language").HasMaxLength(50);

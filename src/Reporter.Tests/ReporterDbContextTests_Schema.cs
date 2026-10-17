@@ -104,4 +104,28 @@ public class ReporterDbContextTests_Schema
         Assert.NotNull(messageProperty);
         Assert.Equal("last_message", messageProperty.GetColumnName());
     }
+
+    /// <summary>
+    /// Verifies that the item entity maps the <c>Tags</c> property to the
+    /// nullable <c>tags</c> column.
+    /// </summary>
+    [Fact]
+    public void Item_TagsColumn_MappedToExpectedColumn()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ReporterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        using var context = new ReporterDbContext(options);
+
+        var entityType = context.Model.FindEntityType(typeof(Reporter.Data.Entities.Item));
+        Assert.NotNull(entityType);
+        var tagsProperty = entityType.FindProperty(nameof(Reporter.Data.Entities.Item.Tags));
+        Assert.NotNull(tagsProperty);
+        Assert.Equal("tags", tagsProperty.GetColumnName());
+        Assert.True(tagsProperty.IsNullable);
+    }
 }

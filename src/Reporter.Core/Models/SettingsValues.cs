@@ -73,6 +73,27 @@ public static class SettingsValues
     public const string SortOrderAscending = "asc";
 
     /// <summary>
+    /// The unread list layout value that shows articles in a vertically scrolling list (default).
+    /// </summary>
+    public const string UnreadLayoutList = "list";
+
+    /// <summary>
+    /// The unread list layout value that shows articles as swipeable full-size cards.
+    /// </summary>
+    public const string UnreadLayoutCards = "cards";
+
+    /// <summary>
+    /// Normalizes a persisted unread list layout value; unknown or missing values fall back to
+    /// <see cref="UnreadLayoutList"/>.
+    /// </summary>
+    /// <param name="layout">The persisted layout value, or <c>null</c>.</param>
+    /// <returns><see cref="UnreadLayoutCards"/> when requested; otherwise <see cref="UnreadLayoutList"/>.</returns>
+    public static string NormalizeUnreadLayout(string? layout)
+    {
+        return layout == UnreadLayoutCards ? UnreadLayoutCards : UnreadLayoutList;
+    }
+
+    /// <summary>
     /// Determines whether the automatic mark-as-read feature is active for the given persisted mode.
     /// </summary>
     /// <param name="autoMarkReadMode">The persisted auto-mark-as-read mode, or <c>null</c>.</param>

@@ -71,6 +71,11 @@ public class Settings
     public string? UnreadSortOrder { get; set; } = SettingsValues.SortOrderDescending;
 
     /// <summary>
+    /// Gets or sets the layout of the unread articles start page ("list" or "cards").
+    /// </summary>
+    public string? UnreadListLayout { get; set; } = SettingsValues.UnreadLayoutList;
+
+    /// <summary>
     /// Gets or sets the appearance theme ("system", "light" or "dark").
     /// </summary>
     public string? Theme { get; set; } = SettingsValues.ThemeSystem;

@@ -231,6 +231,11 @@ public class FeedSyncService : IFeedSyncService
             await _contentStore.SetRangeAsync(collected.ContentBackfill).ConfigureAwait(false);
         }
 
+        if (collected.TagBackfill.Count > 0)
+        {
+            await _itemRepository.UpdateTagsAsync(collected.TagBackfill).ConfigureAwait(false);
+        }
+
         var decision = DetermineHealth(newItems, feedItems.Count, existingCount, lastPublishedAt);
         var filteredSuffix = collected.FilteredCount > 0 ? $", {collected.FilteredCount} filtered" : string.Empty;
         var message = decision.Status == FeedHealth.Warning
@@ -275,6 +280,7 @@ public class FeedSyncService : IFeedSyncService
     {
         var newItemEntities = new List<Item>();
         var contentBackfill = new List<ItemContentEntry>();
+        var tagBackfill = new Dictionary<Guid, IReadOnlyList<string>>();
         var imageCandidates = new List<(Guid ItemId, string ImageUrl)>();
         var filteredCount = 0;
         var knownKeys = new HashSet<string>(
@@ -295,6 +301,15 @@ public class FeedSyncService : IFeedSyncService
         // gespeichertes Bild bleibt das Item Kandidat beim naechsten Sync.
         var imageBackfillCandidates = context.ExistingItems
             .Where(i => !context.ImageItemIds.Contains(i.Id))
+            .GroupBy(i => i.GuidOrHash, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.Ordinal);
+
+        // Bestandsitems ohne gespeicherte Tags (alle Artikel, die vor dem
+        // Tag-Support gespeichert wurden) erhalten die Feed-Schlagworte
+        // nachgezogen — nur fehlende Werte, geaenderte Tags werden nie
+        // ueberschrieben.
+        var tagBackfillCandidates = context.ExistingItems
+            .Where(i => i.Tags.Count == 0)
             .GroupBy(i => i.GuidOrHash, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.Ordinal);
 
@@ -322,10 +337,16 @@ public class FeedSyncService : IFeedSyncService
                     imageCandidates.Add((imageItemId, backfillImageUrl));
                 }
 
+                if (tagBackfillCandidates.Remove(guidOrHash, out var tagItemId) &&
+                    ExtractTags(feedItem) is { Count: > 0 } backfillTags)
+                {
+                    tagBackfill[tagItemId] = backfillTags;
+                }
+
                 continue;
             }
 
-            var title = feedItem.Title?.Text;
+            var title = feedItem.Title?.Text?.Trim();
             var contentHtml = GetContentHtml(feedItem);
 
             if (_keywordFilter.MatchesAny(title, contentHtml, context.KeywordTexts))
@@ -345,6 +366,7 @@ public class FeedSyncService : IFeedSyncService
                 IsRead = false,
                 IsSavedForLater = false,
                 ContentHtml = contentHtml,
+                Tags = ExtractTags(feedItem),
             };
             newItemEntities.Add(newItem);
 
@@ -354,7 +376,7 @@ public class FeedSyncService : IFeedSyncService
             }
         }
 
-        return new CollectResult(newItemEntities, filteredCount, contentBackfill, imageCandidates);
+        return new CollectResult(newItemEntities, filteredCount, contentBackfill, tagBackfill, imageCandidates);
     }
 
     // Sequentielle Bild-Downloads: jeder Kandidat erhaelt ein ItemImage oder
@@ -516,6 +538,54 @@ public class FeedSyncService : IFeedSyncService
         return null;
     }
 
+    // Tag terms come from two sources: extension elements whose local name is
+    // "tags" in any namespace (e.g. <app:tags> of the WDR namespace) carry a
+    // comma-separated term list, while standardized Atom/RSS categories land
+    // in item.Categories with a single term in Name. Both are merged in
+    // document order, trimmed, emptied out and deduplicated ordinally — the
+    // first occurrence wins.
+    private static IReadOnlyList<string> ExtractTags(SyndicationItem item)
+    {
+        var tags = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var extension in item.ElementExtensions)
+        {
+            if (!string.Equals(extension.OuterName, "tags", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            using var reader = extension.GetReader();
+            reader.MoveToContent();
+            var text = reader.ReadElementContentAsString();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                continue;
+            }
+
+            foreach (var term in text.Split(','))
+            {
+                var trimmed = term.Trim();
+                if (trimmed.Length > 0 && seen.Add(trimmed))
+                {
+                    tags.Add(trimmed);
+                }
+            }
+        }
+
+        foreach (var category in item.Categories)
+        {
+            var name = category.Name?.Trim();
+            if (!string.IsNullOrEmpty(name) && seen.Add(name))
+            {
+                tags.Add(name);
+            }
+        }
+
+        return tags;
+    }
+
     private static string NormalizeGuidOrHash(SyndicationItem item, string? link, DateTime? publishedAt)
     {
         var id = item.Id;
@@ -560,17 +630,20 @@ public class FeedSyncService : IFeedSyncService
 
     /// <summary>
     /// The outcome of <see cref="CollectNewItems"/>: the new item entities, the
-    /// keyword-filtered count and the backfill work items for content and image.
+    /// keyword-filtered count and the backfill work items for content, tags
+    /// and image.
     /// </summary>
     /// <param name="NewItems">The newly created item entities.</param>
     /// <param name="FilteredCount">The number of feed items removed by the keyword filter.</param>
     /// <param name="ContentBackfill">Existing items whose stored content must be refetched.</param>
+    /// <param name="TagBackfill">Existing items without stored tags mapped to the tags found in the feed.</param>
     /// <param name="ImageCandidates">Items whose article image should be downloaded.</param>
     /// <returns>A result record carrying the outcome of <see cref="CollectNewItems"/>.</returns>
     private sealed record CollectResult(
         List<Item> NewItems,
         int FilteredCount,
         List<ItemContentEntry> ContentBackfill,
+        Dictionary<Guid, IReadOnlyList<string>> TagBackfill,
         List<(Guid ItemId, string ImageUrl)> ImageCandidates);
 
     /// <summary>

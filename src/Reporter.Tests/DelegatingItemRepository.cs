@@ -72,11 +72,18 @@ public class DelegatingItemRepository : IItemRepository
     public virtual Task<IReadOnlyList<Item>> GetByCategoryAsync(Guid categoryId) => _inner.GetByCategoryAsync(categoryId);
 
     /// <inheritdoc />
-    public virtual Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize) =>
-        _inner.GetSavedForLaterAsync(page, pageSize);
+    public virtual Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null) =>
+        _inner.GetSavedForLaterAsync(page, pageSize, categoryId);
+
+    /// <inheritdoc />
+    public virtual Task<int> GetSavedCountAsync(Guid? categoryId = null) => _inner.GetSavedCountAsync(categoryId);
 
     /// <inheritdoc />
     public virtual Task AddRangeAsync(IReadOnlyList<Item> items) => _inner.AddRangeAsync(items);
+
+    /// <inheritdoc />
+    public virtual Task UpdateTagsAsync(IReadOnlyDictionary<Guid, IReadOnlyList<string>> tagsByItemId) =>
+        _inner.UpdateTagsAsync(tagsByItemId);
 
     /// <inheritdoc />
     public virtual Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default) =>

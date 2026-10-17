@@ -89,6 +89,7 @@ public class ItemRepository : IItemRepository
         entity.IsRead = item.IsRead;
         entity.IsSavedForLater = item.IsSavedForLater;
         entity.ReadAt = item.ReadAt;
+        entity.Tags = SerializeTags(item.Tags);
         await context.SaveChangesAsync();
 
         await _contentStore.SetAsync(item.Id, item.ContentHtml);
@@ -151,6 +152,13 @@ public class ItemRepository : IItemRepository
         var contents = await GetContentsAsync(rows, r => r.Id);
         var imageItemIds = await _contentStore.GetImageIdsAsync(rows.Select(r => r.Id).ToList());
         return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id), imageItemIds.Contains(r.Id))).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetSavedCountAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        return await SavedItemsQuery(context, categoryId).CountAsync();
     }
 
     /// <inheritdoc />
@@ -249,7 +257,7 @@ public class ItemRepository : IItemRepository
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var term = searchTerm.Trim();
-            query = query.Where(i => i.Title.Contains(term));
+            query = query.Where(i => i.Title.Contains(term) || (i.Tags != null && i.Tags.Contains(term)));
         }
 
         var rows = await SelectListItemRows(query
@@ -281,12 +289,10 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
+    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null)
     {
         await using var context = await _factory.CreateDbContextAsync();
-        var rows = await SelectListItemRows(context.Items
-                .AsNoTracking()
-                .Where(i => i.IsSavedForLater)
+        var rows = await SelectListItemRows(SavedItemsQuery(context, categoryId)
                 .OrderByDescending(i => i.PublishedAt)
                 .ThenBy(i => i.Id)
                 .Skip(page * pageSize)
@@ -315,6 +321,24 @@ public class ItemRepository : IItemRepository
             .Select(i => new ItemContentEntry(i.Id, i.ContentHtml, i.Image))
             .ToList();
         await _contentStore.SetRangeAsync(contentEntries);
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateTagsAsync(IReadOnlyDictionary<Guid, IReadOnlyList<string>> tagsByItemId)
+    {
+        if (tagsByItemId.Count == 0)
+        {
+            return;
+        }
+
+        await using var context = await _factory.CreateDbContextAsync();
+        foreach (var (itemId, tags) in tagsByItemId)
+        {
+            var serialized = SerializeTags(tags);
+            await context.Items
+                .Where(i => i.Id == itemId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(i => i.Tags, serialized));
+        }
     }
 
     /// <inheritdoc />
@@ -399,13 +423,24 @@ public class ItemRepository : IItemRepository
         });
     }
 
+    private static IQueryable<ItemEntity> SavedItemsQuery(ReporterDbContext context, Guid? categoryId)
+    {
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => i.IsSavedForLater);
+
+        return categoryId.HasValue
+            ? query.Where(i => i.Feed.CategoryId == categoryId.Value)
+            : query;
+    }
+
     private ItemListItem MapToListItem(ItemListRow row, string? contentHtml, bool hasLocalImage)
     {
         return new ItemListItem
         {
             Id = row.Id,
             FeedId = row.FeedId,
-            Title = row.Title,
+            Title = row.Title.Trim(),
             Link = row.Link,
             PublishedAt = row.PublishedAt,
             IsRead = row.IsRead,
@@ -474,6 +509,7 @@ public class ItemRepository : IItemRepository
             ReadAt = entity.ReadAt,
             ContentHtml = contentHtml,
             Image = image,
+            Tags = DeserializeTags(entity.Tags),
         };
     }
 
@@ -490,7 +526,30 @@ public class ItemRepository : IItemRepository
             IsRead = model.IsRead,
             IsSavedForLater = model.IsSavedForLater,
             ReadAt = model.ReadAt,
+            Tags = SerializeTags(model.Tags),
         };
+    }
+
+    // The tag list is stored in a single text column with the ASCII unit
+    // separator (U+001F) between terms: a comma delimiter would not round-trip
+    // losslessly because a feed category name may itself contain a comma, and
+    // U+001F is not a valid XML 1.0 character, so no feed-derived tag can ever
+    // contain it — the mapping stays injective without any escaping. The
+    // delimiter cannot be typed into the search box either, so the
+    // Contains-based substring search keeps its semantics. An empty list maps
+    // to null so tag-less rows stay distinguishable and compact.
+    private const char TagSeparator = '\x1F';
+
+    private static string? SerializeTags(IReadOnlyList<string> tags)
+    {
+        return tags.Count == 0 ? null : string.Join(TagSeparator, tags);
+    }
+
+    private static IReadOnlyList<string> DeserializeTags(string? tags)
+    {
+        return string.IsNullOrWhiteSpace(tags)
+            ? []
+            : tags.Split(TagSeparator, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
     }
 
     /// <summary>
