@@ -180,6 +180,10 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("read_at");
 
+                    b.Property<string>("Tags")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("tags");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(500)

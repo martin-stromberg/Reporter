@@ -15,15 +15,16 @@ Branch: `task/issue-128-0a6a02d653d94dd6a3c66d5143526e5e-unterstuetzung-von-tags
 | [x] | 5a | Offene Punkte prüfen und ggf. Planung wiederholen | `plan.md` (aktualisiert) |
 | [x] | 5b | Plan gegen Anforderung und Testbedarf prüfen (Unteragent) | `plan-check.md` |
 | [x] | 5c | Planungscommit | – |
-| [ ] | 6 | Implementierung (Unteragent) | Codeänderungen |
-| [ ] | 7 | Plan-Review (Unteragent, bedingt) | `review.md` |
-| [ ] | 8 | Usability-Review (Unteragent, bei UI-Änderungen) | `review-usability.md` |
-| [ ] | 9 | Code-Review (Unteragent) | `review-code.md` |
-| [ ] | 10 | Tests ausführen (Unteragent) | `test-results.md` |
-| [ ] | – | Iteration oder Abschluss entscheiden | – |
-| [ ] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
-| [ ] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
-| [ ] | 12b | README aktualisieren (Unteragent) | `README.md` |
-| [ ] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
+| [x] | 6 | Implementierung (Unteragent) | Codeänderungen |
+| [x] | 7 | Plan-Review (Unteragent, bedingt) | `review.md` |
+| [x] | 8 | Usability-Review (Unteragent, bei UI-Änderungen) | `review-usability.md` |
+| [x] | 9 | Code-Review (Unteragent) | `review-code.md` |
+| [x] | 10 | Tests ausführen (Unteragent) | `test-results.md` |
+| [x] | – | Iteration oder Abschluss entscheiden (3 Iterationen, Abbruch) | – |
+| [x] | 11 | Folgeaufgaben dokumentieren (bei Schleifenabbruch) | `continue.md` |
+| [x] | 12 | Dokumentation erstellen (Unteragent) | `docs/help/` |
+| [x] | 12b | README aktualisieren (Unteragent) | `README.md` |
+| [x] | 12c | Release Notes aktualisieren (Unteragent) | `docs/RELEASE_NOTES.md` |
+| [ ] | 13 | Nacharbeiten abschließen (offene Punkte aus `continue.md` — vom Anwender auf Folge-Branch nach Merge verlegt) | `continue-done.md` |
 | [ ] | – | Feature-Verzeichnis löschen | – |
 | [ ] | – | Commit durchführen | – |

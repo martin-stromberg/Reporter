@@ -82,6 +82,10 @@ public class DelegatingItemRepository : IItemRepository
     public virtual Task AddRangeAsync(IReadOnlyList<Item> items) => _inner.AddRangeAsync(items);
 
     /// <inheritdoc />
+    public virtual Task UpdateTagsAsync(IReadOnlyDictionary<Guid, IReadOnlyList<string>> tagsByItemId) =>
+        _inner.UpdateTagsAsync(tagsByItemId);
+
+    /// <inheritdoc />
     public virtual Task<int> DeleteExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default) =>
         _inner.DeleteExpiredAsync(cutoff, cancellationToken);
 

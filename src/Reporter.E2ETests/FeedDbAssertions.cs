@@ -119,6 +119,53 @@ public static class FeedDbAssertions
     }
 
     /// <summary>
+    /// Polls the <c>items.tags</c> column of the row with the given title
+    /// until it contains the tag fragment or the timeout elapses. Mirrors the
+    /// polling structure of <see cref="FeedExistsAsync"/> with a two-parameter
+    /// core like <see cref="KeywordExistsForFeedAsync"/>.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="title">The item title to look for.</param>
+    /// <param name="tagFragment">The tag fragment expected inside the stored tag list.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether the item's tags column contains the fragment.</returns>
+    public static Task<bool> ItemTagsContainAsync(
+        string databasePath,
+        string title,
+        string tagFragment,
+        TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => ItemTagsContainCoreAsync(path, title, tagFragment));
+
+    // Runs the read-only tag check with both the item title and the expected
+    // tag fragment as parameters — ExistsCoreAsync only covers
+    // single-parameter queries, so the two-column match needs its own core.
+    // instr() avoids LIKE wildcard escaping on arbitrary tag text.
+    private static async Task<bool> ItemTagsContainCoreAsync(
+        string databasePath,
+        string title,
+        string tagFragment)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return false;
+        }
+
+        await using var connection = CreateReadOnlyConnection(databasePath);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT COUNT(*) FROM items " +
+            "WHERE title = $title AND tags IS NOT NULL AND instr(tags, $tag) > 0";
+        command.Parameters.AddWithValue("$title", title);
+        command.Parameters.AddWithValue("$tag", tagFragment);
+        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        return result is long count && count > 0;
+    }
+
+    /// <summary>
     /// Polls until the item with the given title (looked up in
     /// <paramref name="databasePath"/>) has a non-empty <c>image_data</c> row in
     /// the separate <c>item_contents</c> table of

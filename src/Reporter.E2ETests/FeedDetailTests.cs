@@ -281,6 +281,35 @@ public sealed class FeedDetailTests : IDisposable
     }
 
     /// <summary>
+    /// The article search on the detail page also matches stored tags: the
+    /// tagged article of the tag-feed fixture stays found while the untagged
+    /// article of the same feed disappears.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "E2E")]
+    public void FeedDetail_Search_FiltersByTag()
+    {
+        _page.AddFeedViaUi("tag-feed");
+        SyncAllViaUnreadTab();
+        _page.OpenFeedDetail("Stub Feed tag-feed");
+        _page.WaitForCard("tag-feed tagged article", TimeSpan.FromSeconds(10));
+        _page.WaitForCard("tag-feed plain article", TimeSpan.FromSeconds(10));
+
+        var searchBar = UiRetry.WaitForElement(
+            Window,
+            cf => cf.ByAutomationId("FeedDetailSearchBar").Or(cf.ByName(AppResources.PlaceholderFeedDetailSearch)),
+            description: "feed detail search bar");
+        UiRetry.SetText(searchBar, "Stadtbahnen");
+
+        _page.WaitForCard("tag-feed tagged article", TimeSpan.FromSeconds(10));
+        Assert.True(
+            UiRetry.WaitFor(
+                () => UiRetry.TryFindElementByName(Window, "tag-feed plain article", timeout: TimeSpan.FromMilliseconds(500)) is null,
+                TimeSpan.FromSeconds(5)),
+            "The untagged article is still visible after filtering by a tag term.");
+    }
+
+    /// <summary>
     /// The detail action sheet offers "Rename"; the prompt accepts a new title
     /// and both the detail header and the feed card show it afterwards.
     /// Replaces the former <c>SmokeTests.FeedActionSheet_Rename_UpdatesTitle</c>.
