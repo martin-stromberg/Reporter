@@ -397,7 +397,6 @@ public sealed class FeedDetailTests : IDisposable
             "E2E-Kategorie mit einem bewusst sehr langen Namen für den Zeilenumbruch";
         AddCategoryViaUi(categoryName);
         var title = _page.AddFeedViaUi("meta-wrap-target");
-        SyncAllViaUnreadTab();
         _page.OpenFeedDetail(title);
         _page.OpenFeedDetailActions(AppResources.ButtonChangeCategory);
         var changeCategory = _page.WaitForElementInScopeByName(AppResources.ButtonChangeCategory);
