@@ -556,7 +556,9 @@ public class FeedSyncService : IFeedSyncService
                 continue;
             }
 
-            var text = extension.GetObject<System.Xml.Linq.XElement>()?.Value;
+            using var reader = extension.GetReader();
+            reader.MoveToContent();
+            var text = reader.ReadElementContentAsString();
             if (string.IsNullOrWhiteSpace(text))
             {
                 continue;
