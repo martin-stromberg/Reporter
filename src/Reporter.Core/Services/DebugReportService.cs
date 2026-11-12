@@ -173,6 +173,7 @@ public class DebugReportService : IDebugReportService
         builder.AppendLine(CultureInfo.InvariantCulture, $"RefreshIntervalMinutes: {settings.RefreshIntervalMinutes}");
         builder.AppendLine(CultureInfo.InvariantCulture, $"RefreshOnStartupEnabled: {settings.RefreshOnStartupEnabled}");
         builder.AppendLine(CultureInfo.InvariantCulture, $"UnreadSortOrder: {settings.UnreadSortOrder}");
+        builder.AppendLine(CultureInfo.InvariantCulture, $"UnreadListLayout: {settings.UnreadListLayout}");
         builder.AppendLine(CultureInfo.InvariantCulture, $"Theme: {settings.Theme}");
         builder.AppendLine(CultureInfo.InvariantCulture, $"Language: {settings.Language}");
         builder.AppendLine(CultureInfo.InvariantCulture, $"DebugCollectionEnabled: {settings.DebugCollectionEnabled}");

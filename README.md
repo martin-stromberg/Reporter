@@ -1,5 +1,4 @@
 <!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
-
 # Reporter
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
@@ -20,10 +19,12 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 ## Features
 
 - Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
+- Die Startseite **Ungelesen** lädt ungelesene Artikel tageweise als **Lesepaket**: Beim Laden werden nur die Artikel eines Kalendertags angezeigt — bei weniger als fünf Artikeln zusätzlich die des nächsten belegten Tags; Artikel ohne Veröffentlichungsdatum bilden ein eigenes Paket. Der Doppelhaken **Paket gelesen** markiert nur das aktuelle Paket, danach lädt die Seite automatisch das nächste
 - RSS-/Atom-Feed-Abruf (RSS 2.0, Atom 1.0 und Atom 0.3) mit Feed-Health-Status und Sync-Protokoll
 - Feeds über eine Website-Adresse finden (feedsearch.dev plus Autodiscovery) oder direkt per Feed-URL hinzufügen
 - Feeddetailansicht je Feed: Ein Tap auf eine Feed-Karte zeigt alle Artikel des Feeds — gelesen wie ungelesen — als suchbare Liste mit Infinite Scroll; hinter dem **Aktionen**-Button liegt die Feed-Verwaltung (Aktualisieren, Umbenennen, Kategorie ändern, Bearbeiten, „Meldung anzeigen" für den Grund des Status Fehler oder Warnung, Löschen)
 - Artikeldetailansicht mit dem vom Feed gelieferten Artikeltext (bei vielen Feeds nur ein Teaser; der Originalbeitrag lässt sich über „Im Browser öffnen" aufrufen), automatischem Gelesen-Markieren, „Für später bewahren", Teilen und Öffnen im Browser — externe Links im Artikeltext werden an den System-Browser übergeben
+- Artikel-Schlagworte (Tags) aus Feed-Kategorien und Feed-Erweiterungselementen werden beim Abruf am Artikel gespeichert — in der Artikeldetailansicht erscheinen sie als abgeschwächte Zeile am Ende des Artikeltexts, und die Artikelsuche der Feeddetailansicht findet sie zusätzlich zum Titel; bereits gespeicherte Artikel erhalten ihre Schlagworte beim nächsten Abruf nachgezogen, solange der Feed sie noch ausliefert
 - Kategoriefilter, Keyword-Blacklist beim Feed-Abruf und konfigurierbare Sortierung der ungelesenen Artikel — der Schlagwort-Filter lässt sich global in den Einstellungen und ergänzend pro Feed im Formular „Feed bearbeiten" pflegen; beide Listen wirken gemeinsam beim Abruf, bei Benachrichtigungen und bei der Bestandsbereinigung
 - Automatische Hintergrund-Aktualisierung (In-App-Timer; unter iOS zusätzlich OS-Hintergrundabruf) und lokale iOS-Benachrichtigungen mit Ruhezeiten
 - Synchronisierte Artikeltexte offline lesbar dank lokaler SQLite-Datenhaltung — das Artikelbild wird beim Feed-Abruf lokal gespeichert und bleibt auf den Artikelkarten und in der Detailansicht auch offline sichtbar (Originalbeiträge, Links und weitere Inline-Bilder benötigen eine Verbindung); unter iOS sind die Nutzerdaten (Abonnements, Einstellungen, Lesestatus) im iCloud-Backup enthalten, während die re-downloadbaren Artikelinhalte und -bilder in einer separaten, ausgeschlossenen Datei liegen und nach einer Wiederherstellung automatisch nachgeladen werden

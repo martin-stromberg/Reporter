@@ -45,6 +45,7 @@ public partial class SettingsViewModel : ObservableObject
     private RefreshIntervalOption? _selectedRefreshInterval;
     private bool _refreshOnStartupEnabled = true;
     private SortOrderOption? _selectedSortOrder;
+    private UnreadLayoutOption? _selectedUnreadLayout;
     private bool _autoMarkReadEnabled = true;
     private AutoMarkReadDelayOption? _selectedAutoMarkReadDelay;
     private bool _notificationsEnabled = true;
@@ -131,6 +132,11 @@ public partial class SettingsViewModel : ObservableObject
             new() { Value = SettingsValues.SortOrderDescending, Label = AppResources.SettingsSortOrderNewest },
             new() { Value = SettingsValues.SortOrderAscending, Label = AppResources.SettingsSortOrderOldest },
         };
+        UnreadLayoutOptions = new List<UnreadLayoutOption>
+        {
+            new() { Value = SettingsValues.UnreadLayoutList, Label = AppResources.SettingsUnreadLayoutList },
+            new() { Value = SettingsValues.UnreadLayoutCards, Label = AppResources.SettingsUnreadLayoutCards },
+        };
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         AddKeywordCommand = new AsyncRelayCommand(AddKeywordAsync);
@@ -201,6 +207,11 @@ public partial class SettingsViewModel : ObservableObject
     /// Gets the selectable sort order options for the unread articles list.
     /// </summary>
     public IReadOnlyList<SortOrderOption> SortOrderOptions { get; }
+
+    /// <summary>
+    /// Gets the available layouts of the unread articles start page.
+    /// </summary>
+    public IReadOnlyList<UnreadLayoutOption> UnreadLayoutOptions { get; }
 
     /// <summary>
     /// Gets or sets the page title.
@@ -317,6 +328,21 @@ public partial class SettingsViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _selectedSortOrder, value))
+            {
+                PersistOnChange();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the selected layout option of the unread articles start page.
+    /// </summary>
+    public UnreadLayoutOption? SelectedUnreadLayout
+    {
+        get => _selectedUnreadLayout;
+        set
+        {
+            if (SetProperty(ref _selectedUnreadLayout, value))
             {
                 PersistOnChange();
             }
@@ -641,6 +667,8 @@ public partial class SettingsViewModel : ObservableObject
             RefreshOnStartupEnabled = settings.RefreshOnStartupEnabled;
             SelectedSortOrder = SortOrderOptions.FirstOrDefault(o => o.Value == settings.UnreadSortOrder)
                 ?? SortOrderOptions.First(o => o.Value == SettingsValues.SortOrderDescending);
+            var unreadLayout = SettingsValues.NormalizeUnreadLayout(settings.UnreadListLayout);
+            SelectedUnreadLayout = UnreadLayoutOptions.First(o => o.Value == unreadLayout);
             AutoMarkReadEnabled = SettingsValues.IsAutoMarkReadEnabled(settings.AutoMarkReadMode);
             SelectedAutoMarkReadDelay = AutoMarkReadDelayOptions.FirstOrDefault(o => o.Seconds == settings.AutoMarkReadDelaySeconds)
                 ?? AutoMarkReadDelayOptions.First(o => o.Seconds == DefaultAutoMarkReadDelaySeconds);
@@ -828,6 +856,7 @@ public partial class SettingsViewModel : ObservableObject
                 RefreshIntervalMinutes = SelectedRefreshInterval?.Minutes ?? DefaultRefreshIntervalMinutes,
                 RefreshOnStartupEnabled = RefreshOnStartupEnabled,
                 UnreadSortOrder = SelectedSortOrder?.Value ?? SettingsValues.SortOrderDescending,
+                UnreadListLayout = SelectedUnreadLayout?.Value ?? SettingsValues.UnreadLayoutList,
                 Theme = SelectedTheme?.Value ?? SettingsValues.ThemeSystem,
                 Language = SelectedLanguage?.Value ?? SettingsValues.LanguageSystem,
                 DebugCollectionEnabled = DebugCollectionEnabled,

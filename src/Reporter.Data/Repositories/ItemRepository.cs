@@ -15,6 +15,12 @@ namespace Reporter.Data.Repositories;
 /// </summary>
 public class ItemRepository : IItemRepository
 {
+    /// <summary>
+    /// The minimum number of unread articles on the anchor day; below this
+    /// threshold the packet expands to the next occupied calendar day.
+    /// </summary>
+    public const int MinPacketSize = 5;
+
     private readonly IDbContextFactory<ReporterDbContext> _factory;
     private readonly IItemContentStore _contentStore;
 
@@ -89,6 +95,7 @@ public class ItemRepository : IItemRepository
         entity.IsRead = item.IsRead;
         entity.IsSavedForLater = item.IsSavedForLater;
         entity.ReadAt = item.ReadAt;
+        entity.Tags = SerializeTags(item.Tags);
         await context.SaveChangesAsync();
 
         await _contentStore.SetAsync(item.Id, item.ContentHtml);
@@ -123,7 +130,7 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
+    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false, UnreadPacket? packet = null)
     {
         await using var context = await _factory.CreateDbContextAsync();
         var query = context.Items
@@ -139,6 +146,11 @@ public class ItemRepository : IItemRepository
             query = query.Where(i => feedIds.Contains(i.FeedId));
         }
 
+        if (packet is not null)
+        {
+            query = query.Where(PacketMatches(packet));
+        }
+
         var ordered = ascending
             ? query.OrderBy(i => i.PublishedAt).ThenByDescending(i => i.Id)
             : query.OrderByDescending(i => i.PublishedAt).ThenBy(i => i.Id);
@@ -151,6 +163,13 @@ public class ItemRepository : IItemRepository
         var contents = await GetContentsAsync(rows, r => r.Id);
         var imageItemIds = await _contentStore.GetImageIdsAsync(rows.Select(r => r.Id).ToList());
         return rows.Select(r => MapToListItem(r, contents.GetValueOrDefault(r.Id), imageItemIds.Contains(r.Id))).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetSavedCountAsync(Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        return await SavedItemsQuery(context, categoryId).CountAsync();
     }
 
     /// <inheritdoc />
@@ -178,6 +197,188 @@ public class ItemRepository : IItemRepository
     {
         await using var context = await _factory.CreateDbContextAsync();
         var query = context.Items.Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        await query.ExecuteUpdateAsync(setters => setters
+            .SetProperty(i => i.IsRead, true)
+            .SetProperty(i => i.ReadAt, DateTime.UtcNow));
+    }
+
+    /// <inheritdoc />
+    public async Task<UnreadPacket?> ResolveUnreadPacketAsync(Guid? categoryId = null, bool ascending = false)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        if (!await query.AnyAsync())
+        {
+            return null;
+        }
+
+        // The anchor is the first element in the active sort order — the same
+        // ordering the paged list query uses, so the packet always covers what
+        // the list shows first.
+        var anchorPublishedAt = ascending
+            ? await query
+                .OrderBy(i => i.PublishedAt)
+                .ThenByDescending(i => i.Id)
+                .Select(i => i.PublishedAt)
+                .FirstAsync()
+            : await query
+                .OrderByDescending(i => i.PublishedAt)
+                .ThenBy(i => i.Id)
+                .Select(i => i.PublishedAt)
+                .FirstAsync();
+
+        if (anchorPublishedAt is null)
+        {
+            return await ResolveUndatedAnchorPacketAsync(query, ascending);
+        }
+
+        return await ResolveDatedAnchorPacketAsync(query, anchorPublishedAt.Value, ascending);
+    }
+
+    // Undated anchor: the pseudo day sorts first in ascending and last in
+    // descending order — a descending undated anchor therefore means no dated
+    // unread items exist at all.
+    private async Task<UnreadPacket> ResolveUndatedAnchorPacketAsync(IQueryable<ItemEntity> query, bool ascending)
+    {
+        var days = new List<DateOnly?> { null };
+        DateTime? fromUtc = null;
+        DateTime? toUtc = null;
+
+        var undatedCount = await query.CountAsync(i => i.PublishedAt == null);
+        if (ascending && undatedCount < MinPacketSize)
+        {
+            var followPublishedAt = await query
+                .Where(i => i.PublishedAt != null)
+                .OrderBy(i => i.PublishedAt)
+                .ThenByDescending(i => i.Id)
+                .Select(i => i.PublishedAt)
+                .FirstOrDefaultAsync();
+            if (followPublishedAt.HasValue)
+            {
+                var followDay = LocalDayOf(followPublishedAt.Value);
+                days.Add(followDay);
+                (fromUtc, toUtc) = DayBoundsUtc(followDay);
+            }
+        }
+
+        return new UnreadPacket
+        {
+            FromUtc = fromUtc,
+            ToUtc = toUtc,
+            IncludeUndated = true,
+            Days = days,
+        };
+    }
+
+    // Dated anchor: the anchor day extends to the next occupied day in sort
+    // direction when it holds fewer than MinPacketSize unread articles — in
+    // descending order the undated pseudo day counts as that follow day.
+    private async Task<UnreadPacket> ResolveDatedAnchorPacketAsync(IQueryable<ItemEntity> query, DateTime anchorPublishedAt, bool ascending)
+    {
+        var anchorDay = LocalDayOf(anchorPublishedAt);
+        var (fromUtc, toUtc) = DayBoundsUtc(anchorDay);
+        var days = new List<DateOnly?> { anchorDay };
+        var includeUndated = false;
+
+        var anchorCount = await query.CountAsync(i => i.PublishedAt >= fromUtc && i.PublishedAt < toUtc);
+        if (anchorCount < MinPacketSize)
+        {
+            DateTime? followPublishedAt;
+            if (ascending)
+            {
+                followPublishedAt = await query
+                    .Where(i => i.PublishedAt >= toUtc)
+                    .OrderBy(i => i.PublishedAt)
+                    .ThenByDescending(i => i.Id)
+                    .Select(i => i.PublishedAt)
+                    .FirstOrDefaultAsync();
+                if (followPublishedAt.HasValue)
+                {
+                    var followDay = LocalDayOf(followPublishedAt.Value);
+                    days.Add(followDay);
+                    toUtc = DayBoundsUtc(followDay).ToUtc;
+                }
+            }
+            else
+            {
+                followPublishedAt = await query
+                    .Where(i => i.PublishedAt < fromUtc)
+                    .OrderByDescending(i => i.PublishedAt)
+                    .ThenBy(i => i.Id)
+                    .Select(i => i.PublishedAt)
+                    .FirstOrDefaultAsync();
+                if (followPublishedAt.HasValue)
+                {
+                    var followDay = LocalDayOf(followPublishedAt.Value);
+                    days.Add(followDay);
+                    fromUtc = DayBoundsUtc(followDay).FromUtc;
+                }
+                else if (await query.AnyAsync(i => i.PublishedAt == null))
+                {
+                    days.Add(null);
+                    includeUndated = true;
+                }
+            }
+        }
+
+        return new UnreadPacket
+        {
+            FromUtc = fromUtc,
+            ToUtc = toUtc,
+            IncludeUndated = includeUndated,
+            Days = days,
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetUnreadPacketCountAsync(UnreadPacket packet, Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead)
+            .Where(PacketMatches(packet));
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        return await query.CountAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkUnreadPacketAsReadAsync(UnreadPacket packet, Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .Where(i => !i.IsRead)
+            .Where(PacketMatches(packet));
 
         if (categoryId.HasValue)
         {
@@ -249,7 +450,7 @@ public class ItemRepository : IItemRepository
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var term = searchTerm.Trim();
-            query = query.Where(i => i.Title.Contains(term));
+            query = query.Where(i => i.Title.Contains(term) || (i.Tags != null && i.Tags.Contains(term)));
         }
 
         var rows = await SelectListItemRows(query
@@ -281,12 +482,10 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize)
+    public async Task<IReadOnlyList<ItemListItem>> GetSavedForLaterAsync(int page, int pageSize, Guid? categoryId = null)
     {
         await using var context = await _factory.CreateDbContextAsync();
-        var rows = await SelectListItemRows(context.Items
-                .AsNoTracking()
-                .Where(i => i.IsSavedForLater)
+        var rows = await SelectListItemRows(SavedItemsQuery(context, categoryId)
                 .OrderByDescending(i => i.PublishedAt)
                 .ThenBy(i => i.Id)
                 .Skip(page * pageSize)
@@ -315,6 +514,24 @@ public class ItemRepository : IItemRepository
             .Select(i => new ItemContentEntry(i.Id, i.ContentHtml, i.Image))
             .ToList();
         await _contentStore.SetRangeAsync(contentEntries);
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateTagsAsync(IReadOnlyDictionary<Guid, IReadOnlyList<string>> tagsByItemId)
+    {
+        if (tagsByItemId.Count == 0)
+        {
+            return;
+        }
+
+        await using var context = await _factory.CreateDbContextAsync();
+        foreach (var (itemId, tags) in tagsByItemId)
+        {
+            var serialized = SerializeTags(tags);
+            await context.Items
+                .Where(i => i.Id == itemId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(i => i.Tags, serialized));
+        }
     }
 
     /// <inheritdoc />
@@ -375,6 +592,48 @@ public class ItemRepository : IItemRepository
             .ToListAsync(cancellationToken);
     }
 
+    // Shared packet predicate for the read, count and mark paths so "mark all
+    // read" covers exactly the range the packet makes theoretically visible:
+    // the half-open UTC window, or the undated pseudo day, or both. A packet
+    // without range bounds covers undated items only; a half-open packet is
+    // invalid and is rejected instead of silently degrading into a wrong
+    // predicate for the destructive mark path.
+    private static System.Linq.Expressions.Expression<Func<ItemEntity, bool>> PacketMatches(UnreadPacket packet)
+    {
+        var from = packet.FromUtc;
+        var to = packet.ToUtc;
+        if (from.HasValue != to.HasValue)
+        {
+            throw new ArgumentException(
+                $"An unread packet must set either both range bounds or none ({nameof(UnreadPacket.FromUtc)}/{nameof(UnreadPacket.ToUtc)}).",
+                nameof(packet));
+        }
+
+        if (from.HasValue && to.HasValue)
+        {
+            return packet.IncludeUndated
+                ? i => (i.PublishedAt >= from && i.PublishedAt < to) || i.PublishedAt == null
+                : i => i.PublishedAt >= from && i.PublishedAt < to;
+        }
+
+        return packet.IncludeUndated
+            ? i => i.PublishedAt == null
+            : i => false;
+    }
+
+    // Local calendar day of a UTC timestamp: stored PublishedAt values are UTC,
+    // while the packet days are defined by the device's local time.
+    private static DateOnly LocalDayOf(DateTime utc)
+        => DateOnly.FromDateTime(DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime().Date);
+
+    // UTC bounds of a local calendar day: [day start, next day start).
+    private static (DateTime FromUtc, DateTime ToUtc) DayBoundsUtc(DateOnly day)
+    {
+        var from = DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue), DateTimeKind.Local).ToUniversalTime();
+        var to = DateTime.SpecifyKind(day.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Local).ToUniversalTime();
+        return (from, to);
+    }
+
     /// <summary>
     /// Projects item entities including feed and category data into flat list rows.
     /// Shared by the unread and saved-for-later paged queries.
@@ -399,13 +658,24 @@ public class ItemRepository : IItemRepository
         });
     }
 
+    private static IQueryable<ItemEntity> SavedItemsQuery(ReporterDbContext context, Guid? categoryId)
+    {
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => i.IsSavedForLater);
+
+        return categoryId.HasValue
+            ? query.Where(i => i.Feed.CategoryId == categoryId.Value)
+            : query;
+    }
+
     private ItemListItem MapToListItem(ItemListRow row, string? contentHtml, bool hasLocalImage)
     {
         return new ItemListItem
         {
             Id = row.Id,
             FeedId = row.FeedId,
-            Title = row.Title,
+            Title = row.Title.Trim(),
             Link = row.Link,
             PublishedAt = row.PublishedAt,
             IsRead = row.IsRead,
@@ -474,6 +744,7 @@ public class ItemRepository : IItemRepository
             ReadAt = entity.ReadAt,
             ContentHtml = contentHtml,
             Image = image,
+            Tags = DeserializeTags(entity.Tags),
         };
     }
 
@@ -490,7 +761,30 @@ public class ItemRepository : IItemRepository
             IsRead = model.IsRead,
             IsSavedForLater = model.IsSavedForLater,
             ReadAt = model.ReadAt,
+            Tags = SerializeTags(model.Tags),
         };
+    }
+
+    // The tag list is stored in a single text column with the ASCII unit
+    // separator (U+001F) between terms: a comma delimiter would not round-trip
+    // losslessly because a feed category name may itself contain a comma, and
+    // U+001F is not a valid XML 1.0 character, so no feed-derived tag can ever
+    // contain it — the mapping stays injective without any escaping. The
+    // delimiter cannot be typed into the search box either, so the
+    // Contains-based substring search keeps its semantics. An empty list maps
+    // to null so tag-less rows stay distinguishable and compact.
+    private const char TagSeparator = '\x1F';
+
+    private static string? SerializeTags(IReadOnlyList<string> tags)
+    {
+        return tags.Count == 0 ? null : string.Join(TagSeparator, tags);
+    }
+
+    private static IReadOnlyList<string> DeserializeTags(string? tags)
+    {
+        return string.IsNullOrWhiteSpace(tags)
+            ? []
+            : tags.Split(TagSeparator, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
     }
 
     /// <summary>

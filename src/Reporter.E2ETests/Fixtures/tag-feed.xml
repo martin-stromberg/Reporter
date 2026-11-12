@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<rss version="2.0" xmlns:app="http://www.wdr.de/rss/1.0/modules/app/1.0/">
+  <channel>
+    <title>Stub Feed {name}</title>
+    <link>http://127.0.0.1/{name}</link>
+    <description>Stub feed with tag extension elements served by the E2E test web server.</description>
+    <item>
+      <title>{name} tagged article</title>
+      <link>http://127.0.0.1/articles/{name}-tagged</link>
+      <description>Article text of the tagged article.</description>
+      <app:tags>SWB, Stadtbahnen</app:tags>
+      <category>Politik</category>
+    </item>
+    <item>
+      <title>{name} plain article</title>
+      <link>http://127.0.0.1/articles/{name}-plain</link>
+      <description>Article text of the untagged article.</description>
+    </item>
+  </channel>
+</rss>

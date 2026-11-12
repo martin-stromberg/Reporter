@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:Reporter.Core.Resources.Strings;assembly=Reporter.Core"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             x:Name="Card"
+             x:Class="Reporter.Views.ArticleHeroCardView"
+             x:DataType="models:ItemListItem">
+    <Border x:Name="Surface"
+            StrokeThickness="1"
+            Stroke="{AppThemeBinding Light={StaticResource LightHairline}, Dark={StaticResource DarkHairline}}"
+            StrokeShape="RoundRectangle 28"
+            Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}">
+        <Border.Shadow>
+            <Shadow Brush="{AppThemeBinding Light={StaticResource LightCardShadow}, Dark={StaticResource DarkCardShadow}}"
+                    Opacity="0.10"
+                    Radius="24"
+                    Offset="0,12"/>
+        </Border.Shadow>
+        <Grid>
+
+            <!-- Medienbereich: Bild oder typografisches Cover -->
+            <Grid x:Name="MediaHost">
+                <Grid Background="{AppThemeBinding Light={StaticResource LightCoverTint}, Dark={StaticResource DarkCoverTint}}">
+                    <Label Text="{Binding FeedTitle}"
+                           FontFamily="InstrumentSerifItalic"
+                           FontSize="34"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="2"
+                           Margin="28,0"
+                           HorizontalTextAlignment="Center"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"/>
+                </Grid>
+                <Image Source="{Binding LocalImageLoader, Converter={StaticResource LocalImageLoaderToImageSourceConverter}}"
+                       Aspect="AspectFill"
+                       IsVisible="{Binding HasLocalImage}"/>
+                <Image Source="{Binding ImageUrl}"
+                       Aspect="AspectFill"
+                       IsVisible="False">
+                    <Image.Triggers>
+                        <MultiTrigger TargetType="Image">
+                            <MultiTrigger.Conditions>
+                                <BindingCondition Binding="{Binding ImageUrl, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True"/>
+                                <BindingCondition Binding="{Binding HasLocalImage}" Value="False"/>
+                                <BindingCondition Binding="{Binding IsOnline, Source={x:Reference Card}}" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="IsVisible" Value="True"/>
+                        </MultiTrigger>
+                    </Image.Triggers>
+                </Image>
+
+                <!-- Kategorie als Glas-Pille -->
+                <Border Margin="16"
+                        Padding="10,5"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Start"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 12"
+                        Background="{AppThemeBinding Light={StaticResource LightSurfaceCardTranslucent}, Dark={StaticResource DarkSurfaceCardTranslucent}}"
+                        IsVisible="{Binding CategoryName, Converter={StaticResource StringNotEmptyToBoolConverter}}">
+                    <Label Text="{Binding CategoryName}"
+                           Style="{StaticResource TagStyle}"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"/>
+                </Border>
+            </Grid>
+
+            <!-- Inhalt -->
+            <VerticalStackLayout x:Name="Panel"
+                                 VerticalOptions="End"
+                                 Padding="22,16,22,18"
+                                 Spacing="8"
+                                 SizeChanged="OnPanelSizeChanged"
+                                 Background="{AppThemeBinding Light={StaticResource LightSurfaceCard}, Dark={StaticResource DarkPaperBase}}">
+                <HorizontalStackLayout Spacing="6">
+                    <Border WidthRequest="20"
+                            HeightRequest="20"
+                            StrokeThickness="0"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 6"
+                            VerticalOptions="Center"
+                            Background="{AppThemeBinding Light={StaticResource LightCoverTint}, Dark={StaticResource DarkCoverTint}}">
+                        <Label Text="{Binding FeedInitial}"
+                               FontFamily="InterSemiBold"
+                               FontSize="10"
+                               FontAutoScalingEnabled="False"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"/>
+                    </Border>
+                    <Label Text="{Binding FeedTitle}"
+                           Style="{StaticResource MetaStrongStyle}"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           MaximumWidthRequest="170"
+                           VerticalOptions="Center"/>
+                    <Label Text="{Binding PublishedAt, Converter={StaticResource RelativeTimeConverter}, ConverterParameter='·  '}"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <Label Text="{Binding Title}"
+                       Style="{StaticResource HeroTitleStyle}"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="3"/>
+
+                <Label Text="{Binding Summary}"
+                       Style="{StaticResource RowSummaryStyle}"
+                       FontSize="15"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="2"
+                       IsVisible="{Binding Summary, Converter={StaticResource StringNotEmptyToBoolConverter}}"/>
+
+                <HorizontalStackLayout Spacing="4"
+                                       IsVisible="{Binding ReadingTimeText, Converter={StaticResource StringNotEmptyToBoolConverter}}">
+                    <Path Style="{StaticResource IconPathStyle}"
+                          Data="M12,2 A10,10 0 1,1 12,22 A10,10 0 1,1 12,2 Z M12,6 L12,12 L16,14"
+                          Scale="0.6"
+                          StrokeThickness="2.2"
+                          Margin="-5"
+                          Stroke="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}"/>
+                    <Label Text="{Binding ReadingTimeText}"
+                           Style="{StaticResource MetaStyle}"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Tippfläche: öffnet den Artikel -->
+            <Grid Background="Transparent"
+                  SemanticProperties.Description="{Binding Title}"
+                  SemanticProperties.Hint="{x:Static strings:AppResources.AccessibilityOpenArticle}">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnOpenTapped"/>
+                </Grid.GestureRecognizers>
+            </Grid>
+        </Grid>
+    </Border>
+</ContentView>

@@ -322,6 +322,38 @@ public class FeedDetailViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that a search term that only occurs in an article's tags
+    /// filters the list to that article through the real repository chain.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task SearchText_TagMatch_FiltersItems()
+    {
+        var feedId = await SeedFeedAsync();
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Stadtwerke-Bericht",
+            GuidOrHash = Guid.NewGuid().ToString("N"),
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+            Tags = new[] { "Stadtbahnen" },
+        });
+        await SeedItemAsync(feedId, "Other Item", new DateTime(2026, 1, 2));
+        var viewModel = CreateViewModel();
+        await viewModel.LoadAsync(feedId);
+        Assert.Equal(2, viewModel.Items.Count);
+
+        viewModel.SearchText = "Stadtbahnen";
+
+        await TestWaitHelper.WaitUntilAsync(() => viewModel.Items.Count == 1);
+        Assert.Equal("Stadtwerke-Bericht", viewModel.Items[0].Title);
+        Assert.False(viewModel.HasMore);
+    }
+
+    /// <summary>
     /// Verifies that the refresh command synchronizes only this feed and
     /// reloads the view state.
     /// </summary>

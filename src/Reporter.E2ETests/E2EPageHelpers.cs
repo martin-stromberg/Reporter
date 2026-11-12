@@ -214,7 +214,7 @@ public sealed class E2EPageHelpers
         {
             var t when t == AppResources.TabFeeds => AppResources.ActionAddFeed,
             var t when t == AppResources.TabCategories => AppResources.LabelCategoryName,
-            var t when t == AppResources.TabUnread => AppResources.ButtonMarkAllRead,
+            var t when t == AppResources.TabUnread => AppResources.UnreadMarkPacketReadHint,
             _ => null,
         };
 

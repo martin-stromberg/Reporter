@@ -2026,4 +2026,246 @@ public class ItemRepositoryTests : IDisposable
         Assert.Null(await _contentStore.GetImageAsync(first.Id));
         Assert.NotNull(await _contentStore.GetImageAsync(kept.Id));
     }
+
+    /// <summary>
+    /// Verifies that the paged GetByFeedAsync overload finds an item through a
+    /// search term that only occurs in its tags and still excludes non-matching
+    /// articles.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_Paged_SearchTermMatchesTags()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddRangeAsync(new List<Item>
+        {
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Zahlen zur Stadtwerke-Sitzung",
+                GuidOrHash = "tagged",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 1),
+                Tags = new[] { "SWB", "Stadtbahnen" },
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Anderer Artikel",
+                GuidOrHash = "other",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 2),
+                Tags = new[] { "Sport" },
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Ohne Schlagworte",
+                GuidOrHash = "tagless",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 3),
+            },
+        });
+
+        var result = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 10, searchTerm: "Stadtbahnen");
+
+        var match = Assert.Single(result);
+        Assert.Equal("Zahlen zur Stadtwerke-Sitzung", match.Title);
+    }
+
+    /// <summary>
+    /// Verifies that title matches keep working next to tag matches in the
+    /// paged GetByFeedAsync overload.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GetByFeedAsync_Paged_SearchTermMatchesTitleOrTags()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        await _repository.AddRangeAsync(new List<Item>
+        {
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Bericht über Bahnhöfe",
+                GuidOrHash = "title-hit",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 1),
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Anderer Artikel",
+                GuidOrHash = "tag-hit",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 2),
+                Tags = new[] { "Bahn" },
+            },
+            new Item
+            {
+                Id = Guid.NewGuid(),
+                FeedId = feedId,
+                Title = "Dritter Artikel",
+                GuidOrHash = "no-hit",
+                IsRead = false,
+                IsSavedForLater = false,
+                PublishedAt = new DateTime(2026, 1, 3),
+                Tags = new[] { "Sport" },
+            },
+        });
+
+        var result = await _repository.GetByFeedAsync(feedId, page: 0, pageSize: 10, searchTerm: "Bahn");
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Anderer Artikel", result[0].Title);
+        Assert.Equal("Bericht über Bahnhöfe", result[1].Title);
+    }
+
+    /// <summary>
+    /// Verifies that the tags of an item survive the insert/read roundtrip.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_ThenGetByIdAsync_RoundtripsTags()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Tagged Item",
+            GuidOrHash = "abc123",
+            IsRead = false,
+            IsSavedForLater = false,
+            Tags = new[] { "SWB", "Aufsichtsrat" },
+        };
+        await _repository.AddAsync(item);
+
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(new[] { "SWB", "Aufsichtsrat" }, result.Tags);
+    }
+
+    /// <summary>
+    /// Verifies that a tag term containing a comma survives the insert/read
+    /// roundtrip as a single tag instead of being split at the comma.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AddAsync_ThenGetByIdAsync_RoundtripsTagContainingComma()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Tagged Item",
+            GuidOrHash = "comma-tag",
+            IsRead = false,
+            IsSavedForLater = false,
+            Tags = new[] { "Einnahmen, Ausgaben", "Stadtbahnen" },
+        };
+        await _repository.AddAsync(item);
+
+        var result = await _repository.GetByIdAsync(item.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(new[] { "Einnahmen, Ausgaben", "Stadtbahnen" }, result.Tags);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.UpdateAsync"/> writes changed
+    /// tags instead of dropping the column.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateAsync_PersistsTags()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Tagged Item",
+            GuidOrHash = "hash",
+            IsRead = false,
+            IsSavedForLater = false,
+            Tags = new[] { "Alt" },
+        };
+        await _repository.AddAsync(item);
+
+        await _repository.UpdateAsync(new Item
+        {
+            Id = item.Id,
+            FeedId = feedId,
+            Title = "Tagged Item",
+            GuidOrHash = "hash",
+            IsRead = true,
+            IsSavedForLater = false,
+            Tags = new[] { "Neu", "Zusatz" },
+        });
+
+        var result = await _repository.GetByIdAsync(item.Id);
+        Assert.NotNull(result);
+        Assert.Equal(new[] { "Neu", "Zusatz" }, result.Tags);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ItemRepository.UpdateTagsAsync"/> writes only
+    /// the tags column and leaves the other fields untouched.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task UpdateTagsAsync_UpdatesOnlyTags()
+    {
+        var feedId = await TestDataSeeder.SeedFeedAsync(_factory);
+        var tagged = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Backfill Candidate",
+            GuidOrHash = "tagged",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>content</p>",
+        };
+        var other = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Untouched",
+            GuidOrHash = "other",
+            IsRead = false,
+            IsSavedForLater = false,
+            ContentHtml = "<p>other content</p>",
+        };
+        await _repository.AddRangeAsync(new List<Item> { tagged, other });
+
+        await _repository.UpdateTagsAsync(new Dictionary<Guid, IReadOnlyList<string>>
+        {
+            [tagged.Id] = new[] { "SWB", "Bahn" },
+        });
+
+        var updated = await _repository.GetByIdAsync(tagged.Id);
+        Assert.NotNull(updated);
+        Assert.Equal(new[] { "SWB", "Bahn" }, updated.Tags);
+        Assert.Equal("Backfill Candidate", updated.Title);
+        Assert.Equal("<p>content</p>", updated.ContentHtml);
+
+        var untouched = await _repository.GetByIdAsync(other.Id);
+        Assert.NotNull(untouched);
+        Assert.Empty(untouched.Tags);
+        Assert.Equal("<p>other content</p>", untouched.ContentHtml);
+    }
 }

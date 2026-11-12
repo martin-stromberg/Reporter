@@ -524,6 +524,87 @@ public class UnreadViewModelTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that the resolved reading packet is passed to the paged unread
+    /// query, so the list is limited to the packet range.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadPage_PassesResolvedPacketToQuery()
+    {
+        var (feedId, _) = await SeedFeedAndCategoryAsync();
+        await _itemRepository.AddAsync(new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Sample",
+            GuidOrHash = "sample",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        });
+        var repository = new RecordingItemRepository(_itemRepository);
+        var viewModel = new UnreadViewModel(repository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.NotNull(repository.LastPacket);
+    }
+
+    /// <summary>
+    /// Verifies that no packet reaches the paged unread query when there are no
+    /// unread items — the query then keeps its previous unbounded behavior.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task LoadPage_PassesNullPacket_WhenNoUnreadExist()
+    {
+        var repository = new RecordingItemRepository(_itemRepository);
+        var viewModel = new UnreadViewModel(repository, _categoryRepository, _feedSyncService, _settingsRepository, _networkStatusService);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Null(repository.LastPacket);
+    }
+
+    /// <summary>
+    /// Verifies that a failing packet mark operation surfaces the localized
+    /// action error instead of silently swallowing the exception — and leaves
+    /// the unread article in place.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task MarkAllReadCommand_WhenMarkFails_SetsErrorMessage()
+    {
+        var (feedId, _) = await SeedFeedAndCategoryAsync();
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            FeedId = feedId,
+            Title = "Sample",
+            GuidOrHash = "sample",
+            IsRead = false,
+            IsSavedForLater = false,
+            PublishedAt = new DateTime(2026, 1, 1),
+        };
+        await _itemRepository.AddAsync(item);
+        var viewModel = new UnreadViewModel(
+            new FailingMarkPacketRepository(_itemRepository),
+            _categoryRepository,
+            _feedSyncService,
+            _settingsRepository,
+            _networkStatusService);
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        await viewModel.MarkAllReadCommand.ExecuteAsync(null);
+
+        Assert.Equal(AppResources.ErrorActionFailed, viewModel.ErrorMessage);
+        Assert.True(viewModel.HasError);
+        var persisted = await _itemRepository.GetByIdAsync(item.Id);
+        Assert.NotNull(persisted);
+        Assert.False(persisted.IsRead);
+    }
+
+    /// <summary>
     /// A <see cref="DelegatingItemRepository"/> that records the ascending flag of
     /// the last paged unread query.
     /// </summary>
@@ -543,11 +624,17 @@ public class UnreadViewModelTests : IDisposable
         /// </summary>
         public bool LastAscending { get; private set; }
 
+        /// <summary>
+        /// Gets the reading packet passed to the last <see cref="GetUnreadByDateAsync"/> call.
+        /// </summary>
+        public UnreadPacket? LastPacket { get; private set; }
+
         /// <inheritdoc />
-        public override async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
+        public override async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false, UnreadPacket? packet = null)
         {
             LastAscending = ascending;
-            return await base.GetUnreadByDateAsync(page, pageSize, categoryId, ascending);
+            LastPacket = packet;
+            return await base.GetUnreadByDateAsync(page, pageSize, categoryId, ascending, packet);
         }
     }
 
@@ -598,9 +685,31 @@ public class UnreadViewModelTests : IDisposable
         }
 
         /// <inheritdoc />
-        public override Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
+        public override Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false, UnreadPacket? packet = null)
         {
             return Task.FromException<IReadOnlyList<ItemListItem>>(new InvalidOperationException("Simulated load failure."));
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="DelegatingItemRepository"/> that fails the packet mark
+    /// operation to simulate a mark-all failure.
+    /// </summary>
+    private sealed class FailingMarkPacketRepository : DelegatingItemRepository
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FailingMarkPacketRepository"/> class.
+        /// </summary>
+        /// <param name="inner">The repository to delegate to.</param>
+        public FailingMarkPacketRepository(IItemRepository inner)
+            : base(inner)
+        {
+        }
+
+        /// <inheritdoc />
+        public override Task MarkUnreadPacketAsReadAsync(UnreadPacket packet, Guid? categoryId = null)
+        {
+            return Task.FromException(new InvalidOperationException("Simulated mark failure."));
         }
     }
 }

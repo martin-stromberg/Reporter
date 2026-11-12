@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Reporter.Core.Models;assembly=Reporter.Core"
+             xmlns:views="clr-namespace:Reporter.Views"
+             x:Name="Root"
+             x:Class="Reporter.Views.CategoryFilterTabs"
+             x:DataType="views:CategoryFilterTabs">
+    <ScrollView x:Name="Scroller"
+                Orientation="Horizontal"
+                HorizontalScrollBarVisibility="Never"
+                VerticalScrollBarVisibility="Never">
+        <Grid x:Name="Track"
+              Padding="16,4">
+            <!-- Gleitender Pill-Indikator hinter dem aktiven Tab -->
+            <Border x:Name="Indicator"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center"
+                    HeightRequest="40"
+                    WidthRequest="0"
+                    Opacity="0"
+                    InputTransparent="True"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 20"
+                    Background="{AppThemeBinding Light={StaticResource LightPrimaryContainer}, Dark={StaticResource DarkPrimary}}">
+                <Border.Shadow>
+                    <Shadow Brush="{AppThemeBinding Light={StaticResource LightCardShadow}, Dark={StaticResource DarkCardShadow}}"
+                            Opacity="0.18"
+                            Radius="12"
+                            Offset="0,4"/>
+                </Border.Shadow>
+            </Border>
+
+            <HorizontalStackLayout x:Name="TabsHost"
+                                   Spacing="2"
+                                   SizeChanged="OnTabsHostSizeChanged"
+                                   ChildAdded="OnTabAdded"
+                                   BindableLayout.ItemsSource="{Binding ItemsSource, Source={x:Reference Root}}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:CategoryFilterItem">
+                        <Grid MinimumHeightRequest="44"
+                              Padding="16,0"
+                              Background="Transparent"
+                              SemanticProperties.Description="{Binding AccessibilityDescription}">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnTabTapped"/>
+                            </Grid.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="6"
+                                                   VerticalOptions="Center"
+                                                   InputTransparent="True">
+                                <Label Text="{Binding Name}"
+                                       FontFamily="InterSemiBold"
+                                       FontSize="14"
+                                       FontAutoScalingEnabled="True"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimary}, Dark={StaticResource DarkOnPrimary}}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                                <Label Text="{Binding Count}"
+                                       FontFamily="InterMedium"
+                                       FontSize="12"
+                                       FontAutoScalingEnabled="True"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource LightTextMuted}, Dark={StaticResource DarkTextMuted}}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightOnPrimaryContainer}, Dark={StaticResource DarkOnPrimaryContainer}}"/>
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Count}" Value="0">
+                                            <Setter Property="IsVisible" Value="False"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+        </Grid>
+    </ScrollView>
+</ContentView>

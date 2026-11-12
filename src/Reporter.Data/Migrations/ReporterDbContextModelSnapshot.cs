@@ -180,6 +180,10 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("read_at");
 
+                    b.Property<string>("Tags")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("tags");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -294,6 +298,11 @@ namespace Reporter.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("theme");
 
+                    b.Property<string>("UnreadListLayout")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("unread_list_layout");
+
                     b.Property<string>("UnreadSortOrder")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT")
@@ -318,6 +327,7 @@ namespace Reporter.Data.Migrations
                             RefreshOnStartupEnabled = true,
                             RetentionDays = 30,
                             Theme = "system",
+                            UnreadListLayout = "list",
                             UnreadSortOrder = "desc"
                         });
                 });

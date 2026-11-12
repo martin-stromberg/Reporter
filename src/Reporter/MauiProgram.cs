@@ -39,6 +39,8 @@ public static class MauiProgram
                 fonts.AddFont("Newsreader-Medium.ttf", "NewsreaderMedium");
                 fonts.AddFont("Newsreader-SemiBold.ttf", "NewsreaderSemiBold");
                 fonts.AddFont("Newsreader-Italic.ttf", "NewsreaderItalic");
+                fonts.AddFont("InstrumentSerif-Regular.ttf", "InstrumentSerifRegular");
+                fonts.AddFont("InstrumentSerif-Italic.ttf", "InstrumentSerifItalic");
             });
 
         // REPORTER_DB_PATH allows the E2E suite to point the app at an isolated

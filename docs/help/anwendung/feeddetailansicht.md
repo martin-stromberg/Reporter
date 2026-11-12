@@ -29,10 +29,10 @@ Ein Tipp auf eine Artikelkarte öffnet die [Artikeldetailansicht](artikeldetaila
 
 ## Suche in den Artikeln des Feeds
 
-Das Suchfeld **„Artikel in diesem Feed suchen…"** unter dem Kopfbereich durchsucht die Titel aller Artikel dieses Feeds. Die Liste filtert sich kurz nach der Eingabe automatisch — ein extra Tipp auf „Suchen" ist nicht nötig; das Löschen des Suchtextes zeigt wieder alle Artikel.
+Das Suchfeld **„Artikel in diesem Feed suchen…"** unter dem Kopfbereich durchsucht die Titel und Schlagworte aller Artikel dieses Feeds. Die Liste filtert sich kurz nach der Eingabe automatisch — ein extra Tipp auf „Suchen" ist nicht nötig; das Löschen des Suchtextes zeigt wieder alle Artikel.
 
 - Die Suche findet nur Artikel, die bereits synchronisiert und auf dem Gerät gespeichert sind — sie greift nicht auf die Website des Feeds zu.
-- Durchsucht wird nur der Artikeltitel, nicht der Text des Artikels.
+- Durchsucht werden der Artikeltitel und die gespeicherten Schlagworte des Artikels, nicht der Text des Artikels.
 - Gibt es keine Treffer, steht in der Liste **„Keine Artikel zu diesem Suchbegriff gefunden."**
 
 ## Feed-Aktionen
@@ -59,7 +59,7 @@ Im Formular **Feed bearbeiten** verwaltest du unter der Überschrift **Schlagwor
 
 Ohne Internetverbindung erscheint unter dem Kopfbereich das Hinweis-Banner **„Keine Internetverbindung."**:
 
-- Alle gespeicherten Artikel bleiben lesbar, und die Titelsuche funktioniert weiterhin — sie durchsucht nur die lokale Ablage.
+- Alle gespeicherten Artikel bleiben lesbar, und die Suche in Titel und Schlagworten funktioniert weiterhin — sie durchsucht nur die lokale Ablage.
 - **Aktualisieren** und das Ziehen zum Aktualisieren werden übersprungen — es entsteht weder ein Fehlereintrag noch ändert sich der Gesundheitsstatus.
 - Das Feed-Symbol weicht auf den Kreis mit dem Anfangsbuchstaben aus; fehlende Artikelbilder bleiben wie auf den anderen Seiten ausgeblendet, lokal gespeicherte Bilder sichtbar.
 

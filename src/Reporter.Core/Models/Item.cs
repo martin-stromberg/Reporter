@@ -58,6 +58,11 @@ public class Item
     public string? ContentHtml { get; init; }
 
     /// <summary>
+    /// Gets the normalized tag terms of the item; empty when the item has no tags.
+    /// </summary>
+    public IReadOnlyList<string> Tags { get; init; } = [];
+
+    /// <summary>
     /// Gets or sets the locally stored article image. The <c>set</c> accessor is a
     /// deliberate exception from the <c>init</c>-only accessors of this model:
     /// <c>FeedSyncService</c> assigns the downloaded image to the already

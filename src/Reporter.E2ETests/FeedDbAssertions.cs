@@ -119,6 +119,53 @@ public static class FeedDbAssertions
     }
 
     /// <summary>
+    /// Polls the <c>items.tags</c> column of the row with the given title
+    /// until it contains the tag fragment or the timeout elapses. Mirrors the
+    /// polling structure of <see cref="FeedExistsAsync"/> with a two-parameter
+    /// core like <see cref="KeywordExistsForFeedAsync"/>.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="title">The item title to look for.</param>
+    /// <param name="tagFragment">The tag fragment expected inside the stored tag list.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether the item's tags column contains the fragment.</returns>
+    public static Task<bool> ItemTagsContainAsync(
+        string databasePath,
+        string title,
+        string tagFragment,
+        TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => ItemTagsContainCoreAsync(path, title, tagFragment));
+
+    // Runs the read-only tag check with both the item title and the expected
+    // tag fragment as parameters — ExistsCoreAsync only covers
+    // single-parameter queries, so the two-column match needs its own core.
+    // instr() avoids LIKE wildcard escaping on arbitrary tag text.
+    private static async Task<bool> ItemTagsContainCoreAsync(
+        string databasePath,
+        string title,
+        string tagFragment)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return false;
+        }
+
+        await using var connection = CreateReadOnlyConnection(databasePath);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT COUNT(*) FROM items " +
+            "WHERE title = $title AND tags IS NOT NULL AND instr(tags, $tag) > 0";
+        command.Parameters.AddWithValue("$title", title);
+        command.Parameters.AddWithValue("$tag", tagFragment);
+        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        return result is long count && count > 0;
+    }
+
+    /// <summary>
     /// Polls until the item with the given title (looked up in
     /// <paramref name="databasePath"/>) has a non-empty <c>image_data</c> row in
     /// the separate <c>item_contents</c> table of
@@ -240,6 +287,61 @@ public static class FeedDbAssertions
     }
 
     /// <summary>
+    /// Polls the <c>items.is_read</c> flag of the row with the given title
+    /// until it matches <paramref name="isRead"/> or the timeout elapses.
+    /// Mirrors the polling structure of <see cref="ItemExistsAsync"/>; a
+    /// missing row reports the flag as not matching.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="title">The item title to look for.</param>
+    /// <param name="isRead">The expected read flag.</param>
+    /// <param name="timeout">An optional timeout overriding the 15 s default.</param>
+    /// <returns>Whether the item's read flag matches the expectation.</returns>
+    public static Task<bool> ItemHasReadFlagAsync(
+        string databasePath,
+        string title,
+        bool isRead,
+        TimeSpan? timeout = null)
+        => PollUntilExistsAsync(
+            databasePath,
+            timeout,
+            path => ItemHasReadFlagCoreAsync(path, title, isRead));
+
+    // Runs the read-only flag check — a separate core like
+    // ItemTagsContainCoreAsync because the row may be absent entirely.
+    private static async Task<bool> ItemHasReadFlagCoreAsync(string databasePath, string title, bool isRead)
+    {
+        if (!File.Exists(databasePath))
+        {
+            return false;
+        }
+
+        await using var connection = CreateReadOnlyConnection(databasePath);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT is_read FROM items WHERE title = $title";
+        command.Parameters.AddWithValue("$title", title);
+        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        return result is long flag && (flag != 0) == isRead;
+    }
+
+    /// <summary>
+    /// Writes the unread sort order into the singleton <c>settings</c> row so a
+    /// test can pin the direction ("asc"/"desc") instead of depending on the
+    /// default. The row always exists — it is seeded by the schema migrations.
+    /// Retried briefly because the app may hold a write lock while a sync is
+    /// still finishing.
+    /// </summary>
+    /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="value">The sort order value ("asc" or "desc").</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public static Task SetUnreadSortOrderAsync(string databasePath, string value)
+        => ExecuteWriteWithRetryAsync(
+            databasePath,
+            "UPDATE settings SET unread_sort_order = $value",
+            ("$value", value));
+
+    /// <summary>
     /// Marks every item row as read. Tests that seed dozens of articles (the
     /// feed-detail paging fixtures) call this during cleanup: read items leave
     /// the unread list, so the accumulated articles cannot push the few
@@ -275,7 +377,16 @@ public static class FeedDbAssertions
     // Runs a single write statement against the app's database, retrying
     // briefly because the app may hold a write lock while a sync is still
     // finishing.
-    private static async Task ExecuteWriteWithRetryAsync(string databasePath, string commandText)
+    private static Task ExecuteWriteWithRetryAsync(string databasePath, string commandText)
+        => ExecuteWriteWithRetryAsync(databasePath, commandText, parameter: null);
+
+    // Runs a single write statement with an optional bound parameter against
+    // the app's database, retrying briefly because the app may hold a write
+    // lock while a sync is still finishing.
+    private static async Task ExecuteWriteWithRetryAsync(
+        string databasePath,
+        string commandText,
+        (string Name, string Value)? parameter)
     {
         if (!File.Exists(databasePath))
         {
@@ -293,6 +404,11 @@ public static class FeedDbAssertions
                 await connection.OpenAsync().ConfigureAwait(false);
                 await using var command = connection.CreateCommand();
                 command.CommandText = commandText;
+                if (parameter is { } p)
+                {
+                    command.Parameters.AddWithValue(p.Name, p.Value);
+                }
+
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 return;
             }

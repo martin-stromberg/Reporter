@@ -204,4 +204,45 @@ public class ReporterDbContextTests_Persistence
         Assert.Equal(FeedSyncErrorKind.Network, reloaded.LastMessageKind);
         Assert.Equal("Synchronization failed: No connection", reloaded.LastMessage);
     }
+
+    /// <summary>
+    /// Verifies that the tags value of an item survives a persist roundtrip
+    /// on entity level.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task Item_PersistRoundtrip_Tags()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ReporterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var context = new ReporterDbContext(options);
+        await context.Database.EnsureCreatedAsync();
+
+        var feed = new Feed
+        {
+            Url = "https://example.com/feed",
+            Title = "Example Feed",
+        };
+        context.Feeds.Add(feed);
+        await context.SaveChangesAsync();
+
+        var item = new Item
+        {
+            FeedId = feed.Id,
+            Title = "Tagged Item",
+            GuidOrHash = "abc123",
+            Tags = "SWB, Stadtbahnen",
+        };
+        context.Items.Add(item);
+        await context.SaveChangesAsync();
+
+        var reloaded = await context.Items.AsNoTracking().FirstAsync(i => i.Id == item.Id);
+
+        Assert.Equal("SWB, Stadtbahnen", reloaded.Tags);
+    }
 }
