@@ -58,8 +58,39 @@ public interface IItemRepository
     /// <param name="pageSize">The number of items per page.</param>
     /// <param name="categoryId">The optional category to filter by.</param>
     /// <param name="ascending"><c>true</c> to sort oldest first; <c>false</c> (the default) for newest first.</param>
+    /// <param name="packet">The optional reading packet limiting the result to its day range; <c>null</c> disables packet filtering.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the unread items for the page.</returns>
-    Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false);
+    Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false, UnreadPacket? packet = null);
+
+    /// <summary>
+    /// Resolves the current reading packet of unread items asynchronously: the
+    /// calendar day of the first item in the active sort order, extended by the
+    /// next occupied day when the anchor day holds fewer items than the packet
+    /// threshold. Items without a publication date form a pseudo day that is the
+    /// first packet in ascending and the last packet in descending order.
+    /// </summary>
+    /// <param name="categoryId">The optional category to filter by.</param>
+    /// <param name="ascending"><c>true</c> for oldest-first; <c>false</c> (the default) for newest-first.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the reading packet, or <c>null</c> when no unread items exist.</returns>
+    Task<UnreadPacket?> ResolveUnreadPacketAsync(Guid? categoryId = null, bool ascending = false);
+
+    /// <summary>
+    /// Gets the total number of unread items inside the specified reading packet
+    /// for the optional category filter — including items beyond the loaded pages.
+    /// </summary>
+    /// <param name="packet">The reading packet to count.</param>
+    /// <param name="categoryId">The optional category to filter by.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the count.</returns>
+    Task<int> GetUnreadPacketCountAsync(UnreadPacket packet, Guid? categoryId = null);
+
+    /// <summary>
+    /// Marks all unread items inside the specified reading packet as read for the
+    /// optional category filter — including items that were not loaded into the UI.
+    /// </summary>
+    /// <param name="packet">The reading packet to mark as read.</param>
+    /// <param name="categoryId">The optional category to filter by.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    Task MarkUnreadPacketAsReadAsync(UnreadPacket packet, Guid? categoryId = null);
 
     /// <summary>
     /// Gets the total count of unread items for the optional category filter.

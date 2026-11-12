@@ -42,8 +42,20 @@ public class DelegatingItemRepository : IItemRepository
     public virtual Task<IReadOnlyList<Item>> GetUnreadByDateAsync() => _inner.GetUnreadByDateAsync();
 
     /// <inheritdoc />
-    public virtual Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false) =>
-        _inner.GetUnreadByDateAsync(page, pageSize, categoryId, ascending);
+    public virtual Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false, UnreadPacket? packet = null) =>
+        _inner.GetUnreadByDateAsync(page, pageSize, categoryId, ascending, packet);
+
+    /// <inheritdoc />
+    public virtual Task<UnreadPacket?> ResolveUnreadPacketAsync(Guid? categoryId = null, bool ascending = false) =>
+        _inner.ResolveUnreadPacketAsync(categoryId, ascending);
+
+    /// <inheritdoc />
+    public virtual Task<int> GetUnreadPacketCountAsync(UnreadPacket packet, Guid? categoryId = null) =>
+        _inner.GetUnreadPacketCountAsync(packet, categoryId);
+
+    /// <inheritdoc />
+    public virtual Task MarkUnreadPacketAsReadAsync(UnreadPacket packet, Guid? categoryId = null) =>
+        _inner.MarkUnreadPacketAsReadAsync(packet, categoryId);
 
     /// <inheritdoc />
     public virtual Task<int> GetUnreadCountAsync(Guid? categoryId = null) => _inner.GetUnreadCountAsync(categoryId);

@@ -30,6 +30,7 @@ public partial class UnreadViewModel : BaseViewModel
     private CategoryFilterItem? _selectedCategory;
     private bool _isSyncing;
     private bool _isLoading;
+    private bool _reloadPending;
     private bool _hasMore;
     private string _errorMessage = string.Empty;
     private string _lastSyncText = string.Empty;
@@ -39,6 +40,9 @@ public partial class UnreadViewModel : BaseViewModel
     private string _listLayout = SettingsValues.UnreadLayoutList;
     private DateTime? _lastSyncAtUtc;
     private int _cardPosition;
+    private UnreadPacket? _currentPacket;
+    private int _packetUnreadCount;
+    private string _packetDayLabel = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnreadViewModel"/> class.
@@ -280,10 +284,23 @@ public partial class UnreadViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets the localized title of the mark-all confirmation dialog (packet count plus day label).
+    /// </summary>
+    public string MarkAllReadConfirmationText =>
+        string.Format(
+            CultureInfo.CurrentCulture,
+            _packetUnreadCount == 1
+                ? AppResources.MarkAllReadPacketTitleSingularFormat
+                : AppResources.MarkAllReadPacketTitleFormat,
+            _packetUnreadCount,
+            _packetDayLabel);
+
+    /// <summary>
     /// Gets the localized card position indicator (e.g. "3 of 42").
+    /// The denominator is the packet total because the card stack ends at the packet end.
     /// </summary>
     public string CardPositionText => HasArticles
-        ? string.Format(CultureInfo.CurrentCulture, AppResources.UnreadCardPositionFormat, Math.Min(_cardPosition + 1, _articles.Count), Math.Max(UnreadCount, _articles.Count))
+        ? string.Format(CultureInfo.CurrentCulture, AppResources.UnreadCardPositionFormat, Math.Min(_cardPosition + 1, _articles.Count), Math.Max(_packetUnreadCount, _articles.Count))
         : string.Empty;
 
     /// <summary>
@@ -420,6 +437,18 @@ public partial class UnreadViewModel : BaseViewModel
 
     private async Task LoadAsync()
     {
+        if (IsLoading)
+        {
+            // A mandatory reload must never be dropped (e.g. mark-all-read or
+            // pull-to-refresh while a LoadMore is in flight): the in-flight
+            // LoadPageAsync follows up on it when it finishes.
+            _reloadPending = true;
+            return;
+        }
+
+        // A running LoadAsync always satisfies an earlier queued reload request.
+        _reloadPending = false;
+
         ErrorMessage = string.Empty;
         SyncErrorMessage = string.Empty;
         _currentPage = 0;
@@ -478,6 +507,16 @@ public partial class UnreadViewModel : BaseViewModel
 
     private async Task LoadPageAsync(int page, bool append = false)
     {
+        // Serialize page loads: two concurrent loads could otherwise mix the
+        // resolved packet of one call with the category filter of the other.
+        // A skipped load request stays queued as a pending reload so the
+        // in-flight load can follow up on it instead of dropping it.
+        if (IsLoading)
+        {
+            _reloadPending = true;
+            return;
+        }
+
         IsLoading = true;
         ErrorMessage = string.Empty;
 
@@ -486,7 +525,32 @@ public partial class UnreadViewModel : BaseViewModel
             var categoryId = SelectedCategory?.CategoryId;
             var settings = await _settingsRepository.GetAsync();
             var ascending = settings.UnreadSortOrder == SettingsValues.SortOrderAscending;
-            var items = await _itemRepository.GetUnreadByDateAsync(page, PageSize, categoryId, ascending);
+
+            // The packet is carried in a local variable so the query, the count
+            // and the label always refer to the same packet; the observable
+            // state is assigned at exactly one place below.
+            var packet = append
+                ? _currentPacket
+                : await _itemRepository.ResolveUnreadPacketAsync(categoryId, ascending);
+
+            var items = await _itemRepository.GetUnreadByDateAsync(page, PageSize, categoryId, ascending, packet);
+
+            if (!append)
+            {
+                var packetUnreadCount = packet is null
+                    ? 0
+                    : await _itemRepository.GetUnreadPacketCountAsync(packet, categoryId);
+                var packetDayLabel = packet is null
+                    ? string.Empty
+                    : string.Join(" + ", packet.Days.Select(d =>
+                        d?.ToString("d", CultureInfo.CurrentCulture) ?? AppResources.UnreadNoDateLabel));
+
+                _currentPacket = packet;
+                _packetUnreadCount = packetUnreadCount;
+                _packetDayLabel = packetDayLabel;
+                OnPropertyChanged(nameof(MarkAllReadConfirmationText));
+                OnPropertyChanged(nameof(CardPositionText));
+            }
 
             if (append)
             {
@@ -518,6 +582,15 @@ public partial class UnreadViewModel : BaseViewModel
         finally
         {
             IsLoading = false;
+        }
+
+        // Mandatory reloads queued while this load was in flight (mark-all-read,
+        // refresh, an emptied list or a category tap) must not be dropped:
+        // run a full reload now that the serialization point is free again.
+        if (_reloadPending)
+        {
+            _reloadPending = false;
+            await LoadAsync();
         }
     }
 
@@ -572,7 +645,20 @@ public partial class UnreadViewModel : BaseViewModel
     private async Task MarkAllReadAsync()
     {
         ErrorMessage = string.Empty;
-        await _itemRepository.MarkAllAsReadAsync(SelectedCategory?.CategoryId);
+        try
+        {
+            if (_currentPacket is not null)
+            {
+                await _itemRepository.MarkUnreadPacketAsReadAsync(_currentPacket, SelectedCategory?.CategoryId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"MarkAllReadAsync failed: {ex}");
+            ErrorMessage = AppResources.ErrorActionFailed;
+            return;
+        }
+
         await LoadAsync();
     }
 
@@ -580,6 +666,15 @@ public partial class UnreadViewModel : BaseViewModel
     {
         if (category is null)
         {
+            return;
+        }
+
+        if (IsLoading)
+        {
+            // A tap during a load is still applied: the selection is stored and
+            // the in-flight load follows up with a reload for the new category.
+            SelectedCategory = category;
+            _reloadPending = true;
             return;
         }
 
@@ -603,6 +698,11 @@ public partial class UnreadViewModel : BaseViewModel
             var index = Articles.IndexOf(updated);
             Articles[index] = updated.CopyWith(isSavedForLater: !updated.IsSavedForLater);
         }
+
+        if (IsLoading)
+        {
+            await LoadAsync();
+        }
     }
 
     private async Task MarkReadAsync(ItemListItem? item)
@@ -617,6 +717,11 @@ public partial class UnreadViewModel : BaseViewModel
         if (listed is not null)
         {
             Articles.Remove(listed);
+
+            // Only decrement while the article still belongs to the displayed
+            // packet list — a concurrently finished fresh load has already
+            // counted the mark in its packet total.
+            _packetUnreadCount = Math.Max(0, _packetUnreadCount - 1);
         }
 
         if (SelectedCategory is not null)
@@ -632,8 +737,10 @@ public partial class UnreadViewModel : BaseViewModel
 
         UnreadCount = Math.Max(0, UnreadCount - 1);
         UpdateUnreadCountText();
+        OnPropertyChanged(nameof(MarkAllReadConfirmationText));
+        OnPropertyChanged(nameof(CardPositionText));
 
-        if (Articles.Count == 0)
+        if (Articles.Count == 0 || IsLoading)
         {
             await LoadAsync();
         }

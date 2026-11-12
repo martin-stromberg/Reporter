@@ -20,6 +20,7 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 ## Features
 
 - Shell-Navigation mit den Tabs **Ungelesen**, **Feeds**, **Später**, **Kategorien** und **Einstellungen**
+- Die Startseite **Ungelesen** lädt ungelesene Artikel tageweise als **Lesepaket**: Beim Laden werden nur die Artikel eines Kalendertags angezeigt — bei weniger als fünf Artikeln zusätzlich die des nächsten belegten Tags; Artikel ohne Veröffentlichungsdatum bilden ein eigenes Paket. Der Doppelhaken **Paket gelesen** markiert nur das aktuelle Paket, danach lädt die Seite automatisch das nächste
 - RSS-/Atom-Feed-Abruf (RSS 2.0, Atom 1.0 und Atom 0.3) mit Feed-Health-Status und Sync-Protokoll
 - Feeds über eine Website-Adresse finden (feedsearch.dev plus Autodiscovery) oder direkt per Feed-URL hinzufügen
 - Feeddetailansicht je Feed: Ein Tap auf eine Feed-Karte zeigt alle Artikel des Feeds — gelesen wie ungelesen — als suchbare Liste mit Infinite Scroll; hinter dem **Aktionen**-Button liegt die Feed-Verwaltung (Aktualisieren, Umbenennen, Kategorie ändern, Bearbeiten, „Meldung anzeigen" für den Grund des Status Fehler oder Warnung, Löschen)

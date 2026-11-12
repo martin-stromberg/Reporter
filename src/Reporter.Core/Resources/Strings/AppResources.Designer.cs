@@ -504,15 +504,6 @@ namespace Reporter.Core.Resources.Strings {
         }
 
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die All read ähnelt.
-        /// </summary>
-        public static string ButtonMarkAllRead {
-            get {
-                return ResourceManager.GetString("ButtonMarkAllRead", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Mark as read ähnelt.
         /// </summary>
         public static string ButtonMarkAsRead {
@@ -2219,6 +2210,51 @@ namespace Reporter.Core.Resources.Strings {
         public static string UnreadSwipeRemove {
             get {
                 return ResourceManager.GetString("UnreadSwipeRemove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark {0} articles ({1}) as read? ähnelt.
+        /// </summary>
+        public static string MarkAllReadPacketTitleFormat {
+            get {
+                return ResourceManager.GetString("MarkAllReadPacketTitleFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark {0} article ({1}) as read? ähnelt.
+        /// </summary>
+        public static string MarkAllReadPacketTitleSingularFormat {
+            get {
+                return ResourceManager.GetString("MarkAllReadPacketTitleSingularFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die without date ähnelt.
+        /// </summary>
+        public static string UnreadNoDateLabel {
+            get {
+                return ResourceManager.GetString("UnreadNoDateLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark packet read ähnelt.
+        /// </summary>
+        public static string ButtonMarkPacketRead {
+            get {
+                return ResourceManager.GetString("ButtonMarkPacketRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Mark the current reading packet as read ähnelt.
+        /// </summary>
+        public static string UnreadMarkPacketReadHint {
+            get {
+                return ResourceManager.GetString("UnreadMarkPacketReadHint", resourceCulture);
             }
         }
     }

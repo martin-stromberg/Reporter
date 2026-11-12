@@ -15,6 +15,12 @@ namespace Reporter.Data.Repositories;
 /// </summary>
 public class ItemRepository : IItemRepository
 {
+    /// <summary>
+    /// The minimum number of unread articles on the anchor day; below this
+    /// threshold the packet expands to the next occupied calendar day.
+    /// </summary>
+    public const int MinPacketSize = 5;
+
     private readonly IDbContextFactory<ReporterDbContext> _factory;
     private readonly IItemContentStore _contentStore;
 
@@ -124,7 +130,7 @@ public class ItemRepository : IItemRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false)
+    public async Task<IReadOnlyList<ItemListItem>> GetUnreadByDateAsync(int page, int pageSize, Guid? categoryId = null, bool ascending = false, UnreadPacket? packet = null)
     {
         await using var context = await _factory.CreateDbContextAsync();
         var query = context.Items
@@ -138,6 +144,11 @@ public class ItemRepository : IItemRepository
                 .Where(f => f.CategoryId == categoryId.Value)
                 .Select(f => f.Id);
             query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        if (packet is not null)
+        {
+            query = query.Where(PacketMatches(packet));
         }
 
         var ordered = ascending
@@ -186,6 +197,188 @@ public class ItemRepository : IItemRepository
     {
         await using var context = await _factory.CreateDbContextAsync();
         var query = context.Items.Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        await query.ExecuteUpdateAsync(setters => setters
+            .SetProperty(i => i.IsRead, true)
+            .SetProperty(i => i.ReadAt, DateTime.UtcNow));
+    }
+
+    /// <inheritdoc />
+    public async Task<UnreadPacket?> ResolveUnreadPacketAsync(Guid? categoryId = null, bool ascending = false)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead);
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        if (!await query.AnyAsync())
+        {
+            return null;
+        }
+
+        // The anchor is the first element in the active sort order — the same
+        // ordering the paged list query uses, so the packet always covers what
+        // the list shows first.
+        var anchorPublishedAt = ascending
+            ? await query
+                .OrderBy(i => i.PublishedAt)
+                .ThenByDescending(i => i.Id)
+                .Select(i => i.PublishedAt)
+                .FirstAsync()
+            : await query
+                .OrderByDescending(i => i.PublishedAt)
+                .ThenBy(i => i.Id)
+                .Select(i => i.PublishedAt)
+                .FirstAsync();
+
+        if (anchorPublishedAt is null)
+        {
+            return await ResolveUndatedAnchorPacketAsync(query, ascending);
+        }
+
+        return await ResolveDatedAnchorPacketAsync(query, anchorPublishedAt.Value, ascending);
+    }
+
+    // Undated anchor: the pseudo day sorts first in ascending and last in
+    // descending order — a descending undated anchor therefore means no dated
+    // unread items exist at all.
+    private async Task<UnreadPacket> ResolveUndatedAnchorPacketAsync(IQueryable<ItemEntity> query, bool ascending)
+    {
+        var days = new List<DateOnly?> { null };
+        DateTime? fromUtc = null;
+        DateTime? toUtc = null;
+
+        var undatedCount = await query.CountAsync(i => i.PublishedAt == null);
+        if (ascending && undatedCount < MinPacketSize)
+        {
+            var followPublishedAt = await query
+                .Where(i => i.PublishedAt != null)
+                .OrderBy(i => i.PublishedAt)
+                .ThenByDescending(i => i.Id)
+                .Select(i => i.PublishedAt)
+                .FirstOrDefaultAsync();
+            if (followPublishedAt.HasValue)
+            {
+                var followDay = LocalDayOf(followPublishedAt.Value);
+                days.Add(followDay);
+                (fromUtc, toUtc) = DayBoundsUtc(followDay);
+            }
+        }
+
+        return new UnreadPacket
+        {
+            FromUtc = fromUtc,
+            ToUtc = toUtc,
+            IncludeUndated = true,
+            Days = days,
+        };
+    }
+
+    // Dated anchor: the anchor day extends to the next occupied day in sort
+    // direction when it holds fewer than MinPacketSize unread articles — in
+    // descending order the undated pseudo day counts as that follow day.
+    private async Task<UnreadPacket> ResolveDatedAnchorPacketAsync(IQueryable<ItemEntity> query, DateTime anchorPublishedAt, bool ascending)
+    {
+        var anchorDay = LocalDayOf(anchorPublishedAt);
+        var (fromUtc, toUtc) = DayBoundsUtc(anchorDay);
+        var days = new List<DateOnly?> { anchorDay };
+        var includeUndated = false;
+
+        var anchorCount = await query.CountAsync(i => i.PublishedAt >= fromUtc && i.PublishedAt < toUtc);
+        if (anchorCount < MinPacketSize)
+        {
+            DateTime? followPublishedAt;
+            if (ascending)
+            {
+                followPublishedAt = await query
+                    .Where(i => i.PublishedAt >= toUtc)
+                    .OrderBy(i => i.PublishedAt)
+                    .ThenByDescending(i => i.Id)
+                    .Select(i => i.PublishedAt)
+                    .FirstOrDefaultAsync();
+                if (followPublishedAt.HasValue)
+                {
+                    var followDay = LocalDayOf(followPublishedAt.Value);
+                    days.Add(followDay);
+                    toUtc = DayBoundsUtc(followDay).ToUtc;
+                }
+            }
+            else
+            {
+                followPublishedAt = await query
+                    .Where(i => i.PublishedAt < fromUtc)
+                    .OrderByDescending(i => i.PublishedAt)
+                    .ThenBy(i => i.Id)
+                    .Select(i => i.PublishedAt)
+                    .FirstOrDefaultAsync();
+                if (followPublishedAt.HasValue)
+                {
+                    var followDay = LocalDayOf(followPublishedAt.Value);
+                    days.Add(followDay);
+                    fromUtc = DayBoundsUtc(followDay).FromUtc;
+                }
+                else if (await query.AnyAsync(i => i.PublishedAt == null))
+                {
+                    days.Add(null);
+                    includeUndated = true;
+                }
+            }
+        }
+
+        return new UnreadPacket
+        {
+            FromUtc = fromUtc,
+            ToUtc = toUtc,
+            IncludeUndated = includeUndated,
+            Days = days,
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetUnreadPacketCountAsync(UnreadPacket packet, Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsRead)
+            .Where(PacketMatches(packet));
+
+        if (categoryId.HasValue)
+        {
+            var feedIds = context.Feeds
+                .AsNoTracking()
+                .Where(f => f.CategoryId == categoryId.Value)
+                .Select(f => f.Id);
+            query = query.Where(i => feedIds.Contains(i.FeedId));
+        }
+
+        return await query.CountAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkUnreadPacketAsReadAsync(UnreadPacket packet, Guid? categoryId = null)
+    {
+        await using var context = await _factory.CreateDbContextAsync();
+        var query = context.Items
+            .Where(i => !i.IsRead)
+            .Where(PacketMatches(packet));
 
         if (categoryId.HasValue)
         {
@@ -397,6 +590,48 @@ public class ItemRepository : IItemRepository
             .AsNoTracking()
             .Select(i => i.Id)
             .ToListAsync(cancellationToken);
+    }
+
+    // Shared packet predicate for the read, count and mark paths so "mark all
+    // read" covers exactly the range the packet makes theoretically visible:
+    // the half-open UTC window, or the undated pseudo day, or both. A packet
+    // without range bounds covers undated items only; a half-open packet is
+    // invalid and is rejected instead of silently degrading into a wrong
+    // predicate for the destructive mark path.
+    private static System.Linq.Expressions.Expression<Func<ItemEntity, bool>> PacketMatches(UnreadPacket packet)
+    {
+        var from = packet.FromUtc;
+        var to = packet.ToUtc;
+        if (from.HasValue != to.HasValue)
+        {
+            throw new ArgumentException(
+                $"An unread packet must set either both range bounds or none ({nameof(UnreadPacket.FromUtc)}/{nameof(UnreadPacket.ToUtc)}).",
+                nameof(packet));
+        }
+
+        if (from.HasValue && to.HasValue)
+        {
+            return packet.IncludeUndated
+                ? i => (i.PublishedAt >= from && i.PublishedAt < to) || i.PublishedAt == null
+                : i => i.PublishedAt >= from && i.PublishedAt < to;
+        }
+
+        return packet.IncludeUndated
+            ? i => i.PublishedAt == null
+            : i => false;
+    }
+
+    // Local calendar day of a UTC timestamp: stored PublishedAt values are UTC,
+    // while the packet days are defined by the device's local time.
+    private static DateOnly LocalDayOf(DateTime utc)
+        => DateOnly.FromDateTime(DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime().Date);
+
+    // UTC bounds of a local calendar day: [day start, next day start).
+    private static (DateTime FromUtc, DateTime ToUtc) DayBoundsUtc(DateOnly day)
+    {
+        var from = DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue), DateTimeKind.Local).ToUniversalTime();
+        var to = DateTime.SpecifyKind(day.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Local).ToUniversalTime();
+        return (from, to);
     }
 
     /// <summary>

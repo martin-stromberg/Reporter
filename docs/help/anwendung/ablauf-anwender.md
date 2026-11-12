@@ -31,6 +31,8 @@ Tippe auf einen der fünf Tabs — jeder Tab zeigt ein Symbol und seinen Namen:
 
 > **Tipp:** Auf **Ungelesen** kannst du die Liste über die Filter-Chips unter dem Seitentitel auf eine Kategorie eingrenzen. Jeder Chip zeigt den Kategorienamen und die Anzahl ungelesener Artikel.
 
+> **Tipp:** Die Seite **Ungelesen** lädt Artikel tageweise als **Lesepaket** — du arbeitest immer die Artikel eines Tages ab, und der Doppelhaken-Button **Paket gelesen** markiert nur dieses Paket; danach erscheint automatisch das nächste Paket. Details siehe [Ungelesen](ungelesen.md).
+
 ### 3. Feed suchen und hinzufügen
 
 - Öffne **Feeds** und tippe auf **+ Feed per URL hinzufügen** — das Formular schiebt sich von unten über die Seite.
