@@ -161,9 +161,6 @@
   <data name="ButtonBookmark" xml:space="preserve">
     <value>Bookmark</value>
   </data>
-  <data name="ButtonMarkAllRead" xml:space="preserve">
-    <value>All read</value>
-  </data>
   <data name="ButtonMarkAsRead" xml:space="preserve">
     <value>Mark as read</value>
   </data>
@@ -733,5 +730,20 @@
   </data>
   <data name="UnreadSwipeRemove" xml:space="preserve">
     <value>Remove</value>
+  </data>
+  <data name="MarkAllReadPacketTitleFormat" xml:space="preserve">
+    <value>Mark {0} articles ({1}) as read?</value>
+  </data>
+  <data name="MarkAllReadPacketTitleSingularFormat" xml:space="preserve">
+    <value>Mark {0} article ({1}) as read?</value>
+  </data>
+  <data name="UnreadNoDateLabel" xml:space="preserve">
+    <value>without date</value>
+  </data>
+  <data name="ButtonMarkPacketRead" xml:space="preserve">
+    <value>Mark packet read</value>
+  </data>
+  <data name="UnreadMarkPacketReadHint" xml:space="preserve">
+    <value>Mark the current reading packet as read</value>
   </data>
 </root>

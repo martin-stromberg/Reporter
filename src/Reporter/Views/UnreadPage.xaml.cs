@@ -140,11 +140,11 @@ public partial class UnreadPage : ContentPage
         }
 
         var choice = await DisplayActionSheetAsync(
-            _viewModel.UnreadBadgeText,
+            _viewModel.MarkAllReadConfirmationText,
             AppResources.ButtonCancel,
-            AppResources.ButtonMarkAllRead);
+            AppResources.ButtonMarkPacketRead);
 
-        if (choice == AppResources.ButtonMarkAllRead)
+        if (choice == AppResources.ButtonMarkPacketRead)
         {
             Haptics.Confirm();
             await _viewModel.MarkAllReadCommand.ExecuteAsync(null);

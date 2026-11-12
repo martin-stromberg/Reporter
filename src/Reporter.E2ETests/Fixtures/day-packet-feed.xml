@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
+
+<!-- Serves 12 articles over 3 calendar days (6 + 3 + 3) so the reading-packet
+     logic is provable end to end: descending picks day A alone (>= 5 articles),
+     ascending anchors on day C and extends to day B (3 < 5). All pubDate values
+     sit at 12:00 GMT, far away from local-day boundaries on the executing
+     machine, so the day grouping is unambiguous in every time zone. -->
+<rss version="2.0">
+  <channel>
+    <title>Stub Feed {name}</title>
+    <link>http://127.0.0.1/{name}</link>
+    <description>Day-packet stub feed served by the E2E test web server.</description>
+    <item>
+      <title>Packet day A article 1</title>
+      <link>http://127.0.0.1/articles/packet-a-1</link>
+      <pubDate>Tue, 10 Mar 2026 12:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day A article 2</title>
+      <link>http://127.0.0.1/articles/packet-a-2</link>
+      <pubDate>Tue, 10 Mar 2026 12:01:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day A article 3</title>
+      <link>http://127.0.0.1/articles/packet-a-3</link>
+      <pubDate>Tue, 10 Mar 2026 12:02:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day A article 4</title>
+      <link>http://127.0.0.1/articles/packet-a-4</link>
+      <pubDate>Tue, 10 Mar 2026 12:03:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day A article 5</title>
+      <link>http://127.0.0.1/articles/packet-a-5</link>
+      <pubDate>Tue, 10 Mar 2026 12:04:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day A article 6</title>
+      <link>http://127.0.0.1/articles/packet-a-6</link>
+      <pubDate>Tue, 10 Mar 2026 12:05:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day B article 1</title>
+      <link>http://127.0.0.1/articles/packet-b-1</link>
+      <pubDate>Mon, 09 Mar 2026 12:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day B article 2</title>
+      <link>http://127.0.0.1/articles/packet-b-2</link>
+      <pubDate>Mon, 09 Mar 2026 12:01:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day B article 3</title>
+      <link>http://127.0.0.1/articles/packet-b-3</link>
+      <pubDate>Mon, 09 Mar 2026 12:02:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day C article 1</title>
+      <link>http://127.0.0.1/articles/packet-c-1</link>
+      <pubDate>Sun, 08 Mar 2026 12:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day C article 2</title>
+      <link>http://127.0.0.1/articles/packet-c-2</link>
+      <pubDate>Sun, 08 Mar 2026 12:01:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Packet day C article 3</title>
+      <link>http://127.0.0.1/articles/packet-c-3</link>
+      <pubDate>Sun, 08 Mar 2026 12:02:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
