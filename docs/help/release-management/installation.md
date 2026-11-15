@@ -15,9 +15,10 @@
 ## Installationsschritte
 
 1. Workflows auf `staging` mergen und einmalig nach `main` bringen (erster Promotion-PR manuell, siehe Hinweis).
-2. Labels prüfen — `automated-promotion` (`0E8A16`) und `automated-backmerge` (`1D76DB`) existieren bereits; die Workflows legen sie sonst per `gh label create --force` beim ersten Lauf an.
-3. Optional iOS aktivieren (siehe Konfiguration).
-4. Branch-Protection einrichten, sobald der Repository-Plan es zulässt (siehe Konfiguration → Branch-Protection).
+2. Labels prüfen — `automated-promotion` (`0E8A16`) und `automated-backmerge` (`1D76DB`) existieren bereits; die Workflows legen sie sonst per `gh label create --force` beim ersten Lauf an. Gleiches gilt für die Review-Labels `scheduled-architecture-review`, `scheduled-nuget-review` und `scheduled-compliance-review`, die die `review-*.yml`-Workflows beim jeweils ersten Lauf anlegen.
+3. Wiederkehrende Reviews aktivieren — sobald die `review-*.yml`-Workflows auf `main` liegen, läuft der Cron-Zeitplan automatisch; den Workflow `Scheduled Architecture Review` nach dem ersten Merge auf `main` einmalig manuell per `workflow_dispatch` starten (Details siehe [Wiederkehrende Reviews](wiederkehrende-reviews.md)).
+4. Optional iOS aktivieren (siehe Konfiguration).
+5. Branch-Protection einrichten, sobald der Repository-Plan es zulässt (siehe Konfiguration → Branch-Protection).
 
 ## Konfiguration
 
@@ -29,6 +30,7 @@
 | `release.yml` | `contents: write`, `issues: write`, `pull-requests: write` |
 | `staging-to-main-promotion.yml`, `sync-staging-with-main.yml` | `contents: read`, `pull-requests: write`, `issues: write` |
 | `pr-staging-ci.yml` | `contents: read`, `checks: write` |
+| `review-architecture.yml`, `review-nuget.yml`, `review-compliance.yml` | `issues: write` |
 
 `GITHUB_TOKEN`/`github.token` genügt für Releases, PRs und Labels — keine Personal-Access-Tokens nötig.
 
