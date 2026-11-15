@@ -1,12 +1,10 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
 using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reporter.Core.Interfaces;
 using Reporter.Core.Models;
 using Reporter.Core.Services;
-using Reporter.Data;
 
 namespace Reporter;
 
@@ -42,8 +40,7 @@ public partial class App : Application
         var debugLogService = scope.ServiceProvider.GetRequiredService<IDebugLogService>();
         _debugLogService = debugLogService;
 
-        await RunStartupStepAsync(() => MigrateContentAsync(scope), "Content migration failed on start", debugLogService);
-        await RunStartupStepAsync(() => MigrateDatabaseAsync(scope), "Database migration failed on start", debugLogService);
+        await RunStartupStepAsync(() => MigrateDatabasesAsync(scope), "Database migration failed on start", debugLogService);
 
         await debugLogService.BeginSessionAsync();
 
@@ -108,25 +105,16 @@ public partial class App : Application
         _ = _debugLogService?.LogAsync(DebugLogCategory.Exception, "Unobserved task exception", e.Exception.ToString(), DebugLogLevel.Error);
     }
 
-    private static async Task MigrateDatabaseAsync(IServiceScope scope)
-    {
-        var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
-        await context.Database.MigrateAsync();
-    }
-
-    private static async Task MigrateContentAsync(IServiceScope scope)
+    private static async Task MigrateDatabasesAsync(IServiceScope scope)
     {
         // Idempotenter Sicherheitsnetz-Aufruf: faengt den Fall ab, dass die
-        // Content-Migration in MauiProgram scheiterte. Muss vor
-        // MigrateDatabaseAsync laufen, weil die reporter.db-Migration die
-        // Legacy-Spalte items.content_html entfernt — danach waere der
-        // Retry ein No-op und die Inhalte verloren (dieselbe Reihenfolge
-        // wie MigrateContentStoreAndLegacyData vor ApplyPersistedLanguage
-        // in MauiProgram.CreateMauiApp). Der rohe SQL-Zugriff benoetigt
-        // kein migriertes Schema: Ohne items-Tabelle ist die
-        // PRAGMA-Sonde leer und der Aufruf eine harmlose No-op.
-        var migrationService = scope.ServiceProvider.GetRequiredService<IContentMigrationService>();
-        await migrationService.MigrateLegacyContentAsync();
+        // Datenbank-Migration in MauiProgram scheiterte. Der Dienst kapselt
+        // die Pflichtreihenfolge (Legacy-Content-Kopie vor der reporter.db-
+        // Schemamigration, die items.content_html loescht); der rohe
+        // SQL-Zugriff benoetigt kein migriertes Schema: Ohne items-Tabelle
+        // ist die PRAGMA-Sonde leer und der Aufruf eine harmlose No-op.
+        var migrationService = scope.ServiceProvider.GetRequiredService<IDatabaseMigrationService>();
+        await migrationService.MigrateAsync();
     }
 
     private static void ApplyBackupHandling(IServiceScope scope)

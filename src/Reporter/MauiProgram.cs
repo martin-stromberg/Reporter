@@ -85,6 +85,7 @@ public static class MauiProgram
             .AddSingleton<IItemRepository, ItemRepository>()
             .AddSingleton<IItemContentStore, ItemContentRepository>()
             .AddSingleton<IContentMigrationService, ItemContentMigrationService>()
+            .AddSingleton<IDatabaseMigrationService, DatabaseMigrationService>()
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()
@@ -135,7 +136,7 @@ public static class MauiProgram
 #endif
 
         var app = builder.Build();
-        MigrateContentStoreAndLegacyData(app);
+        MigrateDatabases(app);
         ApplyPersistedLanguage(app);
         return app;
     }
@@ -169,26 +170,24 @@ public static class MauiProgram
     }
 
     /// <summary>
-    /// Migrates the content database schema and copies legacy
-    /// <c>items.content_html</c> values into the content store. Must run before
-    /// <see cref="ApplyPersistedLanguage"/>, which migrates <c>reporter.db</c>
-    /// and thereby drops the legacy column. A failure is logged but never
-    /// blocks the start; <c>App.OnStart</c> retries the content migration as
-    /// its own startup step.
+    /// Runs the full database migration pass via <see cref="IDatabaseMigrationService"/>:
+    /// content store schema plus legacy <c>items.content_html</c> copy, then the
+    /// <c>reporter.db</c> schema. A failure is logged but never blocks the start;
+    /// <c>App.OnStart</c> retries the same pass as its own startup step.
     /// </summary>
     /// <param name="app">The built <see cref="MauiApp"/> whose services are used.</param>
-    private static void MigrateContentStoreAndLegacyData(MauiApp app)
+    private static void MigrateDatabases(MauiApp app)
     {
         try
         {
             using var scope = app.Services.CreateScope();
-            var migrationService = scope.ServiceProvider.GetRequiredService<IContentMigrationService>();
-            migrationService.MigrateLegacyContentAsync().GetAwaiter().GetResult();
+            var migrationService = scope.ServiceProvider.GetRequiredService<IDatabaseMigrationService>();
+            migrationService.MigrateAsync().GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
-            // Ein Fehler bei der Content-Migration darf den App-Start nicht verhindern.
-            Debug.WriteLine($"MauiProgram.MigrateContentStoreAndLegacyData failed: {ex}");
+            // Ein Fehler bei der Datenbank-Migration darf den App-Start nicht verhindern.
+            Debug.WriteLine($"MauiProgram.MigrateDatabases failed: {ex}");
         }
     }
 
@@ -198,8 +197,8 @@ public static class MauiProgram
     /// localized tab titles and creates all pages (including the singleton
     /// <see cref="SettingsViewModel"/>, which reads its option labels from
     /// <c>AppResources</c>) eagerly, so the culture must already be effective here.
-    /// The database is migrated synchronously first so the <c>language</c> column
-    /// exists on upgraded databases.
+    /// The schema was already migrated by <see cref="MigrateDatabases"/>; a failed
+    /// pass surfaces here as a settings read error and is caught like before.
     /// </summary>
     /// <param name="app">The built <see cref="MauiApp"/> whose services are used.</param>
     private static void ApplyPersistedLanguage(MauiApp app)
@@ -207,9 +206,6 @@ public static class MauiProgram
         try
         {
             using var scope = app.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<ReporterDbContext>();
-            context.Database.Migrate();
-
             var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
             var settings = settingsRepository.GetAsync().GetAwaiter().GetResult();
             AppCulture.Apply(settings.Language);

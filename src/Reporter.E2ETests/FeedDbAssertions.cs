@@ -355,23 +355,33 @@ public static class FeedDbAssertions
         => ExecuteWriteWithRetryAsync(databasePath, "UPDATE items SET is_read = 1 WHERE is_read = 0");
 
     /// <summary>
-    /// Deletes every feed row together with its items. Tests that add feeds
-    /// call this during cleanup so the shared feed list stays short: an
-    /// accumulating list pushes newly added cards out of the virtualized
-    /// viewport where the scroll scan of the next tests cannot reach them.
-    /// Retried briefly because the app may hold a write lock while a sync is
-    /// still finishing.
+    /// Deletes every feed row together with its items and their stored
+    /// contents. Tests that add feeds call this during cleanup so the shared
+    /// feed list stays short: an accumulating list pushes newly added cards
+    /// out of the virtualized viewport where the scroll scan of the next
+    /// tests cannot reach them. The <c>item_contents</c> rows of the removed
+    /// items live in the separate <c>reporter-content.db</c> and are cleared
+    /// as well, mirroring the delete cascade of the productive
+    /// <c>FeedRepository.DeleteAsync</c>. Retried briefly because the app may
+    /// hold a write lock while a sync is still finishing.
     /// </summary>
     /// <param name="databasePath">The path of the temp <c>reporter.db</c>.</param>
+    /// <param name="contentDatabasePath">The path of the temp <c>reporter-content.db</c>.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public static Task DeleteAllFeedsAsync(string databasePath)
+    public static async Task DeleteAllFeedsAsync(string databasePath, string contentDatabasePath)
     {
         // The items and feed-scoped keywords are removed explicitly instead of
         // relying on the foreign-key cascade so the cleanup does not depend on
         // the connection's FK enforcement.
-        return ExecuteWriteWithRetryAsync(
+        await ExecuteWriteWithRetryAsync(
             databasePath,
             "DELETE FROM items; DELETE FROM keywords WHERE feed_id IS NOT NULL; DELETE FROM feeds");
+
+        // All items were removed, so every stored content row is orphaned —
+        // clearing the table matches the outcome of the productive cascade.
+        await ExecuteWriteWithRetryAsync(
+            contentDatabasePath,
+            "DELETE FROM item_contents");
     }
 
     // Runs a single write statement against the app's database, retrying

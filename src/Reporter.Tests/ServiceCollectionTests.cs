@@ -35,6 +35,7 @@ public class ServiceCollectionTests
         Assert.NotNull(provider.GetRequiredService<IItemRepository>());
         Assert.NotNull(provider.GetRequiredService<IItemContentStore>());
         Assert.NotNull(provider.GetRequiredService<IContentMigrationService>());
+        Assert.NotNull(provider.GetRequiredService<IDatabaseMigrationService>());
         Assert.NotNull(provider.GetRequiredService<IKeywordRepository>());
         Assert.NotNull(provider.GetRequiredService<ISettingsRepository>());
         Assert.NotNull(provider.GetRequiredService<ISyncLogRepository>());
@@ -230,6 +231,7 @@ public class ServiceCollectionTests
             .AddSingleton<IItemRepository, ItemRepository>()
             .AddSingleton<IItemContentStore, ItemContentRepository>()
             .AddSingleton<IContentMigrationService, ItemContentMigrationService>()
+            .AddSingleton<IDatabaseMigrationService, DatabaseMigrationService>()
             .AddSingleton<IKeywordRepository, KeywordRepository>()
             .AddSingleton<ISettingsRepository, SettingsRepository>()
             .AddSingleton<ISyncLogRepository, SyncLogRepository>()

@@ -35,7 +35,7 @@ public sealed class ArticleTagsTests : IDisposable
         // database and grow the feed list beyond the viewport — the scroll
         // scan cannot reach a virtualized-away card reliably, so every test
         // starts from an empty feed list.
-        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
+        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath, _fixture.ContentDatabasePath).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -47,7 +47,7 @@ public sealed class ArticleTagsTests : IDisposable
         try
         {
             _page.DismissPopups();
-            FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
+            FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath, _fixture.ContentDatabasePath).GetAwaiter().GetResult();
             FeedDbAssertions.MarkAllItemsReadAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
             _page.SelectTab(AppResources.TabFeeds);
         }
