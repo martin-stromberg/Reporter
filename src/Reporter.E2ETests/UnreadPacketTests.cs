@@ -37,7 +37,7 @@ public sealed class UnreadPacketTests : IDisposable
         // Every test therefore starts from a fully read, feed-less database
         // with the default sort order.
         FeedDbAssertions.MarkAllItemsReadAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
-        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
+        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath, _fixture.ContentDatabasePath).GetAwaiter().GetResult();
         FeedDbAssertions.SetUnreadSortOrderAsync(_fixture.DatabasePath, "desc").GetAwaiter().GetResult();
     }
 
@@ -52,7 +52,7 @@ public sealed class UnreadPacketTests : IDisposable
         {
             _page.DismissPopups();
             FeedDbAssertions.MarkAllItemsReadAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
-            FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
+            FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath, _fixture.ContentDatabasePath).GetAwaiter().GetResult();
             FeedDbAssertions.SetUnreadSortOrderAsync(_fixture.DatabasePath, "desc").GetAwaiter().GetResult();
             _page.SelectTab(AppResources.TabFeeds);
         }

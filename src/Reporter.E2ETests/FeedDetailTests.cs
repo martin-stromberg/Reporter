@@ -35,7 +35,7 @@ public sealed class FeedDetailTests : IDisposable
         // database and grow the feed list beyond the viewport — the scroll
         // scan in WaitForFeedCard cannot reach a virtualized-away card
         // reliably, so every test starts from an empty feed list.
-        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
+        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath, _fixture.ContentDatabasePath).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public sealed class FeedDetailTests : IDisposable
         // The tests add one to two feeds each; removing them again keeps the
         // shared feed list short so the next test's card renders inside the
         // viewport instead of beyond the reach of the scroll scan.
-        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath).GetAwaiter().GetResult();
+        FeedDbAssertions.DeleteAllFeedsAsync(_fixture.DatabasePath, _fixture.ContentDatabasePath).GetAwaiter().GetResult();
 
         // The paging/search fixtures add dozens of articles to the shared
         // database; marking them read keeps the unread list short enough for
