@@ -2,7 +2,7 @@
 
 # Release-Management
 
-Die automatisierte Release-Pipeline des Repositories baut aus jedem geprüften `staging`-Stand ein RC-Pre-Release, öffnet Promotion-PRs nach `main`, erzeugt auf `main` stabile Releases mit allen Plattform-Artefakten und hält `staging` per Backmerge-PR synchron. Zielgruppe dieser Dokumentation sind Maintainer und Betreiber des Repositories.
+Die automatisierte Release-Pipeline des Repositories baut aus jedem geprüften `staging`-Stand ein RC-Pre-Release, öffnet Promotion-PRs nach `main`, erzeugt auf `main` stabile Releases mit allen Plattform-Artefakten und hält `staging` per Backmerge-PR synchron. Ergänzend erzeugen drei zeitgesteuerte Workflows wiederkehrende Review-Issues (Architektur/Sicherheit, NuGet, Compliance) mit Duplikatvermeidung über Labels. Zielgruppe dieser Dokumentation sind Maintainer und Betreiber des Repositories.
 
 ## Inhalt
 
@@ -11,4 +11,5 @@ Die automatisierte Release-Pipeline des Repositories baut aus jedem geprüften `
 - [Architektur](architektur.md)
 - [Business Rules](business-rules.md)
 - [Installation & Konfiguration](installation.md)
+- [Wiederkehrende Reviews](wiederkehrende-reviews.md)
 - [Fehlerbehebung](troubleshooting.md)

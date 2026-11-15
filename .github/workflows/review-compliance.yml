@@ -1,0 +1,42 @@
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
+name: Scheduled Compliance Review
+
+on:
+  schedule:
+    - cron: '0 6 1 1 *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: review-compliance
+  cancel-in-progress: false
+
+jobs:
+  create-review-issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Ensure scheduled-compliance-review label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh label create scheduled-compliance-review --color "D93F0B" --description "Scheduled compliance and copyright review issue" --force
+
+      - name: Create review issue if none open
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          existing="$(gh issue list --label scheduled-compliance-review --state open --json number)"
+          if [ "$(echo "$existing" | jq length)" -eq 0 ]; then
+            gh issue create \
+              --title "Compliance- und Copyright-Review $(date -u +'%Y')" \
+              --body "@softwarewerkstatt Bitte führe das jährliche Compliance-Review durch. Prüfe: Copyright-Hinweise im Quellcode; Copyright-Angaben auf Webseiten; Copyright-Angaben in About-Dialogen; Impressum; Datenschutzerklärung; Drittanbieter-Lizenzen; Open-Source-Verpflichtungen; Unternehmens- und Kontaktinformationen; App-Store-Metadaten (falls vorhanden). Erstelle konkrete Änderungsvorschläge und liste erkannte Risiken oder Handlungsbedarfe auf." \
+              --label "scheduled-compliance-review"
+          else
+            echo "An open issue with label scheduled-compliance-review already exists; skipping creation."
+          fi
