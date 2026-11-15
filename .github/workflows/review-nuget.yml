@@ -1,0 +1,42 @@
+# Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
+name: Scheduled NuGet Review
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: review-nuget
+  cancel-in-progress: false
+
+jobs:
+  create-review-issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Ensure scheduled-nuget-review label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh label create scheduled-nuget-review --color "0075CA" --description "Scheduled NuGet package review issue" --force
+
+      - name: Create review issue if none open
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          existing="$(gh issue list --label scheduled-nuget-review --state open --json number)"
+          if [ "$(echo "$existing" | jq length)" -eq 0 ]; then
+            gh issue create \
+              --title "NuGet-Paketprüfung KW $(date -u +'%G-W%V')" \
+              --body "@softwarewerkstatt Bitte analysiere alle verwendeten NuGet-Pakete. Prüfe: Verfügbare Updates; Security-Updates; Pakete mit bekannt gewordenen Schwachstellen; Veraltete oder nicht mehr gepflegte Pakete; Empfohlene Nachfolgepakete; Mögliche Breaking Changes bei Updates. Erstelle konkrete Update-Empfehlungen inklusive Risikobewertung. Setze die unbedenklichen Empfehlungen (niedriges bis mittleres Risiko) direkt in einem Pull Request um. Risikoreiche oder aufgeschobene Empfehlungen dokumentiere im PR-Body bzw. als eigenes Folge-Issue." \
+              --label "scheduled-nuget-review"
+          else
+            echo "An open issue with label scheduled-nuget-review already exists; skipping creation."
+          fi

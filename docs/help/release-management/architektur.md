@@ -13,6 +13,9 @@
 | `.github/workflows/sync-staging-with-main.yml` (`Backmerge Main to Staging`) | GitHub-Actions-Workflow | PR `main` → `staging` bei jedem `main`-Push |
 | `.github/workflows/verify-pr-source.yml` (`Verify PR Source`) | GitHub-Actions-Workflow | Lehnt PRs nach `main` ab, die nicht aus `staging` stammen |
 | `.github/workflows/security-scan.yml` | GitHub-Actions-Workflow | Unverändert: geplanter Security-Scan (Schedule/Dispatch) |
+| `.github/workflows/review-architecture.yml` (`Scheduled Architecture Review`) | GitHub-Actions-Workflow | Monatliches Architektur- und Sicherheitsreview als Issue mit Label `scheduled-architecture-review` (Schedule/Dispatch, Label-Dedup) |
+| `.github/workflows/review-nuget.yml` (`Scheduled NuGet Review`) | GitHub-Actions-Workflow | Wöchentliche NuGet-Paketprüfung als Issue mit Label `scheduled-nuget-review` (Schedule/Dispatch, Label-Dedup) |
+| `.github/workflows/review-compliance.yml` (`Scheduled Compliance Review`) | GitHub-Actions-Workflow | Jährliches Compliance- und Copyright-Review als Issue mit Label `scheduled-compliance-review` (Schedule/Dispatch, Label-Dedup) |
 | `.github/actions/build-and-package` | Composite Action | Windows-Publish `net10.0-windows10.0.19041.0`/`win-x64` → `release-win-x64.zip` |
 | `.github/actions/package-android` | Composite Action | Android-Publish `net10.0-android` → `release-android.apk` |
 | `.github/actions/package-ios` | Composite Action | iOS-Publish `net10.0-ios`/`ios-arm64` auf `macos-latest` → `release-ios.ipa` |

@@ -108,7 +108,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - [iOS-Deployment](docs/help/ios-deployment/index.md) — lokaler Buildlauf, Signing, Gerät/Simulator, TestFlight und App Store
 - [Datenschutzerklärung](docs/privacy-policy.md) — öffentlich referenzierbare Privacy-Policy (deutsch/englisch) für App Store Connect
 - [App-Store-Review](docs/app-store-review.md) — Review-Notizen zur Einreichung: App-Privacy-Antworten, ATS-Begründung, Altersfreigabe, iPad-Entscheidung
-- [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien und Asset-Reparatur
+- [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien, Asset-Reparatur und zeitgesteuerte Review-Issues (Architektur/Sicherheit, NuGet, Compliance)
 - [Website](docs/help/website/index.md) — zweisprachige statische Projekt-Website unter `website/` (Landing-Page, Datenschutz, Changelog, Press Kit) und ihr Deployment auf GitHub Pages
 - [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
 - [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen
