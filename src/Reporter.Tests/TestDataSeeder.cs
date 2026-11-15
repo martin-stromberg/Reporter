@@ -16,8 +16,9 @@ public static class TestDataSeeder
     /// </summary>
     /// <param name="factory">The test context factory.</param>
     /// <param name="url">The feed URL; defaults to a fixed value.</param>
+    /// <param name="notificationsEnabled">A value indicating whether notifications are enabled for the feed.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the feed identifier.</returns>
-    public static async Task<Guid> SeedFeedAsync(TestDbContextFactory factory, string url = "https://example.com/feed")
+    public static async Task<Guid> SeedFeedAsync(TestDbContextFactory factory, string url = "https://example.com/feed", bool notificationsEnabled = true)
     {
         var feedId = Guid.NewGuid();
         await using var context = factory.CreateDbContext();
@@ -26,6 +27,7 @@ public static class TestDataSeeder
             Id = feedId,
             Url = url,
             Title = "Example Feed",
+            NotificationsEnabled = notificationsEnabled,
         });
         await context.SaveChangesAsync();
         return feedId;

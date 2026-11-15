@@ -450,7 +450,6 @@ public partial class UnreadViewModel : BaseViewModel
         _reloadPending = false;
 
         ErrorMessage = string.Empty;
-        SyncErrorMessage = string.Empty;
         _currentPage = 0;
         HasMore = false;
         OnPropertyChanged(nameof(HeaderDateText));
@@ -596,49 +595,12 @@ public partial class UnreadViewModel : BaseViewModel
 
     private async Task RefreshAsync()
     {
-        if (!IsOnline)
+        if (await RunFeedSyncAsync(() => _feedSyncService.SyncAllAsync()))
         {
-            // The RefreshView.IsRefreshing TwoWay binding may already have pushed
-            // IsSyncing to true before the command ran — reset it so the refresh
-            // indicator does not hang. No error is raised; the persistent offline
-            // hint already communicates the state.
-            IsSyncing = false;
-            return;
-        }
-
-        IsSyncing = true;
-        SyncErrorMessage = string.Empty;
-
-        var syncError = string.Empty;
-        try
-        {
-            var result = await _feedSyncService.SyncAllAsync();
-            if (result.Status == FeedHealth.Error)
-            {
-                // The technical detail stays in the SyncLog (persisted via
-                // FeedSyncService.UpdateLogAsync); the UI shows the localized
-                // generic message instead of raw English/exception text.
-                syncError = AppResources.SyncStatusError;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"RefreshAsync failed: {ex}");
-            syncError = AppResources.SyncStatusError;
-        }
-        finally
-        {
-            IsSyncing = false;
-        }
-
-        _lastSyncAtUtc = DateTime.UtcNow;
-        LastSyncText = string.Format(CultureInfo.CurrentCulture, "{0:g}", DateTime.Now);
-        OnPropertyChanged(nameof(SyncStatusText));
-        await LoadAsync();
-
-        if (syncError.Length > 0)
-        {
-            SyncErrorMessage = syncError;
+            _lastSyncAtUtc = DateTime.UtcNow;
+            LastSyncText = string.Format(CultureInfo.CurrentCulture, "{0:g}", DateTime.Now);
+            OnPropertyChanged(nameof(SyncStatusText));
+            await LoadAsync();
         }
     }
 
@@ -842,6 +804,18 @@ public partial class UnreadViewModel : BaseViewModel
             : $"{UnreadCount} {AppResources.LabelUnreadArticles} • {LastSyncText}";
         OnPropertyChanged(nameof(UnreadBadgeText));
         OnPropertyChanged(nameof(CardPositionText));
+    }
+
+    /// <inheritdoc />
+    protected override void SetIsSyncing(bool isSyncing)
+    {
+        IsSyncing = isSyncing;
+    }
+
+    /// <inheritdoc />
+    protected override void ReportSyncError(string message)
+    {
+        SyncErrorMessage = message;
     }
 
     /// <inheritdoc />
