@@ -35,7 +35,7 @@ jobs:
           if [ "$(echo "$existing" | jq length)" -eq 0 ]; then
             gh issue create \
               --title "NuGet-Paketprüfung KW $(date -u +'%G-W%V')" \
-              --body "@softwarewerkstatt Bitte analysiere alle verwendeten NuGet-Pakete. Prüfe: Verfügbare Updates; Security-Updates; Pakete mit bekannt gewordenen Schwachstellen; Veraltete oder nicht mehr gepflegte Pakete; Empfohlene Nachfolgepakete; Mögliche Breaking Changes bei Updates. Erstelle konkrete Update-Empfehlungen inklusive Risikobewertung. Setze die unbedenklichen Empfehlungen (niedriges bis mittleres Risiko) direkt in einem Pull Request um. Risikoreiche oder aufgeschobene Empfehlungen dokumentiere im PR-Body bzw. als eigenes Folge-Issue." \
+              --body "@softwarewerkstatt Bitte analysiere alle verwendeten NuGet-Pakete. Prüfe: Verfügbare Updates; Security-Updates; Pakete mit bekannt gewordenen Schwachstellen; Veraltete oder nicht mehr gepflegte Pakete; Empfohlene Nachfolgepakete; Mögliche Breaking Changes bei Updates. Erstelle konkrete Update-Empfehlungen inklusive Risikobewertung. Setze einfache Versionshochsetzungen (unbedenkliche Empfehlungen mit niedrigem bis mittlerem Risiko) direkt mit dem Review in einem Pull Request um. Lege für komplexe Befunde (risikoreiche Updates, Breaking Changes, größere Anpassungen) ein oder mehrere Folge-Issues an und verlinke sie im Kommentar dieses Issues. Sind keine einfachen Anpassungen notwendig, schließe dieses Issue nach dem Review, sodass nur die Folge-Issues offen bleiben." \
               --label "scheduled-nuget-review"
           else
             echo "An open issue with label scheduled-nuget-review already exists; skipping creation."
