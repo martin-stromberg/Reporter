@@ -30,6 +30,17 @@ Alle drei Workflows folgen demselben Muster, das den bestehenden PR-Automatisier
 
 Die Duplikatprüfung gilt auch bei manueller Auslösung — ein neuer Zyklus wird bewusst dadurch gestartet, dass das vorherige Review-Issue geschlossen wird. Eine `concurrency`-Gruppe je Workflow (`cancel-in-progress: false`) verhindert parallele Läufe und damit Doppelerzeugung.
 
+## Dependabot
+
+Ergänzend zu den Issue-basierten Review-Zyklen läuft Dependabot (`.github/dependabot.yml`) wöchentlich für die Ökosysteme `nuget`, `npm` und `github-actions` und öffnet Update-PRs gegen `staging` (`target-branch`). Die Aufgabenteilung ist bewusst komplementär:
+
+- **Dependabot** erzeugt konkrete, einzeln mergebare Update-PRs, die jeweils die `PR CI for Staging`-Gates durchlaufen. Beim `github-actions`-Ökosystem hält es außerdem die auf Commit-SHAs gepinnten externen `uses:`-Referenzen (inkl. `# vN`-Kommentar) aktuell — in Workflows wie in den Composite Actions unter `.github/actions/`.
+- **Die Scheduled-Review-Issues** bleiben unverändert bestehen: Sie liefern die periodische Sichtprüfung mit Risikobewertung (u. a. CVEs, veraltete Pakete), die Dependabot-PRs nicht ersetzen. `review-nuget.yml` erfasst dabei auch Pakete, die Dependabot nicht anheben kann — etwa `Microsoft.Maui.Controls` mit `$(MauiVersion)` (SDK-gesteuert).
+
+**Einschränkung — Security-Update-PRs:** Dependabot-**Security**-Updates (nicht die regulären Version-Updates) ignorieren `target-branch` und zielen plattformbedingt immer auf den Standardbranch `main`. Solche PRs scheitern an `verify-pr-source.yml` (`head_ref == 'staging'`) und sind separat zu behandeln (bekannte Plattform-Einschränkung, keine Fehlkonfiguration).
+
+Wie die `schedule`-Trigger der Review-Workflows wird auch `dependabot.yml` nur vom Standardbranch `main` gelesen — die Update-PRs beginnen daher erst, nachdem der Stand per Promotion auf `main` angekommen ist. Eine manuelle Prüfung ist über *Insights → Dependency graph → Dependabot → Check for updates* möglich.
+
 ## Bereitstellung und Einschränkungen
 
 - **Cron wirkt erst ab `main`:** `schedule`-Trigger laufen ausschließlich auf dem Standardbranch. Bis die Workflow-Dateien über den Promotions-Mechanismus (`staging` → `main`) auf `main` angekommen sind, passiert nichts Zeitgesteuertes — lediglich `workflow_dispatch` steht danach zur Verfügung. Nach dem ersten Merge auf `main` wird der Architektur-Workflow einmalig manuell gestartet, damit Label und erstes Issue sofort entstehen statt erst zum nächsten Monatsersten.

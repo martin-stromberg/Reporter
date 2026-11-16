@@ -93,3 +93,33 @@
 - `dotnet workload restore`/`restore`/`publish` laufen in `package-android` ausschließlich mit `IncludeAndroidTarget: true`.
 
 **Umsetzung:** `src/Reporter/Reporter.csproj` (`IncludeAndroidTarget`, `TargetFrameworks`-Conditions), `env:`-Blöcke in den Workflows und Composite Actions.
+
+## Unterschiedliche Fail-Schwellen im Security-Gate
+
+**Beschreibung:** Das Security-Gate blockiert Änderungen mit bekannten Schwachstellen in den Abhängigkeiten. NuGet und npm werden mit absichtlich unterschiedlichen Schwellen geprüft.
+
+**Bedingungen:**
+- NuGet: `dotnet list Reporter.sln package --vulnerable --include-transitive` — **jeder** gemeldete Befund schlägt fehl.
+- npm: `npm audit --package-lock-only --audit-level=high` gegen `package-lock.json` — nur Befunde der Severity `high`/`critical` schlagen fehl; moderate Befunde werden im Report `npm-audit.txt` weiterhin ausgewiesen, blockieren aber nicht.
+- Sämtliche npm-Abhängigkeiten des Repositories sind `devDependencies` (semantic-release-Toolchain) — ein Audit mit `--omit=dev` wäre wirkungslos, daher wird das vollständige Lockfile geprüft. Ein `npm ci`/`node_modules` ist dank `--package-lock-only` nicht nötig; Node/npm ist auf den gehosteten Runnern vorinstalliert.
+
+**Verhalten:**
+- Bei Befund oberhalb der jeweiligen Schwelle → `::error::` + `exit 1` im Job `static checks` bzw. `security-scan`; das Report-Artefakt (`vulnerable-packages.txt` + `npm-audit.txt`) wird trotzdem hochgeladen (`if: always()`).
+- Die Schwelle `high` ist bewusst so gewählt: vorhandene moderate Advisories der Toolchain wären nur per Breaking-Downgrade behebbar und würden das Gate ab Tag 1 dauerrot machen — sie bleiben sichtbar, ohne die Pipeline zu blockieren.
+
+**Umsetzung:** `.github/actions/security-scan/action.yml` (Steps `Scan for vulnerable packages`, `Audit npm toolchain`, `Upload report`); lokale Spiegelung mit identischer Befehlszeile in `Invoke-SecurityScan` (`scripts/Run-StaticChecks.ps1`).
+
+## SHA-Pinning externer Action-Referenzen
+
+**Beschreibung:** Externe GitHub Actions werden über den Commit-SHA des Tags referenziert statt über den beweglichen Tag — ein von Dritten nachträglich übernommener Tag kann die Pipeline so nicht mehr verändern.
+
+**Bedingungen:**
+- Jede Referenz `uses: <owner>/<repo>@<ref>` in `.github/workflows/*.yml` und `.github/actions/*/action.yml` steht auf einem 40-stelligen Commit-SHA; der Original-Tag bleibt als Kommentar erhalten (`uses: actions/checkout@<sha>  # v7`).
+- Lokale Referenzen `uses: ./.github/actions/...` tragen keinen `@<ref>` und sind vom Pinning ausgenommen.
+- Der `github-actions`-Eintrag in `.github/dependabot.yml` ist die zugehörige Pflichtbedingung: Er hält die gepinnten SHAs (inkl. Kommentar) per wöchentlichem Update-PR aktuell — ohne ihn würden die Pins veralten.
+
+**Verhalten:**
+- Neue externe Action-Referenz → Tag-Auflösung per `git ls-remote` und gepinnte Form eintragen; Dependabot pflegt die Aktualisierung.
+- Dependabot-**Security**-Update-PRs ignorieren `target-branch` und zielen auf `main` — sie scheitern an `verify-pr-source.yml` und sind separat zu behandeln (Details siehe [Wiederkehrende Reviews](wiederkehrende-reviews.md)).
+
+**Umsetzung:** `.github/dependabot.yml` (`updates[].package-ecosystem: "github-actions"`); Konvention ist auch in `ci-instructions.md` §2 verankert.

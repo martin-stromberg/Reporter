@@ -68,6 +68,22 @@ Two composite actions live under `.github/actions/` and are shared between the w
   both `pr-staging-ci.yml`/`staging-ci.yml` (as a blocking gate) and `security-scan.yml` (as a
   standalone weekly check), so the logic exists exactly once.
 
+Two conventions apply across every file shown below:
+
+- **Pin external actions to commit SHAs.** Every `uses: <owner>/<repo>@<ref>` referencing an
+  external action must pin the commit SHA of the referenced tag and keep the tag as a trailing
+  comment for readability: `uses: actions/checkout@<40-hex-sha>  # v7`. Resolve the SHA with
+  `git ls-remote https://github.com/<owner>/<repo> refs/tags/<tag>` (for annotated tags use the
+  dereferenced `refs/tags/<tag>^{}` commit). Local references `uses: ./.github/actions/...`
+  carry no ref and cannot be pinned. Most YAML snippets in this document keep the `@vN` tag
+  form for readability — substitute the pinned form when creating the real files; the
+  snippet in section 6.2 already shows the pinned form.
+- **`.github/dependabot.yml`** keeps dependencies moving: `version: 2` with one `updates`
+  entry per ecosystem (`nuget`, `npm`, `github-actions`), `directory: "/"`,
+  `schedule.interval: weekly` and `target-branch: "staging"` so update PRs enter the same
+  staging gates as every other change. The `github-actions` entry is what keeps the pinned
+  SHAs themselves up to date (it also scans `action.yml` files under `.github/actions/`).
+
 ## 3. Step 1 — `verify-pr-source.yml`
 
 The simplest file. Its only job is to make sure nobody opens a PR into `main` from anywhere
@@ -493,7 +509,12 @@ runs:
 
 The one command shared by three call sites (`static-checks` in both PR/staging workflows, plus
 the standalone weekly `security-scan.yml`). The critical detail is that it must actually **fail**
-the check, not merely print a warning:
+the check, not merely print a warning. Besides the NuGet scan it audits the npm toolchain —
+`npm audit --package-lock-only` works on `package-lock.json` alone, so no `npm ci` and no
+`setup-node` step are needed (Node/npm ship with the hosted runner images). The audit level is
+`high`: a release toolchain typically carries transitive *moderate* advisories you cannot fix
+without breaking downgrades, so the gate trips on `high`/`critical` only while still reporting
+the rest:
 
 ```yaml
 name: Security scan
@@ -517,12 +538,23 @@ runs:
           exit 1
         fi
 
+    - name: Audit npm toolchain
+      shell: bash
+      run: |
+        set -o pipefail
+        if ! npm audit --package-lock-only --audit-level=high 2>&1 | tee npm-audit.txt; then
+          echo "::error::Vulnerable npm dependencies detected - see the uploaded report."
+          exit 1
+        fi
+
     - name: Upload report
       if: always()
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
       with:
         name: ${{ inputs.artifact-name }}
-        path: vulnerable-packages.txt
+        path: |
+          vulnerable-packages.txt
+          npm-audit.txt
         retention-days: 14
 ```
 
