@@ -23,7 +23,7 @@ Prüft, ob der Head-Commit ein reiner Backmerge von `main` ist, und setzt den Ou
 
 Beide Jobs hängen an `needs: detect-backmerge` mit `if: is_backmerge != 'true'` und laufen parallel. Beide setzen `IncludeIosTarget: false` und `IncludeAndroidTarget: false` als Umgebungsvariablen.
 
-- `static-checks` (Anzeigename `static checks`): `dotnet workload restore Reporter.sln`, `dotnet restore Reporter.sln -r win-x64`, `dotnet format --verify-no-changes --severity error`, Composite Action `./.github/actions/security-scan` (Artifact `vulnerable-packages-staging`), Static-Analysis-Build `dotnet build -c Release -p:TreatWarningsAsErrors=true`.
+- `static-checks` (Anzeigename `static checks`): `dotnet workload restore Reporter.sln`, `dotnet restore Reporter.sln -r win-x64`, `dotnet format --verify-no-changes --severity error`, Composite Action `./.github/actions/security-scan` (Artifact `vulnerable-packages-staging`), Static-Analysis-Build `dotnet build -c Release -p:TreatWarningsAsErrors=true`. Die Composite Action führt zwei Gate-Prüfungen aus: `dotnet list package --vulnerable --include-transitive` für NuGet (jeder gemeldete Befund schlägt fehl) und `npm audit --package-lock-only --audit-level=high` gegen `package-lock.json` (schlägt ab Severity `high`/`critical` fehl; moderate Befunde werden nur gemeldet). Beide Reports (`vulnerable-packages.txt`, `npm-audit.txt`) landen im Scan-Artefakt — auch im Fehlerfall (`if: always()`).
 - `build-and-test` (Anzeigename `build & test`): Build `Release`, `dotnet test src/Reporter.Tests/Reporter.Tests.csproj --settings src/Reporter.Tests/coverlet.runsettings` mit XPlat Code Coverage, ReportGenerator `5.5.11`, Coverage-Gate 70 % (awk-Vergleich auf `coverage-report/Summary.txt`), Artefakt-Uploads `coverage-report-staging` und `test-results-staging` (Retention 14 Tage, `if: always()`).
 
 ### 3. Versionsermittlung (`version`, `ubuntu-latest`)
@@ -107,6 +107,7 @@ Trigger: `push → branches: [main]` (läuft parallel zum `Release`-Workflow). J
 
 - `pr-staging-ci.yml` (`PR CI for Staging`): `pull_request → staging` (`opened`/`synchronize`/`reopened`), `concurrency: pr-staging-<pr-number>`. `detect-backmerge` wie in Ablauf 1; `static-checks`/`build-and-test` mit `if: is_backmerge != 'true'` (Artefakte `vulnerable-packages-pr`, `coverage-report-pr`, `test-results-pr`); `back-merge-skip` (`if: is_backmerge == 'true'`) meldet für Backmerge-PRs ein grünes Ergebnis, ohne die Gates zu durchlaufen.
 - `verify-pr-source.yml` (`Verify PR Source`): `pull_request → main`; Job `verify-source` bricht ab, wenn `github.head_ref != 'staging'`.
+- `security-scan.yml` (`Security Scan`): `schedule '0 6 * * 1'` und `workflow_dispatch`; führt dieselbe Composite Action `./.github/actions/security-scan` wie die Gates aus (NuGet- + npm-Audit, Artefakt `vulnerable-packages-weekly`), entkoppelt von Codeänderungen.
 
 ## `update.json`-Schema (`scripts/create-update-manifest.mjs`)
 

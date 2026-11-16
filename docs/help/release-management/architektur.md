@@ -12,7 +12,8 @@
 | `.github/workflows/staging-to-main-promotion.yml` (`Staging to Main Promotion`) | GitHub-Actions-Workflow | Draft-PR `staging` → `main` nach erfolgreichem `Pre-Release`-Lauf (`workflow_run`) |
 | `.github/workflows/sync-staging-with-main.yml` (`Backmerge Main to Staging`) | GitHub-Actions-Workflow | PR `main` → `staging` bei jedem `main`-Push |
 | `.github/workflows/verify-pr-source.yml` (`Verify PR Source`) | GitHub-Actions-Workflow | Lehnt PRs nach `main` ab, die nicht aus `staging` stammen |
-| `.github/workflows/security-scan.yml` | GitHub-Actions-Workflow | Unverändert: geplanter Security-Scan (Schedule/Dispatch) |
+| `.github/workflows/security-scan.yml` | GitHub-Actions-Workflow | Wöchentlicher Security-Scan (Schedule/Dispatch), nutzt dieselbe Composite Action wie die Gates |
+| `.github/dependabot.yml` | Dependabot-Konfiguration | Wöchentliche Update-PRs gegen `staging` für die Ökosysteme `nuget`, `npm` und `github-actions` (letzteres hält die gepinnten Action-SHAs aktuell) |
 | `.github/workflows/review-architecture.yml` (`Scheduled Architecture Review`) | GitHub-Actions-Workflow | Monatliches Architektur- und Sicherheitsreview als Issue mit Label `scheduled-architecture-review` (Schedule/Dispatch, Label-Dedup) |
 | `.github/workflows/review-nuget.yml` (`Scheduled NuGet Review`) | GitHub-Actions-Workflow | Wöchentliche NuGet-Paketprüfung als Issue mit Label `scheduled-nuget-review` (Schedule/Dispatch, Label-Dedup) |
 | `.github/workflows/review-compliance.yml` (`Scheduled Compliance Review`) | GitHub-Actions-Workflow | Jährliches Compliance- und Copyright-Review als Issue mit Label `scheduled-compliance-review` (Schedule/Dispatch, Label-Dedup) |
@@ -20,7 +21,7 @@
 | `.github/actions/package-android` | Composite Action | Android-Publish `net10.0-android` → `release-android.apk` |
 | `.github/actions/package-ios` | Composite Action | iOS-Publish `net10.0-ios`/`ios-arm64` auf `macos-latest` → `release-ios.ipa` |
 | `.github/actions/checkout-release-tag` | Composite Action | Detach-Checkout des Release-Tags für den Asset-Repair-Pfad |
-| `.github/actions/security-scan` | Composite Action | Prüfung auf verwundbare NuGet-Pakete (in den Gates eingebunden) |
+| `.github/actions/security-scan` | Composite Action | Prüfung auf verwundbare NuGet-Pakete und npm-Abhängigkeiten (`package-lock.json`, Schwelle `high`; in den Gates eingebunden) |
 | `scripts/resolve-release-version.mjs` | Node-Skript | Klassifiziert den Ref und entscheidet `create` / `upload-existing` / `none` |
 | `scripts/release-assets.mjs` | Node-Skript | Baut die konditionale Asset-Liste und emittiert `RELEASE_ASSETS`/`RELEASE_ASSET_PATHS`/`RELEASE_ASSET_FILES` |
 | `scripts/create-update-manifest.mjs` | Node-Skript | Erzeugt `update.json` inkl. `sha256`/`sizeBytes`/`assetUrl` pro Asset |
@@ -30,7 +31,7 @@
 
 ## Abhängigkeiten
 
-- **GitHub Actions** (`ubuntu-latest`, `windows-latest`, `macos-latest`): Ausführungsumgebung; iOS-Packaging benötigt zwingend `macos-latest`.
+- **GitHub Actions** (`ubuntu-latest`, `windows-latest`, `macos-latest`): Ausführungsumgebung; iOS-Packaging benötigt zwingend `macos-latest`. Alle externen `uses:`-Referenzen sind auf Commit-SHAs gepinnt (`uses: <owner>/<repo>@<sha> # vN`); der `github-actions`-Eintrag in `dependabot.yml` aktualisiert die Pins wöchentlich.
 - **GitHub Releases & Pull Requests API** via `gh` CLI (`GH_TOKEN` = `github.token`): Release-Erzeugung/-Upload, Asset-Vollständigkeitsprüfung (paginierte Listenabfrage), PR-/Label-Verwaltung. Erforderliche Permissions stehen in den Workflows (`contents`/`pull-requests`/`issues`/`checks`).
 - **semantic-release** (npm, `npx`/`npm run release`): Versionsermittlung per Dry-Run (`--branches staging` bzw. Default `main`) und Tag-/Release-Erzeugung im automatischen Pfad; Commit-Analyse über Preset `conventionalcommits`.
 - **.NET SDK 10.0.x + MAUI-Workloads** (`dotnet workload restore Reporter.sln`): Build, Tests und `dotnet publish` pro Zielplattform; die TFM-Auswahl läuft über die Schalter `IncludeIosTarget`/`IncludeAndroidTarget`.

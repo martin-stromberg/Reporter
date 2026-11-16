@@ -103,6 +103,30 @@
 
 **Symptom:** Check `verify-source` rot mit `PRs into main are only allowed from staging (got '<branch>')`.
 
-**Ursache:** Gewollt — nach `main` darf nur der Promotion-PR aus `staging` gemergt werden.
+**Ursache:** Gewollt — nach `main` darf nur der Promotion-PR aus `staging` gemergt werden. Besonderheit: Dependabot-**Security**-Update-PRs zielen plattformbedingt immer auf `main` (sie ignorieren `target-branch`) und scheitern mit ihren `dependabot/*`-Branches an diesem Check — bekannte Plattform-Einschränkung, siehe [Wiederkehrende Reviews](wiederkehrende-reviews.md).
 
-**Lösung:** Änderungen zuerst nach `staging` bringen; der reguläre Weg ist Feature-Branch → `staging` → Promotion-PR → `main`.
+**Lösung:** Änderungen zuerst nach `staging` bringen; der reguläre Weg ist Feature-Branch → `staging` → Promotion-PR → `main`. Dependabot-Security-Updates separat behandeln (z. B. Änderung manuell über `staging` einbringen).
+
+## `static checks` schlägt im npm-Audit fehl
+
+**Symptom:** Der Job `static checks` (oder `Security Scan`) bricht mit `::error::Vulnerable npm dependencies detected - see the uploaded report.` ab.
+
+**Ursache:** `npm audit --package-lock-only --audit-level=high` hat in `package-lock.json` mindestens eine Schwachstelle der Severity `high` oder `critical` gefunden — meist in der `semantic-release`-Toolchain (alle npm-Abhängigkeiten sind `devDependencies`, werden aber trotzdem geprüft).
+
+**Lösung:**
+1. Das Scan-Artefakt (`vulnerable-packages-pr`/`vulnerable-packages-staging`/`vulnerable-packages-weekly`) herunterladen — die Datei `npm-audit.txt` enthält die betroffenen Pakete und Advisory-Links.
+2. Lokal denselben Befund reproduzieren: `npm audit --package-lock-only --audit-level=high` im Repository-Root.
+3. Behebung durch Update der Toolchain in `package.json` + `package-lock.json` (bzw. über den von Dependabot geöffneten Update-PR), nicht durch Absenken der Schwelle. Moderate Befunde im Report sind erwartbar — sie blockieren das Gate nicht.
+
+> **Hinweis:** Fehlt Node/npm lokal, bricht `scripts\Run-StaticChecks.ps1` den Security-Teil mit `npm wurde nicht gefunden` ab — Node.js installieren, die Runner-Images bringen es bereits mit.
+
+## Dependabot erzeugt keine Update-PRs
+
+**Symptom:** Trotz vorhandener `.github/dependabot.yml` erscheinen keine `dependabot[bot]`-PRs.
+
+**Ursache:** GitHub liest die Konfiguration ausschließlich vom Standardbranch `main` — solange die Datei nur auf `staging` oder einem Feature-Branch liegt, läuft nichts (gleiche Cold-Start-Regel wie bei den `schedule`-Workflows). Zusätzlich müssen Dependency-Graph und Dependabot-Updates in den Repository-Einstellungen aktiviert sein.
+
+**Lösung:**
+1. Promotion `staging` → `main` abwarten bzw. anstoßen.
+2. Unter *Settings → Code security and analysis* prüfen, ob Dependency-Graph und Dependabot-Updates aktiviert sind.
+3. Manuellen Lauf anstoßen: *Insights → Dependency graph → Dependabot → Check for updates*.

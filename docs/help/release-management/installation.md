@@ -17,8 +17,9 @@
 1. Workflows auf `staging` mergen und einmalig nach `main` bringen (erster Promotion-PR manuell, siehe Hinweis).
 2. Labels prüfen — `automated-promotion` (`0E8A16`) und `automated-backmerge` (`1D76DB`) existieren bereits; die Workflows legen sie sonst per `gh label create --force` beim ersten Lauf an. Gleiches gilt für die Review-Labels `scheduled-architecture-review`, `scheduled-nuget-review` und `scheduled-compliance-review`, die die `review-*.yml`-Workflows beim jeweils ersten Lauf anlegen.
 3. Wiederkehrende Reviews aktivieren — sobald die `review-*.yml`-Workflows auf `main` liegen, läuft der Cron-Zeitplan automatisch; den Workflow `Scheduled Architecture Review` nach dem ersten Merge auf `main` einmalig manuell per `workflow_dispatch` starten (Details siehe [Wiederkehrende Reviews](wiederkehrende-reviews.md)).
-4. Optional iOS aktivieren (siehe Konfiguration).
-5. Branch-Protection einrichten, sobald der Repository-Plan es zulässt (siehe Konfiguration → Branch-Protection).
+4. Dependabot aktivieren — unter *Settings → Code security and analysis* den Dependency-Graph und die Dependabot-Updates für das Repository einschalten; sobald `.github/dependabot.yml` auf `main` liegt, erzeugt Dependabot wöchentlich Update-PRs gegen `staging` (Details und bekannte Einschränkung siehe [Wiederkehrende Reviews](wiederkehrende-reviews.md)).
+5. Optional iOS aktivieren (siehe Konfiguration).
+6. Branch-Protection einrichten, sobald der Repository-Plan es zulässt (siehe Konfiguration → Branch-Protection).
 
 ## Konfiguration
 

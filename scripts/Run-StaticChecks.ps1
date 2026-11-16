@@ -72,6 +72,18 @@ function Invoke-SecurityScan {
         exit 1
     }
     Write-Host "Keine verwundbaren Pakete gefunden." -ForegroundColor Green
+
+    Write-Host "Pruefe npm-Toolchain auf verwundbare Pakete (package-lock.json, Schwelle: high)..." -ForegroundColor Cyan
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Host "Fehler: npm wurde nicht gefunden. Der npm-Audit benoetigt Node.js." -ForegroundColor Red
+        exit 1
+    }
+    & npm audit --package-lock-only --audit-level=high
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fehler: Verwundbare npm-Abhaengigkeiten gefunden." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Keine verwundbaren npm-Abhaengigkeiten gefunden." -ForegroundColor Green
 }
 
 function Invoke-LicenseHeaderCheck {
