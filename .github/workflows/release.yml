@@ -75,7 +75,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Release gate - regular tests
-        run: dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release
+        run: dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj --configuration Release
 
   package-windows:
     name: package-windows
