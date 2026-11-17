@@ -50,7 +50,7 @@ Write-Host "==> REPORTER_APP_PATH = $env:REPORTER_APP_PATH" -ForegroundColor Cya
 Write-Host "==> dotnet test src/Reporter.E2ETests" -ForegroundColor Cyan
 $testExitCode = 1
 try {
-    dotnet test "src/Reporter.E2ETests/Reporter.E2ETests.csproj" -c $configuration -f $tfm
+    dotnet test --project "src/Reporter.E2ETests/Reporter.E2ETests.csproj" -c $configuration -f $tfm
     $testExitCode = $LASTEXITCODE
 }
 finally {

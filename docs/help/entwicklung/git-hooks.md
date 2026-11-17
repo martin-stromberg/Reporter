@@ -44,6 +44,8 @@ Vor Abschluss einer Änderung lassen sich die Prüfungen des CI-Jobs `static che
 .\scripts\Run-StaticChecks.ps1
 ```
 
+Der Security-Scan-Teil prüft NuGet-Pakete (`dotnet list package --vulnerable`) und die npm-Toolchain (`npm audit --package-lock-only --audit-level=high` gegen `package-lock.json`) mit denselben Schwellen wie das CI-Gate — dafür wird lokal Node.js inkl. `npm` benötigt.
+
 ## Verwandte Bereiche
 
 - [Tests](../tests/index.md) — Ausführung der Test-Suiten.

@@ -49,7 +49,7 @@ public sealed class StubFeedServer : IAsyncLifetime
     public string DirectoryUrl => $"{BaseUrl}/directory";
 
     /// <inheritdoc />
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var builder = WebApplication.CreateSlimBuilder();
         builder.Logging.ClearProviders();
@@ -143,7 +143,7 @@ public sealed class StubFeedServer : IAsyncLifetime
     }
 
     /// <inheritdoc />
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_app is not null)
         {

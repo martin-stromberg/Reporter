@@ -23,7 +23,7 @@ jobs:
       is_backmerge: ${{ steps.check.outputs.is_backmerge }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           fetch-depth: 0
 
@@ -62,10 +62,10 @@ jobs:
       IncludeAndroidTarget: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6
         with:
           dotnet-version: '10.0.x'
 
@@ -101,10 +101,10 @@ jobs:
       IncludeAndroidTarget: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6
         with:
           dotnet-version: '10.0.x'
 
@@ -119,18 +119,18 @@ jobs:
 
       - name: Test
         run: >
-          dotnet test src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --no-build
-          --settings src/Reporter.Tests/coverlet.runsettings
-          --collect:"XPlat Code Coverage"
-          --logger "trx;LogFileName=test-results.trx"
-          --logger "console;verbosity=normal"
+          dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --no-build
+          -- --coverlet --coverlet-output-format cobertura
+          --coverlet-include "[Reporter.*]*"
+          --coverlet-exclude "[*]Reporter.Data.Migrations.*"
+          --report-trx --report-trx-filename test-results.trx
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.11
 
       - name: Generate coverage report
         shell: bash
-        run: reportgenerator "-reports:**/TestResults/**/coverage.cobertura.xml" "-targetdir:coverage-report" "-reporttypes:TextSummary"
+        run: reportgenerator "-reports:**/coverage.cobertura*.xml" "-targetdir:coverage-report" "-reporttypes:TextSummary"
 
       - name: Enforce coverage threshold
         shell: bash
@@ -150,7 +150,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: coverage-report-staging
           path: coverage-report/
@@ -158,10 +158,10 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: test-results-staging
-          path: src/Reporter.Tests/TestResults/*.trx
+          path: TestResults/*.trx
           retention-days: 14
 
   version:
@@ -177,13 +177,13 @@ jobs:
       rc_version: ${{ steps.rc.outputs.rc_version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           fetch-depth: 0
           fetch-tags: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7
         with:
           node-version: '24'
 
@@ -227,7 +227,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           fetch-depth: 0
 
@@ -238,7 +238,7 @@ jobs:
           release-tag: ${{ needs.version.outputs.rc_tag }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: release-win-x64
           path: release-win-x64.zip
@@ -252,7 +252,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           fetch-depth: 0
 
@@ -263,7 +263,7 @@ jobs:
           release-tag: ${{ needs.version.outputs.rc_tag }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: release-android
           path: release-android.apk
@@ -279,7 +279,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           fetch-depth: 0
 
@@ -298,7 +298,7 @@ jobs:
           provisioning-profile-base64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: release-ios
           path: release-ios.ipa
@@ -312,10 +312,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
       - name: Download release artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
         with:
           pattern: release-*
           merge-multiple: true

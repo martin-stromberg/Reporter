@@ -80,7 +80,7 @@ Die E2E-Suite hinterlässt keine verwaisten App-Prozesse: Die gestartete `Report
 
 ## CI/CD
 
-GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md). Zusätzlich veröffentlicht der Workflow `deploy-pages.yml` den Ordner `website/` bei Änderungen auf `main` als GitHub-Pages-Site unter `https://martin-stromberg.github.io/Reporter/` — Details siehe [Website](docs/help/website/index.md).
+GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md). Die Supply Chain ist gehärtet: Externe Actions sind auf Commit-SHAs gepinnt, das Security-Gate prüft NuGet- und npm-Abhängigkeiten, und Dependabot erzeugt wöchentlich Update-PRs gegen `staging`. Zusätzlich veröffentlicht der Workflow `deploy-pages.yml` den Ordner `website/` bei Änderungen auf `main` als GitHub-Pages-Site unter `https://martin-stromberg.github.io/Reporter/` — Details siehe [Website](docs/help/website/index.md).
 
 ## Changelog
 
@@ -108,7 +108,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - [iOS-Deployment](docs/help/ios-deployment/index.md) — lokaler Buildlauf, Signing, Gerät/Simulator, TestFlight und App Store
 - [Datenschutzerklärung](docs/privacy-policy.md) — öffentlich referenzierbare Privacy-Policy (deutsch/englisch) für App Store Connect
 - [App-Store-Review](docs/app-store-review.md) — Review-Notizen zur Einreichung: App-Privacy-Antworten, ATS-Begründung, Altersfreigabe, iPad-Entscheidung
-- [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien, Asset-Reparatur und zeitgesteuerte Review-Issues (Architektur/Sicherheit, NuGet, Compliance)
+- [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien, Asset-Reparatur, zeitgesteuerte Review-Issues (Architektur/Sicherheit, NuGet, Compliance) und Dependabot-Update-PRs samt SHA-Pinning und NuGet-/npm-Security-Gate
 - [Website](docs/help/website/index.md) — zweisprachige statische Projekt-Website unter `website/` (Landing-Page, Datenschutz, Changelog, Press Kit) und ihr Deployment auf GitHub Pages
 - [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
 - [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen
