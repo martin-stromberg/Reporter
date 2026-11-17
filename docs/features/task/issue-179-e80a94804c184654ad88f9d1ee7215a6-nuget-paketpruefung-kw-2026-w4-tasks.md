@@ -13,6 +13,6 @@
 | 7 | Dokumentation | Kommentar auf Issue #179 mit Ergebnistabelle und Verlinkung des Folge-Issues posten (`gh issue comment 179`) | Erledigt — Kommentar gepostet | Text vorbereitet: `{feat}/issue-comment-179.md` (Platzhalter `{FOLGE_ISSUE}`) |
 | 8 | Verifikation | `dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj -c Release` ausführen (grün) | Erledigt | 798/798 Tests bestanden, 0 fehlgeschlagen (2026-11-17) |
 | 9 | Verifikation | `.\scripts\Run-StaticChecks.ps1` ausführen — Exit-Code 0, keine Findings | Erledigt | Exit 0: Restore, Format, Lizenzheader, Security-Scan (NuGet + npm high), Release-Build 0 Warnungen/0 Fehler (2026-11-17) |
-| 10 | Abschluss | Feature-Unterverzeichnis aufräumen und finalen Commit mit `Closes #179` erstellen | Offen | — |
-| 11 | Abschluss | PR gegen `staging` erstellen; PR-Body mit Ergebnistabelle, aufgeschobenen Empfehlungen und Folge-Issue-Link | Offen | — |
-| 12 | Abschluss | PR-Checks überwachen (Fail-fast); bei `fail` sofort `gh run view --job <id> --log-failed` diagnostizieren | Offen | — |
+| 10 | Abschluss | Feature-Unterverzeichnis aufräumen und finalen Commit mit `Closes #179` erstellen | Erledigt | Commit 5436516, Feature-Verzeichnis entfernt, `Closes #179` im Body |
+| 11 | Abschluss | PR gegen `staging` erstellen; PR-Body mit Ergebnistabelle, aufgeschobenen Empfehlungen und Folge-Issue-Link | Erledigt | PR #188 gegen staging |
+| 12 | Abschluss | PR-Checks überwachen (Fail-fast); bei `fail` sofort `gh run view --job <id> --log-failed` diagnostizieren | Erledigt | Alle Checks grün: build & test, static checks, detect-backmerge (Run 44021135163) |
