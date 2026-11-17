@@ -30,6 +30,16 @@ Alle drei Workflows folgen demselben Muster, das den bestehenden PR-Automatisier
 
 Die Duplikatprüfung gilt auch bei manueller Auslösung — ein neuer Zyklus wird bewusst dadurch gestartet, dass das vorherige Review-Issue geschlossen wird. Eine `concurrency`-Gruppe je Workflow (`cancel-in-progress: false`) verhindert parallele Läufe und damit Doppelerzeugung.
 
+## Abarbeitung eines NuGet-Review-Issues
+
+Der Issue-Body von `review-nuget.yml` legt neben dem Prüfauftrag auch das Ergebnisformat fest — er ist damit der verbindliche Bearbeitungsvertrag (die Architektur- und Compliance-Workflows formulieren nur den Prüfauftrag ohne Abarbeitungsregeln):
+
+- **Prüfumfang:** Alle verwendeten NuGet-Pakete — verfügbare Updates, Security-Updates, bekannt gewordene Schwachstellen, veraltete oder nicht mehr gepflegte Pakete, empfohlene Nachfolgepakete sowie mögliche Breaking Changes bei Versionserhöhungen.
+- **Ergebnis:** Konkrete Update-Empfehlungen mit Risikobewertung je Paket. Zur Inventur dienen die `dotnet list package`-Scans (`--outdated`, `--vulnerable --include-transitive`, `--deprecated --include-transitive` — die Schwachstellen-Variante entspricht dem Gate-Check der Composite Action `security-scan`); `Microsoft.Maui.Controls` ist über `$(MauiVersion)` an den installierten Workload gebunden und gesondert zu bewerten.
+- **Direkte Umsetzung:** Unbedenkliche Empfehlungen mit niedrigem bis mittlerem Risiko (einfache Versionshochsetzungen) werden direkt mit dem Review in einem Pull Request gegen `staging` umgesetzt.
+- **Folge-Issues:** Komplexe Befunde — risikoreiche Updates, Breaking Changes, größere Anpassungen — werden als ein oder mehrere Folge-Issues angelegt und in einem Kommentar auf dem Review-Issue verlinkt; dasselbe Kommentar dokumentiert das Gesamtergebnis. Ein dauerhaftes Audit-Dokument im Repository ist nicht vorgesehen.
+- **Abschluss:** Sind keine einfachen Anpassungen notwendig, wird das Review-Issue nach dem Review geschlossen, sodass nur die Folge-Issues offen bleiben. Das Schließen startet zugleich den nächsten Zyklus — erst dann legt der folgende wöchentliche Lauf ein neues Review-Issue an (siehe [Duplikatvermeidung](#duplikatvermeidung)).
+
 ## Dependabot
 
 Ergänzend zu den Issue-basierten Review-Zyklen läuft Dependabot (`.github/dependabot.yml`) wöchentlich für die Ökosysteme `nuget`, `npm` und `github-actions` und öffnet Update-PRs gegen `staging` (`target-branch`). Die Aufgabenteilung ist bewusst komplementär:
