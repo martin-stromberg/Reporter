@@ -25,7 +25,7 @@ Das Skript:
 2. baut `src/Reporter/Reporter.csproj` (`Debug`, `net10.0-windows10.0.19041.0`, `win-x64`),
 3. prüft, dass `src\Reporter\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Reporter.exe` erzeugt wurde,
 4. setzt `REPORTER_APP_PATH` auf diese Exe,
-5. führt `dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -c Debug -f net10.0-windows10.0.19041.0` aus und reicht den Exit-Code durch; das umschließende `finally` beendet danach verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output-Pfad eingegrenzt, damit eine parallel laufende Nutzer-Installation nicht getroffen wird.
+5. führt `dotnet test --project src/Reporter.E2ETests/Reporter.E2ETests.csproj -c Debug -f net10.0-windows10.0.19041.0` aus und reicht den Exit-Code durch; das umschließende `finally` beendet danach verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output-Pfad eingegrenzt, damit eine parallel laufende Nutzer-Installation nicht getroffen wird.
 
 Alternativ kann das Testprojekt direkt getestet werden, wenn die App bereits gebaut ist (`REPORTER_APP_PATH` oder Konventionspfad, siehe unten).
 
