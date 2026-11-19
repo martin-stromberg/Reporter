@@ -1,20 +1,24 @@
 <!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
 
-# Umsetzungsplan: .NET 11 / MAUI 11 / EF Core 11 Migration (GitHub Issue #180)
+← [Zurück zur Übersicht](index.md)
 
-Quelle: [requirement.md](requirement.md), Inventar: [inventory.md](inventory.md) + `inventory/`.
-Stand: Branch `task/issue-180-...-net-11-maui-11-ef-core-11-migr` (staging-Head).
+# .NET-11-Migration — Entscheidung und Migrationsplan
 
-**Art der Aufgabe:** Planung und Entscheidung, keine Code-Migration. Dieses Dokument ist die
-fachliche Grundlage für das spätere Dauer-Dokument `docs/help/entwicklung/dotnet-11-migration.md`
-und enthält daher bereits die vollständige Entscheidung, Begründung und den Migrationsplan
-(Phasen/Tasks), der in einem Folge-Issue/PR umgesetzt wird.
+**Status:** geplant — Umsetzung in einem Folge-PR.
+**Entscheidung gefällt:** 19.11.2026 (GitHub Issue #180).
+**Fallback-Linie:** Der Maintenance-Branch `maintenance/net10` existiert bereits
+(Commit `5492d71`, Stand v0.7.0).
+
+Dieses Dokument hält die Entscheidung für die Migration auf .NET 11 / .NET MAUI 11 /
+EF Core 11 samt Begründung und geprüfter Alternative fest und beschreibt den
+Migrationsplan (Gates, Phasen, Risiken und Rollback), der im Migrations-PR
+abgearbeitet wird.
 
 ---
 
 ## Entscheidung
 
-**Empfehlung: geplante Migration auf .NET 11 (STS), mit `maintenance/net10` als Fallback-Linie.**
+**Geplante Migration auf .NET 11 (STS), mit `maintenance/net10` als Fallback-Linie.**
 
 ### Begründung
 
@@ -74,54 +78,17 @@ gestartet sein, wird die Entscheidung erneut evaluiert.
 
 ---
 
-## Scope-Klärung
+## Erfolgskriterien der Migration
 
-### In diesem Issue (#180) enthalten
+Checkliste für den Migrations-PR — die Migration gilt als erfolgreich, wenn:
 
-- Diese `plan.md` (Planungsgrundlage).
-- Dauer-Dokument `docs/help/entwicklung/dotnet-11-migration.md` mit Entscheidung +
-  Migrationsplan (Inhalt dieses Dokuments, redaktionell aufbereitet) + Verlinkung in
-  `docs/help/entwicklung/index.md` / `docs/help/index.md`.
-- Entscheidungs-Kommentar im GitHub-Issue #180.
-- PR gegen `staging` mit `Closes #180`.
-
-### Scope-Ausschlüsse (mit Status)
-
-| Ausschluss | Status |
-|---|---|
-| Eigentliche Durchführung der Migration (TFM-, Paket-, CI-Änderungen) | Ausgeschlossen — eigenes Folge-Issue/PR |
-| Maintenance-Branch `maintenance/net10` | Bereits erledigt (Remote-Branch auf `5492d71`, Stand v0.7.0) |
-| UI-/UX-Änderungen | Entfällt (keine UI-Änderung — Usability-Review nicht erforderlich) |
-| Einführung von Central Package Management (`Directory.Packages.props`) | Nicht Teil; optionaler Folgepunkt, siehe Offene Punkte |
-| `.config/dotnet-tools.json` für `dotnet-ef` | Nicht Teil dieses PRs; Entscheidung im Migrationsplan als offener Punkt |
-
----
-
-## Akzeptanzkriterien
-
-**Für diesen Planungs-PR (#180):**
-
-1. `docs/help/entwicklung/dotnet-11-migration.md` existiert und enthält: Entscheidung
-   (inkl. geprüfter Alternative), Voraussetzungen/Gates, Phasen 0–5 mit konkreten Tasks,
-   Risiken & Rollback, Offene Punkte.
-2. Das Dokument deckt alle Pflichtpunkte aus `requirement.md` ab: TFM-Umstellung
-   (inkl. bedingter TFM-Listen), Paketwelle, MAUI-Workloads 11er-Generation inkl. CI,
-   CPU-Mindestbasis, `UseInterpreter`-Reverifikation, CI-Matrizen/Release-Pipeline,
-   EF-Core-11-Breaking-Changes/Migrations-Verhalten, Rolle von `maintenance/net10`.
-3. Das Dokument ist in `docs/help/index.md` bzw. `docs/help/entwicklung/index.md` verlinkt.
-4. Entscheidung ist als Kommentar in Issue #180 festgehalten.
-5. `scripts/Run-StaticChecks.ps1` läuft mit Exit-Code 0 ohne Befund.
-6. PR zielt auf `staging`, Commit-Message enthält `Closes #180`.
-
-**Erfolgskriterien der späteren Migration (Folge-Issue, im Plan verankert):**
-
-- Build aller Plattformen (Windows unpackaged, Android-APK, iOS) grün in CI.
-- Alle Unit-Tests + FlaUI-E2E-Tests grün; `Run-StaticChecks.ps1` Exit 0.
-- Bestands-DB-Upgrade getestet: `reporter.db`/`reporter-content.db` einer
+- [ ] Build aller Plattformen (Windows unpackaged, Android-APK, iOS) grün in CI.
+- [ ] Alle Unit-Tests + FlaUI-E2E-Tests grün; `Run-StaticChecks.ps1` Exit 0.
+- [ ] Bestands-DB-Upgrade getestet: `reporter.db`/`reporter-content.db` einer
   v0.7.0-Installation migrieren unter dem .NET-11-Build fehlerfrei.
-- iOS: App läuft auf echtem Gerät (kein `ExecutionEngineException`) —
+- [ ] iOS: App läuft auf echtem Gerät (kein `ExecutionEngineException`) —
   `UseInterpreter` reverifiziert.
-- Keine neue EF-Schema-Migration im selben Release wie der Runtime-Wechsel
+- [ ] Keine neue EF-Schema-Migration im selben Release wie der Runtime-Wechsel
   (Rollback-Fähigkeit der Nutzer-DBs, siehe Risiken).
 
 ---
@@ -146,7 +113,7 @@ abgehakt — nicht erst bei der Verifikation.
 
 ## Phasen
 
-Die Phasen beschreiben den **Folge-Migrations-PR** (und dessen Umfeld). Reihenfolge ist
+Die Phasen beschreiben den **Migrations-PR** (und dessen Umfeld). Reihenfolge ist
 bindend; Phase 1+2 werden als ein atomarer Umstellungs-Commit empfohlen, weil TFM- und
 Paket-Flip untrennbar sind (EF 11 läuft nicht auf net10).
 
@@ -154,7 +121,7 @@ Paket-Flip untrennbar sind (EF 11 läuft nicht auf net10).
 
 | Task | Detail |
 |---|---|
-| 0.1 | `maintenance/net10` existiert (`5492d71`, v0.7.0) — Rolle dokumentieren: **nur kritische Fixes** (Security, Datenverlust, Absturz), die vor der .NET-11-Auslieferung noch an Nutzer müssen. Keine Features. |
+| 0.1 | `maintenance/net10` existiert (`5492d71`, v0.7.0) — Rolle: **nur kritische Fixes** (Security, Datenverlust, Absturz), die vor der .NET-11-Auslieferung noch an Nutzer müssen. Keine Features. |
 | 0.2 | Release-Weg für Hotfixes festlegen: `staging-ci.yml`/`pr-staging-ci.yml` triggern nur auf `staging` (`staging-ci.yml:6-8`, `pr-staging-ci.yml:6-8`) — PRs gegen `maintenance/net10` laufen also **ohne CI-Gate**. Entscheidung: bei erstem Hotfix-Bedarf den `branches`-Trigger um `maintenance/net10` erweitern oder manuelle Verifikation dokumentieren (empfohlen: Trigger erweitern, sobald der erste Hotfix ansteht — nicht präventiv). |
 | 0.3 | semantic-release läuft auf `staging`/`main` — Hotfix-Release von `maintenance/net10` erfolgt manuell (Tag + Build via vorhandener Package-Actions), kein automatisierter Promotions-Pfad. |
 | 0.4 | Backport-Regel: Fixes für `maintenance/net10` werden (falls für 11er-Linie relevant) zusätzlich auf `staging`/`main` gecherry-pickt — nie umgekehrt automatisch. |
@@ -215,8 +182,8 @@ Paket-Flip untrennbar sind (EF 11 läuft nicht auf net10).
 | 5.3 | CI-Gesamtlauf: Build + Package **Windows** (unpackaged, `WindowsPackageType=None`), **Android** (APK, `IncludeAndroidTarget=true`), **iOS** (`macos-latest`, nur bei `IOS_SIGNING_ENABLED`). |
 | 5.4 | iOS-TestFlight + echtes Gerät: `UseInterpreter`-Verifikation (3.4), App-Start, Migration, Feed-Refresh. |
 | 5.5 | Bestands-DB-Upgrade-Test (3.5) dokumentieren. |
-| 5.6 | **Doku-Welle** (nicht vergessen — Liste in `inventory/misc.md`): `README.md` (Badge `.NET-10.0` Z. 4, SDK-Voraussetzung Z. 47, TFM-Beispiele Z. 57/63/66), `docs/help/release-management/{installation,ablauf-technisch,architektur,business-rules}.md`, `docs/help/tests/{ablauf-technisch,api,architektur,installation,troubleshooting}.md`, `docs/help/ios-deployment/*`, `docs/help/anwendung/mobile-ui-design.md`, `docs/help/benachrichtigungen/installation.md`, `docs/help/einstellungen/architektur.md`, `scripts/iOS-Deployment.md`. Volltextsuche vor Abschluss: `grep -rn "net10\.0\|10\.0\.x\|\.NET 10" docs/ README.md ci-instructions.md scripts/`. |
-| 5.7 | `docs/help/entwicklung/dotnet-11-migration.md` auf „durchgeführt"-Status heben (Datum, verarbeitete Abweichungen, gefundene iOS-Workload-Version). |
+| 5.6 | **Doku-Welle** (nicht vergessen — alle Stellen mit .NET-10-Bezug): `README.md` (Badge `.NET-10.0` Z. 4, SDK-Voraussetzung Z. 47, TFM-Beispiele Z. 57/63/66), `docs/help/release-management/{installation,ablauf-technisch,architektur,business-rules}.md`, `docs/help/tests/{ablauf-technisch,api,architektur,installation,troubleshooting}.md`, `docs/help/ios-deployment/*`, `docs/help/anwendung/mobile-ui-design.md`, `docs/help/benachrichtigungen/installation.md`, `docs/help/einstellungen/architektur.md`, `scripts/iOS-Deployment.md`. Volltextsuche vor Abschluss: `grep -rn "net10\.0\|10\.0\.x\|\.NET 10" docs/ README.md ci-instructions.md scripts/`. |
+| 5.7 | Dieses Dokument auf „durchgeführt"-Status heben (Datum, verarbeitete Abweichungen, gefundene iOS-Workload-Version). |
 | 5.8 | **Release-Timing:** Migration bewusst **nicht** direkt vor einem Release auf `main` mergen. Empfehlung: direkt nach einem Release auf `staging` bringen, damit der volle staging→main-Zyklus als Stabilisierungsphase dient; erste .NET-11-Auslieferung **ohne** neue EF-Schema-Migration (Rollback-Fähigkeit, s. Risiken). |
 | 5.9 | Release-Notes: CPU-Mindestbasis (x86-64-v2) + CLR-Fehlermeldung in Troubleshooting-Doku; ggf. angehobene Plattform-Mindestversionen (G5). |
 
@@ -238,6 +205,9 @@ Paket-Flip untrennbar sind (EF 11 läuft nicht auf net10).
 
 ## Offene Punkte
 
+Die folgenden Punkte sind bewusst offen gelassen und **zum Migrationszeitpunkt zu
+klären** (jeweils mit Verweis auf Gate/Task):
+
 1. **iOS-Workload-Pack-Version (11er-Generation)** — erst zum Migrationszeitpunkt
    ermittelbar (abhängig vom dann aktuellen Release-Xcode, `macos-latest`-Image und
    SDK-Band-Feed). Gate G4 / Task 4.2.
@@ -256,3 +226,8 @@ Paket-Flip untrennbar sind (EF 11 läuft nicht auf net10).
    „vernachlässigbar", Kommunikation über Release-Notes (Task 5.9).
 10. **Central Package Management** — nicht Scope dieses Plans; als separates
     Folgethema für künftige Paketwellen prüfenswert.
+
+## Verwandte Bereiche
+
+- [Release-Management](../release-management/index.md) — CI/CD-Pipeline, Release-Prozess und Dependabot-Verwaltung.
+- [Tests](../tests/index.md) — Unit-/Integrationstests und E2E-Smoke-Suite, die im Migrations-PR verifiziert werden.
