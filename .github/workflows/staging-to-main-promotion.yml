@@ -2,10 +2,19 @@
 
 name: Staging to Main Promotion
 
+# On every push to staging this workflow immediately creates the draft PR staging -> main
+# (label: automated-promotion), so the pre-release checks run in the context of that PR and
+# release progress is observable there. The draft state prevents accidental merging; the
+# "only on successful pre-release" guarantee is preserved via main's required checks,
+# which the PR has to pass anyway. The final merge must be approved and completed manually
+# by a maintainer.
+#
+# A pure back-merge from main produces no PR: the "main is behind staging" check
+# below treats a tree identical to main as commits_ahead=0. An already open
+# staging -> main PR is never duplicated.
+
 on:
-  workflow_run:
-    workflows: ["Pre-Release"]
-    types: [completed]
+  push:
     branches: [staging]
 
 permissions:
@@ -19,7 +28,6 @@ concurrency:
 
 jobs:
   promote:
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -27,7 +35,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.sha }}
 
       - name: Fetch main
         run: git fetch origin main
@@ -58,7 +66,7 @@ jobs:
             gh pr create \
               --base main --head staging \
               --title "Automated promotion from staging to main" \
-              --body "Automated promotion from staging to main. Contains all changes that have been integrated and successfully validated on staging. Requires manual review and merge by a maintainer." \
+              --body "Automated promotion from staging to main. Contains all changes integrated on staging; the pre-release checks run in the context of this PR. Requires manual review and merge by a maintainer." \
               --draft \
               --label "automated-promotion"
           fi
