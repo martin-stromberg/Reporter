@@ -24,4 +24,4 @@
 
 ## Entwicklung
 
-- [Entwicklung](entwicklung/index.md) — Lokale Qualitätssicherung für Beitragende: Git-Hooks aus `.githooks` (Lokalisierungs-, Lizenz-Header- und Abdeckungs-Checks, Schutz der Branches `main`/`staging`) und der lokale Lauf der CI-Static-Checks.
+- [Entwicklung](entwicklung/index.md) — Lokale Qualitätssicherung für Beitragende: Git-Hooks aus `.githooks` (Lokalisierungs-, Lizenz-Header- und Abdeckungs-Checks, Schutz der Branches `main`/`staging`) und der lokale Lauf der CI-Static-Checks, sowie die Entscheidung und der Plan zur .NET-11-Migration.

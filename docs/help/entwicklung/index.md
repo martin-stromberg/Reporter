@@ -7,6 +7,7 @@ Hinweise für Beitragende und Maintainer des Repositories: lokale Qualitätssich
 ## Inhalt
 
 - [Git-Hooks und lokale Prüfungen](git-hooks.md) — `.githooks` aktivieren, geprüfte Regeln, lokaler Lauf der CI-Static-Checks
+- [.NET-11-Migration](dotnet-11-migration.md) — Entscheidung (geplante Migration auf .NET 11 STS) und Migrationsplan für .NET 11 / MAUI 11 / EF Core 11
 
 ## Verwandte Bereiche
 
