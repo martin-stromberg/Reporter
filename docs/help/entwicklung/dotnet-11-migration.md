@@ -4,15 +4,53 @@
 
 # .NET-11-Migration — Entscheidung und Migrationsplan
 
-**Status:** geplant — Umsetzung in einem Folge-PR.
+**Status:** durchgeführt — Umsetzung via Issue #202 (PR gegen `staging`).
 **Entscheidung gefällt:** 19.11.2026 (GitHub Issue #180).
 **Fallback-Linie:** Der Maintenance-Branch `maintenance/net10` existiert bereits
 (Commit `5492d71`, Stand v0.7.0).
+
+**Umsetzungsstand (Issue #202):**
+
+- Alle TFMs auf `net11.0*`, SDK-Pin `global.json` = `11.0.100` (`latestPatch`),
+  `dotnet-ef` per Root-`dotnet-tools.json` auf `11.0.0` gepinnt (Pfad ohne
+  `.config/`-Präfix — neue SDK-11-Konvention; Abweichung zum ursprünglichen
+  Plantext `.config/dotnet-tools.json`, funktional gleichwertig).
+- Paketwelle 2.2 vollständig: EF Core/`Microsoft.Data.Sqlite`/
+  `System.ServiceModel.Syndication` → `11.0.0`,
+  `Microsoft.Extensions.TimeProvider.Testing` → `11.0.1`;
+  Dependabot-PRs #196/#200 erledigt (geschlossen, Inhalte im Migrations-PR).
+- **Gate G4 ermittelt:** iOS-Workload-Pin **`27.2.11039`**
+  (`Microsoft.iOS.Sdk.net11.0_27.2`, Release-Xcode-kompatibel, Feed-Band
+  `11.0.1xx`); `package-ios/action.yml` entsprechend umgestellt.
+- **Gate G5 angehoben:** Android-Minimum `21.0` → `24.0` (XA4216-Befund),
+  MacCatalyst `15.0` → `17.0` (Pack-Mindestversion); iOS `15.0` und Windows
+  `10.0.17763.0` unverändert.
+- **Bestands-DB-Upgrade (Task 5.5) verifiziert:** `reporter.db` +
+  `reporter-content.db` einer v0.7.0-Installation (`maintenance/net10`,
+  dotnet-ef 10.0.12) migrierten unter dotnet-ef 11.0.0 fehlerfrei —
+  Vollstand „already up to date", Partiellstand wendete die ausstehenden
+  Migrationen korrekt an. EF 11 legt dabei die Infrastrukturtabelle
+  `__EFMigrationsLock` an — für einen EF-10-Rollback unbedenklich
+  (unbekannte Tabelle wird ignoriert).
+- **Lokale Nachweise:** Build `net11.0-windows10.0.19041.0` + `net11.0-android`
+  grün, `dotnet test` 805/805 (inkl. MTP `--coverlet`/`--report-trx`),
+  `scripts/Run-StaticChecks.ps1` Exit 0. Keine neue EF-Schema-Migration
+  (Task 5.8/2.5 eingehalten).
+- **Offener Restpunkt (Task 5.4):** iOS-TestFlight + Geräteverifikation
+  (`UseInterpreter`, App-Start, Migration, Feed-Refresh) bleibt ein
+  umgebungsabhängiger, userseitiger Schritt — die CI-Pipeline liefert den
+  Build/Publish-Nachweis (`macos-latest`, `IOS_SIGNING_ENABLED`).
 
 Dieses Dokument hält die Entscheidung für die Migration auf .NET 11 / .NET MAUI 11 /
 EF Core 11 samt Begründung und geprüfter Alternative fest und beschreibt den
 Migrationsplan (Gates, Phasen, Risiken und Rollback), der im Migrations-PR
 abgearbeitet wird.
+
+> **Hinweis zu Zeilenreferenzen:** Sämtliche `Datei:Zeile`-Angaben in den
+> Tasks beschreiben den Stand **vor** der Migration (Planungszeitpunkt,
+> .NET 10). Nach der Umsetzung liegen die betroffenen Inhalte teils auf
+> verschobenen oder umbenannten Zeilen — die Referenzen dienen nur noch
+> der Nachvollziehbarkeit der Planung.
 
 ---
 

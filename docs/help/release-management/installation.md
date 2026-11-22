@@ -9,7 +9,7 @@
 - GitHub-Repository mit den Branches `main` (Standardbranch) und `staging`.
 - Die Workflow-Dateien liegen im Repository; `workflow_run`- und `push → main`-Trigger wirken erst, sobald sie einmalig auf dem Standardbranch `main` angekommen sind (Cold-Start, siehe unten).
 - `npm ci`-fähige `package.json`/`package-lock.json` mit der gepinnten `semantic-release`-Toolchain (semantic-release `25.0.9`, `@semantic-release/commit-analyzer` `13.0.1`, `@semantic-release/release-notes-generator` `14.1.1`, `@semantic-release/github` `12.0.9`, `conventional-changelog-conventionalcommits` `9.3.1`).
-- .NET SDK `10.0.x` inkl. MAUI-Workloads auf den Runnern (`dotnet workload restore Reporter.sln`); `macos-latest` nur für `package-ios`.
+- .NET SDK `11.0.x` inkl. MAUI-Workloads auf den Runnern (`dotnet workload restore Reporter.sln`); `macos-latest` nur für `package-ios`.
 - Commits im Conventional-Commits-Format — nur `fix:`/`feat:`/`BREAKING CHANGE` usw. erzeugen neue Versionen.
 
 ## Installationsschritte

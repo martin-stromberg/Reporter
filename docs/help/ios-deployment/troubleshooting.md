@@ -88,7 +88,7 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 ## „Mehrere verschiedene .ipa-Dateien"
 
-**Ursache:** Unter `bin/Release/net10.0-ios/ios-arm64` liegen IPAs mit unterschiedlichen Dateinamen (z. B. alte Builds).
+**Ursache:** Unter `bin/Release/net11.0-ios/ios-arm64` liegen IPAs mit unterschiedlichen Dateinamen (z. B. alte Builds).
 
 **Lösung:** Alte Artefakte löschen oder mit `-IpaPath` gezielt eine Datei wählen.
 

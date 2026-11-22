@@ -33,7 +33,7 @@ Das Skript baut eine signierte `.ipa` via Pair-to-Mac, installiert sie per `devi
 ./scripts/iOS-Deployment.ps1 -Action simulator
 ```
 
-Baut ein Debug-Bundle, bootet einen iPhone-Simulator (oder `-Device <udid>`), installiert und startet die App und legt einen Screenshot unter `src/Reporter/bin/Debug/net10.0-ios/iossimulator-arm64/` ab. Keine Signatur nötig.
+Baut ein Debug-Bundle, bootet einen iPhone-Simulator (oder `-Device <udid>`), installiert und startet die App und legt einen Screenshot unter `src/Reporter/bin/Debug/net11.0-ios/iossimulator-arm64/` ab. Keine Signatur nötig.
 
 ## Schritt-für-Schritt: Build in TestFlight bringen
 
@@ -52,7 +52,7 @@ Das Skript erhöht dabei automatisch die Buildnummer (`ApplicationVersion` in `s
 Alternativ nur hochladen, ohne neu zu bauen:
 
 ```powershell
-.\scripts\iOS-Deployment.ps1 -Action upload -IpaPath "src\Reporter\bin\Release\net10.0-ios\ios-arm64\Reporter.ipa"
+.\scripts\iOS-Deployment.ps1 -Action upload -IpaPath "src\Reporter\bin\Release\net11.0-ios\ios-arm64\Reporter.ipa"
 ```
 
 ### 2. Verarbeitung abwarten

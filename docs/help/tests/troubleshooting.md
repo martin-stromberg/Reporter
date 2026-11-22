@@ -6,11 +6,11 @@
 
 **Symptom:** Der Testlauf bricht sofort mit `FileNotFoundException: Reporter.exe not found. Build the app first (see scripts/Run-E2ETests.ps1) or set REPORTER_APP_PATH to a built executable.` ab.
 
-**Ursache:** `ReporterAppFixture.ResolveAppPath` findet weder die Datei unter `REPORTER_APP_PATH` noch den Konventionspfad `src/Reporter/bin/Debug/net10.0-windows10.0.19041.0/win-x64/Reporter.exe` — die App wurde nicht für das Windows-TFM gebaut.
+**Ursache:** `ReporterAppFixture.ResolveAppPath` findet weder die Datei unter `REPORTER_APP_PATH` noch den Konventionspfad `src/Reporter/bin/Debug/net11.0-windows10.0.19041.0/win-x64/Reporter.exe` — die App wurde nicht für das Windows-TFM gebaut.
 
 **Lösung:**
 1. `.\scripts\Run-E2ETests.ps1` aus dem Repository-Root ausführen (baut die App selbst), oder
-2. die App manuell bauen: `dotnet build src/Reporter/Reporter.csproj -c Debug -f net10.0-windows10.0.19041.0 -r win-x64`, oder
+2. die App manuell bauen: `dotnet build src/Reporter/Reporter.csproj -c Debug -f net11.0-windows10.0.19041.0 -r win-x64`, oder
 3. `REPORTER_APP_PATH` auf eine bestehende Exe zeigen lassen.
 
 ## Kein Hauptfenster / Timeout beim Suite-Start

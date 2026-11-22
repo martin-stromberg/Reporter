@@ -1,7 +1,7 @@
 <!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
 # Reporter
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
+[![.NET](https://img.shields.io/badge/.NET-11.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![Pre-Release](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/staging-ci.yml?branch=staging&label=Pre-Release)](https://github.com/martin-stromberg/Reporter/actions/workflows/staging-ci.yml)
 [![Release-Workflow](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/release.yml?label=Release-Workflow)](https://github.com/martin-stromberg/Reporter/actions/workflows/release.yml)
 [![Deploy Pages](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/deploy-pages.yml?label=Deploy%20Pages)](https://github.com/martin-stromberg/Reporter/actions/workflows/deploy-pages.yml)
@@ -44,7 +44,7 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 
 ## Voraussetzungen
 
-- .NET 10 SDK (inkl. .NET-MAUI-Workload)
+- .NET 11 SDK (inkl. .NET-MAUI-Workload)
 - iOS (Zielplattform): Xcode auf macOS
 - Windows (Entwicklung und Tests): Windows 10 Build 19041 oder höher
 
@@ -54,16 +54,16 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 dotnet build Reporter.sln
 ```
 
-Primäres Ziel-Framework ist `net10.0-ios` — unter macOS das einzige; unter Windows baut zusätzlich `net10.0-windows10.0.19041.0` als Entwicklungs- und Testziel. Die Target Frameworks lassen sich über die MSBuild-Schalter `IncludeIosTarget` (Default `true`) und `IncludeAndroidTarget` (Default `false`) steuern.
+Primäres Ziel-Framework ist `net11.0-ios` — unter macOS das einzige; unter Windows baut zusätzlich `net11.0-windows10.0.19041.0` als Entwicklungs- und Testziel. Die Target Frameworks lassen sich über die MSBuild-Schalter `IncludeIosTarget` (Default `true`) und `IncludeAndroidTarget` (Default `false`) steuern.
 
 ## Starten
 
 ```bash
 # iOS (auf macOS)
-dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
+dotnet run --project src/Reporter/Reporter.csproj -f net11.0-ios
 
 # Windows (Entwicklung und Tests)
-dotnet run --project src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0
+dotnet run --project src/Reporter/Reporter.csproj -f net11.0-windows10.0.19041.0
 ```
 
 Geräte-Deployment, Simulator, Signing und App-Store-Upload übernimmt `scripts/iOS-Deployment.ps1` — Details siehe [iOS-Deployment](docs/help/ios-deployment/index.md).
