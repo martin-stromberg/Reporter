@@ -8,8 +8,9 @@ namespace Reporter.E2ETests;
 /// Contains regression tests for <see cref="E2EProcessGuard"/>: the guard is
 /// the last line of defense in teardown paths and must never throw itself,
 /// even when handed a <see cref="Process"/> object that lost its association.
-/// These are plain process-API tests — they deliberately carry no
-/// <c>Category=E2E</c> trait so the regular test run covers them.
+/// These are process-API tests that deliberately carry no
+/// <c>Category=E2E</c> trait; their real process and file-lock dependency is
+/// classified separately as <c>Category=OsInterface</c>.
 /// </summary>
 public sealed class E2EProcessGuardTests
 {
@@ -22,6 +23,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task KillAndWaitAsync_UnassociatedProcess_DoesNotThrow()
     {
         using var process = new Process();
@@ -36,6 +38,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task KillAndWaitAsync_NonexistentProcessId_ConfirmsExit()
     {
         var exited = await E2EProcessGuard.KillAndWaitAsync(NonexistentProcessId(), TimeSpan.FromSeconds(5));
@@ -49,6 +52,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task KillAndWaitAsync_ExitedProcess_ConfirmsExit()
     {
         using var process = StartProcess("cmd.exe", "/c exit 0");
@@ -64,6 +68,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task KillAndWaitAsync_RunningProcessTree_KillsAndConfirmsExit()
     {
         using var process = StartProcess("cmd.exe", "/c ping -n 60 127.0.0.1 > nul");
@@ -81,6 +86,7 @@ public sealed class E2EProcessGuardTests
     /// handle can no longer be opened must not escape the method either.
     /// </summary>
     [Fact]
+    [OsInterface]
     public void TrackProcess_UnassociatedProcess_DoesNotThrow()
     {
         using var process = new Process();
@@ -95,6 +101,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task TryDeleteDirectoryAsync_ExistingDirectory_RemovesIt()
     {
         var directory = CreateTempDirectory();
@@ -110,6 +117,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task TryDeleteDirectoryAsync_MissingDirectory_DoesNotThrow()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"reporter-e2e-guard-test-{Guid.NewGuid():N}");
@@ -125,6 +133,7 @@ public sealed class E2EProcessGuardTests
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
+    [OsInterface]
     public async Task TryDeleteDirectoryAsync_BrieflyLockedFile_RetriesAndRemoves()
     {
         var directory = CreateTempDirectory();

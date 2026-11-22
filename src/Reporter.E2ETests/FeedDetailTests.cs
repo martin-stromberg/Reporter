@@ -241,6 +241,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Navigation_ShowsFeedItems()
     {
         _page.AddFeedViaUi("nav-target");
@@ -258,6 +259,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Search_FiltersItems()
     {
         _page.AddFeedViaUi("paged-feed");
@@ -287,6 +289,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Search_FiltersByTag()
     {
         _page.AddFeedViaUi("tag-feed");
@@ -316,6 +319,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Rename_UpdatesTitle()
     {
         _page.AddFeedViaUi("rename-target");
@@ -349,6 +353,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_ChangeCategory_IncludingNone()
     {
         const string categoryName = "E2E Detail Category";
@@ -391,6 +396,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_MetaInfo_WrapsInsteadOfOverlappingActionsButton()
     {
         const string categoryName =
@@ -423,6 +429,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Delete_ReturnsToList()
     {
         var title = _page.AddFeedViaUi("delete-target");
@@ -455,6 +462,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task FeedDetail_Edit_PersistsChanges()
     {
         var title = _page.AddFeedViaUi("edit-target");
@@ -482,6 +490,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task FeedDetail_RefreshAction_SyncsFeed()
     {
         var title = _page.AddFeedViaUi("refresh-target");
@@ -503,6 +512,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_InfiniteScroll_LoadsNextPage()
     {
         _page.AddFeedViaUi("scroll-feed");
@@ -536,6 +546,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Message_ForErrorFeed()
     {
         // A URL outside /feeds/ hits the stub server's 404 fallback, so the
@@ -590,6 +601,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Message_ForWarningFeed()
     {
         _page.AddFeedViaUi("stale-feed");
@@ -636,6 +648,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task FeedDetail_Edit_AddKeyword_PersistsAndShowsChip()
     {
         var title = _page.AddFeedViaUi("kwadd");
@@ -667,6 +680,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task FeedDetail_Edit_RemoveKeyword_RemovesChipAndRow()
     {
         _page.AddFeedViaUi("kwremove");
@@ -708,6 +722,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task FeedDetail_FeedKeyword_FiltersOnlyOwnFeed()
     {
         _page.AddFeedViaUi("kwfilter-a");
@@ -744,6 +759,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_Edit_FeedKeywordValidation_ShowsErrors()
     {
         _page.AddFeedViaUi("kwvalidate");
@@ -768,6 +784,7 @@ public sealed class FeedDetailTests : IDisposable
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void FeedDetail_FeedKeyword_NotInGlobalSettings()
     {
         _page.AddFeedViaUi("kwsettings");
