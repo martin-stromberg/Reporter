@@ -10,7 +10,7 @@
       - Windows mit installiertem .NET MAUI Workload.
       - Eine interaktive Desktop-Session (UIA3 benoetigt ein sichtbares Fenster).
       - Reporter.exe wird vom Testprojekt ueber REPORTER_APP_PATH gefunden bzw.
-        ansonsten unter src/Reporter/bin/Debug/net10.0-windows10.0.19041.0/win-x64
+        ansonsten unter src/Reporter/bin/Debug/net11.0-windows10.0.19041.0/win-x64
         gesucht.
 
     Beispiel:
@@ -21,7 +21,7 @@ $ErrorActionPreference = "Stop"
 
 $env:IncludeIosTarget = 'false'
 
-$tfm = "net10.0-windows10.0.19041.0"
+$tfm = "net11.0-windows10.0.19041.0"
 $runtime = "win-x64"
 $configuration = "Debug"
 $repoRoot = Split-Path $PSScriptRoot -Parent

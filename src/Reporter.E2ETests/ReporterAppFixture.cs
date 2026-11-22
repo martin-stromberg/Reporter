@@ -140,7 +140,7 @@ public sealed class ReporterAppFixture : IAsyncLifetime
         {
             var candidate = Path.Combine(
                 directory.FullName,
-                "src", "Reporter", "bin", "Debug", "net10.0-windows10.0.19041.0", "win-x64", "Reporter.exe");
+                "src", "Reporter", "bin", "Debug", "net11.0-windows10.0.19041.0", "win-x64", "Reporter.exe");
             if (File.Exists(candidate))
             {
                 return candidate;
