@@ -68,6 +68,7 @@ public sealed class ArticleTagsTests : IDisposable
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task ArticleDetail_Tags_ShownBelowArticleText()
     {
         AddFeedAndSync();
@@ -125,6 +126,7 @@ public sealed class ArticleTagsTests : IDisposable
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task ArticleDetail_Tags_PersistedInDatabase()
     {
         AddFeedAndSync();

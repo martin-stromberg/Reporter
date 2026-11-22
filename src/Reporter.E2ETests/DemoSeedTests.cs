@@ -41,6 +41,7 @@ public sealed class DemoSeedTests
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task FirstStart_SeedsNewsCategoryAndDemoFeed()
     {
         var tempDirectory = Path.Combine(Path.GetTempPath(), $"reporter-e2e-demo-{Guid.NewGuid():N}");

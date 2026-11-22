@@ -140,6 +140,7 @@ public sealed class UnreadPacketTests : IDisposable
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task MarkAllRead_Descending_MarksOnlyNewestDay_ThenLoadsNextPacket()
     {
         AddFeedAndSync("day-packet-feed");
@@ -195,6 +196,7 @@ public sealed class UnreadPacketTests : IDisposable
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task MarkAllRead_Ascending_MarksExtendedOldestPacket()
     {
         await FeedDbAssertions.SetUnreadSortOrderAsync(_fixture.DatabasePath, "asc");
@@ -245,6 +247,7 @@ public sealed class UnreadPacketTests : IDisposable
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task MarkRead_SingleArticle_DoesNotPromoteFollowDay()
     {
         AddFeedAndSync("paged-feed");
