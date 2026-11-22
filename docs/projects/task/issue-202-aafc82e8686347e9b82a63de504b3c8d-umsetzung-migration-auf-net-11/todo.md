@@ -18,5 +18,5 @@ Issue: #202 (Folge-Issue zu #180)
 | [x] | 5c | Planungscommit | – |
 | [x] | 6 | Entwicklungsschritte-Tracking | `steps.md`, `status.html` |
 | [x] | 7 | Entwicklungsschleife (Schritte 1–4 via Lifecycle) | `acceptance-schritt-{n}.md` |
-| [ ] | 8 | Aufräumen + Abschlusscommit | – |
-| [ ] | 9 | Push + PR gegen `staging` (Closes #202), Checks überwachen | – |
+| [x] | 8 | Aufräumen + Abschlusscommit | `abschluss.md` |
+| [x] | 9 | Push + PR #208 gegen `staging` (Closes #202), Checks grün | – |
