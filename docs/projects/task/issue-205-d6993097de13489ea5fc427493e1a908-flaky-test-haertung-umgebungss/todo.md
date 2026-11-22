@@ -17,5 +17,5 @@ Branch: `task/issue-205-d6993097de13489ea5fc427493e1a908-flaky-test-haertung-umg
 | [x] | 5c | Planungscommit | – |
 | [x] | 6 | Entwicklungsschritte-Tracking anlegen | `steps.md` |
 | [x] | 7 | Entwicklungsschritte abarbeiten (Schleife über `/lifecycle`) — Schritt 1 und Schritt 2 abgeschlossen | Codeänderungen je Schritt |
-| [ ] | – | Projekt-Verzeichnis aufräumen | – |
-| [ ] | 8 | Abschlusscommit | – |
+| [x] | – | Projekt-Verzeichnis aufräumen | – |
+| [x] | 8 | Abschlusscommit | – |
