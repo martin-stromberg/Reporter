@@ -43,7 +43,7 @@
 9. `global.json`: `sdk`-Block ergänzen:
    `{ "sdk": { "version": "11.0.100", "rollForward": "latestPatch" },
       "test": { "runner": "Microsoft.Testing.Platform" } }`.
-10. `.config/dotnet-tools.json` neu:
+10. `dotnet-tools.json` (Repo-Root, neue SDK-11-Konvention — `dotnet new tool-manifest` legt seit SDK 10 die Datei direkt im Wurzelverzeichnis an, `dotnet tool restore` findet beide Orte) neu:
     `dotnet-ef` Version `11.0.0`, `rollForward: false` o. ä. per
     `dotnet new tool-manifest` + `dotnet tool install dotnet-ef --version 11.0.0`.
     Lokal parallel `dotnet tool update -g dotnet-ef` auf 11.x.

@@ -17,16 +17,16 @@ schreibgeschützte Explore-Subagenten.
 | [x] | 4 | Bestandsaufnahme | `inventory.md` |
 | [x] | 5 | Umsetzungsplanung | `plan.md` |
 | [x] | 5a | Offene Punkte: keine (Entscheidungen im Projektplan getroffen) | `plan.md` |
-| [ ] | 5b | Plan gegen Anforderung prüfen | `plan-check.md` |
-| [ ] | 5c | Planungscommit | – |
-| [ ] | 6 | Implementierung | Codeänderungen |
-| [ ] | 7 | Plan-Review | `review.md` |
-| [ ] | 8 | Usability-Review | `review-usability.md` |
-| [ ] | 9 | Code-Review | `review-code.md` |
-| [ ] | 10 | Tests ausführen | `test-results.md` |
-| [ ] | – | Iteration oder Abschluss entscheiden | – |
-| [ ] | 12 | Dokumentation | (Doku-Welle = Projektschritt 4, vermerkt) |
-| [ ] | 12b | README | (Projektschritt 4) |
-| [ ] | 12c | Release Notes | `docs/RELEASE_NOTES.md` (Projektschritt 4) |
-| [ ] | – | Feature-Verzeichnis löschen | – |
-| [ ] | – | Commit durchführen | – |
+| [x] | 5b | Plan gegen Anforderung prüfen | `plan-check.md` |
+| [x] | 5c | Planungscommit | – |
+| [x] | 6 | Implementierung | Codeänderungen |
+| [x] | 7 | Plan-Review | `review.md` |
+| [x] | 8 | Usability-Review | `review-usability.md` |
+| [x] | 9 | Code-Review | `review-code.md` |
+| [x] | 10 | Tests ausführen | `test-results.md` |
+| [x] | – | Iteration oder Abschluss entscheiden | – |
+| [x] | 12 | Dokumentation | (Doku-Welle = Projektschritt 4, vermerkt) |
+| [x] | 12b | README | (Projektschritt 4) |
+| [x] | 12c | Release Notes | `docs/RELEASE_NOTES.md` (Projektschritt 4) |
+| [x] | – | Feature-Verzeichnis löschen | – |
+| [x] | – | Commit durchführen | – |
