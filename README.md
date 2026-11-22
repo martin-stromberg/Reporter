@@ -78,6 +78,8 @@ npm test                                          # node:test-Suite der Release-
 
 Die E2E-Suite hinterlässt keine verwaisten App-Prozesse: Die gestartete `Reporter.exe` ist per Windows-Job-Objekt an den Test-Host gebunden und endet auch bei dessen hartem Abbruch; das Skript beendet im `finally` zusätzlich verbliebene Prozesse aus dem Build-Output — eine parallel installierte App bleibt unberührt. Details und Fehlerbehebung siehe [Tests](docs/help/tests/index.md).
 
+In der CI läuft `Reporter.Tests` zweigeteilt: Die deterministische Lane (`build-and-test`, `Category!=OsInterface` via MTP `--filter-not-trait`) ist blockierend, während die OS-sensitiven Tests als best-effort `os-interface tests`-Job (`Category=OsInterface`, `continue-on-error`) mit einmaligem Flaky-Retry und TRX-Flake-Statistik separat laufen — Details siehe [OS-Interface-Tests](docs/help/tests/os-interface-tests.md). `Reporter.E2ETests` bleibt lokal/on-demand und ist kein regulärer CI-Bestandteil.
+
 ## CI/CD
 
 GitHub-Actions-Pipeline nach dem Branch-Modell `staging` → `main`: PR-Gates (`static checks`, `build & test`), RC-Pre-Releases auf `staging`, automatischer Promotion-PR und stabile Releases mit Plattform-Artefakten auf `main` — Details siehe [Release-Management](docs/help/release-management/index.md). Die Supply Chain ist gehärtet: Externe Actions sind auf Commit-SHAs gepinnt, das Security-Gate prüft NuGet- und npm-Abhängigkeiten, und Dependabot erzeugt wöchentlich Update-PRs gegen `staging`. Zusätzlich veröffentlicht der Workflow `deploy-pages.yml` den Ordner `website/` bei Änderungen auf `main` als GitHub-Pages-Site unter `https://martin-stromberg.github.io/Reporter/` — Details siehe [Website](docs/help/website/index.md).
@@ -110,7 +112,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - [App-Store-Review](docs/app-store-review.md) — Review-Notizen zur Einreichung: App-Privacy-Antworten, ATS-Begründung, Altersfreigabe, iPad-Entscheidung
 - [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien, Asset-Reparatur, zeitgesteuerte Review-Issues (Architektur/Sicherheit, NuGet, Compliance) und Dependabot-Update-PRs samt SHA-Pinning und NuGet-/npm-Security-Gate
 - [Website](docs/help/website/index.md) — zweisprachige statische Projekt-Website unter `website/` (Landing-Page, Datenschutz, Changelog, Press Kit) und ihr Deployment auf GitHub Pages
-- [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
+- [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite, OS-Interface-CI-Lane und `REPORTER_*`-Umgebungsvariablen
 - [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen
 - [Contributing](CONTRIBUTING.md) — Richtlinien für Beiträge
 - [Release Notes](docs/RELEASE_NOTES.md) — Versionshinweise der Releases
