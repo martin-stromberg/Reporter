@@ -82,7 +82,7 @@
 
 ## TFM-Schalter für lokale Builds vs. Packaging
 
-**Beschreibung:** `net10.0-android` darf lokale Builds und die Gates nicht mit dem Android-Workload belasten; nur die Packaging-Jobs aktivieren das TFM.
+**Beschreibung:** `net11.0-android` darf lokale Builds und die Gates nicht mit dem Android-Workload belasten; nur die Packaging-Jobs aktivieren das TFM.
 
 **Bedingungen:**
 - `IncludeAndroidTarget` (Default `false`), `IncludeIosTarget` (Default `true` auf Windows) steuern `TargetFrameworks` in `Reporter.csproj` über `Condition`-Kombinationen je Betriebssystem.

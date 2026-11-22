@@ -22,10 +22,10 @@ Kein separates Setup nötig — das Skript erledigt Build und Ausführung:
 Das Skript:
 
 1. setzt `IncludeIosTarget=false`,
-2. baut `src/Reporter/Reporter.csproj` (`Debug`, `net10.0-windows10.0.19041.0`, `win-x64`),
-3. prüft, dass `src\Reporter\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Reporter.exe` erzeugt wurde,
+2. baut `src/Reporter/Reporter.csproj` (`Debug`, `net11.0-windows10.0.19041.0`, `win-x64`),
+3. prüft, dass `src\Reporter\bin\Debug\net11.0-windows10.0.19041.0\win-x64\Reporter.exe` erzeugt wurde,
 4. setzt `REPORTER_APP_PATH` auf diese Exe,
-5. führt `dotnet test --project src/Reporter.E2ETests/Reporter.E2ETests.csproj -c Debug -f net10.0-windows10.0.19041.0` aus und reicht den Exit-Code durch; das umschließende `finally` beendet danach verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output-Pfad eingegrenzt, damit eine parallel laufende Nutzer-Installation nicht getroffen wird.
+5. führt `dotnet test --project src/Reporter.E2ETests/Reporter.E2ETests.csproj -c Debug -f net11.0-windows10.0.19041.0` aus und reicht den Exit-Code durch; das umschließende `finally` beendet danach verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output-Pfad eingegrenzt, damit eine parallel laufende Nutzer-Installation nicht getroffen wird.
 
 Alternativ kann das Testprojekt direkt getestet werden, wenn die App bereits gebaut ist (`REPORTER_APP_PATH` oder Konventionspfad, siehe unten).
 
@@ -35,12 +35,12 @@ Die Suite selbst hat keine Konfigurationsdateien; das Testprojekt ist in `Report
 
 ```powershell
 dotnet test Reporter.sln --filter "Category!=E2E"   # ohne E2E-Suite
-dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -f net10.0-windows10.0.19041.0   # nur E2E
+dotnet test src/Reporter.E2ETests/Reporter.E2ETests.csproj -f net11.0-windows10.0.19041.0   # nur E2E
 ```
 
 | Einstellung | Standardwert | Beschreibung |
 |-------------|--------------|--------------|
-| Build-Konvention | `Debug` / `net10.0-windows10.0.19041.0` / `win-x64` | Feste Konvention in `Run-E2ETests.ps1` und `ResolveAppPath` |
+| Build-Konvention | `Debug` / `net11.0-windows10.0.19041.0` / `win-x64` | Feste Konvention in `Run-E2ETests.ps1` und `ResolveAppPath` |
 | Test-Filter | `[Trait("Category", "E2E")]` auf allen Tests | Trennung vom regulären `dotnet test`-Lauf |
 | Stub-Port | `0` (OS vergibt freien Port) | `StubFeedServer` bindet `http://127.0.0.1:0`, `BaseUrl` nach `StartAsync` ausgelesen |
 

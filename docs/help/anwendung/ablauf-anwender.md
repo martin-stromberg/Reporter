@@ -8,6 +8,7 @@
 
 - Reporter wurde auf dem Gerät installiert und gestartet.
 - Das Gerät hat eine funktionierende Internetverbindung (wird für den späteren Feed-Abruf benötigt).
+- Windows: Der Prozessor muss den x86-64-v2-Befehlssatz unterstützen (SSE4.2 + POPCNT — alle Intel-/AMD-Prozessoren ab ca. 2013). Startet die App nach einem Update nicht mehr und bricht direkt beim Prozessstart mit einem CLR-Fehler ab (Exit-Code `0xC000001D`, „illegal instruction"), erfüllt die CPU diese Voraussetzung nicht — in dem Fall bleibt die Installation der Vorversion (v0.7.x) nutzbar.
 
 ## Schritt-für-Schritt-Anleitung
 

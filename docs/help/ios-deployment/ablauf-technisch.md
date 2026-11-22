@@ -6,7 +6,7 @@
 
 ## Übersicht
 
-`scripts/iOS-Deployment.ps1` orchestriert `dotnet build/publish` für `net10.0-ios` und — für Store-Läufe — die macOS-Werkzeuge `codesign`, `security` und `iTMSTransporter`. Unter Windows delegiert es Remote-Schritte per `ssh`/`scp` an den Pair-to-Mac-Host.
+`scripts/iOS-Deployment.ps1` orchestriert `dotnet build/publish` für `net11.0-ios` und — für Store-Läufe — die macOS-Werkzeuge `codesign`, `security` und `iTMSTransporter`. Unter Windows delegiert es Remote-Schritte per `ssh`/`scp` an den Pair-to-Mac-Host.
 
 ## Ablauf `store`
 
@@ -20,7 +20,7 @@
 
 ### 3. Signierter Release-Build
 
-`Invoke-Build` führt `dotnet publish src/Reporter/Reporter.csproj -f net10.0-ios -c Release -p:RuntimeIdentifier=ios-arm64 -p:ArchiveOnBuild=true -p:CodesignKey=… -p:CodesignProvision=…` aus. Parameter werden über eine temporäre Response-Datei (`.ios-deploy-*.rsp`, gitignored via `*.rsp`) übergeben; die Ausgabe landet unter `src/Reporter/bin/Release/net10.0-ios/ios-arm64/`. Auf Windows läuft der Build remote auf dem Pair-to-Mac-Host, die `.ipa` wird zurückkopiert.
+`Invoke-Build` führt `dotnet publish src/Reporter/Reporter.csproj -f net11.0-ios -c Release -p:RuntimeIdentifier=ios-arm64 -p:ArchiveOnBuild=true -p:CodesignKey=… -p:CodesignProvision=…` aus. Parameter werden über eine temporäre Response-Datei (`.ios-deploy-*.rsp`, gitignored via `*.rsp`) übergeben; die Ausgabe landet unter `src/Reporter/bin/Release/net11.0-ios/ios-arm64/`. Auf Windows läuft der Build remote auf dem Pair-to-Mac-Host, die `.ipa` wird zurückkopiert.
 
 ### 4. API-Key auf den Mac spiegeln
 
