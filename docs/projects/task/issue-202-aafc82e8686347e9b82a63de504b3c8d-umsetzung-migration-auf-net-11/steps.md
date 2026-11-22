@@ -6,7 +6,7 @@ Branch: `task/issue-202-aafc82e8686347e9b82a63de504b3c8d-umsetzung-migration-auf
 
 | # | Titel | Abhängigkeiten | Branch | Status |
 |---|-------|----------------|--------|--------|
-| 1 | SDK-/TFM-Flip + Paketwelle | Keine | `task/issue-202-aafc82e8686347e9b82a63de504b3c8d-umsetzung-migration-auf-net-11-schritt-1-tfm-paket-flip` | Offen |
+| 1 | SDK-/TFM-Flip + Paketwelle | Keine | `task/issue-202-aafc82e8686347e9b82a63de504b3c8d-umsetzung-migration-auf-net-11-schritt-1-tfm-paket-flip` | In Arbeit |
 | 2 | EF-Core-11-Verifikation | 1 | `task/issue-202-aafc82e8686347e9b82a63de504b3c8d-umsetzung-migration-auf-net-11-schritt-2-ef-verifikation` | Offen |
 | 3 | CI/CD auf .NET 11 | 1 | `task/issue-202-aafc82e8686347e9b82a63de504b3c8d-umsetzung-migration-auf-net-11-schritt-3-cicd` | Offen |
 | 4 | Doku-Welle + Plan-Status | 1, 2, 3 | `task/issue-202-aafc82e8686347e9b82a63de504b3c8d-umsetzung-migration-auf-net-11-schritt-4-doku` | Offen |
