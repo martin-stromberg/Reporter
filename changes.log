@@ -1,10 +1,13 @@
 Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
 
-## 2026-11-22 — Flaky-Test-Härtung, Teil 1 (Issue #205)
+## 2026-11-22 — Flaky-Test-Härtung (Issue #205)
 
 - **Testklassifikation:** Neue xUnit-Kategorien `OsInterface` und `Flaky` in `Reporter.Tests` und `Reporter.E2ETests` trennen deterministische Tests von Tests mit echten Betriebssystemabhängigkeiten. Alle 39 E2E-/Infrastrukturtests tragen jetzt `Category=OsInterface`; `Flaky` ist als explizite Ausnahme nur zusammen mit `OsInterface` zulässig und wird durch `TestClassificationConventionTests` erzwungen.
 - **Robuster Temp-Cleanup:** `TempDirectoryCleanup` übernimmt das bewährte Best-Effort-Muster aus der E2E-Suite für `Reporter.Tests`: bis zu fünf Löschversuche mit kurzen Abständen, diagnostische Meldungen über einen Log-Callback und kein Wurf aus dem Teardown. `TempDirectoryCleanupTests` deckt Erfolg, fehlende Verzeichnisse, kurze und dauerhafte Dateisperren ab und ist selbst als `OsInterface` klassifiziert.
-- **Doku:** `docs/help/tests/` beschreibt die Klassifikationsregeln, die MTP-Trait-Filter und die unveränderte lokale/on-demand-Rolle der FlaUI-Suite.
+- **Deterministische blockierende Lane:** Der `build-and-test`-Job in `pr-staging-ci.yml` und `staging-ci.yml` führt `Reporter.Tests` jetzt per MTP-Filter `--filter-not-trait "Category=OsInterface"` aus — nur die deterministische Menge bleibt Teil des Coverage-Gates und der blockierenden `test-results`-Artefakte.
+- **Best-Effort-Lane für OS-Tests:** Der neue Job `os-interface tests` läuft in beiden Workflows mit `continue-on-error: true`, eigenem Timeout (45 min) und Filter `--filter-trait "Category=OsInterface"`. Fehlschläge werden sichtbar, blockieren aber nichts: Der Job steht in keiner `needs`-Kette der Gate-/Release-Jobs und lädt eigene TRX-Artefakte (`test-results-os-interface-pr`/`test-results-os-interface-staging`) hoch, die nicht mit denen der deterministischen Lane kollidieren.
+- **Flaky-Retry und Flake-Statistik:** Die neuen Skripte `scripts/Retry-FlakyTests.ps1`, `scripts/Analyze-FlakyTestResults.ps1` und die Hilfsbibliotheken `scripts/lib/Trx.ps1` (TRX-Parsing) und `scripts/lib/TestDiscovery.ps1` (Flaky-Testliste) wiederholen fehlgeschlagene Tests genau einmal — und nur, wenn sie als `Flaky` markiert sind (kein Blanket-Retry). Der Analyzer wertet Primär- und Retry-TRX statistisch aus, klassifiziert Tests über dokumentierte Schwellwerte als `stabil`/`beobachten`/`Quarantaene-Kandidat` und empfiehlt bei Kandidaten ein Quarantäne-Issue (Anlage bleibt Maintainer-Entscheidung).
+- **Doku:** `docs/help/tests/` beschreibt die Klassifikationsregeln, die MTP-Trait-Filter und die unveränderte lokale/on-demand-Rolle der FlaUI-Suite; die neue Seite `docs/help/tests/os-interface-tests.md` dokumentiert die CI-Lanes, die Retry-/Re-Run-Regeln und die Flake-Statistik und ist in der Testdoku-Übersicht sowie in der `README.md` verlinkt.
 
 ## 2026-11-16 — Supply-Chain-Härtung (Issue #182)
 

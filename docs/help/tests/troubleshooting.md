@@ -62,6 +62,17 @@
 1. Solution-Tests mit Filter ausführen: `dotnet test Reporter.sln --filter "Category!=E2E"` (so auch in `CONTRIBUTING.md` dokumentiert).
 2. Die E2E-Suite bewusst über `.\scripts\Run-E2ETests.ps1` starten.
 
+## OS-Interface-Job schlägt im CI-Lauf fehl
+
+**Symptom:** Der Job `os-interface tests` in `pr-staging-ci.yml`/`staging-ci.yml` zeigt einen Fehlschlag, der PR bzw. der Staging-Lauf bleibt aber grün.
+
+**Ursache:** Die Lane läuft bewusst unter `continue-on-error` — OS-sensitive Fehlschläge werden sichtbar gemeldet, ohne das Gate zu blockieren. Fehlschlagende `Flaky`-Tests hat der Schritt „Retry flaky tests once" bereits genau einmal gefiltert wiederholt; „Analyze flaky test results" klassifiziert sie als `beobachten`/`Quarantaene-Kandidat`.
+
+**Lösung:**
+1. Job-Log und TRX-Artefakt `test-results-os-interface-*` prüfen: persistente Fehlschläge (Primär **und** Retry rot) sind echte Fehler — wie einen Testfehler behandeln.
+2. Recovered-/beobachtete Fälle über `scripts/Analyze-FlakyTestResults.ps1` gegen gesammelte Artefakte bewerten; Quarantäne-Kandidaten als Issue anlegen und unter [Bekannte Fehlerbilder](os-interface-tests.md#bekannte-fehlerbilder) dokumentieren.
+3. Bei Infrastruktur-Problemen nur den OS-Job gezielt neu starten (`gh run rerun <run-id> --job <job-id>`) — niemals `gh run rerun --failed`, das trifft auch blockierende Jobs. Details: [OS-Interface-Tests](os-interface-tests.md).
+
 ## Versehentlich gesetzte Env-Overrides
 
 **Symptom:** Die manuell gestartete App findet keine echten Feed-Verzeichnis-Treffer, schreibt in eine unerwartete Datenbankdatei oder legt auf einer frischen Datenbank keinen Demo-Feed an — oder `DemoSeedTests` schlägt fehl, weil der Seed unterdrückt bleibt.
