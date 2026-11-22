@@ -16,6 +16,6 @@ Branch: `task/issue-205-d6993097de13489ea5fc427493e1a908-flaky-test-haertung-umg
 | [x] | 5b | Projektplan gegen Anforderung prüfen (direkt statt Unteragent; Umgebungsrestriktion) | `project-plan-check.md` |
 | [x] | 5c | Planungscommit | – |
 | [x] | 6 | Entwicklungsschritte-Tracking anlegen | `steps.md` |
-| [ ] | 7 | Entwicklungsschritte abarbeiten (Schleife über `/lifecycle`) | Codeänderungen je Schritt |
+| [ ] | 7 | Entwicklungsschritte abarbeiten (Schleife über `/lifecycle`) — Schritt 1 abgeschlossen, Schritt 2 offen | Codeänderungen je Schritt |
 | [ ] | – | Projekt-Verzeichnis aufräumen | – |
 | [ ] | 8 | Abschlusscommit | – |
