@@ -42,6 +42,7 @@ public sealed class ArticleLinkTests
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task ExternalLinkInArticle_OpensSystemBrowser()
     {
         _page.SelectTab(AppResources.TabFeeds);

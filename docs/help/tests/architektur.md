@@ -25,6 +25,16 @@ Die E2E-Infrastruktur besteht aus dem Testprozess (`src/Reporter.E2ETests`), der
 | `FeedSearchService` | `Reporter.Core`-Service | Optionaler Konstruktorparameter `directoryEndpoint` mit Fallback auf die Konstante `https://feedsearch.dev/api/v1/search` |
 | XAML-Views | `src/Reporter/Views/*.xaml` | `x:DataType` auf allen Seiten und `DataTemplate`s → Compiled Bindings als Compile-Zeit-Prüfebene |
 
+## Testklassifikation
+
+Die xUnit-Kategorien trennen die fachliche Suite von ihrer Ausführungsumgebung:
+
+- `Category=E2E` kennzeichnet die interaktive Desktop-Suite in `Reporter.E2ETests`.
+- `Category=OsInterface` kennzeichnet Tests, deren Assertion oder zuverlässiger Teardown von realen Betriebssystemressourcen abhängt — etwa Prozesse, Windows-Job-Objekte, UIA-Fenster oder Dateisperren. Alle 39 Tests in `Reporter.E2ETests` tragen diese Kategorie zusätzlich zu ihrer bisherigen Kennzeichnung; in `Reporter.Tests` gehören die `TempDirectoryCleanupTests` dazu.
+- `Category=Flaky` ist eine explizite Ausnahme für bekannte instabile OS-sensitive Tests und darf niemals ohne `OsInterface` verwendet werden; `TestClassificationConventionTests` erzwingt diese Regel per Reflection.
+
+Microsoft Testing Platform filtert die Lane über `-- --filter-trait "Category=OsInterface"` bzw. `"Category!=OsInterface"`. Die normale Pipeline bleibt die deterministische `Reporter.Tests`-Suite; die Desktop-Suite bleibt bewusst lokal/on-demand.
+
 ## Abhängigkeiten
 
 - **Testprojekt (`Reporter.E2ETests.csproj`, `net10.0-windows10.0.19041.0`):** Pakete `FlaUI.UIA3` 5.0.0, `Microsoft.Data.Sqlite`, `Microsoft.NET.Test.Sdk`, `xunit.v3`, `xunit.runner.visualstudio`; `FrameworkReference Microsoft.AspNetCore.App` (Kestrel ohne zusätzliches NuGet-Paket); `ProjectReference` auf `Reporter.Core` für die lokalisierten `AppResources`-Texte und Modelle.

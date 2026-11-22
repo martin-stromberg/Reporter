@@ -49,6 +49,7 @@ public sealed class ArticleImageTests
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task ArticleImage_StoredLocally_AndShownOnCardAndDetail()
     {
         var feedUrl = $"{_fixture.Server.BaseUrl}/feeds/image-feed.xml";
@@ -162,6 +163,7 @@ public sealed class ArticleImageTests
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task BrokenImage_DoesNotFailSync_StoresNoImage()
     {
         var feedUrl = $"{_fixture.Server.BaseUrl}/feeds/broken-image-feed.xml";

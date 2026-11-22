@@ -65,6 +65,7 @@ public sealed class SmokeTests
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void AppStarts_FeedListRenders()
     {
         _page.SelectTab(AppResources.TabFeeds);
@@ -80,6 +81,7 @@ public sealed class SmokeTests
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void AddButton_OpensSheet_FocusesUrlEntry()
     {
         _page.SelectTab(AppResources.TabFeeds);
@@ -94,6 +96,7 @@ public sealed class SmokeTests
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task DirectAdd_FeedAppearsInListAndDatabase()
     {
         var feedUrl = $"{_fixture.Server.BaseUrl}/feeds/direct-add.xml";
@@ -110,6 +113,7 @@ public sealed class SmokeTests
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public async Task Search_SubscribesResult_PersistsFeed()
     {
         _page.SelectTab(AppResources.TabFeeds);
@@ -152,6 +156,7 @@ public sealed class SmokeTests
     /// </summary>
     [Fact]
     [Trait("Category", "E2E")]
+    [OsInterface]
     public void Search_SiteUrl_DiscoversFeedViaLinkTag()
     {
         _page.SelectTab(AppResources.TabFeeds);
