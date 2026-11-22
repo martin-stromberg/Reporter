@@ -16,7 +16,7 @@
 
 | Lauf | Befehl | Arbeitsverzeichnis | Exit-Code | Erfolgreich | Fehlgeschlagen | Übersprungen | Nachweis |
 |------|--------|--------------------|-----------|-------------|----------------|--------------|----------|
-| Baseline | `dotnet test --project src\Reporter.Tests\Reporter.Tests.csproj --no-build` | Repo-Root | 0 | 798 | 0 | 0 | [Log](test-results/baseline-reporter-tests.log) |
+| Baseline | `dotnet test --project src\Reporter.Tests\Reporter.Tests.csproj --no-build` | Repo-Root | 0 | 798 | 0 | 0 | [Log](test-results/baseline-reporter-tests.txt) |
 | MTP-Filterprobe | `dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj --no-build --list-tests -- --filter "FullyQualifiedName~AppCultureTests.Apply_SetsCultures"` | Repo-Root | 0 | 1 gelistet | 0 | – | Konsolenausgabe |
 
 ## Nachgewiesene bestehende Testfehler
