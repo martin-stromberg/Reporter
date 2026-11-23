@@ -46,6 +46,22 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 
 ### Voraussetzungen
 
+- Xcode **27.2** (Release-Version, keine Beta) auf dem Build-Mac, per
+  `xcode-select` aktiv — der installierte iOS-Workload-Pin
+  `Microsoft.iOS.Sdk 27.2.11039` verlangt exakt Xcode 27.2 (auch
+  neuere Xcode werden abgelehnt, solange der Pin nicht angehoben
+  ist); Apple verlangt fuer Store-Uploads zudem ein Build-SDK >= 27
+  (ITMS-90725, Frist April 2027) und lehnt Beta-Toolchains ab.
+  `store` prueft `xcode-select`-Pfad (muss auf
+  `<Xcode>.app/Contents/Developer` zeigen — die Command Line Tools
+  unter `/Library/Developer/CommandLineTools` enthalten kein
+  `xcodebuild` und brechen hart ab), Version und Beta-Status vor dem
+  Build (`Assert-RequiredXcodeVersion`), die IPA-Validierung prueft
+  zusaetzlich `DTSDKName` der erzeugten `.ipa`. Grenze des
+  `upload`-Pfads: Eine mit Beta-Xcode gebaute `.ipa` ist an den
+  SDK-Metadaten nicht zuverlaessig erkennbar — dort bleibt die
+  serverseitige Ablehnung durch App Store Connect die letzte
+  Sicherung.
 - Apple Developer Program-Account, App-Eintrag in App Store Connect
   (Bundle-ID `de.martinstromberg.reporter`)
 - **Apple Distribution**-Zertifikat in der Mac-Keychain (`-CodesignKey`,
@@ -223,7 +239,9 @@ und der Codesign-Teil des Builds schlaegt fehl — die Runner-Images
 enthalten keine Signing-Identitaeten. Die Release-Version wird per
 `-p:ApplicationDisplayVersion=<version>` in die App gebracht — die csproj-
 Werte gelten nur als lokaler Fallback. Als Buildnummer dient
-`github.run_number` (monoton steigend, eindeutig, kein Commit-Back noetig).
+`git rev-list --count HEAD + github.run_attempt - 1` (repo-weit
+monoton, eindeutig ueber beide Workflows hinweg, kein Commit-Back
+noetig; `run_attempt` erhoeht bei Repair-Uploads desselben Commits).
 Die Einstellungen-Seite zeigt die faktische Version unten an
 („Version x.y.z (Build n)" via `AppInfo.Current`), sodass lokale und
 CI-Builds unterscheidbar sind.

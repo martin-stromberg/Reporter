@@ -16,6 +16,7 @@
 - The former "Show error details" action is now called "Show message" (dialog "Sync message") and covers errors and warnings alike; error and warning details are stored in the same unified fields (automatic database migration on app start).
 - Fixed: a manual refresh of a feed running in parallel with an automatic full sync could fail with a duplicate-key error or overwrite the feed's status and message with stale values — syncs of the same feed are now serialized.
 - Development infrastructure: the automated test pipeline has been hardened — deterministic tests run as a blocking lane, while tests that depend on real operating-system behavior run separately as a best-effort lane, so environment-related flakiness can no longer hide genuine test failures.
+- Development infrastructure: iOS release builds now run on the `xcode-27` runner image and are built with the iOS 27 SDK (Xcode 27.2) — meeting Apple's new App Store requirement ahead of the April 2027 deadline; the pipeline selects Xcode explicitly and verifies the built package's SDK version before every upload.
 
 ## Wichtige Hinweise vor dem Update
 
@@ -31,3 +32,4 @@
 - Die bisherige Aktion „Fehlerdetails anzeigen" heißt jetzt „Meldung anzeigen" (Dialog „Synchronisierungsmeldung") und gilt für Fehler und Warnungen gleichermaßen; Fehler- und Warnungsdetails werden in denselben vereinheitlichten Feldern gespeichert (automatische Datenbankmigration beim App-Start).
 - Behoben: Ein manueller Abruf eines Feeds parallel zum automatischen Gesamt-Abgleich konnte mit einem Doppelschlüssel-Fehler fehlschlagen oder Status und Meldung des Feeds mit veralteten Werten überschreiben — Synchronisationen desselben Feeds werden jetzt serialisiert.
 - Entwicklungsinfrastruktur: Die automatisierte Test-Pipeline wurde gehärtet — deterministische Tests laufen als blockierende Lane, während Tests mit echten Betriebssystemabhängigkeiten getrennt als Best-Effort-Lane laufen, sodass umgebungsbedingtes Flackern echte Testfehler nicht mehr verdecken kann.
+- Entwicklungsinfrastruktur: iOS-Release-Builds laufen jetzt auf dem Runner-Image `xcode-27` und werden mit dem iOS-27-SDK (Xcode 27.2) erstellt — damit erfüllen sie Apples neue App-Store-Anforderung vor der Frist April 2027; die Pipeline wählt das Xcode explizit aus und verifiziert die SDK-Version des gebauten Pakets vor jedem Upload.

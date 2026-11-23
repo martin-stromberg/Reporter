@@ -143,11 +143,14 @@ jobs:
 
   # iOS packaging stays disabled until the signing secrets are provided externally.
   # Activate by setting the repository variable IOS_SIGNING_ENABLED=true - no code change needed.
+  # Runner xcode-27 (arm64): das einzige GitHub-Image mit Xcode 27.x - das
+  # gepinnte iOS-Workload-Pack (27.2.11039) verlangt exakt Xcode 27.2; die
+  # package-ios-Action waehlt /Applications/Xcode_27.2.app via DEVELOPER_DIR.
   package-ios:
     name: package-ios
     needs: [resolve, release-gate]
     if: needs.resolve.outputs.released == 'true' && vars.IOS_SIGNING_ENABLED == 'true' && !failure() && !cancelled()
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 30
     steps:
       - name: Checkout

@@ -86,6 +86,32 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
   Der Agent fragt das Passwort einmalig beim `ssh-add` ab; danach läuft `ssh` passwortlos. Simpler für den Anwendungsfall: Schlüssel ohne Passwort neu erzeugen (Passwort-Fragen mit Enter beantworten).
 
+## „exakt Xcode 27.2" / Beta-Toolchain / kein Xcode selektiert — `store` bricht vor dem Build ab
+
+**Symptom:** `store` bricht vor dem Build mit einer dieser Meldungen ab (`Assert-RequiredXcodeVersion`):
+
+- `Fehler: xcode-select zeigt auf dem Build-Mac auf '<Pfad>' - nicht auf ein Xcode.app.`
+- `Fehler: Auf dem Build-Mac ist 'Xcode <Version>' aktiv - der Store-Build benoetigt exakt Xcode 27.2.`
+- `Fehler: Auf dem Build-Mac ist eine Beta-Toolchain aktiv ('…').`
+
+**Ursache:** Drei mögliche Fälle — (a) `xcode-select` auf dem Build-Mac zeigt nicht auf `<Xcode>.app/Contents/Developer`, sondern z. B. auf die Command Line Tools (`/Library/Developer/CommandLineTools`, enthalten kein `xcodebuild`): aus dem `xcode-select -p`-Pfad eindeutig erkennbar, daher harter Abbruch statt implizitem Fehler mitten im Build; (b) `xcode-select` zeigt auf ein Release-Xcode ≠ 27.2 (älter oder neuer); (c) eine Beta-Toolchain ist aktiv (erkannt an `beta`/`Beta` in der `xcodebuild -version`-Ausgabe oder im `xcode-select -p`-Pfad, z. B. `Xcode_*_beta.app`/`Xcode-beta.app`). Der installierte iOS-Workload-Pin `Microsoft.iOS.Sdk 27.2.11039` verlangt exakt Xcode 27.2 — ohne die Vorab-Prüfung käme mitten im Build der Pack-Fehler `This version of .NET for iOS (…) requires Xcode 27.2`. Apple verlangt für Store-Uploads zudem ein Build-SDK ≥ 27 (ITMS-90725, Frist April 2027) und lehnt Builds aus Beta-Xcode ab.
+
+**Lösung:**
+1. Release-Xcode 27.2 auf dem Mac installieren (Apple Developer Downloads / App Store) — kann parallel zu anderen Xcode-Versionen liegen.
+2. Aktivieren: `sudo xcode-select -s /Applications/Xcode_27.2.app`, dann `xcode-select -p` und `xcodebuild -version` zur Kontrolle — der Pfad muss `…/Xcode_27.2.app/Contents/Developer` liefern (zeigt er weiterhin auf `/Library/Developer/CommandLineTools`, war der `xcode-select`-Aufruf wirkungslos, z. B. ohne `sudo`).
+3. Bei bewusst **neuerem** Xcode (> 27.2): Die exakte Versionsanforderung ist an den Workload-Pin gekoppelt — den Pin auf das zum Xcode passende `Microsoft.iOS.Sdk`-Pack anheben (in der CI: Input `ios-workload-version` zusammen mit `xcode-path`; lokal: `dotnet workload restore` ohne Pin) **und** `$requiredXcodeVersion` am Anfang der Funktion `Assert-RequiredXcodeVersion` in `scripts/iOS-Deployment.ps1` auf dieselbe Xcode-Version setzen. Ohne diese Skript-Anpassung bricht `store` weiterhin mit „benoetigt exakt Xcode 27.2" ab — es gibt keinen Override-Schalter. Pin, `$requiredXcodeVersion` und Xcode-Version müssen versionsgleich bleiben.
+4. `store` erneut ausführen. Kommt es trotz passendem Xcode zum Pack-Fehler, stimmt die installierte Workload-Version nicht (`dotnet workload list` — erwartet `ios 27.2.11039/11.0.100`).
+
+## „FEHLER: Build-SDK … App Store verlangt iOS SDK >= 27" bei `store`/`upload`
+
+**Symptom:** Die IPA-Validierung bricht mit `FEHLER: Build-SDK 'iphoneos<26.x>' - App Store verlangt iOS SDK >= 27 (Release-Xcode); mit passendem Xcode/Workload neu bauen statt hochladen.` ab; es erfolgt kein Upload.
+
+**Ursache:** Die zu validierende `.ipa` wurde mit einem Build-SDK < `iphoneos27` erstellt (`DTSDKName` in der `Info.plist` des App-Bundles) — typisch bei einer älteren, mit Xcode 26.x gebauten Datei, die per `upload` eingereicht werden soll. Ein solcher Upload würde Apples ITMS-90725-Warnung auslösen; der Gate-Block in `Invoke-IpaValidation` verhindert das bewusst.
+
+**Lösung:** Nicht hochladen, sondern neu bauen: Release-Xcode 27.2 auf dem Build-Mac aktivieren (`sudo xcode-select -s`), Workload-Stand `27.2.11039` sicherstellen und `store` ausführen — die erzeugte `.ipa` enthält dann `DTSDKName=iphoneos27.x` (sichtbar im Validierungsprotokoll direkt über der Fehlermeldung).
+
+> **Grenze des Gates:** Eine mit **Beta-Xcode** gebaute `.ipa` erfüllt `DTSDKName` ≥ `iphoneos27` ebenso wie ein Release-Build — die Metadaten markieren Beta-Toolchains nicht eindeutig, das Gate kann sie daher nicht abfangen. Beim `store`-Pfad lehnt `Assert-RequiredXcodeVersion` Beta-Xcode bereits vor dem Build ab; im `upload`-Pfad bleibt die serverseitige Ablehnung durch App Store Connect die letzte Sicherung.
+
 ## „Mehrere verschiedene .ipa-Dateien"
 
 **Ursache:** Unter `bin/Release/net11.0-ios/ios-arm64` liegen IPAs mit unterschiedlichen Dateinamen (z. B. alte Builds).
