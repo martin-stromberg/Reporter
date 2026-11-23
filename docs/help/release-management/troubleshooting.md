@@ -37,6 +37,25 @@
 
 > **Hinweis:** Niemals `IOS_SIGNING_ENABLED` setzen, ohne die Secrets zu hinterlegen — der Publish würde zwar laufen, liefert aber kein verteilbares signiertes `.ipa` bzw. schlägt im Collect-Step fehl.
 
+## `package-ios` schlägt fehl: „requires Xcode 27.2" / SDK-Gate
+
+**Symptom:** Der `package-ios`-Job bricht mit `::error::Xcode not found at '/Applications/Xcode_27.2.app'…` oder `::error::… is not a usable Xcode bundle ('Contents/Developer' is missing)…` im `Select Xcode`-Schritt, mit `error : This version of .NET for iOS (…) requires Xcode 27.2` im `Publish (ios)`-Schritt oder mit `::error::Built with SDK '…' - Apple requires iOS SDK >= 27` im `Verify built SDK version`-Schritt ab.
+
+**Ursache:** Das gepinnte `Microsoft.iOS.Sdk`-Pack (`ios-workload-version`, `27.2.11039`) verlangt exakt Xcode 27.2 — drei Kopplungen müssen zusammenpassen: Runner-Image (`xcode-27`), `xcode-path` (`/Applications/Xcode_27.2.app`, wird per `DEVELOPER_DIR` aktiviert) und Workload-Pin. Der `Select Xcode`-Fehler bedeutet, das Runner-Image enthält die erwartete Xcode-App nicht mehr (Image-Update) oder der Pfad zeigt auf ein Verzeichnis ohne `Contents/Developer` (kein Xcode-Bundle); der Pack-Fehler im Publish, dass ein anderes als das per `xcode-path` gewählte Xcode wirksam war; der Gate-Fehler, dass die erzeugte `.ipa` gegen ein SDK < `iphoneos27` gebaut wurde (z. B. veralteter Workload-Pin).
+
+**Lösung:**
+1. `Select Xcode`-Abbruch: Image-Inhalt des `xcode-27`-Runners prüfen (Job-Log `xcodebuild -version`/`xcodebuild -showsdks` bzw. [runner-images](https://github.com/actions/runner-images)-README); `xcode-path` an die vorhandene Release-Xcode-App anpassen bzw. `ios-workload-version` auf das dazu passende Pack anheben — beide Inputs sind bewusst gekoppelt.
+2. Pack-Fehler „requires Xcode 27.2": `DEVELOPER_DIR`-Auswahl im `Select Xcode`-Schritt des Job-Logs prüfen; Workload-Pin und `xcode-path` müssen versionsgleich bleiben (Pack 27.2.x ↔ Xcode 27.2).
+3. Gate-Fehlschlag in `Verify built SDK version`: absichtlicher Schutz — die `.ipa` würde sonst Apples ITMS-90725-Warnung auslösen. Workload-Pin/Xcode korrigieren und neu laufen lassen; die geloggten `DTSDKName`/`DTPlatformVersion`/`DTXcode`-Werte zeigen die tatsächliche Toolchain.
+
+## iOS-Repair alter Release-Stände schlägt fehl
+
+**Symptom:** Ein `release.yml`-Lauf mit `release_action == 'upload-existing'` auf einen Release-Tag vor der .NET-11-Migration bricht im `package-ios`-Job ab (`Select Xcode` findet kein passendes Xcode bzw. das Pack verlangt eine andere Xcode-Version).
+
+**Ursache:** Der Repair-Pfad checkt den getaggten Stand aus (`checkout-release-tag`) und baut ihn mit **dessen** Workload-Pin — Stände < 0.8.x pinnen `Microsoft.iOS.Sdk 26.x`, das Xcode 26 verlangt. Auf dem `xcode-27`-Image ist kein Xcode 26 installiert — eine Reparatur alter iOS-Binaries ist dort nicht mehr möglich.
+
+**Lösung:** Bewusste Einschränkung, kein Fehler: Die betroffenen alten iOS-Binaries liegen bereits ausgeliefert in App Store Connect und müssen nicht erneut gebaut werden. Reparaturen sind nur für neuere Stände (Pack-Pin ≥ 27.x) vorgesehen; Windows-/Android-Repair alter Stände ist davon nicht betroffen.
+
 ## Branch-Protection-API antwortet mit HTTP 403
 
 **Symptom:** `gh api …/branches/<branch>/protection` oder `…/rulesets` liefern `403` mit dem Hinweis auf GitHub Pro / public Repository.

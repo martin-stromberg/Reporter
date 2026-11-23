@@ -6,8 +6,8 @@
 
 ## Voraussetzungen
 
-- macOS mit Xcode (kompatibel zur installierten .NET-MAUI-Version) — als Pair-to-Mac-Build-Host unter Windows oder als direkte Ausführungsplattform
-- .NET SDK 10.x mit MAUI-Workload (`dotnet workload restore Reporter.sln`)
+- macOS mit Xcode **27.2 (Release-Version, keine Beta)**, per `xcode-select` aktiv (`xcode-select -p` muss `…/Xcode.app/Contents/Developer` liefern — die allein installierten Command Line Tools unter `/Library/Developer/CommandLineTools` reichen nicht) — der installierte iOS-Workload `Microsoft.iOS.Sdk 27.2.11039` verlangt exakt diese Version (auch neuere Xcode werden abgelehnt, solange der Pin nicht angehoben ist); zugleich erfüllt Xcode 27.2 Apples Mindestanforderung für Store-Uploads (Build-SDK ≥ iOS 27, ITMS-90725). Als Pair-to-Mac-Build-Host unter Windows oder als direkte Ausführungsplattform; `store` prüft `xcode-select`-Pfad, Version und Beta-Status vor dem Build automatisch
+- .NET SDK 11.x mit MAUI-Workload (`dotnet workload restore Reporter.sln`)
 - Apple Developer Program-Mitgliedschaft, Distribution-Zertifikat in der Mac-Keychain, App-Store-Provisioning-Profil, App-Store-Connect-API-Key (`.p8`) — Einrichtung siehe [Einrichtung](einrichtung-anwender.md)
 - Für `store`/`upload` unter Windows: OpenSSH-Client (in Windows enthalten) mit schlüsselbasierter Anmeldung am Mac
 

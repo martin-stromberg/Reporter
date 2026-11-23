@@ -9,7 +9,7 @@
 - GitHub-Repository mit den Branches `main` (Standardbranch) und `staging`.
 - Die Workflow-Dateien liegen im Repository; `workflow_run`- und `push → main`-Trigger wirken erst, sobald sie einmalig auf dem Standardbranch `main` angekommen sind (Cold-Start, siehe unten).
 - `npm ci`-fähige `package.json`/`package-lock.json` mit der gepinnten `semantic-release`-Toolchain (semantic-release `25.0.9`, `@semantic-release/commit-analyzer` `13.0.1`, `@semantic-release/release-notes-generator` `14.1.1`, `@semantic-release/github` `12.0.9`, `conventional-changelog-conventionalcommits` `9.3.1`).
-- .NET SDK `11.0.x` inkl. MAUI-Workloads auf den Runnern (`dotnet workload restore Reporter.sln`); `macos-latest` nur für `package-ios`.
+- .NET SDK `11.0.x` inkl. MAUI-Workloads auf den Runnern (`dotnet workload restore Reporter.sln`); das GitHub-Image `xcode-27` nur für `package-ios` — es ist das einzige Image mit Xcode 27.x, das die gepinnte `Microsoft.iOS.Sdk`-Version (`27.2.11039` → exakt Xcode 27.2) benötigt; die Action wählt `/Applications/Xcode_27.2.app` per `DEVELOPER_DIR` (Input `xcode-path`).
 - Commits im Conventional-Commits-Format — nur `fix:`/`feat:`/`BREAKING CHANGE` usw. erzeugen neue Versionen.
 
 ## Installationsschritte
