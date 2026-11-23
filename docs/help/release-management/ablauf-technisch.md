@@ -37,9 +37,9 @@ Beide Jobs hängen an `needs: detect-backmerge` mit `if: is_backmerge != 'true'`
 
 Alle drei `needs: version`, `if: needs.version.outputs.changed == 'true'`, parallel:
 
-- `package-windows` (`windows-latest`): Composite Action `./.github/actions/build-and-package` mit `release-version: rc_version`, `release-tag: rc_tag` → `dotnet publish` `net10.0-windows10.0.19041.0`/`win-x64` self-contained (`PublishReadyToRun=false`) → `Compress-Archive` → Upload-Artefakt `release-win-x64` (`release-win-x64.zip`).
-- `package-android` (`windows-latest`): Composite Action `./.github/actions/package-android` → `dotnet publish` `net10.0-android -p:AndroidPackageFormat=apk` mit `IncludeAndroidTarget: true` → Collect-Step bevorzugt `*-Signed.apk` → Upload-Artefakt `release-android` (`release-android.apk`).
-- `package-ios` (`macos-latest`, zusätzlich `if: vars.IOS_SIGNING_ENABLED == 'true'`): Composite Action `./.github/actions/package-ios` mit `codesign-key: secrets.IOS_CODESIGN_KEY`, `provisioning-profile: secrets.IOS_PROVISIONING_PROFILE` → `dotnet publish` `net10.0-ios -p:RuntimeIdentifier=ios-arm64 -p:ArchiveOnBuild=true` → Upload-Artefakt `release-ios` (`release-ios.ipa`).
+- `package-windows` (`windows-latest`): Composite Action `./.github/actions/build-and-package` mit `release-version: rc_version`, `release-tag: rc_tag` → `dotnet publish` `net11.0-windows10.0.19041.0`/`win-x64` self-contained (`PublishReadyToRun=false`) → `Compress-Archive` → Upload-Artefakt `release-win-x64` (`release-win-x64.zip`).
+- `package-android` (`windows-latest`): Composite Action `./.github/actions/package-android` → `dotnet publish` `net11.0-android -p:AndroidPackageFormat=apk` mit `IncludeAndroidTarget: true` → Collect-Step bevorzugt `*-Signed.apk` → Upload-Artefakt `release-android` (`release-android.apk`).
+- `package-ios` (`macos-latest`, zusätzlich `if: vars.IOS_SIGNING_ENABLED == 'true'`): Composite Action `./.github/actions/package-ios` mit `codesign-key: secrets.IOS_CODESIGN_KEY`, `provisioning-profile: secrets.IOS_PROVISIONING_PROFILE` → `dotnet publish` `net11.0-ios -p:RuntimeIdentifier=ios-arm64 -p:ArchiveOnBuild=true` → Upload-Artefakt `release-ios` (`release-ios.ipa`).
 
 ### 5. Aggregation und Pre-Release (`prerelease`, `ubuntu-latest`)
 
@@ -78,7 +78,7 @@ Outputs: `released`, `reason`, `version`, `tag`, `release_kind`, `release_action
 
 ### 2. Release-Gate (`release-gate`, `windows-latest`)
 
-`needs: resolve`, `if: released == 'true' && release_action == 'create'` — beim Repair-Pfad entfällt das Gate, weil der getaggte Stand bereits geprüft wurde. `actions/setup-dotnet` `10.0.x`, `dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj -c Release`.
+`needs: resolve`, `if: released == 'true' && release_action == 'create'` — beim Repair-Pfad entfällt das Gate, weil der getaggte Stand bereits geprüft wurde. `actions/setup-dotnet` `11.0.x`, `dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj -c Release`.
 
 ### 3. Plattform-Packaging (`package-windows`, `package-android`, `package-ios`)
 

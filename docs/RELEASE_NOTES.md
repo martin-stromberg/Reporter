@@ -4,7 +4,7 @@
 
 ## Important Notes Before Update
 
-- There are no special notices.
+- New minimum processor requirement: the app now runs on .NET 11, which requires a CPU with x86-64-v2 support (SSE4.2 + POPCNT — all Intel/AMD processors since ~2013). On older processors the app will not start (CLR error at process start).
 
 ## What's New
 
@@ -19,7 +19,7 @@
 
 ## Wichtige Hinweise vor dem Update
 
-- Es gibt keine besonderen Hinweise.
+- Neue Mindest-Prozessoranforderung: Die App läuft jetzt auf .NET 11 und setzt eine CPU mit x86-64-v2-Unterstützung voraus (SSE4.2 + POPCNT — alle Intel-/AMD-Prozessoren ab ca. 2013). Auf älteren Prozessoren startet die App nicht (CLR-Fehler beim Prozessstart).
 
 ## Neuerungen
 

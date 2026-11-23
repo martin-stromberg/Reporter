@@ -8,7 +8,7 @@ Die E2E-Infrastruktur besteht aus dem Testprozess (`src/Reporter.E2ETests`), der
 
 | Komponente | Typ | Rolle |
 |------------|-----|-------|
-| `scripts/Run-E2ETests.ps1` | PowerShell-Skript | Einstiegspunkt: baut die App (Debug, `net10.0-windows10.0.19041.0`, win-x64), setzt `REPORTER_APP_PATH`, ruft `dotnet test` auf das E2E-Projekt; beendet im `finally` verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output `$appOutput` eingegrenzt |
+| `scripts/Run-E2ETests.ps1` | PowerShell-Skript | Einstiegspunkt: baut die App (Debug, `net11.0-windows10.0.19041.0`, win-x64), setzt `REPORTER_APP_PATH`, ruft `dotnet test` auf das E2E-Projekt; beendet im `finally` verbliebene `Reporter`-Prozesse — per `Path`-Vergleich auf den Build-Output `$appOutput` eingegrenzt |
 | `SmokeTests` | xunit-Testklasse | Die fünf FlaUI-Smoke-Tests (App-Start/Feed-Liste, Add-Sheet-Fokus, Direct-Add-Persistenz, Directory-Abonnieren, Site-Discovery) plus UI-Helfer gegen die geteilte Fixture-Instanz |
 | `FeedDetailTests` | xunit-Testklasse | Die fünfzehn FlaUI-Tests der Feeddetailansicht gegen die geteilte Fixture-Instanz: Navigation per Karten-Tap, Titelsuche, Rename-Prompt, Kategorie-Zuordnung inkl. `CategoryNone`, Edit-Sheet-URL-Persistenz, Single-Feed-Refresh, Infinite-Scroll-Nachladen, Sync-Meldung nur bei `HealthStatus == Error` oder `Warning` (`FeedDetail_Message_ForErrorFeed`/`FeedDetail_Message_ForWarningFeed`, Fixture `stale-feed.xml`), fünf Stichwort-Tests (Hinzufügen/Entfernen/Validierung, Feed-Scoping des Filters, Abgrenzung zur globalen Liste) sowie Löschen mit Rücksprung; räumt per `FeedDbAssertions.DeleteAllFeedsAsync`/`MarkAllItemsReadAsync` auf, damit virtualisierte Listen erreichbar bleiben |
 | `ArticleLinkTests` | xunit-Testklasse | Nachweis des externen-Link-Verhaltens im Artikel-WebView: aktiviert einen `Hyperlink` im WebView2-UIA-Subtree und assertet über `StubFeedServer.ExternalLinkHitCount`, dass der System-Browser die URL abgerufen hat |
@@ -37,7 +37,7 @@ Microsoft Testing Platform filtert die Lane über `-- --filter-trait "Category=O
 
 ## Abhängigkeiten
 
-- **Testprojekt (`Reporter.E2ETests.csproj`, `net10.0-windows10.0.19041.0`):** Pakete `FlaUI.UIA3` 5.0.0, `Microsoft.Data.Sqlite`, `Microsoft.NET.Test.Sdk`, `xunit.v3`, `xunit.runner.visualstudio`; `FrameworkReference Microsoft.AspNetCore.App` (Kestrel ohne zusätzliches NuGet-Paket); `ProjectReference` auf `Reporter.Core` für die lokalisierten `AppResources`-Texte und Modelle.
+- **Testprojekt (`Reporter.E2ETests.csproj`, `net11.0-windows10.0.19041.0`):** Pakete `FlaUI.UIA3` 5.0.0, `Microsoft.Data.Sqlite`, `Microsoft.NET.Test.Sdk`, `xunit.v3`, `xunit.runner.visualstudio`; `FrameworkReference Microsoft.AspNetCore.App` (Kestrel ohne zusätzliches NuGet-Paket); `ProjectReference` auf `Reporter.Core` für die lokalisierten `AppResources`-Texte und Modelle.
 - **Kommunikationsrichtungen:** Testprozess → App synchron über UIA3 (UI-Automation); App → Stubserver synchron über HTTP (derselbe DI-`HttpClient` für Feed-Sync, Verzeichnis-Suche und Favicon-Abrufe); Testprozess → SQLite-DB synchron lesend (`Microsoft.Data.Sqlite`).
 - **Umgebungsvariablen:** `REPORTER_FEEDSEARCH_ENDPOINT`, `REPORTER_DB_PATH` und `REPORTER_DISABLE_DEMO_SEED` vom Fixture zum App-Prozess (Prozess-Environment), `REPORTER_APP_PATH` vom Skript/Aufrufer zum Testprozess.
 - **Voraussetzung der Plattform:** Windows mit interaktiver Desktop-Session; FlaUI-UIA3, weil UIA2 WinUI-3-Controls nicht vollständig abdeckt.

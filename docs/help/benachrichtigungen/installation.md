@@ -6,7 +6,7 @@
 
 ## Voraussetzungen
 
-- iOS-Target (`net10.0-ios`): Die Frameworks `UserNotifications` und `BackgroundTasks` sind Teil des iOS-Workloads — kein NuGet-Paket erforderlich.
+- iOS-Target (`net11.0-ios`): Die Frameworks `UserNotifications` und `BackgroundTasks` sind Teil des iOS-Workloads — kein NuGet-Paket erforderlich.
 - `Platforms/iOS/Info.plist` benötigt für den OS-seitigen Hintergrundabruf zwei Einträge: `UIBackgroundModes` mit `fetch` sowie `BGTaskSchedulerPermittedIdentifiers` mit `de.martinstromberg.reporter.feedrefresh` — letzterer muss exakt der Konstante `BackgroundRefreshService.RefreshTaskIdentifier` entsprechen, sonst schlagen `Register`/`Submit` fehl. Für die reine lokale Benachrichtigung selbst sind keine Schlüssel nötig; die Berechtigung wird zur Laufzeit angefragt (`UNUserNotificationCenter.RequestAuthorizationAsync`).
 - `PrivacyInfo.xcprivacy` bleibt unverändert — `UserNotifications`/`BackgroundTasks` sind keine Required-Reason-APIs.
 - Datenbank-Migrationen werden beim App-Start über `App.OnStart` → `Database.MigrateAsync()` angewendet.
