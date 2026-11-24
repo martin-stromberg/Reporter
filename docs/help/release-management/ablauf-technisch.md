@@ -28,7 +28,7 @@ Beide Jobs hängen an `needs: detect-backmerge` mit `if: is_backmerge != 'true'`
 
 ### 3. Versionsermittlung (`version`, `ubuntu-latest`)
 
-`needs: [detect-backmerge, static-checks, build-and-test]`, `if: is_backmerge != 'true'`.
+`needs: [detect-backmerge, static-checks, build-and-test]`, `if: is_backmerge != 'true'`. Der Job läuft unter demselben `node-version`-Pin `'>=26.13 <27'` wie die `resolve`-/`publish`-Jobs in `release.yml` (Untergrenze aus den `engines` von `semantic-release@26`).
 
 - `npx semantic-release --dry-run --no-ci --branches staging` mit `RESOLVE_DRY_RUN: 'true'` (schaltet `release.config.js` auf die Dry-Run-Pluginliste um) → Regex `the next release version is (X.Y.Z…)` → Outputs `version`, `changed`.
 - RC-Nummer: `rc_number = count(git tag --list "v<version>-rc.*") + 1` → Outputs `rc_tag = v<version>-rc.<N>`, `rc_version = <version>-rc.<N>`.
@@ -67,7 +67,7 @@ Trigger: `push → branches: [main]` oder `tags: ['v*.*.*']`, `concurrency: rele
 
 ### 1. Release-Entscheidung (`resolve`, `ubuntu-latest`)
 
-Checkout mit `fetch-depth: 0`/`fetch-tags: true`, Node 24, `npm ci`, Entfernen lokaler `v*-rc.*`-Tags, dann `node scripts/resolve-release-version.mjs` (Env `GITHUB_TOKEN`, `IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}`).
+Checkout mit `fetch-depth: 0`/`fetch-tags: true`, Node ≥ 26.13 (`node-version: '>=26.13 <27'` — die Untergrenze 26.13 fordert `semantic-release@26` per `engines.node`, die Range bleibt auf Major 26), `npm ci`, Entfernen lokaler `v*-rc.*`-Tags, dann `node scripts/resolve-release-version.mjs` (Env `GITHUB_TOKEN`, `IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}`).
 
 `resolveReleaseVersion()` klassifiziert den Ref über `classifyWorkflowRef` (`GITHUB_REF_TYPE`/`GITHUB_REF_NAME`): `tag` → `manual` (Tag muss `v` + SemVer sein, `parseManualTag`/`VERSION_PATTERN`), Branch in `AUTOMATIC_RELEASE_BRANCHES = ["main"]` → `automatic`, sonst Fehler.
 

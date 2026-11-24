@@ -13,6 +13,19 @@
 2. Commit-Botschaften auf `staging` gegen das Preset `conventionalcommits` prüfen.
 3. Bei Backmerge: gewolltes Verhalten — kein Eingriff nötig.
 
+## `semantic-release` bricht ab: „node version >=… is required"
+
+**Symptom:** Der Schritt `Determine next version` im Job `version` (`staging-ci.yml`) oder ein `semantic-release`-Aufruf in `release.yml` (`resolve`/`publish`) endet mit `exit code 1` und einer Meldung wie `[semantic-release]: node version >=26.13 is required. Found v24.x`.
+
+**Ursache:** Ein `semantic-release`-Major-Update (typischerweise ein wöchentlicher Dependabot-PR gegen `staging`) hat die `engines.node`-Untergrenze des Pakets angehoben — `semantic-release@26` verlangt z. B. Node `>=26.13`. Der `node-version`-Pin in den `actions/setup-node`-Schritten wurde nicht mitgeführt, sodass die Jobs unter einer zu alten Node-Version laufen.
+
+**Lösung:**
+1. Die geforderte Mindestversion aus der Fehlermeldung bzw. aus `package-lock.json` (`semantic-release` → `engines.node`) entnehmen.
+2. Den `node-version`-Pin an allen drei Stellen nachführen — `.github/workflows/staging-ci.yml` (Job `version`) und `.github/workflows/release.yml` (Jobs `resolve` und `publish`). Aktueller Pin: `'>=26.13 <27'` — die Range schließt ein veraltetes `26.x < 26.13` aus dem Runner-Toolcache konstruktiv aus und bleibt innerhalb der Major-Version.
+3. Kein Downgrade von `semantic-release` als Alternative: Dependabot würde den Major-Bump beim nächsten Lauf erneut vorschlagen.
+
+> **Hinweis:** Bei jedem `semantic-release`-Major-Update durch Dependabot prüfen, ob die neue `engines.node`-Forderung der aktuelle Pin noch erfüllt — sonst tritt der Fehler im `staging-ci`-Push-Lauf direkt nach dem Merge auf.
+
 ## Der erste Promotion-PR wird nicht geöffnet
 
 **Symptom:** Nach dem ersten erfolgreichen `Pre-Release`-Lauf erscheint kein Draft-PR `staging` → `main`.
