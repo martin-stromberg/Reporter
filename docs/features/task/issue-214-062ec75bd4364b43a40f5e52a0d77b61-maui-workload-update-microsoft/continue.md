@@ -22,9 +22,15 @@ An den Anwender eskaliert per Issue-Kommentar auf #214 (2026-11-23) mit den Opti
 2. `<MauiVersion>11.0.10</MauiVersion>`-Override (offizieller Hotfix-Weg, aber Version-Mismatch-Risiko Paket 11.0.10 ↔ Workload-Packs 11.0.0; war ursprünglich Scope-Ausschluss 1)
 3. Trotzdem `workloadVersion: 11.100.1` pinnen + Diagnose + Doku (friert 11.0.0 ein — schlechter als Floating)
 
+## Anwender-Entscheidung (2026-11-24, Issue #214)
+
+**Option 1 — Zurückstellen bis zum Manifest.** Anweisung per Issue-Kommentar („Zurückstellen bis zum Manifest"). Konsequenz: kein `MauiVersion`-Override, kein Workload-Pin; `$(MauiVersion)` folgt weiter dem Workload-Stand. Der Befund gilt in der wöchentlichen Paketprüfung bis dahin als bekannter Publish-Lag.
+
+**Fortsetzungs-Trigger:** `dotnet workload list`/`dotnet workload update` liefert `maui-windows ≥ 11.0.10` (Manifest `Microsoft.NET.Sdk.Maui.Manifest-11.0.100 ≥ 11.0.10` bzw. neues Workload-Set `11.100.x`) → Umsetzung anhand `plan.md` fortsetzen (ggf. re-scoped).
+
 ## Noch offene Aufgaben (bei Fortsetzung)
 
-- [ ] Anwender-Entscheidung zum Blocker abwarten (Kommentar auf Issue #214)
+- [x] Anwender-Entscheidung zum Blocker abwarten (Kommentar auf Issue #214) → Option 1: Zurückstellen bis zum Manifest
 - [ ] Je nach Entscheidung Plan anpassen und Implementierung fortsetzen (Umsetzungsschritte 1–5 aus `plan.md`, ggf. re-scoped)
 - [ ] Plan-Review, Code-Review, Tests (Schritte 7–10)
 - [ ] Dokumentation (Schritte 12–12c), Commit `fix:` + `Closes #214`, PR gegen `staging`
