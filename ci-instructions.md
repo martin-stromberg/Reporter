@@ -341,7 +341,7 @@ suffix by hand:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '>=26.13 <27'
 
       - name: Install dependencies
         run: npm ci
@@ -722,7 +722,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '>=26.13 <27'
 
       - name: Install dependencies
         run: npm ci
