@@ -1,0 +1,105 @@
+Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
+=== date ===
+Tue Nov 24 04:25:09     2026
+2026-11-24T04:25:10.0140184+01:00
+W. Europe Standard Time
+=== git ===
+73b1bcb3d5cef2d83a589d338840cbfe9e4098d9
+task/issue-214-062ec75bd4364b43a40f5e52a0d77b61-maui-workload-update-microsoft
+?? docs/features/task/issue-214-062ec75bd4364b43a40f5e52a0d77b61-maui-workload-update-microsoft/
+=== dotnet --info ===
+.NET SDK:
+ Version:           11.0.100
+ Commit:            297acf930f
+ Workload version:  11.0.100.1
+ MSBuild version:   18.12.2-1.26529.118+297acf930
+
+Runtime Environment:
+ OS Name:     Windows
+ OS Version:  10.0.26300
+ OS Platform: Windows
+ RID:         win-x64
+ Base Path:   C:\Program Files\dotnet\sdk\11.0.100
+
+.NET workloads installed:
+ [android]
+   Installationsquelle: SDK 11.0.100, VS 18.11.12402.416
+   Manifestversion:    37.2.31/11.0.100
+   Manifestpfad:       C:\Program Files\dotnet\sdk-manifests\11.0.100\microsoft.net.sdk.android\37.2.31\WorkloadManifest.json
+   Installationstyp:              Msi
+
+ [ios]
+   Installationsquelle: SDK 11.0.100, VS 18.11.12402.416
+   Manifestversion:    27.2.11039/11.0.100
+   Manifestpfad:       C:\Program Files\dotnet\sdk-manifests\11.0.100\microsoft.net.sdk.ios\27.2.11039\WorkloadManifest.json
+   Installationstyp:              Msi
+
+ [maccatalyst]
+   Installationsquelle: SDK 11.0.100, VS 18.11.12402.416
+   Manifestversion:    27.2.11039/11.0.100
+   Manifestpfad:       C:\Program Files\dotnet\sdk-manifests\11.0.100\microsoft.net.sdk.maccatalyst\27.2.11039\WorkloadManifest.json
+   Installationstyp:              Msi
+
+ [maui-windows]
+   Installationsquelle: SDK 11.0.100, VS 18.11.12402.416
+   Manifestversion:    11.0.0/11.0.100
+   Manifestpfad:       C:\Program Files\dotnet\sdk-manifests\11.0.100\microsoft.net.sdk.maui\11.0.0\WorkloadManifest.json
+   Installationstyp:              Msi
+
+Für die Verwendung von workload sets bei der Installation neuer Manifeste konfiguriert.
+
+Host:
+  Version:      11.0.0
+  Architecture: x64
+  Commit:       297acf930f
+
+.NET SDKs installed:
+  10.0.404 [C:\Program Files\dotnet\sdk]
+  11.0.100 [C:\Program Files\dotnet\sdk]
+
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 8.0.34 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 9.0.23 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 10.0.15 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 11.0.0 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 8.0.34 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.NETCore.App 9.0.23 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.NETCore.App 10.0.15 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.NETCore.App 11.0.0 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.WindowsDesktop.App 8.0.34 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+  Microsoft.WindowsDesktop.App 9.0.23 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+  Microsoft.WindowsDesktop.App 10.0.15 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+  Microsoft.WindowsDesktop.App 11.0.0 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+
+Other architectures found:
+  x86   [C:\Program Files (x86)\dotnet]
+    registered at [HKLM\SOFTWARE\dotnet\Setup\InstalledVersions\x86\InstallLocation]
+
+Environment variables:
+  Not set
+
+global.json file:
+  D:\Repositories\softwareschmiede\062ec75b-d436-4b43-a40f-5e52a0d77b61\global.json
+
+Learn more:
+  https://aka.ms/dotnet/info
+
+Download .NET:
+  https://aka.ms/dotnet/download
+=== dotnet workload list ===
+
+Workloadversion: 11.0.100.1
+
+Installierte Workload-ID      Manifestversion          Installationsquelle             
+---------------------------------------------------------------------------------------
+android                       37.2.31/11.0.100         SDK 11.0.100, VS 18.11.12402.416
+ios                           27.2.11039/11.0.100      SDK 11.0.100, VS 18.11.12402.416
+maccatalyst                   27.2.11039/11.0.100      SDK 11.0.100, VS 18.11.12402.416
+maui-windows                  11.0.0/11.0.100          SDK 11.0.100, VS 18.11.12402.416
+
+Verwenden Sie „dotnet workload search“, um zusätzliche zu installierende Workloads zu finden.
+
+=== node/npm ===
+v24.15.0
+11.10.0
