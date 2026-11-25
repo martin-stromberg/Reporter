@@ -1,0 +1,11 @@
+Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details.
+
+Ausführen von Tests von D:\Repositories\softwareschmiede\27d7d532-2b53-4509-8d16-6cc36bfb390f\src\Reporter.Tests\bin\Release\net11.0\Reporter.Tests.dll (net11.0|x64)
+D:\Repositories\softwareschmiede\27d7d532-2b53-4509-8d16-6cc36bfb390f\src\Reporter.Tests\bin\Release\net11.0\Reporter.Tests.dll (net11.0|x64) erfolgreich [+801/x0/?0] (5s 094ms)
+
+Testlaufzusammenfassung: Bestanden!
+  gesamt: 801
+  fehlgeschlagen: 0
+  erfolgreich: 801
+  übersprungen: 0
+  Dauer: 5s 263ms
