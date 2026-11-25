@@ -46,6 +46,22 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
 
 ### Voraussetzungen
 
+- Xcode **27.2** (Release-Version, keine Beta) auf dem Build-Mac, per
+  `xcode-select` aktiv — der installierte iOS-Workload-Pin
+  `Microsoft.iOS.Sdk 27.2.11039` verlangt exakt Xcode 27.2 (auch
+  neuere Xcode werden abgelehnt, solange der Pin nicht angehoben
+  ist); Apple verlangt fuer Store-Uploads zudem ein Build-SDK >= 27
+  (ITMS-90725, Frist April 2027) und lehnt Beta-Toolchains ab.
+  `store` prueft `xcode-select`-Pfad (muss auf
+  `<Xcode>.app/Contents/Developer` zeigen — die Command Line Tools
+  unter `/Library/Developer/CommandLineTools` enthalten kein
+  `xcodebuild` und brechen hart ab), Version und Beta-Status vor dem
+  Build (`Assert-RequiredXcodeVersion`), die IPA-Validierung prueft
+  zusaetzlich `DTSDKName` der erzeugten `.ipa`. Grenze des
+  `upload`-Pfads: Eine mit Beta-Xcode gebaute `.ipa` ist an den
+  SDK-Metadaten nicht zuverlaessig erkennbar — dort bleibt die
+  serverseitige Ablehnung durch App Store Connect die letzte
+  Sicherung.
 - Apple Developer Program-Account, App-Eintrag in App Store Connect
   (Bundle-ID `de.martinstromberg.reporter`)
 - **Apple Distribution**-Zertifikat in der Mac-Keychain (`-CodesignKey`,
@@ -86,7 +102,7 @@ Wenn das Skript direkt auf einem Mac lauft, funktionieren alle Aktionen
    Buildnummer automatisch auf 1 zurueckgesetzt (statt erhoeht).
 3. `dotnet publish -c Release -p:ArchiveOnBuild=true` mit
    Distribution-Signing erzeugt die `.ipa`
-   (`src/Reporter/bin/Release/net10.0-ios/ios-arm64/`).
+   (`src/Reporter/bin/Release/net11.0-ios/ios-arm64/`).
 4. Auf dem Mac (lokal bzw. per SSH von Windows): IPA wird entpackt,
    `codesign --verify --deep --strict` und ein Check auf
    `get-task-allow=false` im `embedded.mobileprovision` laufen. Dazu
@@ -111,7 +127,7 @@ Alle Laeufe schreiben ein Transcript nach `logs/ios-deploy-<zeitstempel>.log`
 
 Fuer `simulator` wird die App per `xcrun simctl` gebootet, installiert,
 gestartet und ein Screenshot gespeichert. Der Screenshot liegt unter
-`src/Reporter/bin/<config>/net10.0-ios/<rid>/simulator-screenshot-<zeitstempel>.png`
+`src/Reporter/bin/<config>/net11.0-ios/<rid>/simulator-screenshot-<zeitstempel>.png`
 und wird automatisch in der Vorschau geoeffnet.
 
 ## Bekannte Probleme und Limitierungen
@@ -124,7 +140,7 @@ unterstuetzt. Das bewirkt, dass `dotnet` versucht, die iOS-DLL lokal als
 
 ```text
 A fatal error was encountered. The library 'hostpolicy.dll' required to
-execute the application was not found in '...\net10.0-ios\iossimulator-x64\'.
+execute the application was not found in '...\net11.0-ios\iossimulator-x64\'.
 ```
 
 Dies ist ein bekanntes .NET-MAUI/.NET-iOS-Problem. Visual Studio umgeht es,
@@ -223,7 +239,9 @@ und der Codesign-Teil des Builds schlaegt fehl — die Runner-Images
 enthalten keine Signing-Identitaeten. Die Release-Version wird per
 `-p:ApplicationDisplayVersion=<version>` in die App gebracht — die csproj-
 Werte gelten nur als lokaler Fallback. Als Buildnummer dient
-`github.run_number` (monoton steigend, eindeutig, kein Commit-Back noetig).
+`git rev-list --count HEAD + github.run_attempt - 1` (repo-weit
+monoton, eindeutig ueber beide Workflows hinweg, kein Commit-Back
+noetig; `run_attempt` erhoeht bei Repair-Uploads desselben Commits).
 Die Einstellungen-Seite zeigt die faktische Version unten an
 („Version x.y.z (Build n)" via `AppInfo.Current`), sodass lokale und
 CI-Builds unterscheidbar sind.
@@ -232,13 +250,13 @@ CI-Builds unterscheidbar sind.
 `dotnet build` via Pair-to-Mac erzeugt `iossimulator-<arch>` (Architektur
 wird remote per `uname -m` ermittelt). Das nach Windows zurueckgesyncte
 `.app`-Bundle ist unvollstaendig (0-Byte-Stub), daher wird das echte Bundle
-direkt im Remote-Build-Cache gesucht — neuestes `bin/<config>/net10.0-ios/
+direkt im Remote-Build-Cache gesucht — neuestes `bin/<config>/net11.0-ios/
 <rid>/Reporter.app` unter `~/Library/Caches/maui/PairToMac/Builds/` bzw.
 `~/Library/Caches/Xamarin/mtbs/builds/` (VS 2022). Ohne `-Device` wird
 automatisch ein **iPhone Pro Max** gewaehlt: das 6,9"-Display liefert die
 fuer App-Store-Screenshots benoetigten 1320 × 2868 px, Apple skaliert die
 kleineren Groessen selbst. Der Screenshot landet lokal unter
-`src/Reporter/bin/<config>/net10.0-ios/<rid>/simulator-screenshot-<zeitstempel>.png`.
+`src/Reporter/bin/<config>/net11.0-ios/<rid>/simulator-screenshot-<zeitstempel>.png`.
 Das Simulator-Fenster wird per `open` auf dem Mac geoeffnet, sodass die App
 anschliessend dort bedienbar ist.
 

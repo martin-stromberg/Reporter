@@ -6,11 +6,11 @@
 
 **Symptom:** Der Testlauf bricht sofort mit `FileNotFoundException: Reporter.exe not found. Build the app first (see scripts/Run-E2ETests.ps1) or set REPORTER_APP_PATH to a built executable.` ab.
 
-**Ursache:** `ReporterAppFixture.ResolveAppPath` findet weder die Datei unter `REPORTER_APP_PATH` noch den Konventionspfad `src/Reporter/bin/Debug/net10.0-windows10.0.19041.0/win-x64/Reporter.exe` — die App wurde nicht für das Windows-TFM gebaut.
+**Ursache:** `ReporterAppFixture.ResolveAppPath` findet weder die Datei unter `REPORTER_APP_PATH` noch den Konventionspfad `src/Reporter/bin/Debug/net11.0-windows10.0.19041.0/win-x64/Reporter.exe` — die App wurde nicht für das Windows-TFM gebaut.
 
 **Lösung:**
 1. `.\scripts\Run-E2ETests.ps1` aus dem Repository-Root ausführen (baut die App selbst), oder
-2. die App manuell bauen: `dotnet build src/Reporter/Reporter.csproj -c Debug -f net10.0-windows10.0.19041.0 -r win-x64`, oder
+2. die App manuell bauen: `dotnet build src/Reporter/Reporter.csproj -c Debug -f net11.0-windows10.0.19041.0 -r win-x64`, oder
 3. `REPORTER_APP_PATH` auf eine bestehende Exe zeigen lassen.
 
 ## Kein Hauptfenster / Timeout beim Suite-Start
@@ -61,6 +61,17 @@
 **Lösung:**
 1. Solution-Tests mit Filter ausführen: `dotnet test Reporter.sln --filter "Category!=E2E"` (so auch in `CONTRIBUTING.md` dokumentiert).
 2. Die E2E-Suite bewusst über `.\scripts\Run-E2ETests.ps1` starten.
+
+## OS-Interface-Job schlägt im CI-Lauf fehl
+
+**Symptom:** Der Job `os-interface tests` in `pr-staging-ci.yml`/`staging-ci.yml` zeigt einen Fehlschlag, der PR bzw. der Staging-Lauf bleibt aber grün.
+
+**Ursache:** Die Lane läuft bewusst unter `continue-on-error` — OS-sensitive Fehlschläge werden sichtbar gemeldet, ohne das Gate zu blockieren. Fehlschlagende `Flaky`-Tests hat der Schritt „Retry flaky tests once" bereits genau einmal gefiltert wiederholt; „Analyze flaky test results" klassifiziert sie als `beobachten`/`Quarantaene-Kandidat`.
+
+**Lösung:**
+1. Job-Log und TRX-Artefakt `test-results-os-interface-*` prüfen: persistente Fehlschläge (Primär **und** Retry rot) sind echte Fehler — wie einen Testfehler behandeln.
+2. Recovered-/beobachtete Fälle über `scripts/Analyze-FlakyTestResults.ps1` gegen gesammelte Artefakte bewerten; Quarantäne-Kandidaten als Issue anlegen und unter [Bekannte Fehlerbilder](os-interface-tests.md#bekannte-fehlerbilder) dokumentieren.
+3. Bei Infrastruktur-Problemen nur den OS-Job gezielt neu starten (`gh run rerun <run-id> --job <job-id>`) — niemals `gh run rerun --failed`, das trifft auch blockierende Jobs. Details: [OS-Interface-Tests](os-interface-tests.md).
 
 ## Versehentlich gesetzte Env-Overrides
 

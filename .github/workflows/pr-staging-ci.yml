@@ -70,7 +70,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Install .NET MAUI workload
         run: dotnet workload restore Reporter.sln
@@ -109,7 +109,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Install .NET MAUI workload
         run: dotnet workload restore Reporter.sln
@@ -126,6 +126,7 @@ jobs:
           -- --coverlet --coverlet-output-format cobertura
           --coverlet-include "[Reporter.*]*"
           --coverlet-exclude "[*]Reporter.Data.Migrations.*"
+          --filter-not-trait "Category=OsInterface"
           --report-trx --report-trx-filename test-results.trx
 
       - name: Install ReportGenerator
@@ -165,6 +166,74 @@ jobs:
         with:
           name: test-results-pr
           path: TestResults/*.trx
+          retention-days: 14
+
+  # Best-effort lane for OS-sensitive tests (Category=OsInterface). Runs visibly
+  # but never blocks the PR: continue-on-error keeps the job result neutral.
+  # Deliberately not part of any needs-chain of the gate jobs.
+  os-interface-tests:
+    name: os-interface tests
+    needs: detect-backmerge
+    if: needs.detect-backmerge.outputs.is_backmerge != 'true'
+    continue-on-error: true
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      IncludeIosTarget: false
+      IncludeAndroidTarget: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload restore Reporter.sln
+
+      - name: Restore
+        run: dotnet restore Reporter.sln -r win-x64
+
+      - name: Build
+        run: dotnet build Reporter.sln --configuration Release --no-restore
+
+      - name: Test (OsInterface)
+        shell: pwsh
+        run: >
+          dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj --configuration Release --no-build
+          -- --filter-trait "Category=OsInterface"
+          --report-trx --report-trx-filename test-results-os-interface.trx
+
+      - name: Retry flaky tests once
+        # if: failure() is deliberately broad: on a build failure or missing TRX the script
+        # reports "keine Flaky-Fehlschlaege" and exits 0, so the original failing step stays
+        # the leading signal. Persistent flaky failures make this step fail - the job still
+        # stays non-blocking via job-level continue-on-error.
+        if: failure()
+        shell: pwsh
+        run: |
+          & scripts/Retry-FlakyTests.ps1 -TestProject src/Reporter.Tests/Reporter.Tests.csproj -PrimaryTrx TestResults/test-results-os-interface.trx -Configuration Release
+          # All normal paths of the script end the process via its own exit; reaching
+          # the next line means an unexpected abort. A stale $LASTEXITCODE must then
+          # not be propagated as success.
+          if (-not $?) { exit 1 }
+          exit ($LASTEXITCODE ?? 0)
+
+      - name: Analyze flaky test results
+        # Pure visibility report over this run's TestResults directory (always exit 0).
+        if: always()
+        shell: pwsh
+        run: |
+          & scripts/Analyze-FlakyTestResults.ps1 -Path TestResults
+
+      - name: Upload OS-interface test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
+        with:
+          name: test-results-os-interface-pr
+          path: TestResults/*os-interface*.trx
           retention-days: 14
 
   back-merge-skip:

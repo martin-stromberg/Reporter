@@ -2,7 +2,7 @@
 
 # Tests
 
-Die automatisierte Testinfrastruktur des Repositories umfasst neben den Unit-Tests eine End-to-End-Smoke-Suite, die die echte Windows-App gegen einen lokalen Test-Webserver fährt, sowie Compiled Bindings auf allen XAML-Views, die Binding-Fehler bereits zur Compile-Zeit sichtbar machen. Zielgruppe dieser Dokumentation sind Entwickler und Maintainer des Repositories.
+Die automatisierte Testinfrastruktur des Repositories umfasst neben den Unit-Tests eine End-to-End-Smoke-Suite, die die echte Windows-App gegen einen lokalen Test-Webserver fährt, sowie Compiled Bindings auf allen XAML-Views, die Binding-Fehler bereits zur Compile-Zeit sichtbar machen. OS-sensitive Tests (`Category=OsInterface`) laufen in der CI als eigene, nicht blockierende Best-Effort-Lane mit einmaligem Flaky-Retry und Flake-Statistik. Zielgruppe dieser Dokumentation sind Entwickler und Maintainer des Repositories.
 
 ## Inhalt
 
@@ -11,5 +11,6 @@ Die automatisierte Testinfrastruktur des Repositories umfasst neben den Unit-Tes
 - [API](api.md)
 - [Installation & Konfiguration](installation.md)
 - [Architektur](architektur.md)
+- [OS-Interface-Tests](os-interface-tests.md)
 - [Business Rules](business-rules.md)
 - [Fehlerbehebung](troubleshooting.md)

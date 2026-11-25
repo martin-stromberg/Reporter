@@ -4,7 +4,7 @@
 
 ## Important Notes Before Update
 
-- There are no special notices.
+- New minimum processor requirement: the app now runs on .NET 11, which requires a CPU with x86-64-v2 support (SSE4.2 + POPCNT — all Intel/AMD processors since ~2013). On older processors the app will not start (CLR error at process start).
 
 ## What's New
 
@@ -15,10 +15,14 @@
 - Feed detail view: for feeds with "Warning" status the actions menu now offers "Show message" — a "Sync message" dialog names the reason (e.g. the feed contains no articles, or has not published new items for more than 30 days) and shows the technical detail; previously "Show error details" was only available for feeds with an error.
 - The former "Show error details" action is now called "Show message" (dialog "Sync message") and covers errors and warnings alike; error and warning details are stored in the same unified fields (automatic database migration on app start).
 - Fixed: a manual refresh of a feed running in parallel with an automatic full sync could fail with a duplicate-key error or overwrite the feed's status and message with stale values — syncs of the same feed are now serialized.
+- Development infrastructure: the automated test pipeline has been hardened — deterministic tests run as a blocking lane, while tests that depend on real operating-system behavior run separately as a best-effort lane, so environment-related flakiness can no longer hide genuine test failures.
+- Development infrastructure: iOS release builds now run on the `xcode-27` runner image and are built with the iOS 27 SDK (Xcode 27.2) — meeting Apple's new App Store requirement ahead of the April 2027 deadline; the pipeline selects Xcode explicitly and verifies the built package's SDK version before every upload.
+- Development infrastructure: the Node.js pins of the release and staging pipelines have been raised from Node 24 to `>=26.13 <27` — semantic-release 26 requires Node 26.13 or newer, and the version-resolution and publish jobs were failing with "node version >=26.13 is required".
+- Development infrastructure: the pre-release pipeline has been repaired — iOS builds now declare the UIKit scene lifecycle required by the iOS 27 SDK (scene manifest plus scene delegate on iOS and Mac Catalyst; the publish step previously failed with `error MT7199`), and Android packaging explicitly disables ReadyToRun compilation, which the RID-less restore cannot provide (`error NETSDK1094`).
 
 ## Wichtige Hinweise vor dem Update
 
-- Es gibt keine besonderen Hinweise.
+- Neue Mindest-Prozessoranforderung: Die App läuft jetzt auf .NET 11 und setzt eine CPU mit x86-64-v2-Unterstützung voraus (SSE4.2 + POPCNT — alle Intel-/AMD-Prozessoren ab ca. 2013). Auf älteren Prozessoren startet die App nicht (CLR-Fehler beim Prozessstart).
 
 ## Neuerungen
 
@@ -29,3 +33,7 @@
 - Feed-Detailansicht: Bei Feeds mit Status „Warnung" bietet das Aktionsmenü jetzt „Meldung anzeigen" — ein Dialog „Synchronisierungsmeldung" nennt den Grund (z. B. enthält der Feed keine Artikel oder hat seit über 30 Tagen keine neuen Beiträge veröffentlicht) und zeigt die technische Detailmeldung; bisher gab es „Fehlerdetails anzeigen" nur bei Fehlern.
 - Die bisherige Aktion „Fehlerdetails anzeigen" heißt jetzt „Meldung anzeigen" (Dialog „Synchronisierungsmeldung") und gilt für Fehler und Warnungen gleichermaßen; Fehler- und Warnungsdetails werden in denselben vereinheitlichten Feldern gespeichert (automatische Datenbankmigration beim App-Start).
 - Behoben: Ein manueller Abruf eines Feeds parallel zum automatischen Gesamt-Abgleich konnte mit einem Doppelschlüssel-Fehler fehlschlagen oder Status und Meldung des Feeds mit veralteten Werten überschreiben — Synchronisationen desselben Feeds werden jetzt serialisiert.
+- Entwicklungsinfrastruktur: Die automatisierte Test-Pipeline wurde gehärtet — deterministische Tests laufen als blockierende Lane, während Tests mit echten Betriebssystemabhängigkeiten getrennt als Best-Effort-Lane laufen, sodass umgebungsbedingtes Flackern echte Testfehler nicht mehr verdecken kann.
+- Entwicklungsinfrastruktur: iOS-Release-Builds laufen jetzt auf dem Runner-Image `xcode-27` und werden mit dem iOS-27-SDK (Xcode 27.2) erstellt — damit erfüllen sie Apples neue App-Store-Anforderung vor der Frist April 2027; die Pipeline wählt das Xcode explizit aus und verifiziert die SDK-Version des gebauten Pakets vor jedem Upload.
+- Entwicklungsinfrastruktur: Die Node.js-Pins der Release- und Staging-Pipelines wurden von Node 24 auf `>=26.13 <27` angehoben — semantic-release 26 verlangt Node 26.13 oder neuer, die Versions- und Publish-Jobs schlugen mit „node version >=26.13 is required" fehl.
+- Entwicklungsinfrastruktur: Die Pre-Release-Pipeline wurde repariert — iOS-Builds deklarieren jetzt den vom iOS-27-SDK geforderten UIKit-Scene-Lifecycle (Scene-Manifest plus Scene-Delegate unter iOS und Mac Catalyst; der Publish-Schritt schlug zuvor mit `error MT7199` fehl), und die Android-Paketierung deaktiviert die ReadyToRun-Vorkompilierung explizit, die der RID-lose Restore nicht bereitstellen kann (`error NETSDK1094`).

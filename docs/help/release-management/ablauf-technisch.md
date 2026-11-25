@@ -28,7 +28,7 @@ Beide Jobs hängen an `needs: detect-backmerge` mit `if: is_backmerge != 'true'`
 
 ### 3. Versionsermittlung (`version`, `ubuntu-latest`)
 
-`needs: [detect-backmerge, static-checks, build-and-test]`, `if: is_backmerge != 'true'`.
+`needs: [detect-backmerge, static-checks, build-and-test]`, `if: is_backmerge != 'true'`. Der Job läuft unter demselben `node-version`-Pin `'>=26.13 <27'` wie die `resolve`-/`publish`-Jobs in `release.yml` (Untergrenze aus den `engines` von `semantic-release@26`).
 
 - `npx semantic-release --dry-run --no-ci --branches staging` mit `RESOLVE_DRY_RUN: 'true'` (schaltet `release.config.js` auf die Dry-Run-Pluginliste um) → Regex `the next release version is (X.Y.Z…)` → Outputs `version`, `changed`.
 - RC-Nummer: `rc_number = count(git tag --list "v<version>-rc.*") + 1` → Outputs `rc_tag = v<version>-rc.<N>`, `rc_version = <version>-rc.<N>`.
@@ -37,9 +37,9 @@ Beide Jobs hängen an `needs: detect-backmerge` mit `if: is_backmerge != 'true'`
 
 Alle drei `needs: version`, `if: needs.version.outputs.changed == 'true'`, parallel:
 
-- `package-windows` (`windows-latest`): Composite Action `./.github/actions/build-and-package` mit `release-version: rc_version`, `release-tag: rc_tag` → `dotnet publish` `net10.0-windows10.0.19041.0`/`win-x64` self-contained (`PublishReadyToRun=false`) → `Compress-Archive` → Upload-Artefakt `release-win-x64` (`release-win-x64.zip`).
-- `package-android` (`windows-latest`): Composite Action `./.github/actions/package-android` → `dotnet publish` `net10.0-android -p:AndroidPackageFormat=apk` mit `IncludeAndroidTarget: true` → Collect-Step bevorzugt `*-Signed.apk` → Upload-Artefakt `release-android` (`release-android.apk`).
-- `package-ios` (`macos-latest`, zusätzlich `if: vars.IOS_SIGNING_ENABLED == 'true'`): Composite Action `./.github/actions/package-ios` mit `codesign-key: secrets.IOS_CODESIGN_KEY`, `provisioning-profile: secrets.IOS_PROVISIONING_PROFILE` → `dotnet publish` `net10.0-ios -p:RuntimeIdentifier=ios-arm64 -p:ArchiveOnBuild=true` → Upload-Artefakt `release-ios` (`release-ios.ipa`).
+- `package-windows` (`windows-latest`): Composite Action `./.github/actions/build-and-package` mit `release-version: rc_version`, `release-tag: rc_tag` → `dotnet publish` `net11.0-windows10.0.19041.0`/`win-x64` self-contained (`PublishReadyToRun=false`) → `Compress-Archive` → Upload-Artefakt `release-win-x64` (`release-win-x64.zip`).
+- `package-android` (`windows-latest`): Composite Action `./.github/actions/package-android` → `dotnet publish` `net11.0-android -p:AndroidPackageFormat=apk -p:PublishReadyToRun=false` mit `IncludeAndroidTarget: true` (das explizite `PublishReadyToRun=false` deaktiviert den R2R-Default des CoreCLR-Android-Workloads — der RID-lose `dotnet restore` löst kein Runtime-Pack auf, sonst `error NETSDK1094`; gleiches Muster wie der Windows-Pfad) → Collect-Step bevorzugt `*-Signed.apk` → Upload-Artefakt `release-android` (`release-android.apk`).
+- `package-ios` (`xcode-27`, zusätzlich `if: vars.IOS_SIGNING_ENABLED == 'true'`): Composite Action `./.github/actions/package-ios` mit `codesign-key: secrets.IOS_CODESIGN_KEY`, `provisioning-profile: secrets.IOS_PROVISIONING_PROFILE`. Ablauf der Action: `Select Xcode` aktiviert `/Applications/Xcode_27.2.app` via `DEVELOPER_DIR` (Input `xcode-path`; das Image-Default ist Xcode 27.1, das gepinnte Pack `Microsoft.iOS.Sdk 27.2.11039` verlangt exakt Xcode 27.2 — Fail-fast mit `::error::`, falls die App fehlt oder der Pfad kein gültiges Xcode-Bundle ist — `Contents/Developer` wird geprüft) → `dotnet publish` `net11.0-ios -p:RuntimeIdentifier=ios-arm64 -p:ArchiveOnBuild=true` (baut gegen das iOS-27-SDK und erzwingt damit den UIKit-Scene-Lifecycle — `UIApplicationSceneManifest` + `SceneDelegate` in `Platforms/iOS`, Build-Check `MT7199`) → `Collect iOS package` → `Verify built SDK version` liest `DTSDKName`/`DTPlatformVersion`/`DTXcode` aus der `.ipa`-`Info.plist` und bricht ab, wenn `DTSDKName` nicht `iphoneos` ≥ 27 ist (Apple ITMS-90725) → `Upload to TestFlight` → Upload-Artefakt `release-ios` (`release-ios.ipa`).
 
 ### 5. Aggregation und Pre-Release (`prerelease`, `ubuntu-latest`)
 
@@ -67,7 +67,7 @@ Trigger: `push → branches: [main]` oder `tags: ['v*.*.*']`, `concurrency: rele
 
 ### 1. Release-Entscheidung (`resolve`, `ubuntu-latest`)
 
-Checkout mit `fetch-depth: 0`/`fetch-tags: true`, Node 24, `npm ci`, Entfernen lokaler `v*-rc.*`-Tags, dann `node scripts/resolve-release-version.mjs` (Env `GITHUB_TOKEN`, `IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}`).
+Checkout mit `fetch-depth: 0`/`fetch-tags: true`, Node ≥ 26.13 (`node-version: '>=26.13 <27'` — die Untergrenze 26.13 fordert `semantic-release@26` per `engines.node`, die Range bleibt auf Major 26), `npm ci`, Entfernen lokaler `v*-rc.*`-Tags, dann `node scripts/resolve-release-version.mjs` (Env `GITHUB_TOKEN`, `IOS_SIGNING_ENABLED: ${{ vars.IOS_SIGNING_ENABLED }}`).
 
 `resolveReleaseVersion()` klassifiziert den Ref über `classifyWorkflowRef` (`GITHUB_REF_TYPE`/`GITHUB_REF_NAME`): `tag` → `manual` (Tag muss `v` + SemVer sein, `parseManualTag`/`VERSION_PATTERN`), Branch in `AUTOMATIC_RELEASE_BRANCHES = ["main"]` → `automatic`, sonst Fehler.
 
@@ -78,7 +78,7 @@ Outputs: `released`, `reason`, `version`, `tag`, `release_kind`, `release_action
 
 ### 2. Release-Gate (`release-gate`, `windows-latest`)
 
-`needs: resolve`, `if: released == 'true' && release_action == 'create'` — beim Repair-Pfad entfällt das Gate, weil der getaggte Stand bereits geprüft wurde. `actions/setup-dotnet` `10.0.x`, `dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj -c Release`.
+`needs: resolve`, `if: released == 'true' && release_action == 'create'` — beim Repair-Pfad entfällt das Gate, weil der getaggte Stand bereits geprüft wurde. `actions/setup-dotnet` `11.0.x`, `dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj -c Release`.
 
 ### 3. Plattform-Packaging (`package-windows`, `package-android`, `package-ios`)
 
@@ -166,7 +166,7 @@ flowchart TD
 - `resolve-release-version.mjs`: ungültige/unterstützte Refs, fehlendes `GITHUB_OUTPUT` und `gh api`-Fehler (außer `HTTP 404` → Release nicht vorhanden) führen zum Abbruch des `resolve`-Jobs.
 - `create-update-manifest.mjs`: fehlende Umgebungsvariablen (`RELEASE_ASSETS`, `RELEASE_VERSION`, `RELEASE_TAG`, `GITHUB_REPOSITORY`), fehlende oder leere Asset-Dateien → Fehlerwurf, `publish`-Job schlägt fehl statt ein unvollständiges Release anzulegen.
 - `package-android`: kein `.apk` oder mehrere Kandidaten → Abbruch; kein signiertes `*-Signed.apk`, aber genau ein unsigniertes → Warnung + Fallback.
-- `package-ios`: kein oder mehrere `.ipa` unter `src/Reporter/bin/Release` → Abbruch.
+- `package-ios`: `xcode-path` auf dem Runner nicht vorhanden oder kein Xcode-Bundle (`Contents/Developer` fehlt) → Fail-fast-Abbruch bereits im `Select Xcode`-Schritt; kein oder mehrere `.ipa` unter `src/Reporter/bin/Release` → Abbruch im `Collect iOS package`-Schritt; `DTSDKName` der erzeugten `.ipa` nicht `iphoneos` ≥ 27 → Abbruch im `Verify built SDK version`-Schritt **vor** dem TestFlight-Upload.
 - `checkout-release-tag`: HEAD nach dem Detach-Checkout ≠ Tag-Commit → Abbruch.
 - Coverage-Gate: `Line coverage` nicht ermittelbar oder `< 70 %` → `build-and-test` schlägt fehl; Test-/Coverage-Artefakte werden trotzdem hochgeladen (`if: always()`).
 - `concurrency`-Gruppen: `staging-ci` und `pr-staging-<nr>` brechen Vorgängerläufe ab; `release` läuft ohne Abbruch zu Ende (`cancel-in-progress: false`).

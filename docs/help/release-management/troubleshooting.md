@@ -13,6 +13,19 @@
 2. Commit-Botschaften auf `staging` gegen das Preset `conventionalcommits` prüfen.
 3. Bei Backmerge: gewolltes Verhalten — kein Eingriff nötig.
 
+## `semantic-release` bricht ab: „node version >=… is required"
+
+**Symptom:** Der Schritt `Determine next version` im Job `version` (`staging-ci.yml`) oder ein `semantic-release`-Aufruf in `release.yml` (`resolve`/`publish`) endet mit `exit code 1` und einer Meldung wie `[semantic-release]: node version >=26.13 is required. Found v24.x`.
+
+**Ursache:** Ein `semantic-release`-Major-Update (typischerweise ein wöchentlicher Dependabot-PR gegen `staging`) hat die `engines.node`-Untergrenze des Pakets angehoben — `semantic-release@26` verlangt z. B. Node `>=26.13`. Der `node-version`-Pin in den `actions/setup-node`-Schritten wurde nicht mitgeführt, sodass die Jobs unter einer zu alten Node-Version laufen.
+
+**Lösung:**
+1. Die geforderte Mindestversion aus der Fehlermeldung bzw. aus `package-lock.json` (`semantic-release` → `engines.node`) entnehmen.
+2. Den `node-version`-Pin an allen drei Stellen nachführen — `.github/workflows/staging-ci.yml` (Job `version`) und `.github/workflows/release.yml` (Jobs `resolve` und `publish`). Aktueller Pin: `'>=26.13 <27'` — die Range schließt ein veraltetes `26.x < 26.13` aus dem Runner-Toolcache konstruktiv aus und bleibt innerhalb der Major-Version.
+3. Kein Downgrade von `semantic-release` als Alternative: Dependabot würde den Major-Bump beim nächsten Lauf erneut vorschlagen.
+
+> **Hinweis:** Bei jedem `semantic-release`-Major-Update durch Dependabot prüfen, ob die neue `engines.node`-Forderung der aktuelle Pin noch erfüllt — sonst tritt der Fehler im `staging-ci`-Push-Lauf direkt nach dem Merge auf.
+
 ## Der erste Promotion-PR wird nicht geöffnet
 
 **Symptom:** Nach dem ersten erfolgreichen `Pre-Release`-Lauf erscheint kein Draft-PR `staging` → `main`.
@@ -36,6 +49,36 @@
 2. Variable `IOS_SIGNING_ENABLED=true` setzen — danach läuft `package-ios` automatisch mit und das Asset erscheint in `update.json`.
 
 > **Hinweis:** Niemals `IOS_SIGNING_ENABLED` setzen, ohne die Secrets zu hinterlegen — der Publish würde zwar laufen, liefert aber kein verteilbares signiertes `.ipa` bzw. schlägt im Collect-Step fehl.
+
+## `package-ios` schlägt fehl: „requires Xcode 27.2" / SDK-Gate
+
+**Symptom:** Der `package-ios`-Job bricht mit `::error::Xcode not found at '/Applications/Xcode_27.2.app'…` oder `::error::… is not a usable Xcode bundle ('Contents/Developer' is missing)…` im `Select Xcode`-Schritt, mit `error : This version of .NET for iOS (…) requires Xcode 27.2` im `Publish (ios)`-Schritt oder mit `::error::Built with SDK '…' - Apple requires iOS SDK >= 27` im `Verify built SDK version`-Schritt ab.
+
+**Ursache:** Das gepinnte `Microsoft.iOS.Sdk`-Pack (`ios-workload-version`, `27.2.11039`) verlangt exakt Xcode 27.2 — drei Kopplungen müssen zusammenpassen: Runner-Image (`xcode-27`), `xcode-path` (`/Applications/Xcode_27.2.app`, wird per `DEVELOPER_DIR` aktiviert) und Workload-Pin. Der `Select Xcode`-Fehler bedeutet, das Runner-Image enthält die erwartete Xcode-App nicht mehr (Image-Update) oder der Pfad zeigt auf ein Verzeichnis ohne `Contents/Developer` (kein Xcode-Bundle); der Pack-Fehler im Publish, dass ein anderes als das per `xcode-path` gewählte Xcode wirksam war; der Gate-Fehler, dass die erzeugte `.ipa` gegen ein SDK < `iphoneos27` gebaut wurde (z. B. veralteter Workload-Pin).
+
+**Lösung:**
+1. `Select Xcode`-Abbruch: Image-Inhalt des `xcode-27`-Runners prüfen (Job-Log `xcodebuild -version`/`xcodebuild -showsdks` bzw. [runner-images](https://github.com/actions/runner-images)-README); `xcode-path` an die vorhandene Release-Xcode-App anpassen bzw. `ios-workload-version` auf das dazu passende Pack anheben — beide Inputs sind bewusst gekoppelt.
+2. Pack-Fehler „requires Xcode 27.2": `DEVELOPER_DIR`-Auswahl im `Select Xcode`-Schritt des Job-Logs prüfen; Workload-Pin und `xcode-path` müssen versionsgleich bleiben (Pack 27.2.x ↔ Xcode 27.2).
+3. Gate-Fehlschlag in `Verify built SDK version`: absichtlicher Schutz — die `.ipa` würde sonst Apples ITMS-90725-Warnung auslösen. Workload-Pin/Xcode korrigieren und neu laufen lassen; die geloggten `DTSDKName`/`DTPlatformVersion`/`DTXcode`-Werte zeigen die tatsächliche Toolchain.
+
+## `package-ios` schlägt fehl: `error MT7199` (Scene-Manifest)
+
+**Symptom:** Der `Publish (ios)`-Schritt bricht mit `error MT7199` ab (fehlendes `UIApplicationSceneManifest` in der `Info.plist`) — aufgetreten im ersten `Pre-Release`-Lauf nach der .NET-11-/Xcode-27-Migration.
+
+**Ursache:** Builds gegen das iOS-27-SDK verlangen den UIKit-Scene-Lifecycle. Ohne `UIApplicationSceneManifest` lehnt der Build-Check ab — und eine App ohne wirksames Scene-Manifest würde unter iOS 27 zudem beim Start abstürzen.
+
+**Lösung:**
+1. Bereits behoben: `Platforms/iOS/Info.plist` deklariert `UIApplicationSceneManifest` mit der MAUI-Standardkonfiguration `__MAUI_DEFAULT_SCENE_CONFIGURATION__`, `Platforms/iOS/SceneDelegate.cs` (`[Register("SceneDelegate")]`, `MauiUISceneDelegate`) liefert den Delegate; dieselbe Kombination liegt präventiv unter `Platforms/MacCatalyst`.
+2. Tritt der Fehler erneut auf: `UISceneDelegateClassName` im Manifest muss exakt dem `[Register("SceneDelegate")]`-Namen entsprechen — ein Mismatch führt nicht zum Build-Fehler, sondern zum Startabsturz der App.
+3. `ValidateSceneManifest=false` ist **keine** Lösung — es deaktiviert nur den Build-Check, der Startabsturz unter iOS 27 bliebe bestehen.
+
+## iOS-Repair alter Release-Stände schlägt fehl
+
+**Symptom:** Ein `release.yml`-Lauf mit `release_action == 'upload-existing'` auf einen Release-Tag vor der .NET-11-Migration bricht im `package-ios`-Job ab (`Select Xcode` findet kein passendes Xcode bzw. das Pack verlangt eine andere Xcode-Version).
+
+**Ursache:** Der Repair-Pfad checkt den getaggten Stand aus (`checkout-release-tag`) und baut ihn mit **dessen** Workload-Pin — Stände < 0.8.x pinnen `Microsoft.iOS.Sdk 26.x`, das Xcode 26 verlangt. Auf dem `xcode-27`-Image ist kein Xcode 26 installiert — eine Reparatur alter iOS-Binaries ist dort nicht mehr möglich.
+
+**Lösung:** Bewusste Einschränkung, kein Fehler: Die betroffenen alten iOS-Binaries liegen bereits ausgeliefert in App Store Connect und müssen nicht erneut gebaut werden. Reparaturen sind nur für neuere Stände (Pack-Pin ≥ 27.x) vorgesehen; Windows-/Android-Repair alter Stände ist davon nicht betroffen.
 
 ## Branch-Protection-API antwortet mit HTTP 403
 
@@ -78,6 +121,16 @@
 1. Im fehlgeschlagenen Job prüfen, ob alle `package-*`-Artefakte (`release-win-x64`, `release-android`, ggf. `release-ios`) im Download-Step landen (`pattern: release-*`).
 2. Reihenfolge prüfen: `release-assets.mjs` muss vor `create-update-manifest.mjs` laufen, damit `RELEASE_ASSETS` im Environment steht.
 3. Bei geändertem `IOS_SIGNING_ENABLED`: Artefaktliste und `EXPECTED_ASSETS` müssen denselben Schalterstand verwenden.
+
+## `package-android` schlägt fehl: `error NETSDK1094`
+
+**Symptom:** Der `Publish (android)`-Schritt bricht mit `error NETSDK1094` ab — `PublishReadyToRun` verlangt ein `Microsoft.NETCore.App.Runtime.*`-Pack, das der Restore nicht aufgelöst hat.
+
+**Ursache:** Seit .NET 11 defaultet der CoreCLR-Android-Runtime `PublishReadyToRun` bei `Release`-Builds implizit auf `true` (`Microsoft.Android.Sdk.CoreCLR.targets`). Der Restore in der Action läuft RID-los (`dotnet restore Reporter.sln`), sodass kein R2R-Runtime-Pack für den Ziel-RID in den Assets steht.
+
+**Lösung:**
+1. Bereits behoben: der Publish-Schritt der `package-android`-Action übergibt `-p:PublishReadyToRun=false` — gleiches Muster wie der Windows-Pfad in `build-and-package`; ReadyToRun bringt der `.apk` keinen dokumentierten Nutzen.
+2. Alternative beim Umbau der Action: Restore gezielt um RID und `-p:PublishReadyToRun=true` erweitern, damit das Runtime-Pack aufgelöst wird — höherer Pflegeaufwand, daher bewusst nicht gewählt.
 
 ## Android-Job liefert nur ein unsigniertes APK
 

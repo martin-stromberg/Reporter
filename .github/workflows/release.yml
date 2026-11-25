@@ -38,7 +38,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7
         with:
-          node-version: '24'
+          # semantic-release@26 verlangt node >=26.13; Range bleibt auf Major 26.
+          node-version: '>=26.13 <27'
 
       - name: Install dependencies
         run: npm ci
@@ -72,7 +73,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Release gate - regular tests
         run: dotnet test --project src/Reporter.Tests/Reporter.Tests.csproj --configuration Release
@@ -143,11 +144,14 @@ jobs:
 
   # iOS packaging stays disabled until the signing secrets are provided externally.
   # Activate by setting the repository variable IOS_SIGNING_ENABLED=true - no code change needed.
+  # Runner xcode-27 (arm64): das einzige GitHub-Image mit Xcode 27.x - das
+  # gepinnte iOS-Workload-Pack (27.2.11039) verlangt exakt Xcode 27.2; die
+  # package-ios-Action waehlt /Applications/Xcode_27.2.app via DEVELOPER_DIR.
   package-ios:
     name: package-ios
     needs: [resolve, release-gate]
     if: needs.resolve.outputs.released == 'true' && vars.IOS_SIGNING_ENABLED == 'true' && !failure() && !cancelled()
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -199,7 +203,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7
         with:
-          node-version: '24'
+          # semantic-release@26 verlangt node >=26.13; Range bleibt auf Major 26.
+          node-version: '>=26.13 <27'
 
       - name: Install dependencies
         run: npm ci

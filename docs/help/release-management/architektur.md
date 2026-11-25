@@ -17,9 +17,9 @@
 | `.github/workflows/review-architecture.yml` (`Scheduled Architecture Review`) | GitHub-Actions-Workflow | Monatliches Architektur- und Sicherheitsreview als Issue mit Label `scheduled-architecture-review` (Schedule/Dispatch, Label-Dedup) |
 | `.github/workflows/review-nuget.yml` (`Scheduled NuGet Review`) | GitHub-Actions-Workflow | Wöchentliche NuGet-Paketprüfung als Issue mit Label `scheduled-nuget-review` (Schedule/Dispatch, Label-Dedup) |
 | `.github/workflows/review-compliance.yml` (`Scheduled Compliance Review`) | GitHub-Actions-Workflow | Jährliches Compliance- und Copyright-Review als Issue mit Label `scheduled-compliance-review` (Schedule/Dispatch, Label-Dedup) |
-| `.github/actions/build-and-package` | Composite Action | Windows-Publish `net10.0-windows10.0.19041.0`/`win-x64` → `release-win-x64.zip` |
-| `.github/actions/package-android` | Composite Action | Android-Publish `net10.0-android` → `release-android.apk` |
-| `.github/actions/package-ios` | Composite Action | iOS-Publish `net10.0-ios`/`ios-arm64` auf `macos-latest` → `release-ios.ipa` |
+| `.github/actions/build-and-package` | Composite Action | Windows-Publish `net11.0-windows10.0.19041.0`/`win-x64` → `release-win-x64.zip` |
+| `.github/actions/package-android` | Composite Action | Android-Publish `net11.0-android` → `release-android.apk` |
+| `.github/actions/package-ios` | Composite Action | iOS-Publish `net11.0-ios`/`ios-arm64` auf `xcode-27` (Xcode 27.2 via `DEVELOPER_DIR`, SDK-Gate auf der `.ipa`) → `release-ios.ipa` |
 | `.github/actions/checkout-release-tag` | Composite Action | Detach-Checkout des Release-Tags für den Asset-Repair-Pfad |
 | `.github/actions/security-scan` | Composite Action | Prüfung auf verwundbare NuGet-Pakete und npm-Abhängigkeiten (`package-lock.json`, Schwelle `high`; in den Gates eingebunden) |
 | `scripts/resolve-release-version.mjs` | Node-Skript | Klassifiziert den Ref und entscheidet `create` / `upload-existing` / `none` |
@@ -31,10 +31,10 @@
 
 ## Abhängigkeiten
 
-- **GitHub Actions** (`ubuntu-latest`, `windows-latest`, `macos-latest`): Ausführungsumgebung; iOS-Packaging benötigt zwingend `macos-latest`. Alle externen `uses:`-Referenzen sind auf Commit-SHAs gepinnt (`uses: <owner>/<repo>@<sha> # vN`); der `github-actions`-Eintrag in `dependabot.yml` aktualisiert die Pins wöchentlich.
+- **GitHub Actions** (`ubuntu-latest`, `windows-latest`, `xcode-27`): Ausführungsumgebung; iOS-Packaging benötigt zwingend das arm64-Image `xcode-27` — das einzige GitHub-Image mit Xcode 27.x (27.0/27.1/27.2). Das gepinnte `Microsoft.iOS.Sdk`-Pack (`27.2.11039`) verlangt exakt Xcode 27.2; die Action aktiviert `/Applications/Xcode_27.2.app` über `DEVELOPER_DIR` (Input `xcode-path`) und verifiziert das Build-SDK der erzeugten `.ipa` (`DTSDKName` ≥ `iphoneos27`, Apple ITMS-90725). Alle externen `uses:`-Referenzen sind auf Commit-SHAs gepinnt (`uses: <owner>/<repo>@<sha> # vN`); der `github-actions`-Eintrag in `dependabot.yml` aktualisiert die Pins wöchentlich.
 - **GitHub Releases & Pull Requests API** via `gh` CLI (`GH_TOKEN` = `github.token`): Release-Erzeugung/-Upload, Asset-Vollständigkeitsprüfung (paginierte Listenabfrage), PR-/Label-Verwaltung. Erforderliche Permissions stehen in den Workflows (`contents`/`pull-requests`/`issues`/`checks`).
 - **semantic-release** (npm, `npx`/`npm run release`): Versionsermittlung per Dry-Run (`--branches staging` bzw. Default `main`) und Tag-/Release-Erzeugung im automatischen Pfad; Commit-Analyse über Preset `conventionalcommits`.
-- **.NET SDK 10.0.x + MAUI-Workloads** (`dotnet workload restore Reporter.sln`): Build, Tests und `dotnet publish` pro Zielplattform; die TFM-Auswahl läuft über die Schalter `IncludeIosTarget`/`IncludeAndroidTarget`.
+- **.NET SDK 11.0.x + MAUI-Workloads** (`dotnet workload restore Reporter.sln`): Build, Tests und `dotnet publish` pro Zielplattform; die TFM-Auswahl läuft über die Schalter `IncludeIosTarget`/`IncludeAndroidTarget`.
 - **Git-Tags** als Versionsgedächtnis: RC-Zählung über `git tag --list "v<version>-rc.*"`; stabile Tags `vX.Y.Z` werden von semantic-release bzw. `gh release create` angelegt und müssen per Backmerge auf `staging` erreichbar bleiben.
 
 ## Datenfluss

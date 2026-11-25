@@ -133,6 +133,59 @@ Apple lehnt App-Icons mit Alpha-Kanal/Transparenz ab (ITMS-90717).
 **Ergebnis:** Die Quellen garantieren ein Alpha-freies Icon; die
 Abschlussprüfung am generierten PNG ist dokumentiert als macOS-Folgeschritt.
 
+## Build-SDK-Anforderung (ITMS-90725)
+
+Apple hat für Build 331 (Version 0.8.0) die Warnung **ITMS-90725**
+ausgesprochen: Das Binary wurde mit dem iOS-26.5-SDK erstellt. **Ab
+April 2027** müssen iOS-Uploads mit dem **iOS-27-SDK oder neuer**
+gebaut sein — enthalten in Xcode 27 oder neuer, jeweils als
+Release-Version (Beta-Xcode-Builds lehnt der Store ab).
+
+Ursache: Build 331 entstand noch aus dem .NET-10-Stand
+(`Microsoft.iOS.Sdk 26.5.x` → `iphoneos26.5`). Die Umstellung auf SDK
+≥ 27 ist in der Pipeline verankert und wird vor jedem Upload erzwungen:
+
+- **Runner-Image:** Beide `package-ios`-Jobs (`staging-ci.yml`,
+  `release.yml`) laufen auf dem Label `xcode-27` — das einzige
+  GitHub-Image mit Xcode 27.x (27.0/27.1/27.2). `macos-latest`
+  enthält kein Xcode 27.
+- **Xcode-Auswahl:** Die Composite-Action `package-ios` aktiviert im
+  ersten Schritt (`Select Xcode`) `/Applications/Xcode_27.2.app` über
+  `DEVELOPER_DIR` (Input `xcode-path`) — Default des Images ist
+  Xcode 27.1, das gepinnte Pack `Microsoft.iOS.Sdk 27.2.11039`
+  (Input `ios-workload-version`) verlangt exakt Xcode 27.2. Der
+  explizite Pfad schließt zugleich die seit Image-Version 20261119
+  mitgelieferte Xcode-27.3-Beta aus (`Xcode_*_beta.app`).
+- **SDK-Gate:** Der Schritt `Verify built SDK version` liest
+  `DTSDKName`/`DTPlatformVersion`/`DTXcode` aus der `Info.plist` der
+  erzeugten `.ipa` und lässt den Job **vor** dem TestFlight-Upload
+  fehlschlagen, wenn `DTSDKName` nicht `iphoneos` ≥ 27 ist.
+- **Manueller Pfad:** `scripts/iOS-Deployment.ps1` verlangt bei
+  `store` vor dem Build exakt Xcode 27.2 als Release-Version auf dem
+  Build-Mac (`Assert-RequiredXcodeVersion` — Beta-Toolchains werden an
+  der `xcodebuild`-Ausgabe bzw. dem `xcode-select`-Pfad erkannt und
+  abgelehnt; zeigt `xcode-select` nicht auf
+  `<Xcode>.app/Contents/Developer`, z. B. auf die Command Line Tools,
+  wird ebenfalls hart abgebrochen) und validiert bei `store`/`upload`
+  die SDK-Metadaten der
+  `.ipa` in `Invoke-IpaValidation` (`DTSDKName` ≥ `iphoneos27`; eine
+  Beta-Herkunft der `.ipa` ist aus den Metadaten nicht zuverlässig
+  ablesbar — dort bleibt die serverseitige Ablehnung durch
+  App Store Connect die letzte Sicherung).
+
+- **Scene-Lifecycle:** Das iOS-27-SDK verlangt zusätzlich den
+  UIKit-Scene-Lifecycle — `Platforms/iOS/Info.plist` (und präventiv
+  `Platforms/MacCatalyst/Info.plist`) deklariert das
+  `UIApplicationSceneManifest` mit der MAUI-Standardkonfiguration
+  `__MAUI_DEFAULT_SCENE_CONFIGURATION__`, passend zum
+  `SceneDelegate` (`MauiUISceneDelegate`). Der Build-Check
+  `MT7199` erzwingt das Manifest bereits zur Compile-Zeit; ohne es
+  würde die App unter iOS 27 beim Start abstürzen.
+
+**Nachweis:** Die Gate-Ausgabe im `package-ios`-Job-Log
+(`DTSDKName=iphoneos27.x`); die Store-Akzeptanz ohne ITMS-90725
+bestätigt der nächste reguläre RC-/Release-Upload.
+
 ## Upload-Tooling (`iTMSTransporter`)
 
 `xcrun altool` (deprecated) wurde in `scripts/iOS-Deployment.ps1` durch

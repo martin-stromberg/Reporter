@@ -191,7 +191,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Restore
         run: dotnet restore MyApp.sln
@@ -225,7 +225,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Restore
         run: dotnet restore MyApp.sln
@@ -341,7 +341,7 @@ suffix by hand:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '>=26.13 <27'
 
       - name: Install dependencies
         run: npm ci
@@ -446,7 +446,7 @@ runs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: '11.0.x'
 
     - name: Restore
       run: dotnet restore MyApp.sln
@@ -455,14 +455,14 @@ runs:
     - name: Publish (win-x64, self-contained)
       run: >
         dotnet publish MyApp.Web/MyApp.Web.csproj -p:Version=${{ inputs.release-version }}
-        --configuration Release --framework net10.0 --runtime win-x64
+        --configuration Release --framework net11.0 --runtime win-x64
         --self-contained true --no-restore --output artifacts/publish-win-x64
       shell: bash
 
     - name: Publish (linux-x64, self-contained)
       run: >
         dotnet publish MyApp.Web/MyApp.Web.csproj -p:Version=${{ inputs.release-version }}
-        --configuration Release --framework net10.0 --runtime linux-x64
+        --configuration Release --framework net11.0 --runtime linux-x64
         --self-contained true --no-restore --output artifacts/publish-linux-x64
       shell: bash
 
@@ -722,7 +722,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '>=26.13 <27'
 
       - name: Install dependencies
         run: npm ci
@@ -1015,7 +1015,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Restore
         run: dotnet restore MyApp.sln

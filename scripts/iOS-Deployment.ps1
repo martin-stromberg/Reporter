@@ -91,7 +91,7 @@ param(
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $projectPath = Join-Path $repoRoot "src/Reporter/Reporter.csproj"
-$framework = "net10.0-ios"
+$framework = "net11.0-ios"
 
 $isWindows = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
 $isMacOS = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX)
@@ -515,6 +515,80 @@ function Assert-TransporterAvailable {
     exit 1
 }
 
+function Assert-RequiredXcodeVersion {
+    # Erforderliche Xcode-Version - an den installierten iOS-Workload-Pin
+    # gekoppelt: Microsoft.iOS.Sdk 27.2.11039 verlangt exakt Xcode 27.2
+    # als Release-Version. Wird der Workload-Pin angehoben, muss
+    # $requiredXcodeVersion hier zentral mit angehoben werden.
+    # Apple verlangt fuer Store-Uploads zusaetzlich ein Build-SDK >= 27
+    # (ITMS-90725, Frist April 2027) und lehnt Beta-Toolchains ab.
+    # Ohne diese Vorab-Pruefung kaeme erst mitten im Build der
+    # Pack-Fehler 'requires Xcode 27.2'.
+    $requiredXcodeVersion = [version]'27.2'
+    $workloadPin = '27.2.11039'
+    $remedy = @(
+        "Abhilfe auf dem Mac: Release-Xcode $requiredXcodeVersion installieren und aktivieren, z. B."
+        "  sudo xcode-select -s /Applications/Xcode_$requiredXcodeVersion.app"
+    )
+    $lines = @(Invoke-MacCapture -Script 'xcodebuild -version 2>/dev/null || true; xcode-select -p 2>/dev/null || true')
+    $versionLine = $lines | Where-Object { $_ -match '^Xcode\s+[0-9]' } | Select-Object -First 1
+    $selectPath = ($lines | Where-Object { $_ -match '^\s*/' } | Select-Object -First 1)
+    if ($selectPath) { $selectPath = $selectPath.Trim() }
+    # xcode-select muss auf ein Xcode.app-Bundle zeigen
+    # ('<Xcode>.app/Contents/Developer'). Steht es auf den Command Line
+    # Tools ('/Library/Developer/CommandLineTools') oder einem anderen
+    # Nicht-Xcode-Pfad, ist das aus dem Pfad deterministisch erkennbar
+    # und xcodebuild liefert keine Xcode-Version - harter Abbruch statt
+    # implizitem Fehler mitten im Build.
+    if ($selectPath -and $selectPath -notmatch '\.app/Contents/Developer$') {
+        Write-Host "Fehler: xcode-select zeigt auf dem Build-Mac auf '$selectPath' - nicht auf ein Xcode.app." -ForegroundColor Red
+        Write-Host "Der Store-Build benoetigt Xcode $requiredXcodeVersion (Workload-Pin Microsoft.iOS.Sdk $workloadPin);" -ForegroundColor Yellow
+        Write-Host "die Command Line Tools ('/Library/Developer/CommandLineTools') enthalten kein xcodebuild." -ForegroundColor Yellow
+        $remedy | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+        exit 1
+    }
+    if (-not $versionLine) {
+        Write-Host "Warnung: Xcode-Version auf dem Build-Mac konnte nicht ermittelt werden - die Pack-eigene Pruefung im Build bleibt letzte Sicherung." -ForegroundColor Yellow
+        return
+    }
+    # Beta-Toolchain ablehnen: 'beta'/'Beta' (-match ist
+    # case-insensitive) taucht in der xcodebuild-Versionsausgabe und/oder
+    # im per xcode-select gewaehlten App-Pfad auf (Beta-Installationen
+    # heissen Xcode-beta.app bzw. Xcode_*_beta.app). Begruendung: Apple
+    # lehnt Store-Uploads aus Beta-Xcode ab und der Workload-Pin fordert
+    # ein Release-Xcode.
+    $betaHint = $lines | Where-Object { $_ -match 'beta' } | Select-Object -First 1
+    if ($betaHint) {
+        Write-Host "Fehler: Auf dem Build-Mac ist eine Beta-Toolchain aktiv ('$betaHint')." -ForegroundColor Red
+        Write-Host "Der installierte iOS-Workload (Microsoft.iOS.Sdk $workloadPin) verlangt ein Release-Xcode" -ForegroundColor Yellow
+        Write-Host "und Apple lehnt Store-Uploads aus Beta-Toolchains ab." -ForegroundColor Yellow
+        $remedy | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+        exit 1
+    }
+    if ($versionLine -match '^Xcode\s+([0-9]+(\.[0-9]+)*)') {
+        $version = [version]$Matches[1]
+    }
+    else {
+        Write-Host "Warnung: Xcode-Versionszeile nicht auswertbar ('$versionLine') - die Pack-eigene Pruefung im Build bleibt letzte Sicherung." -ForegroundColor Yellow
+        return
+    }
+    if ($version -ne $requiredXcodeVersion) {
+        Write-Host "Fehler: Auf dem Build-Mac ist '$versionLine' aktiv - der Store-Build benoetigt exakt Xcode $requiredXcodeVersion." -ForegroundColor Red
+        if ($version -lt $requiredXcodeVersion) {
+            Write-Host "Der installierte iOS-Workload (Microsoft.iOS.Sdk $workloadPin) verlangt exakt Xcode $requiredXcodeVersion;" -ForegroundColor Yellow
+            Write-Host "Apple verlangt fuer Uploads zudem ein Build-SDK >= 27 (Release-Xcode, keine Beta)." -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "Der installierte iOS-Workload (Microsoft.iOS.Sdk $workloadPin) verlangt exakt Xcode $requiredXcodeVersion -" -ForegroundColor Yellow
+            Write-Host "fuer ein neueres Xcode muss der Workload-Pin auf das passende Pack angehoben" -ForegroundColor Yellow
+            Write-Host "und `$requiredXcodeVersion in dieser Funktion entsprechend gesetzt werden." -ForegroundColor Yellow
+        }
+        $remedy | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+        exit 1
+    }
+    Write-Host "Xcode auf dem Build-Mac: $versionLine (erforderlich: $requiredXcodeVersion, Release)" -ForegroundColor Gray
+}
+
 function Update-BuildNumber {
     $csprojPath = $projectPath
     $content = [System.IO.File]::ReadAllText($csprojPath)
@@ -732,6 +806,27 @@ LOCS=`$(plutil -extract CFBundleLocalizations json -o - "`$APP/Info.plist" 2>/de
 { echo "`$LOCS" | grep -q '"en"' && echo "`$LOCS" | grep -q '"de"'; } || { echo "FEHLER: CFBundleLocalizations fehlt oder enthaelt nicht en+de: `$LOCS"; exit 1; }
 ENC=`$(plutil -extract ITSAppUsesNonExemptEncryption raw -o - "`$APP/Info.plist" 2>/dev/null || echo '?')
 [ "`$ENC" = "false" ] || [ "`$ENC" = "0" ] || { echo "FEHLER: ITSAppUsesNonExemptEncryption nicht false: `$ENC"; exit 1; }
+echo "==> Pruefe Build-SDK-Metadaten (Info.plist)"
+# Apple ITMS-90725: Store-Uploads muessen mit iOS SDK >= 27 gebaut sein
+# (Frist April 2027). Eine mit aelterem Xcode gebaute IPA wuerde die
+# Warnung erst nach dem Upload ausloesen - deshalb hart abbrechen
+# statt hochzuladen. Eine Beta-Herkunft der IPA ist an diesen Metadaten
+# dagegen nicht zuverlaessig erkennbar (DTXcode/DTXcodeBuild markieren
+# Beta-Toolchains nicht eindeutig) - sie werden nur protokolliert.
+# Letzte Sicherung gegen Beta-Binaries bleibt die serverseitige
+# Ablehnung durch App Store Connect; beim store-Pfad wird Beta-Xcode
+# bereits in Assert-RequiredXcodeVersion vor dem Build abgelehnt.
+SDK_NAME=`$(plutil -extract DTSDKName raw -o - "`$APP/Info.plist" 2>/dev/null || true)
+PLATFORM_VERSION=`$(plutil -extract DTPlatformVersion raw -o - "`$APP/Info.plist" 2>/dev/null || true)
+XCODE_VERSION=`$(plutil -extract DTXcode raw -o - "`$APP/Info.plist" 2>/dev/null || true)
+XCODE_BUILD=`$(plutil -extract DTXcodeBuild raw -o - "`$APP/Info.plist" 2>/dev/null || true)
+echo "DTSDKName=`$SDK_NAME DTPlatformVersion=`$PLATFORM_VERSION DTXcode=`$XCODE_VERSION DTXcodeBuild=`$XCODE_BUILD"
+SDK_MAJOR=""
+if [[ "`$SDK_NAME" =~ ^iphoneos([0-9]+) ]]; then SDK_MAJOR="`${BASH_REMATCH[1]}"; fi
+if [ -z "`$SDK_MAJOR" ] || [ "`$SDK_MAJOR" -lt 27 ]; then
+    echo "FEHLER: Build-SDK '`$SDK_NAME' - App Store verlangt iOS SDK >= 27 (Release-Xcode); mit passendem Xcode/Workload neu bauen statt hochladen."
+    exit 1
+fi
 echo "==> Pruefe App-Icon-Kodierung"
 # ITMS-90717 lehnt Icons mit Transparenz ab. Der Resizetizer erzeugt
 # grundsaetzlich RGBA; actool kodiert ARGB - das ist bei vollstaendig
@@ -789,6 +884,7 @@ function Invoke-Store {
     Assert-StorePrerequisites -Action "store"
     Assert-CodesigningForAction -Action "store"
     Assert-TransporterAvailable
+    Assert-RequiredXcodeVersion
     if (-not $NoBumpBuildNumber) { Update-BuildNumber }
     Invoke-Build
     $ipa = Get-LatestIpa

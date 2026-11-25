@@ -1,7 +1,7 @@
 <!-- Licensed under the PolyForm Noncommercial License 1.0.0 - see the LICENSE file in the project root for details. -->
 # Reporter
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
+[![.NET](https://img.shields.io/badge/.NET-11.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![Pre-Release](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/staging-ci.yml?branch=staging&label=Pre-Release)](https://github.com/martin-stromberg/Reporter/actions/workflows/staging-ci.yml)
 [![Release-Workflow](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/release.yml?label=Release-Workflow)](https://github.com/martin-stromberg/Reporter/actions/workflows/release.yml)
 [![Deploy Pages](https://img.shields.io/github/actions/workflow/status/martin-stromberg/Reporter/deploy-pages.yml?label=Deploy%20Pages)](https://github.com/martin-stromberg/Reporter/actions/workflows/deploy-pages.yml)
@@ -44,7 +44,7 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 
 ## Voraussetzungen
 
-- .NET 10 SDK (inkl. .NET-MAUI-Workload)
+- .NET 11 SDK (inkl. .NET-MAUI-Workload)
 - iOS (Zielplattform): Xcode auf macOS
 - Windows (Entwicklung und Tests): Windows 10 Build 19041 oder höher
 
@@ -54,16 +54,16 @@ Die Demo wurde im iOS-Simulator aufgenommen und zeigt den ersten Start mit dem a
 dotnet build Reporter.sln
 ```
 
-Primäres Ziel-Framework ist `net10.0-ios` — unter macOS das einzige; unter Windows baut zusätzlich `net10.0-windows10.0.19041.0` als Entwicklungs- und Testziel. Die Target Frameworks lassen sich über die MSBuild-Schalter `IncludeIosTarget` (Default `true`) und `IncludeAndroidTarget` (Default `false`) steuern.
+Primäres Ziel-Framework ist `net11.0-ios` — unter macOS das einzige; unter Windows baut zusätzlich `net11.0-windows10.0.19041.0` als Entwicklungs- und Testziel. Die Target Frameworks lassen sich über die MSBuild-Schalter `IncludeIosTarget` (Default `true`) und `IncludeAndroidTarget` (Default `false`) steuern.
 
 ## Starten
 
 ```bash
 # iOS (auf macOS)
-dotnet run --project src/Reporter/Reporter.csproj -f net10.0-ios
+dotnet run --project src/Reporter/Reporter.csproj -f net11.0-ios
 
 # Windows (Entwicklung und Tests)
-dotnet run --project src/Reporter/Reporter.csproj -f net10.0-windows10.0.19041.0
+dotnet run --project src/Reporter/Reporter.csproj -f net11.0-windows10.0.19041.0
 ```
 
 Geräte-Deployment, Simulator, Signing und App-Store-Upload übernimmt `scripts/iOS-Deployment.ps1` — Details siehe [iOS-Deployment](docs/help/ios-deployment/index.md).
@@ -77,6 +77,8 @@ npm test                                          # node:test-Suite der Release-
 ```
 
 Die E2E-Suite hinterlässt keine verwaisten App-Prozesse: Die gestartete `Reporter.exe` ist per Windows-Job-Objekt an den Test-Host gebunden und endet auch bei dessen hartem Abbruch; das Skript beendet im `finally` zusätzlich verbliebene Prozesse aus dem Build-Output — eine parallel installierte App bleibt unberührt. Details und Fehlerbehebung siehe [Tests](docs/help/tests/index.md).
+
+In der CI läuft `Reporter.Tests` zweigeteilt: Die deterministische Lane (`build-and-test`, `Category!=OsInterface` via MTP `--filter-not-trait`) ist blockierend, während die OS-sensitiven Tests als best-effort `os-interface tests`-Job (`Category=OsInterface`, `continue-on-error`) mit einmaligem Flaky-Retry und TRX-Flake-Statistik separat laufen — Details siehe [OS-Interface-Tests](docs/help/tests/os-interface-tests.md). `Reporter.E2ETests` bleibt lokal/on-demand und ist kein regulärer CI-Bestandteil.
 
 ## CI/CD
 
@@ -110,7 +112,7 @@ Dieses Projekt steht unter der **PolyForm Noncommercial License 1.0.0** — den 
 - [App-Store-Review](docs/app-store-review.md) — Review-Notizen zur Einreichung: App-Privacy-Antworten, ATS-Begründung, Altersfreigabe, iPad-Entscheidung
 - [Release-Management](docs/help/release-management/index.md) — Release-Pipeline, Workflow-Dateien, Asset-Reparatur, zeitgesteuerte Review-Issues (Architektur/Sicherheit, NuGet, Compliance) und Dependabot-Update-PRs samt SHA-Pinning und NuGet-/npm-Security-Gate
 - [Website](docs/help/website/index.md) — zweisprachige statische Projekt-Website unter `website/` (Landing-Page, Datenschutz, Changelog, Press Kit) und ihr Deployment auf GitHub Pages
-- [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite und `REPORTER_*`-Umgebungsvariablen
+- [Tests](docs/help/tests/index.md) — Testinfrastruktur, E2E-Suite, OS-Interface-CI-Lane und `REPORTER_*`-Umgebungsvariablen
 - [Entwicklung](docs/help/entwicklung/index.md) — Git-Hooks und lokale statische Prüfungen
 - [Contributing](CONTRIBUTING.md) — Richtlinien für Beiträge
 - [Release Notes](docs/RELEASE_NOTES.md) — Versionshinweise der Releases
