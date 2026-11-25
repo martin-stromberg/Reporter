@@ -38,6 +38,10 @@ runs:
     # pro Workflow und wuerde zwischen staging-ci und release kollidieren).
     # ApplicationDisplayVersion akzeptiert nur dreiteilige numerische
     # Versionen - bei Pre-Releases (0.4.0-rc.1) wird der Suffix abgeschnitten.
+    # PublishReadyToRun=false: seit .NET 11 defaultet der CoreCLR-Android-
+    # Runtime PublishReadyToRun bei Release auf true; der RID-lose Restore
+    # loest dann kein R2R-Runtime-Pack auf (error NETSDK1094) - analog zum
+    # Windows-Pfad (ee41281).
     - name: Publish (android)
       run: |
         set -euo pipefail
@@ -48,7 +52,7 @@ runs:
           -p:ApplicationDisplayVersion="$DISPLAY_VERSION" \
           -p:ApplicationVersion=$BUILD_NUMBER \
           --configuration Release --framework net11.0-android \
-          -p:AndroidPackageFormat=apk --no-restore
+          -p:AndroidPackageFormat=apk -p:PublishReadyToRun=false --no-restore
       shell: bash
       env:
         IncludeIosTarget: false

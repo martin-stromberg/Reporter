@@ -61,6 +61,17 @@
 2. Pack-Fehler „requires Xcode 27.2": `DEVELOPER_DIR`-Auswahl im `Select Xcode`-Schritt des Job-Logs prüfen; Workload-Pin und `xcode-path` müssen versionsgleich bleiben (Pack 27.2.x ↔ Xcode 27.2).
 3. Gate-Fehlschlag in `Verify built SDK version`: absichtlicher Schutz — die `.ipa` würde sonst Apples ITMS-90725-Warnung auslösen. Workload-Pin/Xcode korrigieren und neu laufen lassen; die geloggten `DTSDKName`/`DTPlatformVersion`/`DTXcode`-Werte zeigen die tatsächliche Toolchain.
 
+## `package-ios` schlägt fehl: `error MT7199` (Scene-Manifest)
+
+**Symptom:** Der `Publish (ios)`-Schritt bricht mit `error MT7199` ab (fehlendes `UIApplicationSceneManifest` in der `Info.plist`) — aufgetreten im ersten `Pre-Release`-Lauf nach der .NET-11-/Xcode-27-Migration.
+
+**Ursache:** Builds gegen das iOS-27-SDK verlangen den UIKit-Scene-Lifecycle. Ohne `UIApplicationSceneManifest` lehnt der Build-Check ab — und eine App ohne wirksames Scene-Manifest würde unter iOS 27 zudem beim Start abstürzen.
+
+**Lösung:**
+1. Bereits behoben: `Platforms/iOS/Info.plist` deklariert `UIApplicationSceneManifest` mit der MAUI-Standardkonfiguration `__MAUI_DEFAULT_SCENE_CONFIGURATION__`, `Platforms/iOS/SceneDelegate.cs` (`[Register("SceneDelegate")]`, `MauiUISceneDelegate`) liefert den Delegate; dieselbe Kombination liegt präventiv unter `Platforms/MacCatalyst`.
+2. Tritt der Fehler erneut auf: `UISceneDelegateClassName` im Manifest muss exakt dem `[Register("SceneDelegate")]`-Namen entsprechen — ein Mismatch führt nicht zum Build-Fehler, sondern zum Startabsturz der App.
+3. `ValidateSceneManifest=false` ist **keine** Lösung — es deaktiviert nur den Build-Check, der Startabsturz unter iOS 27 bliebe bestehen.
+
 ## iOS-Repair alter Release-Stände schlägt fehl
 
 **Symptom:** Ein `release.yml`-Lauf mit `release_action == 'upload-existing'` auf einen Release-Tag vor der .NET-11-Migration bricht im `package-ios`-Job ab (`Select Xcode` findet kein passendes Xcode bzw. das Pack verlangt eine andere Xcode-Version).
@@ -110,6 +121,16 @@
 1. Im fehlgeschlagenen Job prüfen, ob alle `package-*`-Artefakte (`release-win-x64`, `release-android`, ggf. `release-ios`) im Download-Step landen (`pattern: release-*`).
 2. Reihenfolge prüfen: `release-assets.mjs` muss vor `create-update-manifest.mjs` laufen, damit `RELEASE_ASSETS` im Environment steht.
 3. Bei geändertem `IOS_SIGNING_ENABLED`: Artefaktliste und `EXPECTED_ASSETS` müssen denselben Schalterstand verwenden.
+
+## `package-android` schlägt fehl: `error NETSDK1094`
+
+**Symptom:** Der `Publish (android)`-Schritt bricht mit `error NETSDK1094` ab — `PublishReadyToRun` verlangt ein `Microsoft.NETCore.App.Runtime.*`-Pack, das der Restore nicht aufgelöst hat.
+
+**Ursache:** Seit .NET 11 defaultet der CoreCLR-Android-Runtime `PublishReadyToRun` bei `Release`-Builds implizit auf `true` (`Microsoft.Android.Sdk.CoreCLR.targets`). Der Restore in der Action läuft RID-los (`dotnet restore Reporter.sln`), sodass kein R2R-Runtime-Pack für den Ziel-RID in den Assets steht.
+
+**Lösung:**
+1. Bereits behoben: der Publish-Schritt der `package-android`-Action übergibt `-p:PublishReadyToRun=false` — gleiches Muster wie der Windows-Pfad in `build-and-package`; ReadyToRun bringt der `.apk` keinen dokumentierten Nutzen.
+2. Alternative beim Umbau der Action: Restore gezielt um RID und `-p:PublishReadyToRun=true` erweitern, damit das Runtime-Pack aufgelöst wird — höherer Pflegeaufwand, daher bewusst nicht gewählt.
 
 ## Android-Job liefert nur ein unsigniertes APK
 
