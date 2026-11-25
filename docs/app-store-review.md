@@ -173,6 +173,15 @@ Ursache: Build 331 entstand noch aus dem .NET-10-Stand
   ablesbar — dort bleibt die serverseitige Ablehnung durch
   App Store Connect die letzte Sicherung).
 
+- **Scene-Lifecycle:** Das iOS-27-SDK verlangt zusätzlich den
+  UIKit-Scene-Lifecycle — `Platforms/iOS/Info.plist` (und präventiv
+  `Platforms/MacCatalyst/Info.plist`) deklariert das
+  `UIApplicationSceneManifest` mit der MAUI-Standardkonfiguration
+  `__MAUI_DEFAULT_SCENE_CONFIGURATION__`, passend zum
+  `SceneDelegate` (`MauiUISceneDelegate`). Der Build-Check
+  `MT7199` erzwingt das Manifest bereits zur Compile-Zeit; ohne es
+  würde die App unter iOS 27 beim Start abstürzen.
+
 **Nachweis:** Die Gate-Ausgabe im `package-ios`-Job-Log
 (`DTSDKName=iphoneos27.x`); die Store-Akzeptanz ohne ITMS-90725
 bestätigt der nächste reguläre RC-/Release-Upload.

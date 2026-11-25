@@ -94,6 +94,20 @@
 
 **Umsetzung:** `src/Reporter/Reporter.csproj` (`IncludeAndroidTarget`, `TargetFrameworks`-Conditions), `env:`-Blöcke in den Workflows und Composite Actions.
 
+## Kein ReadyToRun im Release-Packaging
+
+**Beschreibung:** Alle Plattform-Publishes der Pipeline laufen ohne ReadyToRun-Vorkompilierung — die RID-losen Restores lösen keine R2R-Runtime-Packs auf, und die Artefakte profitieren nicht dokumentiert davon.
+
+**Bedingungen:**
+- `build-and-package` (Windows) und `package-android` übergeben `dotnet publish` explizit `-p:PublishReadyToRun=false`.
+- Hintergrund: seit .NET 11 defaultet der CoreCLR-Android-Runtime `PublishReadyToRun` bei `Release` auf `true` (`Microsoft.Android.Sdk.CoreCLR.targets`); ohne explizites `false` fordert der Publish ein nicht restauriertes `Microsoft.NETCore.App.Runtime.*`-Pack (`error NETSDK1094`).
+
+**Verhalten:**
+- Publish mit `-p:PublishReadyToRun=false` → der R2R-Schritt entfällt, der RID-lose `dotnet restore Reporter.sln` genügt.
+- Würde ReadyToRun gewollt aktiviert, müsste der Restore stattdessen um RID und `-p:PublishReadyToRun=true` erweitert werden — höherer Pflegeaufwand, bewusst nicht gewählt.
+
+**Umsetzung:** `.github/actions/build-and-package/action.yml`, `.github/actions/package-android/action.yml` (Schritt `Publish (android)`).
+
 ## Unterschiedliche Fail-Schwellen im Security-Gate
 
 **Beschreibung:** Das Security-Gate blockiert Änderungen mit bekannten Schwachstellen in den Abhängigkeiten. NuGet und npm werden mit absichtlich unterschiedlichen Schwellen geprüft.

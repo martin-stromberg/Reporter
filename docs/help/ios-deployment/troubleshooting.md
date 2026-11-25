@@ -150,6 +150,14 @@ Danach `security find-identity -v -p codesigning` prüfen und die Zeile `Apple D
 
 **Lösung:** In den Review-Informationen begründen: Benutzer tragen beliebige Feed-URLs ein, die nicht zwingend HTTPS unterstützen. Das ist eine anerkannte Begründung, muss aber erklärt werden — der konsolidierte englische Wortlaut für den Review-Dialog steht in [`docs/app-store-review.md`](../../app-store-review.md) (Abschnitt „ATS-Begründung").
 
+## `error MT7199` beim iOS-Build / Startabsturz unter iOS 27 (Scene-Lifecycle)
+
+**Symptom:** `dotnet publish`/`dotnet build` für `net11.0-ios` bricht mit `error MT7199` ab — oder eine ohne Scene-Manifest gebaute App stürzt unter iOS 27 direkt beim Start ab (`UIScene life cycle is required`).
+
+**Ursache:** Apps, die gegen das iOS-27-SDK gebaut werden, müssen den UIKit-Scene-Lifecycle verwenden. Der Build-Check MT7199 erzwingt ein `UIApplicationSceneManifest` in der `Info.plist` — und ohne den dazu passenden Scene-Delegate würde die App beim Start abstürzen, selbst wenn sie durch den Build liefe.
+
+**Lösung:** Bereits im Stand verankert: `Platforms/iOS/Info.plist` enthält `UIApplicationSceneManifest` mit der MAUI-Standardkonfiguration `__MAUI_DEFAULT_SCENE_CONFIGURATION__` (`UIApplicationSupportsMultipleScenes` = `false`), und `Platforms/iOS/SceneDelegate.cs` (`[Register("SceneDelegate")]`, `MauiUISceneDelegate`) liefert den Delegate — die Window-Einrichtung übernimmt .NET MAUI, der `AppDelegate` bleibt parallel für `FinishedLaunching`-Initialisierungen (Benachrichtigungen, Hintergrundabruf) und `CreateMauiApp` zuständig. Dieselbe Kombination liegt präventiv unter `Platforms/MacCatalyst`. Tritt der Fehler auf, muss `UISceneDelegateClassName` im Manifest exakt dem `[Register("SceneDelegate")]`-Namen entsprechen; `ValidateSceneManifest=false` deaktiviert nur den Build-Check und lässt den Startabsturz bestehen — keine Lösung.
+
 ## App stürzt direkt nach dem Start ab (`ExecutionEngineException`, „aot-only mode")
 
 **Ursache:** Release-Builds sind auf iOS Full-AOT — `Expression.Compile()`/`Reflection.Emit` (EF Core nutzt beides, z. B. im `DbSetInitializer` beim ersten `DbContext`) kann nicht JIT-kompiliert werden und wirft `System.ExecutionEngineException`. Debug-Builds laufen, weil dort der Interpreter aktiv ist.
